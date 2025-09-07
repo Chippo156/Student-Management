@@ -15,6 +15,6 @@ namespace StudentManagement.Models
         public DateTime RefreshTokenExpiryTime { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public ICollection<Role> Roles { get; set; } = new List<Role>();
+        public Role Role { get; set; } = null!;
     }
 }
