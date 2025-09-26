@@ -31,5 +31,6 @@ namespace StudentManagement.Data
         public DbSet<Prerequisite> Prerequisites { get; set; } = null!;
         public DbSet<Schedule> Schedules { get; set; } = null!;
         public DbSet<Semester> Semesters { get; set; } = null!;
+        public DbSet<Faculty> Falcuties { get; set; } = null!;
     }
 }
