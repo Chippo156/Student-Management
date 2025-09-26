@@ -95,7 +95,7 @@ namespace StudentManagement.Services
             return refreshToken;
         }
 
-        private async Task<User?> ValidateRefreshTokenAsync(Guid userId, string refreshetToken)
+        private async Task<User?> ValidateRefreshTokenAsync(int userId, string refreshetToken)
         {
             var user = await context.Users.FindAsync(userId);
             if (user is null || user.RefreshToken != refreshetToken
