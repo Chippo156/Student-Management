@@ -1,10 +1,10 @@
 ﻿using AuthProject.Models;
-using JwtAuthenticationNet.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
+using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Controllers
 {
