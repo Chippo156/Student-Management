@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StudentManagement.Data;
 
@@ -11,9 +12,11 @@ using StudentManagement.Data;
 namespace StudentManagement.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250926041352_UpdateManyTableV2")]
+    partial class UpdateManyTableV2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -64,35 +67,6 @@ namespace StudentManagement.Migrations
                     b.HasIndex("LecturerId");
 
                     b.ToTable("AdviserAssignments");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.Announcement", b =>
-                {
-                    b.Property<int>("AnnouncementId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AnnouncementId"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("AnnouncementId");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.ToTable("Announcements");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Assessment", b =>
@@ -169,35 +143,6 @@ namespace StudentManagement.Migrations
                     b.ToTable("Courses");
                 });
 
-            modelBuilder.Entity("StudentManagement.Models.CurriculumCourse", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProgramId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SemeterSuggested")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("isRequired")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseId");
-
-                    b.HasIndex("ProgramId");
-
-                    b.ToTable("CurriculumCourses");
-                });
-
             modelBuilder.Entity("StudentManagement.Models.Department", b =>
                 {
                     b.Property<int>("DepartmentId")
@@ -218,56 +163,6 @@ namespace StudentManagement.Migrations
                     b.HasIndex("FacultyId");
 
                     b.ToTable("Departments");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.DocumentRequest", b =>
-                {
-                    b.Property<int>("DocumentRequestId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DocumentRequestId"));
-
-                    b.Property<int>("DocumentTypeId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("RequestDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.HasKey("DocumentRequestId");
-
-                    b.HasIndex("DocumentTypeId");
-
-                    b.HasIndex("StudentId");
-
-                    b.ToTable("DocumentRequests");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.DocumentType", b =>
-                {
-                    b.Property<int>("DocumentTypeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DocumentTypeId"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TemplatePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("DocumentTypeId");
-
-                    b.ToTable("DocumentTypes");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Enrollment", b =>
@@ -318,123 +213,6 @@ namespace StudentManagement.Migrations
                     b.HasKey("FacultyId");
 
                     b.ToTable("Faculty");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.File", b =>
-                {
-                    b.Property<int>("FileId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FileId"));
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FileType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UploadedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UploadedByUserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("FileId");
-
-                    b.HasIndex("UploadedByUserId");
-
-                    b.ToTable("Files");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.FinalResult", b =>
-                {
-                    b.Property<int>("FinalResultId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FinalResultId"));
-
-                    b.Property<double>("FinalScore")
-                        .HasColumnType("float");
-
-                    b.Property<string>("GradeLetter")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("GradePoint")
-                        .HasColumnType("float");
-
-                    b.Property<int>("SectionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.HasKey("FinalResultId");
-
-                    b.HasIndex("SectionId");
-
-                    b.HasIndex("StudentId");
-
-                    b.ToTable("FinalResults");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.GeneratedDocument", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("DocumentRequestId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DocumentRequestId");
-
-                    b.ToTable("GeneratedDocuments");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.GpaSnapshot", b =>
-                {
-                    b.Property<int>("GpaSnapshotId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("GpaSnapshotId"));
-
-                    b.Property<double>("Gpa")
-                        .HasColumnType("float");
-
-                    b.Property<int>("SemesterId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.HasKey("GpaSnapshotId");
-
-                    b.HasIndex("SemesterId");
-
-                    b.HasIndex("StudentId");
-
-                    b.ToTable("GpaSnapshots");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Grade", b =>
@@ -494,35 +272,6 @@ namespace StudentManagement.Migrations
                     b.ToTable("Lecturers");
                 });
 
-            modelBuilder.Entity("StudentManagement.Models.Notification", b =>
-                {
-                    b.Property<int>("NotificationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NotificationId"));
-
-                    b.Property<int>("AnnouncementId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("SentAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("NotificationId");
-
-                    b.HasIndex("AnnouncementId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("notifications");
-                });
-
             modelBuilder.Entity("StudentManagement.Models.Permission", b =>
                 {
                     b.Property<int>("PermissionId")
@@ -542,29 +291,6 @@ namespace StudentManagement.Migrations
                     b.HasKey("PermissionId");
 
                     b.ToTable("Permissions");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.Prerequisite", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PrerequisiteCourseId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseId");
-
-                    b.HasIndex("PrerequisiteCourseId");
-
-                    b.ToTable("Prerequisites");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Program", b =>
@@ -614,43 +340,6 @@ namespace StudentManagement.Migrations
                     b.ToTable("Roles");
                 });
 
-            modelBuilder.Entity("StudentManagement.Models.Schedule", b =>
-                {
-                    b.Property<int>("ScheduleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ScheduleId"));
-
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("int");
-
-                    b.Property<DateOnly>("EndDate")
-                        .HasColumnType("date");
-
-                    b.Property<TimeOnly>("EndTime")
-                        .HasColumnType("time");
-
-                    b.Property<string>("Room")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("SectionId")
-                        .HasColumnType("int");
-
-                    b.Property<DateOnly>("StartDate")
-                        .HasColumnType("date");
-
-                    b.Property<TimeOnly>("StartTime")
-                        .HasColumnType("time");
-
-                    b.HasKey("ScheduleId");
-
-                    b.HasIndex("SectionId");
-
-                    b.ToTable("Schedules");
-                });
-
             modelBuilder.Entity("StudentManagement.Models.Section", b =>
                 {
                     b.Property<int>("SectionId")
@@ -676,26 +365,6 @@ namespace StudentManagement.Migrations
                     b.HasIndex("LecturerId");
 
                     b.ToTable("Sections");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.Semester", b =>
-                {
-                    b.Property<int>("SemesterId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SemesterId"));
-
-                    b.Property<string>("Term")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("int");
-
-                    b.HasKey("SemesterId");
-
-                    b.ToTable("Semesters");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Student", b =>
@@ -821,17 +490,6 @@ namespace StudentManagement.Migrations
                     b.Navigation("Lecturer");
                 });
 
-            modelBuilder.Entity("StudentManagement.Models.Announcement", b =>
-                {
-                    b.HasOne("StudentManagement.Models.User", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CreatedBy");
-                });
-
             modelBuilder.Entity("StudentManagement.Models.Assessment", b =>
                 {
                     b.HasOne("StudentManagement.Models.Section", "Section")
@@ -854,25 +512,6 @@ namespace StudentManagement.Migrations
                     b.Navigation("Program");
                 });
 
-            modelBuilder.Entity("StudentManagement.Models.CurriculumCourse", b =>
-                {
-                    b.HasOne("StudentManagement.Models.Course", "Course")
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StudentManagement.Models.Program", "Program")
-                        .WithMany()
-                        .HasForeignKey("ProgramId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Course");
-
-                    b.Navigation("Program");
-                });
-
             modelBuilder.Entity("StudentManagement.Models.Department", b =>
                 {
                     b.HasOne("StudentManagement.Models.Faculty", "Faculty")
@@ -882,25 +521,6 @@ namespace StudentManagement.Migrations
                         .IsRequired();
 
                     b.Navigation("Faculty");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.DocumentRequest", b =>
-                {
-                    b.HasOne("StudentManagement.Models.DocumentType", "DocumentType")
-                        .WithMany()
-                        .HasForeignKey("DocumentTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StudentManagement.Models.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DocumentType");
-
-                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Enrollment", b =>
@@ -918,66 +538,6 @@ namespace StudentManagement.Migrations
                         .IsRequired();
 
                     b.Navigation("Section");
-
-                    b.Navigation("Student");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.File", b =>
-                {
-                    b.HasOne("StudentManagement.Models.User", "UploadedBy")
-                        .WithMany()
-                        .HasForeignKey("UploadedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("UploadedBy");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.FinalResult", b =>
-                {
-                    b.HasOne("StudentManagement.Models.Section", "Section")
-                        .WithMany()
-                        .HasForeignKey("SectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StudentManagement.Models.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Section");
-
-                    b.Navigation("Student");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.GeneratedDocument", b =>
-                {
-                    b.HasOne("StudentManagement.Models.DocumentRequest", "DocumentRequest")
-                        .WithMany()
-                        .HasForeignKey("DocumentRequestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DocumentRequest");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.GpaSnapshot", b =>
-                {
-                    b.HasOne("StudentManagement.Models.Semester", "Semester")
-                        .WithMany()
-                        .HasForeignKey("SemesterId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StudentManagement.Models.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Semester");
 
                     b.Navigation("Student");
                 });
@@ -1020,44 +580,6 @@ namespace StudentManagement.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("StudentManagement.Models.Notification", b =>
-                {
-                    b.HasOne("StudentManagement.Models.Announcement", "Announcement")
-                        .WithMany()
-                        .HasForeignKey("AnnouncementId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StudentManagement.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Announcement");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.Prerequisite", b =>
-                {
-                    b.HasOne("StudentManagement.Models.Course", "Course")
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StudentManagement.Models.Course", "PrerequisiteCourse")
-                        .WithMany()
-                        .HasForeignKey("PrerequisiteCourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Course");
-
-                    b.Navigation("PrerequisiteCourse");
-                });
-
             modelBuilder.Entity("StudentManagement.Models.Program", b =>
                 {
                     b.HasOne("StudentManagement.Models.Department", "Department")
@@ -1067,17 +589,6 @@ namespace StudentManagement.Migrations
                         .IsRequired();
 
                     b.Navigation("Department");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.Schedule", b =>
-                {
-                    b.HasOne("StudentManagement.Models.Section", "Section")
-                        .WithMany()
-                        .HasForeignKey("SectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Section");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Section", b =>
