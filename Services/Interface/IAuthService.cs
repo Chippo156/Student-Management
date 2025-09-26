@@ -4,7 +4,7 @@ using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
 
-namespace JwtAuthenticationNet.Services
+namespace StudentManagement.Services.Interface
 {
     public interface IAuthService
     {
