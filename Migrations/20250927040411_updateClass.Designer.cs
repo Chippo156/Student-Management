@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StudentManagement.Data;
 
@@ -11,9 +12,11 @@ using StudentManagement.Data;
 namespace StudentManagement.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250927040411_updateClass")]
+    partial class updateClass
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,32 +38,6 @@ namespace StudentManagement.Migrations
                     b.HasIndex("RolesRoleId");
 
                     b.ToTable("PermissionRole");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.AcademicProgram", b =>
-                {
-                    b.Property<int>("AcademicProgramId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AcademicProgramId"));
-
-                    b.Property<string>("DegreeLevel")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("DepartmentId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ProgramName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("AcademicProgramId");
-
-                    b.HasIndex("DepartmentId");
-
-                    b.ToTable("Programs");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.AdviserAssignment", b =>
@@ -151,14 +128,14 @@ namespace StudentManagement.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ProgramAcademicProgramId")
+                    b.Property<int>("ProgramId")
                         .HasColumnType("int");
 
                     b.HasKey("ClassId");
 
                     b.HasIndex("AdviserAssignmentId");
 
-                    b.HasIndex("ProgramAcademicProgramId");
+                    b.HasIndex("ProgramId");
 
                     b.ToTable("Classes");
                 });
@@ -201,7 +178,7 @@ namespace StudentManagement.Migrations
                     b.Property<int>("CourseId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProgramAcademicProgramId")
+                    b.Property<int>("ProgramId")
                         .HasColumnType("int");
 
                     b.Property<int>("SemeterSuggested")
@@ -214,7 +191,7 @@ namespace StudentManagement.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.HasIndex("ProgramAcademicProgramId");
+                    b.HasIndex("ProgramId");
 
                     b.ToTable("CurriculumCourses");
                 });
@@ -588,6 +565,32 @@ namespace StudentManagement.Migrations
                     b.ToTable("Prerequisites");
                 });
 
+            modelBuilder.Entity("StudentManagement.Models.Program", b =>
+                {
+                    b.Property<int>("ProgramId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProgramId"));
+
+                    b.Property<string>("DegreeLevel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("DepartmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProgramName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ProgramId");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.ToTable("Program");
+                });
+
             modelBuilder.Entity("StudentManagement.Models.Role", b =>
                 {
                     b.Property<int>("RoleId")
@@ -660,16 +663,15 @@ namespace StudentManagement.Migrations
                     b.Property<int>("LecturerId")
                         .HasColumnType("int");
 
-                    b.Property<int>("SemesterId")
-                        .HasColumnType("int");
+                    b.Property<string>("Semester")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("SectionId");
 
                     b.HasIndex("CourseId");
 
                     b.HasIndex("LecturerId");
-
-                    b.HasIndex("SemesterId");
 
                     b.ToTable("Sections");
                 });
@@ -798,17 +800,6 @@ namespace StudentManagement.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("StudentManagement.Models.AcademicProgram", b =>
-                {
-                    b.HasOne("StudentManagement.Models.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Department");
-                });
-
             modelBuilder.Entity("StudentManagement.Models.AdviserAssignment", b =>
                 {
                     b.HasOne("StudentManagement.Models.Lecturer", "Lecturer")
@@ -837,9 +828,9 @@ namespace StudentManagement.Migrations
                         .WithMany()
                         .HasForeignKey("AdviserAssignmentId");
 
-                    b.HasOne("StudentManagement.Models.AcademicProgram", "Program")
+                    b.HasOne("StudentManagement.Models.Program", "Program")
                         .WithMany()
-                        .HasForeignKey("ProgramAcademicProgramId")
+                        .HasForeignKey("ProgramId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -856,9 +847,9 @@ namespace StudentManagement.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("StudentManagement.Models.AcademicProgram", "Program")
+                    b.HasOne("StudentManagement.Models.Program", "Program")
                         .WithMany()
-                        .HasForeignKey("ProgramAcademicProgramId")
+                        .HasForeignKey("ProgramId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1052,6 +1043,17 @@ namespace StudentManagement.Migrations
                     b.Navigation("PrerequisiteCourse");
                 });
 
+            modelBuilder.Entity("StudentManagement.Models.Program", b =>
+                {
+                    b.HasOne("StudentManagement.Models.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+                });
+
             modelBuilder.Entity("StudentManagement.Models.Schedule", b =>
                 {
                     b.HasOne("StudentManagement.Models.Section", "Section")
@@ -1077,17 +1079,9 @@ namespace StudentManagement.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("StudentManagement.Models.Semester", "Semester")
-                        .WithMany()
-                        .HasForeignKey("SemesterId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Course");
 
                     b.Navigation("Lecturer");
-
-                    b.Navigation("Semester");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Student", b =>

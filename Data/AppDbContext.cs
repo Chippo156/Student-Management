@@ -32,5 +32,8 @@ namespace StudentManagement.Data
         public DbSet<Schedule> Schedules { get; set; } = null!;
         public DbSet<Semester> Semesters { get; set; } = null!;
         public DbSet<Faculty> Falcuties { get; set; } = null!;
+        public DbSet<AcademicProgram> Programs { get; set; } = null!;
+        public DbSet<Assessment> Assessment { get; set; } = null!;
+
     }
 }
