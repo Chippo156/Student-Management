@@ -47,6 +47,7 @@ namespace StudentManagement.Services
         }
         private async Task<TokenResponse> CreateTokenResponse(User? user)
         {
+
             return new TokenResponse
             {
                 AccessToken = GenerateToken(user!),
@@ -97,7 +98,10 @@ namespace StudentManagement.Services
 
         private async Task<User?> ValidateRefreshTokenAsync(int userId, string refreshetToken)
         {
-            var user = await context.Users.FindAsync(userId);
+            var user = await context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
             if (user is null || user.RefreshToken != refreshetToken
                 || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             {

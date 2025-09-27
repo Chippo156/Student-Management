@@ -1,18 +1,19 @@
 ﻿using StudentManagement.Data;
 using StudentManagement.Models;
+using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Services
 {
     public class DepartmentService(AppDbContext context) : IDepartmentService
     {
-        public Task<Department> CreateDepartmentAsync(string departmentName, int facultyId)
+        public Task<Department> CreateDepartmentAsync(DepartmentRequest departmentRequest)
         {
             Department department = new Department
             {
-                DepartmentName = departmentName
+                DepartmentName = departmentRequest.DepartmentName
             };
-            var faculty = context.Falcuties.Find(facultyId);
+            var faculty = context.Falcuties.Find(departmentRequest.FacultyId);
             if (faculty is null)
             {
                 throw new Exception("Faculty not found");

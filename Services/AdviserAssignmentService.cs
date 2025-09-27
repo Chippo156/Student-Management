@@ -9,18 +9,21 @@ namespace StudentManagement.Services
 
         public async Task<bool> AssignLecturerToClass(int lecturerId, int classId)
         {
-            Lecturer lecturer = await context.Lecturers.FindAsync(lecturerId) ?? throw new Exception("Lecturer not found");
-            Class cls = await context.Classes.FindAsync(classId) ?? throw new Exception("Class not found");
+            Lecturer lecturer = await context.Lecturers.FindAsync(lecturerId) ?? throw new System.Exception("Lecturer not found");
+            Class cls = await context.Classes.FindAsync(classId) ?? throw new System.Exception("Class not found");
+
             if (cls.AdviserAssignment != null)
             {
-                throw new Exception("Class already has an adviser assigned");
+                throw new System.Exception("Class already has an adviser");
             }
             AdviserAssignment assignment = new AdviserAssignment
             {
                 Lecturer = lecturer,
-                Class = cls
+                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                EndDate = null
             };
             context.AdviserAssignments.Add(assignment);
+            cls.AdviserAssignment = assignment;
             return await context.SaveChangesAsync() > 0;
         }
 

@@ -5,7 +5,7 @@ using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Services
 {
-    public class FalcutyService(AppDbContext context) : IFalcutyService
+    public class FacultyService(AppDbContext context) : IFacultyService
     {
         public Task<Faculty> CreateFacultyAsync(FacultyRequest faculty)
         {
@@ -39,12 +39,12 @@ namespace StudentManagement.Services
 
         public Task<Faculty?> UpdateFacultyAsync(int facultyId, FacultyRequest faculty)
         {
-            Faculty faculty1= context.Falcuties.Find(facultyId) ?? throw new Exception("Faculty not found");
+            Faculty? faculty1 = context.Falcuties.Find(facultyId) ?? throw new Exception("Faculty not found");
             faculty1.FacultyName = faculty.Name;
             faculty1.Description = faculty.Description;
             context.Falcuties.Update(faculty1);
             context.SaveChanges();
-            return Task.FromResult(faculty1);
+            return Task.FromResult<Faculty?>(faculty1);
         }
     }
 }
