@@ -23,13 +23,13 @@ import SearchIcon from "@mui/icons-material/Search";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import Dashboard from "~/component/Student/Dashboard";
-import StudentInfoPage from "~/component/Student/StudentInfoPage";
-import StudentNotes from "~/component/Student/StudentNotes";
-import StudentSchedule from "~/component/Student/StudentSchedule";
-import StudentGrades from "~/component/Student/StudentGrades";
-import BankInfo from "~/component/Student/BankInfo";
-import BHYTPage from "~/component/Student/BHYTPage";
-import GraduatePage from "~/component/Student/GraduatePage";
+import StudentInfoPage from "~/component/Student/Pages/StudentInfoPage";
+import StudentNotes from "~/component/Student/Components/StudentNotes";
+import StudentSchedule from "~/component/Student/Components/StudentSchedule";
+import StudentGrades from "~/component/Student/Components/StudentGrades";
+import BankInfo from "~/component/Student/Components/BankInfo";
+import BHYTPage from "~/component/Student/Pages/BHYTPage";
+import GraduatePage from "~/component/Student/Pages/GraduatePage";
 
 interface MenuItem {
   label: string;

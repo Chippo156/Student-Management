@@ -1,110 +1,127 @@
-import React, { useEffect, useState } from "react";
-import { GoogleOutlined, UserOutlined } from "@ant-design/icons";
-import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
-import { Button, Input, Space, notification } from "antd";
-import "./login.scss";
-import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { login, logout } from "../../redux/UserSlice";
-import { loginUser, reloadUser } from "../../controller/loginController";
-import { RootState, AppDispatch } from "~/types/api";
-
-
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useNavigate, Link } from 'react-router-dom';
+import { doLoginAction } from '../../redux/UserSlice';
+import { authService } from '../../service/authService';
+import './login.scss';
 
 const Login: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [rememberMe, setRememberMe] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const openNotification = (placement: string): void => {
-    notification.info({
-      message: `Notification ${placement}`,
-      description: `Hello, I'm a notification in ${placement}`,
-      placement: placement as any,
-    });
-  };
-
-  const handleLogin = async (): Promise<void> => {
-    try {
-      const res: any = await loginUser(username, password);
-      console.log(res);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email && password) {
+      setLoading(true);
+      setError('');
       
-      if (res && res.code === 1000) {
-        localStorage.setItem("token", res.result.token);
-        const ress: any = await reloadUser(res.result.token);
+      try {
+        const response = await authService.login({ email, password });
         
-        if (ress && ress.code === 200) {
-          dispatch(login({ user: ress.result }));
-        }
-        navigate("/");
-      } else {
-        console.log("Login fail");
-        notification.error({
-          message: "Login Failed",
-          description: res.message || "Invalid username or password",
-        });
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      notification.error({
-        message: "Login Error",
-        description: "An error occurred during login",
-      });
-    }
-  };
+        if (response.data && response.data.result) {
+          const { token, user } = response.data.result;
+          
+          // Dispatch login action
+          dispatch(doLoginAction({
+            access_token: token,
+            refresh_token: '',
+            username: user.username,
+            image: user.image || '',
+            role: user.role.toString(),
+            userId: user.id
+          }));
 
-  const handleKeyPress = (e: React.KeyboardEvent): void => {
-    if (e.key === 'Enter') {
-      handleLogin();
+          // Redirect based on role
+          switch (parseInt(user.role.toString())) {
+            case 1: // Admin
+              navigate('/admin');
+              break;
+            case 2: // Giảng viên
+              navigate('/teacher');
+              break;
+            case 3: // Sinh viên
+              navigate('/student');
+              break;
+            default:
+              navigate('/');
+          }
+        } else {
+          setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        setError('Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   return (
     <div className="login-container">
-      <div className="login-container-main">
-        <h2>Login</h2>
-        <Input
-          size="large"
-          placeholder="Username"
-          prefix={<UserOutlined />}
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          onKeyPress={handleKeyPress}
-          style={{ width: "100%", marginBottom: "20px" }}
-        />
-        <Input.Password
-          size="large"
-          placeholder="Password"
-          iconRender={(visible) =>
-            visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
-          }
-          visibilityToggle={{
-            visible: passwordVisible,
-            onVisibleChange: setPasswordVisible,
-          }}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyPress={handleKeyPress}
-          style={{ width: "100%", marginBottom: "20px" }}
-        />
-        <Button
-          type="primary"
-          block
-          style={{ marginTop: "20px" }}
-          onClick={handleLogin}
-          loading={false} // TODO: Add loading state
-        >
-          Login
-        </Button>
-        <div className="login-links">
-          <a href="/forgot" className="forgot-password">
-            Forgot Password?
-          </a>
-          <a href="/Register">Register</a>
+      <form className="login-form" onSubmit={handleLogin}>
+        <h2>Đăng nhập</h2>
+
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
+
+        <div className="form-group">
+          <label htmlFor="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={loading}
+            placeholder="Nhập email của bạn"
+          />
         </div>
-      </div>
+
+        <div className="form-group">
+          <label htmlFor="password">Mật khẩu</label>
+          <input
+            type="password"
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={loading}
+            placeholder="Nhập mật khẩu"
+          />
+        </div>
+
+        <div className="form-group checkbox-group">
+          <label>
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              disabled={loading}
+            />
+            Ghi nhớ đăng nhập
+          </label>
+        </div>
+
+        <button type="submit" className="login-btn" disabled={loading}>
+          {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+        </button>
+
+        <div className="login-links">
+          <Link to="/forgot">Quên mật khẩu?</Link>
+          <span>|</span>
+          <Link to="/register">Đăng ký tài khoản</Link>
+        </div>
+      </form>
     </div>
   );
 };

@@ -39,6 +39,30 @@ body,
   transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
     border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
+
+/* Smooth theme switch animation */
+.theme-transition,
+.theme-transition * {
+  transition: background-color 350ms ease, color 350ms ease,
+    border-color 350ms ease, box-shadow 350ms ease, fill 350ms ease,
+    stroke 350ms ease;
+}
+
+/* Improve transitions for charts and SVG */
+.theme-transition svg *,
+svg .recharts-layer path,
+svg .recharts-layer rect,
+svg .recharts-layer circle {
+  transition: fill 350ms ease, stroke 350ms ease, opacity 350ms ease;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition,
+  .theme-transition * {
+    transition: none !important;
+  }
+}
 .btn.btn_danger {
   color: #fff;
   background-color: #dc3545;

@@ -12,7 +12,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleMode } from "../../redux/ThemeSlice";
 import { useNavigate } from "react-router-dom";
-import { RootState, AppDispatch } from "~/types/api";
+import { RootState, AppDispatch } from "../../redux/store";
 
 const HeaderPage: React.FC = () => {
   const theme = useTheme();
