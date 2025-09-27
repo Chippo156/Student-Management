@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]")] 
     [ApiController]
     public class StudentController(IStudentService studentService) : ControllerBase
     {
@@ -16,7 +17,7 @@ namespace StudentManagement.Controllers
         public async Task<ActionResult<IEnumerable<Student>>> GetAllStudents()
         {
             var students = await studentService.GetAllStudentsAsync();
-            return Ok(students);
+            return Ok(ApiResponse.SuccessResponse(students, "Students retrieved successfully"));
         }
 
         [HttpGet("{id}")]
@@ -25,9 +26,9 @@ namespace StudentManagement.Controllers
             var student = await studentService.GetStudentByIdAsync(id);
             if (student is null)
             {
-                return NotFound($"Student with ID {id} not found.");
+                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Student with ID {id} not found.", null));
             }
-            return Ok(student);
+            return Ok(ApiResponse.SuccessResponse(student, "Student retrieved successfully"));
         }
 
         [HttpPost("CreateStudent")]
@@ -36,9 +37,9 @@ namespace StudentManagement.Controllers
             var createdStudent = await studentService.CreateStudentAsync(student);
             if (createdStudent is null)
             {
-                return BadRequest("Failed to create student.");
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Failed to create student.", null));
             }
-            return CreatedAtAction(nameof(GetStudentById), new { id = createdStudent.Id }, createdStudent);
+            return CreatedAtAction(nameof(GetStudentById), new { id = createdStudent.Id }, ApiResponse.SuccessResponse(createdStudent, "Student created successfully"));
         }
 
         [HttpDelete("DeleteStudent/{id}")]
@@ -47,9 +48,9 @@ namespace StudentManagement.Controllers
             var isDeleted = await studentService.DeleteStudentAsync(id);
             if (!isDeleted)
             {
-                return NotFound($"Student with ID {id} not found.");
+                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Student with ID {id} not found.", null));
             }
-            return NoContent();
+            return Ok(ApiResponse.SuccessResponse(null, "Student deleted successfully"));
         }
 
     }

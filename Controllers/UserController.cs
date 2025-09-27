@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
-using System.Runtime.InteropServices;
 
 namespace StudentManagement.Controllers
 {
@@ -17,7 +16,7 @@ namespace StudentManagement.Controllers
         public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
         {
             var users = await userService.GetAllUsersAsync();
-            return Ok(users);
+            return Ok(ApiResponse.SuccessResponse(users, "Users retrieved successfully"));
         }
 
         [HttpGet("{id}")]
@@ -26,9 +25,9 @@ namespace StudentManagement.Controllers
             var user = await userService.GetUserByIdAsync(id);
             if (user is null)
             {
-                return NotFound($"User with ID {id} not found.");
+                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"User with ID {id} not found.", null));
             }
-            return Ok(user);
+            return Ok(ApiResponse.SuccessResponse(user, "User retrieved successfully"));
         }
 
         [HttpPut("Update/{id}")]
@@ -37,9 +36,9 @@ namespace StudentManagement.Controllers
             var updatedUser = await userService.UpdateUserAsync(id, user);
             if (updatedUser is null)
             {
-                return NotFound($"User with ID {id} not found.");
+                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"User with ID {id} not found.", null));
             }
-            return Ok(updatedUser);
+            return Ok(ApiResponse.SuccessResponse(updatedUser, "User updated successfully"));
         }
     }
 }

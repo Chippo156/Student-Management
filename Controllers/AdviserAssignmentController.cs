@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using StudentManagement.Exceptions;
+using StudentManagement.Models;
+using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Controllers
@@ -12,7 +15,7 @@ namespace StudentManagement.Controllers
         public async Task<IActionResult> GetLecturerFromAdviser(int id)
         {
             var assignments = await assignmentService.GetLecturerByAdviser(id);
-            return Ok(assignments);
+            return Ok(ApiResponse.SuccessResponse(assignments, "Lecturer retrieved successfully."));
         }
 
         [HttpPost("assign")]
@@ -21,9 +24,9 @@ namespace StudentManagement.Controllers
             var result = await assignmentService.AssignLecturerToClass(adviserId, classId);
             if (!result)
             {
-                return BadRequest("Assignment failed.");
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.NotFound, "Gán quyền không thành công", null));
             }
-            return Ok("Assignment successful.");
+            return Ok(ApiResponse.SuccessResponse(result, "Gán quyền thành công"));
         }
     }
 }

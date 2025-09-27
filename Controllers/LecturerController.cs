@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
@@ -8,13 +9,13 @@ namespace StudentManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class LecturerController(ILecturerService lecturerService) : ControllerBase
+    public class LecturerController(ILecturerService lecturerService) : ControllerBase  
     {
         [HttpGet("GetAllLecturers")]
         public async Task<ActionResult<IEnumerable<Lecturer>>> GetAllLecturers()
         {
             var lecturers = await lecturerService.GetAllLecturersAsync();
-            return Ok(lecturers);
+            return Ok(ApiResponse.SuccessResponse(lecturers, "Lecturers retrieved successfully"));
         }
         [HttpGet("{id}")]
         public async Task<ActionResult<Lecturer>> GetLecturerById(int id)
@@ -22,9 +23,9 @@ namespace StudentManagement.Controllers
             var lecturer = await lecturerService.GetLecturerByIdAsync(id);
             if (lecturer is null)
             {
-                return NotFound($"Lecturer with ID {id} not found.");
+                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Lecturer with ID {id} not found.", null));
             }
-            return Ok(lecturer);
+            return Ok(ApiResponse.SuccessResponse(lecturer, "Lecturer retrieved successfully"));
         }
         [HttpPost]
         public async Task<ActionResult<Lecturer>> CreateLecturer(LecturerRequest lecturer)
@@ -32,9 +33,9 @@ namespace StudentManagement.Controllers
             var createdLecturer = await lecturerService.CreateLecturerAsync(lecturer);
             if (createdLecturer is null)
             {
-                return BadRequest("Failed to create lecturer.");
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Failed to create lecturer.", null));
             }
-            return CreatedAtAction(nameof(GetLecturerById), new { id = createdLecturer.Id }, createdLecturer);
+            return CreatedAtAction(nameof(GetLecturerById), new { id = createdLecturer.Id }, ApiResponse.SuccessResponse(createdLecturer, "Lecturer created successfully"));
         }
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteLecturer(int id)
@@ -42,9 +43,9 @@ namespace StudentManagement.Controllers
             var isDeleted = await lecturerService.DeleteLecturerAsync(id);
             if (!isDeleted)
             {
-                return NotFound($"Lecturer with ID {id} not found.");
+                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Lecturer with ID {id} not found.", null));
             }
-            return NoContent();
+            return Ok(ApiResponse.SuccessResponse(null, "Lecturer deleted successfully"));
         }
     }
 }

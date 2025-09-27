@@ -1,6 +1,7 @@
 ﻿using AuthProject.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
@@ -20,9 +21,9 @@ namespace StudentManagement.Controllers
             var user = await authService.RegisterAsync(request);
             if (user is null)
             {
-                return BadRequest("User already exists or registration failed.");
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Register failed", null));
             }
-            return Ok(user);
+            return Ok(ApiResponse.SuccessResponse(user, "Success"));
         }
 
         [HttpPost("login")]
@@ -31,16 +32,16 @@ namespace StudentManagement.Controllers
             var loginResponse = await authService.LoginAsync(request);
             if (loginResponse == null)
             {
-                return Unauthorized("Invalid username or password.");
+                return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "Invalid username or password.", null));
             }
-            return Ok(loginResponse);
+            return Ok(ApiResponse.SuccessResponse(loginResponse, "Login success"));
         }
 
         [Authorize]
         [HttpGet]
         public IActionResult AuthenticatedOnlyEndpoint()
         {
-            return Ok("You are authenticated !");
+            return Ok(ApiResponse.SuccessResponse("You are authenticated !", "Authentication verified"));
         }
 
         [HttpPost]
@@ -50,9 +51,9 @@ namespace StudentManagement.Controllers
             var result = await authService.RefreshTokenAsync(refreshTokenRequest);
             if (result is null)
             {
-                return Unauthorized("Invalid refresh token.");
+                return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "Invalid refresh token.", null));
             }
-            return Ok(result);
+            return Ok(ApiResponse.SuccessResponse(result, "Refresh token success"));
         }
 
     }
