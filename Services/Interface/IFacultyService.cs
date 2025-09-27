@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace StudentManagement.Services.Interface
 {
-    public interface IFalcutyService
+    public interface IFacultyService
     {
         Task<Faculty?> GetFacultyByIdAsync(int facultyId);
         Task<IEnumerable<Faculty>> GetAllFacultiesAsync();
@@ -12,4 +12,4 @@ namespace StudentManagement.Services.Interface
         Task<Faculty?> UpdateFacultyAsync(int facultyId, FacultyRequest faculty);
         Task<bool> DeleteFacultyAsync(int facultyId);
     }
-}
+}   

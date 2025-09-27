@@ -1,4 +1,5 @@
 ﻿using StudentManagement.Models;
+using StudentManagement.Models.Dto.Request;
 using System.Threading.Tasks;
 
 namespace StudentManagement.Services.Interface
@@ -7,7 +8,7 @@ namespace StudentManagement.Services.Interface
     {
         Task<Department?> GetDepartmentByIdAsync(int departmentId);
         Task<IEnumerable<Department>> GetAllDepartmentsAsync();
-        Task<Department> CreateDepartmentAsync(string departmentName, int facultyId);
+        Task<Department> CreateDepartmentAsync(DepartmentRequest departmentRequest);
         Task<Department?> UpdateDepartmentAsync(int departmentId, string newDepartmentName);
         Task<bool> DeleteDepartmentAsync(int departmentId);
     }
