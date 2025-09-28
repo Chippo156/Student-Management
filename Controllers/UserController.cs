@@ -31,7 +31,7 @@ namespace StudentManagement.Controllers
         }
 
         [HttpPut("Update/{id}")]
-        public async Task<ActionResult<User>> UpdateUser(int id, UserRequest user)
+        public async Task<ActionResult<User>> UpdateUser(int id, [FromForm] UpdateUserRequest user)
         {
             var updatedUser = await userService.UpdateUserAsync(id, user);
             if (updatedUser is null)
