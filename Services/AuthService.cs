@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StudentManagement.Data;
+using StudentManagement.Enum;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;

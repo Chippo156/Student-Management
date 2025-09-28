@@ -1,5 +1,6 @@
 ﻿using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 
 namespace StudentManagement.Services.Interface
 {
@@ -7,6 +8,6 @@ namespace StudentManagement.Services.Interface
     {
         Task<User?> GetUserByIdAsync(int userId);
         Task<IEnumerable<User>> GetAllUsersAsync();
-        Task<User?> UpdateUserAsync(int userId, UserRequest user);
+        Task<UserResponse?> UpdateUserAsync(int userId, UpdateUserRequest user);
     }
 }

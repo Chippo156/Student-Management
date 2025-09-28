@@ -2,6 +2,7 @@
 using StudentManagement.Data;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
 using System;
 
@@ -46,12 +47,31 @@ namespace StudentManagement.Services
                 .ToListAsync();
         }
 
-        public async Task<Student?> GetStudentByIdAsync(int studentId)
+     
+            public async Task<StudentDetailDto?> GetStudentByIdAsync(int studentId)
         {
             return await context.Students
-                .Include(s => s.User)
-                .Include(s => s.Class)
-                .FirstOrDefaultAsync(s => s.Id == studentId);
+                .Where(s => s.Id == studentId)
+                .Select(s => new StudentDetailDto
+                {
+                    StudentId = s.Id,
+                    MSSV = s.MSSV,
+                    User = new UserResponse
+                    {
+                        Username = s.User.Username,
+                        FullName = s.User.FullName,
+                        Email = s.User.Email,
+                        Phone = s.User.Phone,
+                        Address = s.User.Address,
+                        AccountStatus = s.User.AccountStatus,
+                        AvatarUrl = s.User.AvatarUrl
+                    },
+                    ClassName = s.Class.ClassName,
+                    ProgramName = s.Class.Program.ProgramName,
+                    DepartmentName = s.Class.Program.Department.DepartmentName
+                })
+                .FirstOrDefaultAsync();
         }
+
     }
 }
