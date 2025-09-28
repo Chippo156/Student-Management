@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Services
@@ -102,6 +103,24 @@ namespace StudentManagement.Services
                     .ThenInclude(s => s.Course)
                 .Include(s => s.Section.Lecturer)
                 .Where(s => s.Section.SectionId == sectionId)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Schedule>> GetSchedulesByStudentAsync(int studentId)
+        {
+            // Get all schedules based on the sections the student has enrolled in
+            return await context.Enrollments
+                .Where(e => e.Student.Id == studentId)
+                .Select(e => e.Section.SectionId)
+                .Distinct()
+                .Join(context.Schedules,
+                      sectionId => sectionId,
+                      schedule => schedule.Section.SectionId,
+                      (sectionId, schedule) => schedule)
+                .Include(s => s.Section)
+                    .ThenInclude(s => s.Course)
+                .Include(s => s.Section.Lecturer)
+               
                 .ToListAsync();
         }
 

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Enum;
 using StudentManagement.Models;
@@ -53,10 +54,12 @@ namespace StudentManagement.Services
             return Task.FromResult(enrollment);
         }
 
-        public Task<IEnumerable<Enrollment>> GetEnrollmentsByStudentIdAsync(int studentId)
+        public async Task<IEnumerable<Enrollment>> GetEnrollmentsByStudentIdAsync(int studentId)
         {
-            var enrollments = context.Enrollments.Where(e => e.Student.Id == studentId);
-            return Task.FromResult(enrollments.AsEnumerable());
+            var enrollments = context.Enrollments.Where(e => e.Student.Id == studentId)
+                .Include(e => e.Section.Course)
+                .Include(e => e.Section.Lecturer.User);
+            return await enrollments.ToListAsync();
         }
 
         public Task<IEnumerable<Enrollment>> GetEnrollmentsByCourseIdAsync(int courseId)

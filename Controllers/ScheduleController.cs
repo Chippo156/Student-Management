@@ -42,6 +42,13 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(schedules, "Lecturer schedules retrieved successfully"));
         }
 
+        [HttpGet("student/{studentId}")]
+        public async Task<IActionResult> GetSchedulesByStudent(int studentId)
+        {
+            var schedules = await scheduleService.GetSchedulesByStudentAsync(studentId);
+            return Ok(ApiResponse.SuccessResponse(schedules, "Student schedules retrieved successfully"));
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateSchedule([FromBody] ScheduleRequest request)
         {

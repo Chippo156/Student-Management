@@ -57,6 +57,7 @@ namespace StudentManagement.Services
             return await context.Sections
                 .Include(s => s.Course)
                 .Include(s => s.Lecturer)
+                .Include(s => s.Semester)
                 .ToListAsync();
         }
 
