@@ -58,6 +58,7 @@ builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IFinalResultService, FinalResultService>();
 builder.Services.AddScoped<IGpaSnapshotService, GpaSnapshotService>();
 builder.Services.AddScoped<IGradeService, GradeService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 var app = builder.Build();
 

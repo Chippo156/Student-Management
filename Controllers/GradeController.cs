@@ -11,22 +11,6 @@ namespace StudentManagement.Controllers
     public class GradeController(IGradeService gradeService) : ControllerBase
     {
         [HttpGet("GetAllGrades")]
-        public async Task<ActionResult<IEnumerable<Grade>>> GetAllGrades()
-        {
-            var grades = await gradeService.GetAllGradesAsync();
-            return Ok(ApiResponse.SuccessResponse(grades, "Grades retrieved successfully"));
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Grade>> GetGradeById(int id)
-        {
-            var grade = await gradeService.GetGradeByIdAsync(id);
-            if (grade is null)
-            {
-                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Grade with ID {id} not found.", null));
-            }
-            return Ok(ApiResponse.SuccessResponse(grade, "Grade retrieved successfully"));
-        }
 
         [HttpGet("student/{studentId}")]
         public async Task<ActionResult<IEnumerable<Grade>>> GetGradesByStudent(int studentId)
@@ -53,7 +37,7 @@ namespace StudentManagement.Controllers
         public async Task<ActionResult<Grade>> CreateGrade(GradeRequest request)
         {
             var createdGrade = await gradeService.CreateGradeAsync(request);
-            return CreatedAtAction(nameof(GetGradeById), new { id = createdGrade.GradeId }, ApiResponse.SuccessResponse(createdGrade, "Grade created successfully"));
+            return Ok(ApiResponse.SuccessResponse(createdGrade, "Grade created successfully"));
         }
 
         [HttpPut("Update/{id}")]

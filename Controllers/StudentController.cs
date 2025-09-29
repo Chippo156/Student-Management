@@ -53,5 +53,12 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(null, "Student deleted successfully"));
         }
 
+        [HttpGet("section/{sectionId}")]
+        public async Task<ActionResult<IEnumerable<Student>>> GetStudentsBySection(int sectionId)
+        {
+            var students = await studentService.GetStudentsBySectionIdAsync(sectionId);
+            return Ok(ApiResponse.SuccessResponse(students, "Section students retrieved successfully"));
+        }
+
     }
 }

@@ -52,7 +52,12 @@ namespace StudentManagement.Controllers
             }
             return Ok(ApiResponse.SuccessResponse(null, "Section deleted successfully"));
         }
-
+        [HttpGet("lecturer/{lecturerId}")]
+        public async Task<ActionResult<IEnumerable<Section>>> GetSectionsByLecturer(int lecturerId)
+        {
+            var sections = await sectionService.GetSectionsByLecturerAsync(lecturerId);
+            return Ok(ApiResponse.SuccessResponse(sections, "Lecturer sections retrieved successfully"));
+        }
 
     }
 }
