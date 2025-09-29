@@ -14,6 +14,6 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<Schedule>> GetSchedulesByLecturerAsync(int lecturerId);
         Task<IEnumerable<Schedule>> GetSchedulesByStudentAsync(int studentId);
 
-        Task<bool> CheckScheduleConflictsAsync(int sectionId, DayOfWeek dayOfWeek, TimeOnly startTime, TimeOnly endTime, string room);
+        Task<bool> CheckScheduleConflictsAsync(int sectionId, DateOnly? dateEvent, DayOfWeek? dayOfWeek, TimeOnly startTime, TimeOnly endTime, string room);
     }
 }

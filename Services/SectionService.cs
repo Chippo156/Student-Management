@@ -28,11 +28,20 @@ namespace StudentManagement.Services
                 throw new Exception("Semester not found");
             }
 
+            var classSection = await context.Classes.FindAsync(request.ClassId);
+
+            if (classSection is null)
+            {
+                throw new Exception("Class not found");
+            }
+
+
             Section newSection = new Section
             {
                 Course = course,
                 Lecturer = lecturer,
-                Semester = existingSemester
+                Semester = existingSemester,
+                Class = classSection,
             };
 
             context.Sections.Add(newSection);
@@ -76,6 +85,14 @@ namespace StudentManagement.Services
                 .Include(s => s.Lecturer)
                 .Where(s => s.Course.CourseId == courseId)
                 .ToListAsync();
+        }
+
+        public Task<IEnumerable<Section>> GetSectionsByLecturerAsync(int lecturerId)
+        {
+            return Task.FromResult(context.Sections
+                .Include(s => s.Course)
+                .Where(s => s.Lecturer.Id == lecturerId)
+                .AsEnumerable());
         }
     }
 }

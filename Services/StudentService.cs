@@ -39,12 +39,26 @@ namespace StudentManagement.Services
             return Task.FromResult(context.SaveChanges() > 0);
         }
 
-        public async Task<IEnumerable<Student>> GetAllStudentsAsync()
+        public async Task<IEnumerable<StudentDetailDto>> GetAllStudentsAsync()
         {
-            return await context.Students
-                .Include(s => s.User)
-                .Include(s => s.Class)
-                .ToListAsync();
+            return await context.Students.Select(
+                
+                s => new StudentDetailDto
+                {
+                    StudentId = s.Id,
+                    MSSV = s.MSSV,
+                    User = new UserResponse
+                    {
+                        Username = s.User.Username,
+                        FullName = s.User.FullName,
+                        Email = s.User.Email,
+                        Phone = s.User.Phone,
+                        Address = s.User.Address,
+                        AccountStatus = s.User.AccountStatus,
+                        AvatarUrl = s.User.AvatarUrl
+                    },
+                    ClassName = s.Class.ClassName,
+                }).ToListAsync();
         }
 
      
@@ -73,5 +87,32 @@ namespace StudentManagement.Services
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<IEnumerable<StudentDetailDto>> GetStudentsBySectionIdAsync(int sectionId)
+        {
+            var section = await context.Sections.FirstOrDefaultAsync(s => s.SectionId == sectionId);
+            if (section is null)
+            {
+                throw new Exception("Section not found");
+            }
+
+            var students = await context.Enrollments
+                .Where(e => e.Section.SectionId == sectionId)
+                .Select(e => new StudentDetailDto
+                {
+                    StudentId = e.Student.Id,
+                    MSSV = e.Student.MSSV,
+                    User = new UserResponse
+                    {
+                        Username = e.Student.User.Username,
+                        FullName = e.Student.User.FullName,
+                        Email = e.Student.User.Email,
+                        Phone = e.Student.User.Phone,
+                        AccountStatus = e.Student.User.AccountStatus,
+                    },
+                })
+                .ToListAsync();
+
+            return students;
+        }
     }
 }

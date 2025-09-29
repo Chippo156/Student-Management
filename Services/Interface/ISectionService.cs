@@ -10,5 +10,6 @@ namespace StudentManagement.Services.Interface
         Task<Section> CreateSectionAsync(SectionRequest request);
         Task<bool> DeleteSectionAsync(int sectionId);
         Task<IEnumerable<Section>> GetSectionsByCourseAsync(int courseId);
+        Task<IEnumerable<Section>> GetSectionsByLecturerAsync(int lecturerId);
     }
 }

@@ -60,7 +60,6 @@ namespace StudentManagement.Services
         public async Task<IEnumerable<CurriculumCourse>> GetCurriculumCoursesByProgramAsync(int programId)
         {
             return await context.CurriculumCourses
-                .Include(cc => cc.Program)
                 .Include(cc => cc.Course)
                 .Where(cc => cc.Program.AcademicProgramId == programId)
                 .ToListAsync();

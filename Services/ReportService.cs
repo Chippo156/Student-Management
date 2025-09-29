@@ -1,0 +1,197 @@
+﻿using Microsoft.EntityFrameworkCore;
+using StudentManagement.Data;
+using StudentManagement.Models;
+using StudentManagement.Models.Dto.Response;
+using StudentManagement.Services.Interface;
+
+namespace StudentManagement.Services
+{
+    public class ReportService : IReportService
+    {
+        private readonly AppDbContext _context;
+
+        public ReportService(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<CreditStatisticsResponse> GetStudentCreditStatisticsAsync(int studentId)
+        {
+            // Lấy thông tin sinh viên
+            var student = await _context.Students
+                .Include(s => s.User)
+                .Include(s => s.Class)
+                    .ThenInclude(c => c.Program)
+                .FirstOrDefaultAsync(s => s.Id == studentId)
+                ?? throw new Exception($"Student with ID {studentId} not found");
+
+            // Lấy tất cả kết quả học tập của sinh viên
+            var finalResults = await _context.FinalResults
+                .Include(fr => fr.Section)
+                    .ThenInclude(s => s.Course)
+                .Include(fr => fr.Section.Semester)
+                .Where(fr => fr.Student.Id == studentId)
+                .ToListAsync();
+
+            // Lấy tất cả enrollment của sinh viên
+            var enrollments = await _context.Enrollments
+                .Include(e => e.Section)
+                    .ThenInclude(s => s.Course)
+                .Include(e => e.Section.Semester)
+                .Where(e => e.Student.Id == studentId)
+                .ToListAsync();
+
+            // Lấy thông tin GPA snapshot mới nhất
+            var latestGpaSnapshot = await _context.GpaSnapshots
+                .Where(g => g.Student.Id == studentId)
+                .OrderByDescending(g => g.Semester.Year)
+                .ThenByDescending(g => g.Semester.Term)
+                .FirstOrDefaultAsync();
+
+            // Tính toán thống kê tín chỉ
+            int totalCreditsRegistered = enrollments.Sum(e => e.Section.Course.CreditsTheory + e.Section.Course.CreditsLab);
+            int totalCreditsCompleted = finalResults.Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab);
+            
+            // Tính tín chỉ đạt (điểm chữ từ D trở lên hoặc GradePoint >= 1.0)
+            int totalCreditsPassed = finalResults
+                .Where(fr => fr.GradePoint >= 1.0)
+                .Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab);
+
+            // Tạo response
+            var response = new CreditStatisticsResponse
+            {
+                StudentId = student.Id,
+                StudentName = student.User.FullName,
+                MSSV = student.MSSV,
+                ClassName = student.Class.ClassName,
+                ProgramName = student.Class.Program.ProgramName,
+                TotalCreditsRegistered = totalCreditsRegistered,
+                TotalCreditsCompleted = totalCreditsCompleted,
+                TotalCreditsPassed = totalCreditsPassed,
+                GPA = latestGpaSnapshot?.Gpa ?? 0.0
+            };
+
+            // Thống kê theo học kỳ
+            var semesters = enrollments
+                .Select(e => e.Section.Semester)
+                .Distinct()
+                .OrderByDescending(s => s.Year)
+                .ThenByDescending(s => s.Term)
+                .ToList();
+
+            foreach (var semester in semesters)
+            {
+                var semesterEnrollments = enrollments.Where(e => e.Section.Semester.SemesterId == semester.SemesterId).ToList();
+                var semesterResults = finalResults.Where(fr => fr.Section.Semester.SemesterId == semester.SemesterId).ToList();
+
+                var semesterGpa = await _context.GpaSnapshots
+                    .FirstOrDefaultAsync(g => g.Student.Id == studentId && g.Semester.SemesterId == semester.SemesterId);
+
+                var semesterDetail = new SemesterCreditDetail
+                {
+                    SemesterName = $"{semester.Year} - {semester.Term}",
+                    Year = semester.Year,
+                    Term = semester.Term,
+                    CreditsRegistered = semesterEnrollments.Sum(e => e.Section.Course.CreditsTheory + e.Section.Course.CreditsLab),
+                    CreditsCompleted = semesterResults.Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab),
+                    CreditsPassed = semesterResults.Where(fr => fr.GradePoint >= 1.0).Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab),
+                    SemesterGPA = semesterGpa?.Gpa ?? 0.0
+                };
+
+                // Thêm chi tiết về các khóa học trong học kỳ
+                foreach (var result in semesterResults)
+                {
+                    semesterDetail.Courses.Add(new CourseDetail
+                    {
+                        CourseId = result.Section.Course.CourseId,
+                        CourseCode = result.Section.Course.CourseCode,
+                        CourseName = result.Section.Course.CourseName,
+                        CreditsTheory = result.Section.Course.CreditsTheory,
+                        CreditsLab = result.Section.Course.CreditsLab,
+                        GradeLetter = result.GradeLetter,
+                        GradePoint = result.GradePoint
+                    });
+                }
+
+                response.SemesterCredits.Add(semesterDetail);
+            }
+
+            return response;
+        }
+
+        public async Task<SemesterCreditDetail> GetStudentSemesterStatisticsAsync(int studentId, int semesterId)
+        {
+            // Kiểm tra sinh viên tồn tại
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.Id == studentId)
+                ?? throw new Exception($"Student with ID {studentId} not found");
+
+            // Kiểm tra học kỳ tồn tại
+            var semester = await _context.Semesters
+                .FirstOrDefaultAsync(s => s.SemesterId == semesterId)
+                ?? throw new Exception($"Semester with ID {semesterId} not found");
+
+            // Lấy kết quả học tập trong học kỳ
+            var semesterResults = await _context.FinalResults
+                .Include(fr => fr.Section)
+                    .ThenInclude(s => s.Course)
+                .Include(fr => fr.Section.Semester)
+                .Where(fr => fr.Student.Id == studentId && fr.Section.Semester.SemesterId == semesterId)
+                .ToListAsync();
+
+            // Lấy đăng ký học trong học kỳ
+            var semesterEnrollments = await _context.Enrollments
+                .Include(e => e.Section)
+                    .ThenInclude(s => s.Course)
+                .Include(e => e.Section.Semester)
+                .Where(e => e.Student.Id == studentId && e.Section.Semester.SemesterId == semesterId)
+                .ToListAsync();
+
+            // Lấy GPA của học kỳ
+            var semesterGpa = await _context.GpaSnapshots
+                .FirstOrDefaultAsync(g => g.Student.Id == studentId && g.Semester.SemesterId == semesterId);
+
+            // Tạo response
+            var semesterDetail = new SemesterCreditDetail
+            {
+                SemesterName = $"{semester.Year} - {semester.Term}",
+                Year = semester.Year,
+                Term = semester.Term,
+                CreditsRegistered = semesterEnrollments.Sum(e => e.Section.Course.CreditsTheory + e.Section.Course.CreditsLab),
+                CreditsCompleted = semesterResults.Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab),
+                CreditsPassed = semesterResults.Where(fr => fr.GradePoint >= 1.0).Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab),
+                SemesterGPA = semesterGpa?.Gpa ?? 0.0
+            };
+
+            // Tính điểm trung bình lớp cho từng khóa học và thêm chi tiết về các khóa học
+            foreach (var result in semesterResults)
+            {
+                // Lấy tất cả điểm của lớp học phần (section) này
+                var sectionResults = await _context.FinalResults
+                    .Where(fr => fr.Section.SectionId == result.Section.SectionId)
+                    .ToListAsync();
+
+                // Tính điểm trung bình lớp
+                double classAverageScore = 0;
+                if (sectionResults.Count > 0)
+                {
+                    classAverageScore = sectionResults.Average(fr => fr.FinalScore);
+                }
+
+                semesterDetail.Courses.Add(new CourseDetail
+                {
+                    CourseId = result.Section.Course.CourseId,
+                    CourseCode = result.Section.Course.CourseCode,
+                    CourseName = result.Section.Course.CourseName,
+                    CreditsTheory = result.Section.Course.CreditsTheory,
+                    CreditsLab = result.Section.Course.CreditsLab,
+                    GradeLetter = result.GradeLetter,
+                    GradePoint = result.FinalScore,
+                    ClassAverageScore = Math.Round(classAverageScore, 2) // Làm tròn đến 2 chữ số thập phân
+                });
+            }
+
+            return semesterDetail;
+        }
+    }
+}

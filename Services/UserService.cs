@@ -9,14 +9,37 @@ namespace StudentManagement.Services
 {
     public class UserService(AppDbContext context, IFileService fileService) : IUserService
     {
-        public async Task<IEnumerable<User>> GetAllUsersAsync()
+        public async Task<IEnumerable<UserResponse>> GetAllUsersAsync()
         {
-            return await context.Users.ToListAsync();
+            return await context.Users
+                .Select(u => new UserResponse
+                {
+                    Username = u.Username,
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    Phone = u.Phone,
+                    Address = u.Address,
+                    AccountStatus = u.AccountStatus,
+                    AvatarUrl = u.AvatarUrl,
+                })
+                .ToListAsync();
         }
 
-        public async Task<User?> GetUserByIdAsync(int userId)
+        public async Task<UserResponse?> GetUserByIdAsync(int userId)
         {
-            return await context.Users.FindAsync(userId);
+            return await context.Users
+                .Where(u => u.UserId == userId)
+                .Select(u => new UserResponse
+                {
+                    Username = u.Username,
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    Phone = u.Phone,
+                    Address = u.Address,
+                    AccountStatus = u.AccountStatus,
+                    AvatarUrl = u.AvatarUrl,
+                })
+                .FirstOrDefaultAsync();
         }
 
         public async Task<UserResponse?> UpdateUserAsync(int userId, UpdateUserRequest user)

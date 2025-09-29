@@ -6,8 +6,8 @@ namespace StudentManagement.Services.Interface
 {
     public interface IUserService
     {
-        Task<User?> GetUserByIdAsync(int userId);
-        Task<IEnumerable<User>> GetAllUsersAsync();
+        Task<UserResponse?> GetUserByIdAsync(int userId);
+        Task<IEnumerable<UserResponse>> GetAllUsersAsync();
         Task<UserResponse?> UpdateUserAsync(int userId, UpdateUserRequest user);
     }
 }

@@ -5,8 +5,6 @@ namespace StudentManagement.Services.Interface
 {
     public interface IGradeService
     {
-        Task<Grade?> GetGradeByIdAsync(int gradeId);
-        Task<IEnumerable<Grade>> GetAllGradesAsync();
         Task<Grade> CreateGradeAsync(GradeRequest request);
         Task<Grade?> UpdateGradeAsync(int gradeId, GradeRequest request);
         Task<bool> DeleteGradeAsync(int gradeId);

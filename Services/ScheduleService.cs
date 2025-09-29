@@ -9,11 +9,12 @@ namespace StudentManagement.Services
 {
     public class ScheduleService(AppDbContext context) : IScheduleService
     {
-        public async Task<bool> CheckScheduleConflictsAsync(int sectionId, DayOfWeek dayOfWeek, TimeOnly startTime, TimeOnly endTime, string room)
+        public async Task<bool> CheckScheduleConflictsAsync(int sectionId, DateOnly? dateEvent, DayOfWeek? dayOfWeek, TimeOnly startTime, TimeOnly endTime, string room)
         {
             // Check for room conflicts at the same time
             var roomConflicts = await context.Schedules
                 .Where(s => s.DayOfWeek == dayOfWeek &&
+                            s.Date == dateEvent && 
                            s.Room == room &&
                            s.Section.SectionId != sectionId &&
                            ((s.StartTime <= startTime && s.EndTime > startTime) ||
@@ -32,6 +33,7 @@ namespace StudentManagement.Services
             // Check for conflicts
             var hasConflicts = await CheckScheduleConflictsAsync(
                 request.SectionId,
+                request.Date, // Use request.Date for the dateEvent parameter
                 request.DayOfWeek,
                 request.StartTime,
                 request.EndTime,
@@ -41,15 +43,26 @@ namespace StudentManagement.Services
             {
                 throw new Exception("Schedule conflicts with existing schedules");
             }
+            var scheduleType = await context.ScheduleTypes.FindAsync(request.ScheduleTypeId)
+                ?? throw new Exception("Schedule type not found");
 
             var schedule = new Schedule
             {
                 Section = section,
+                ScheduleType = scheduleType,
                 DayOfWeek = request.DayOfWeek,
                 StartTime = request.StartTime,
                 EndTime = request.EndTime,
                 Room = request.Room
             };
+            if (request.Date.HasValue)
+            {
+                schedule.Date = request.Date.Value;
+            }
+            if (!string.IsNullOrEmpty(request.OnlineLink))
+            {
+                schedule.OnlineLink = request.OnlineLink;
+            }
 
             context.Schedules.Add(schedule);
             await context.SaveChangesAsync();
@@ -150,6 +163,7 @@ namespace StudentManagement.Services
             {
                 var hasConflicts = await CheckScheduleConflictsAsync(
                     schedule.Section.SectionId,
+                    request.Date,
                     request.DayOfWeek,
                     request.StartTime,
                     request.EndTime,
