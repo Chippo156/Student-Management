@@ -6,10 +6,13 @@ namespace StudentManagement.Models.Dto.Request
     {
         [Required(ErrorMessage = "Section ID is required")]
         public int SectionId { get; set; }
-        
-        [Required(ErrorMessage = "Day of week is required")]
-        [Range(0, 6, ErrorMessage = "Day of week must be between 0 (Sunday) and 6 (Saturday)")]
-        public DayOfWeek DayOfWeek { get; set; }
+
+        [Required(ErrorMessage = "Schedule type ID is required")]
+        public int ScheduleTypeId { get; set; }
+
+        public DateOnly? Date { get; set; } // Use for one-time events
+
+        public DayOfWeek? DayOfWeek { get; set; }
         
         [Required(ErrorMessage = "Start time is required")]
         public TimeOnly StartTime { get; set; }
@@ -19,5 +22,6 @@ namespace StudentManagement.Models.Dto.Request
         
         [Required(ErrorMessage = "Room is required")]
         public string Room { get; set; } = string.Empty;
+        public string? OnlineLink { get; set; }
     }
 }

@@ -119,6 +119,9 @@ namespace StudentManagement.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AssessmentId"));
 
+                    b.Property<int>("AssessmentTypeId")
+                        .HasColumnType("int");
+
                     b.Property<int>("SectionId")
                         .HasColumnType("int");
 
@@ -131,9 +134,31 @@ namespace StudentManagement.Migrations
 
                     b.HasKey("AssessmentId");
 
+                    b.HasIndex("AssessmentTypeId");
+
                     b.HasIndex("SectionId");
 
                     b.ToTable("Assessment");
+                });
+
+            modelBuilder.Entity("StudentManagement.Models.AssessmentType", b =>
+                {
+                    b.Property<int>("AssessmentTypeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AssessmentTypeId"));
+
+                    b.Property<double>("DefaultWeight")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("AssessmentTypeId");
+
+                    b.ToTable("AssessmentTypes");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Class", b =>
@@ -617,33 +642,55 @@ namespace StudentManagement.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ScheduleId"));
 
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("int");
-
-                    b.Property<DateOnly>("EndDate")
+                    b.Property<DateOnly?>("Date")
                         .HasColumnType("date");
+
+                    b.Property<int?>("DayOfWeek")
+                        .HasColumnType("int");
 
                     b.Property<TimeOnly>("EndTime")
                         .HasColumnType("time");
+
+                    b.Property<string>("OnlineLink")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Room")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("SectionId")
+                    b.Property<int>("ScheduleTypeId")
                         .HasColumnType("int");
 
-                    b.Property<DateOnly>("StartDate")
-                        .HasColumnType("date");
+                    b.Property<int>("SectionId")
+                        .HasColumnType("int");
 
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
 
                     b.HasKey("ScheduleId");
 
+                    b.HasIndex("ScheduleTypeId");
+
                     b.HasIndex("SectionId");
 
                     b.ToTable("Schedules");
+                });
+
+            modelBuilder.Entity("StudentManagement.Models.ScheduleType", b =>
+                {
+                    b.Property<int>("ScheduleTypeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ScheduleTypeId"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ScheduleTypeId");
+
+                    b.ToTable("ScheduleTypes");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Section", b =>
@@ -654,8 +701,14 @@ namespace StudentManagement.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SectionId"));
 
+                    b.Property<int>("ClassId")
+                        .HasColumnType("int");
+
                     b.Property<int>("CourseId")
                         .HasColumnType("int");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
 
                     b.Property<int>("LecturerId")
                         .HasColumnType("int");
@@ -663,7 +716,12 @@ namespace StudentManagement.Migrations
                     b.Property<int>("SemesterId")
                         .HasColumnType("int");
 
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
                     b.HasKey("SectionId");
+
+                    b.HasIndex("ClassId");
 
                     b.HasIndex("CourseId");
 
@@ -822,11 +880,19 @@ namespace StudentManagement.Migrations
 
             modelBuilder.Entity("StudentManagement.Models.Assessment", b =>
                 {
-                    b.HasOne("StudentManagement.Models.Section", "Section")
+                    b.HasOne("StudentManagement.Models.AssessmentType", "AssessmentType")
                         .WithMany()
+                        .HasForeignKey("AssessmentTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StudentManagement.Models.Section", "Section")
+                        .WithMany("Assessments")
                         .HasForeignKey("SectionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("AssessmentType");
 
                     b.Navigation("Section");
                 });
@@ -1054,17 +1120,31 @@ namespace StudentManagement.Migrations
 
             modelBuilder.Entity("StudentManagement.Models.Schedule", b =>
                 {
+                    b.HasOne("StudentManagement.Models.ScheduleType", "ScheduleType")
+                        .WithMany()
+                        .HasForeignKey("ScheduleTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("StudentManagement.Models.Section", "Section")
                         .WithMany()
                         .HasForeignKey("SectionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("ScheduleType");
+
                     b.Navigation("Section");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Section", b =>
                 {
+                    b.HasOne("StudentManagement.Models.Class", "Class")
+                        .WithMany()
+                        .HasForeignKey("ClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("StudentManagement.Models.Course", "Course")
                         .WithMany()
                         .HasForeignKey("CourseId")
@@ -1082,6 +1162,8 @@ namespace StudentManagement.Migrations
                         .HasForeignKey("SemesterId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Class");
 
                     b.Navigation("Course");
 
@@ -1118,6 +1200,11 @@ namespace StudentManagement.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("StudentManagement.Models.Section", b =>
+                {
+                    b.Navigation("Assessments");
                 });
 #pragma warning restore 612, 618
         }

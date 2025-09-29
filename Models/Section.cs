@@ -6,5 +6,9 @@
         public Course Course { get; set; } = null!;
         public Semester Semester { get; set; } = null!;
         public Lecturer Lecturer { get; set; } = null!;
+        public Class Class { get; set; } = null!;
+        public DateOnly StartDate { get; set; }
+        public DateOnly EndDate { get; set; }
+        public ICollection<Assessment> Assessments { get; set; } = new List<Assessment>();
     }
 }

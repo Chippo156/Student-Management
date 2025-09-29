@@ -11,6 +11,9 @@ namespace StudentManagement.Models.Dto.Request
         public int LecturerId { get; set; }
         
         [Required(ErrorMessage = "Semester is required")]
-        public int SemesterId { get; set; } 
+        public int SemesterId { get; set; }
+
+        [Required(ErrorMessage = "Class ID is required")]
+        public int ClassId { get; set; }
     }
 }
