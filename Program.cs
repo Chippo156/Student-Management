@@ -59,7 +59,7 @@ builder.Services.AddScoped<IFinalResultService, FinalResultService>();
 builder.Services.AddScoped<IGpaSnapshotService, GpaSnapshotService>();
 builder.Services.AddScoped<IGradeService, GradeService>();
 builder.Services.AddScoped<IReportService, ReportService>();
-
+builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

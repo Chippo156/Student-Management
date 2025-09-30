@@ -6,6 +6,7 @@ using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
+using System.Security.Claims;
 
 namespace StudentManagement.Controllers
 {
@@ -54,6 +55,28 @@ namespace StudentManagement.Controllers
                 return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "Invalid refresh token.", null));
             }
             return Ok(ApiResponse.SuccessResponse(result, "Refresh token success"));
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            if (User.Identity is not { IsAuthenticated: true })
+            {
+                return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "User is not authenticated.", null));
+            }
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdStr, out int userId))
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid user ID in token.", null));
+            }
+            var result = await authService.LogoutAsync(userId);
+            if (!result)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Logout failed.", null));
+            }
+            return Ok(ApiResponse.SuccessResponse(null, "Logout successful."));
         }
 
     }

@@ -15,7 +15,7 @@ using System.Text;
 
 namespace StudentManagement.Services
 {
-    public class AuthService(AppDbContext context, IConfiguration configuration) : IAuthService
+    public class AuthService(AppDbContext context, IConfiguration configuration, IHttpContextAccessor httpContextAccessor) : IAuthService
     {
         public async Task<LoginResponse?> LoginAsync(UserLoginRequest request)
         {
@@ -151,5 +151,32 @@ namespace StudentManagement.Services
 
             return user;
         }
+        public async Task<bool> LogoutAsync(int userId)
+        {
+            try
+            {
+                // Find the user in the database
+                var user = await context.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    return false;
+                }
+
+                // Invalidate refresh token
+                user.RefreshToken = "";
+                user.RefreshTokenExpiryTime = DateTime.UtcNow;
+
+                // Update the user in the database
+                context.Users.Update(user);
+                await context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
     }
+
 }
