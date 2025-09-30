@@ -99,8 +99,9 @@ namespace StudentManagement.Services
                 .FirstOrDefaultAsync(s => s.ScheduleId == scheduleId);
         }
 
-        public async Task<IEnumerable<Schedule>> GetSchedulesByDateAndStudentAsync(DateOnly date, int studentId)
+        public async Task<IEnumerable<Schedule>> GetSchedulesByDateAndStudentAsync(DateOnly date, int studentId, int scheduleTypeId)
         {
+            var scheduleType = await context.ScheduleTypes.FindAsync(scheduleTypeId);
             // Xác định ngày đầu tuần (thứ 2) và ngày cuối tuần (chủ nhật) dựa trên ngày được truyền vào
             int dayOfWeek = (int)date.DayOfWeek;
             // C# DayOfWeek: Sunday = 0, Monday = 1, ..., Saturday = 6
@@ -135,12 +136,12 @@ namespace StudentManagement.Services
                         (!s.Date.HasValue && s.DayOfWeek.HasValue &&
                          weekStart.AddDays((int)s.DayOfWeek.Value) <= weekEnd)
                     )
+                    && s.ScheduleType.ScheduleTypeId == scheduleTypeId
                 )
                 .Include(s => s.Section)
                     .ThenInclude(s => s.Course)
                 .Include(s => s.Section.Lecturer)
                     .ThenInclude(l => l.User)
-                .Include(s => s.ScheduleType)
                 .ToListAsync();
         }
 

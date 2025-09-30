@@ -3,6 +3,7 @@ using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
+using System.Runtime.InteropServices;
 
 namespace StudentManagement.Controllers
 {
@@ -90,9 +91,9 @@ namespace StudentManagement.Controllers
         }
 
         [HttpGet("GetByDate/{studentId}")]
-        public async Task<IActionResult> GetSchedulesByDate([FromQuery] DateOnly date, int studentId)
+        public async Task<IActionResult> GetSchedulesByDate([FromQuery] DateOnly date, [FromQuery] int scheduleTypeId, int studentId)
         {
-            var schedules = await scheduleService.GetSchedulesByDateAndStudentAsync(date, studentId);
+            var schedules = await scheduleService.GetSchedulesByDateAndStudentAsync(date, studentId, scheduleTypeId);
             return Ok(ApiResponse.SuccessResponse(schedules, "Schedules retrieved successfully"));
         }
     }
