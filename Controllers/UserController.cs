@@ -40,5 +40,15 @@ namespace StudentManagement.Controllers
             }
             return Ok(ApiResponse.SuccessResponse(updatedUser, "User updated successfully"));
         }
+        [HttpPut("ResetPassword/{id}")]
+        public async Task<ActionResult> ResetPassword(int id, [FromBody] ResetPasswordRequest request)
+        {
+            var result = await userService.ResetPassword(id, request.NewPassword);
+            if (!result)
+            {
+                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"User with ID {id} not found.", null));
+            }
+            return Ok(ApiResponse.SuccessResponse(null, "Password reset successfully"));
+        }
     }
 }

@@ -9,5 +9,6 @@ namespace StudentManagement.Services.Interface
         Task<UserResponse?> GetUserByIdAsync(int userId);
         Task<IEnumerable<UserResponse>> GetAllUsersAsync();
         Task<UserResponse?> UpdateUserAsync(int userId, UpdateUserRequest user);
+        Task<bool> ResetPassword(int userId, string newPassword);
     }
 }

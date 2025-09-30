@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
@@ -42,6 +44,17 @@ namespace StudentManagement.Services
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<bool> ResetPassword(int userId, string newPassword)
+        {
+            User? user= await context.Users.FindAsync(userId);
+            if (user is null) return false;
+            var hashedPassword = new PasswordHasher<User>()
+                 .HashPassword(user, newPassword);
+            user.PasswordHash = hashedPassword;
+            context.Users.Update(user);
+            return await context.SaveChangesAsync() > 0;
+        }
+
         public async Task<UserResponse?> UpdateUserAsync(int userId, UpdateUserRequest user)
         {
             var existingUser = await context.Users.FindAsync(userId);
@@ -76,5 +89,7 @@ namespace StudentManagement.Services
                 AvatarUrl = existingUser.AvatarUrl,
             };
         }
+
+
     }
 }

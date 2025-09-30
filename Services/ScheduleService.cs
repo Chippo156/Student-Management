@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
@@ -98,6 +98,52 @@ namespace StudentManagement.Services
                 .Include(s => s.Section.Lecturer)
                 .FirstOrDefaultAsync(s => s.ScheduleId == scheduleId);
         }
+
+        public async Task<IEnumerable<Schedule>> GetSchedulesByDateAndStudentAsync(DateOnly date, int studentId)
+        {
+            // Xác định ngày đầu tuần (thứ 2) và ngày cuối tuần (chủ nhật) dựa trên ngày được truyền vào
+            int dayOfWeek = (int)date.DayOfWeek;
+            // C# DayOfWeek: Sunday = 0, Monday = 1, ..., Saturday = 6
+            // Để lấy ngày thứ 2, chúng ta cần lùi lại (dayOfWeek - 1) ngày nếu là 1-6 (thứ 2 - thứ 7)
+            // hoặc lùi lại 6 ngày nếu là 0 (chủ nhật)
+            int daysToSubtract = dayOfWeek == 0 ? 6 : dayOfWeek - 1;
+
+            DateOnly weekStart = date.AddDays(-daysToSubtract); // Ngày đầu tuần (thứ 2)
+            DateOnly weekEnd = weekStart.AddDays(6);            // Ngày cuối tuần (chủ nhật)
+
+            // Lấy tất cả section ID mà sinh viên đã đăng ký và nằm trong khoảng thời gian hiệu lực
+            var studentSections = await context.Enrollments
+                .Where(e => e.Student.Id == studentId)
+                .Include(e => e.Section)
+                .Where(e =>
+                    // Kiểm tra xem tuần hiện tại có nằm trong khoảng thời gian của section hay không
+                    (e.Section.StartDate <= weekEnd && e.Section.EndDate >= weekStart)
+                )
+                .Select(e => e.Section.SectionId)
+                .Distinct()
+                .ToListAsync();
+
+            // Truy vấn lịch học trong tuần đó với điều kiện là các lịch học của các section mà sinh viên đã đăng ký
+            return await context.Schedules
+                .Where(s =>
+                    // Chỉ lấy lịch học của các section mà sinh viên đã đăng ký và trong thời gian hiệu lực
+                    studentSections.Contains(s.Section.SectionId) &&
+                    (
+                        // Lịch học một lần có Date nằm trong tuần
+                        (s.Date.HasValue && s.Date >= weekStart && s.Date <= weekEnd) ||
+                        // HOẶC lịch học định kỳ có DayOfWeek trong tuần
+                        (!s.Date.HasValue && s.DayOfWeek.HasValue &&
+                         weekStart.AddDays((int)s.DayOfWeek.Value) <= weekEnd)
+                    )
+                )
+                .Include(s => s.Section)
+                    .ThenInclude(s => s.Course)
+                .Include(s => s.Section.Lecturer)
+                    .ThenInclude(l => l.User)
+                .Include(s => s.ScheduleType)
+                .ToListAsync();
+        }
+
 
         public async Task<IEnumerable<Schedule>> GetSchedulesByLecturerAsync(int lecturerId)
         {

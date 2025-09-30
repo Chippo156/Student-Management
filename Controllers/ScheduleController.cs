@@ -88,5 +88,12 @@ namespace StudentManagement.Controllers
             }
             return Ok(ApiResponse.SuccessResponse(null, "Schedule deleted successfully"));
         }
+
+        [HttpGet("GetByDate/{studentId}")]
+        public async Task<IActionResult> GetSchedulesByDate([FromQuery] DateOnly date, int studentId)
+        {
+            var schedules = await scheduleService.GetSchedulesByDateAndStudentAsync(date, studentId);
+            return Ok(ApiResponse.SuccessResponse(schedules, "Schedules retrieved successfully"));
+        }
     }
 }
