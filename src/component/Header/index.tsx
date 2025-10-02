@@ -1,5 +1,18 @@
 import React from "react";
-import { AppBar, Toolbar, IconButton, Typography, Box, useTheme, Avatar, Menu, MenuItem, Tooltip, Divider, Container } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Box,
+  useTheme,
+  Avatar,
+  Menu,
+  MenuItem,
+  Tooltip,
+  Divider,
+  Container,
+} from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
@@ -22,27 +35,31 @@ const HeaderPage: React.FC = () => {
   const theme = useTheme();
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { isAuthenticated, account } = useSelector((state: RootState) => state.user);
+  const { isAuthenticated, account } = useSelector(
+    (state: RootState) => state.user
+  );
   const mode = useSelector((state: RootState) => state.theme.mode);
 
   // Dropdown state
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [notifyEl, setNotifyEl] = React.useState<null | HTMLElement>(null);
 
-  const handleUserMenu = (event: React.MouseEvent<HTMLElement>): void => setAnchorEl(event.currentTarget);
+  const handleUserMenu = (event: React.MouseEvent<HTMLElement>): void =>
+    setAnchorEl(event.currentTarget);
   const handleUserClose = (): void => setAnchorEl(null);
 
-  const handleNotifyMenu = (event: React.MouseEvent<HTMLElement>): void => setNotifyEl(event.currentTarget);
+  const handleNotifyMenu = (event: React.MouseEvent<HTMLElement>): void =>
+    setNotifyEl(event.currentTarget);
   const handleNotifyClose = (): void => setNotifyEl(null);
 
   const handleLogout = async (): Promise<void> => {
     try {
       // Call logout API
       await dispatch(logoutUser());
-      
+
       // Close dropdown
       handleUserClose();
-      
+
       // Navigate to login page
       navigate("/login");
     } catch (error) {
@@ -56,39 +73,41 @@ const HeaderPage: React.FC = () => {
 
   const getDashboardByRole = () => {
     if (!account || !account.role) {
-      return '/login';
+      return "/login";
     }
     const userRoleId = account.role.roleId;
     switch (userRoleId) {
-      case 1: // Admin
-        return '/admin';
+      case 1:
+      case 4: // Admin
+        return "/admin";
       case 2: // Teacher
-        return '/teacher';
+        return "/teacher";
       case 3: // Student
-        return '/student';
+        return "/student";
       default:
-        return '/login';
+        return "/login";
     }
   };
 
   const getRoleDisplayName = () => {
-    if (!account || !account.role) return '';
-    
+    if (!account || !account.role) return "";
+
     const userRoleId = account.role.roleId;
     switch (userRoleId) {
       case 1:
-        return 'Quản trị viên';
+      case 4:
+        return "Quản trị viên";
       case 2:
-        return 'Giảng viên';
+        return "Giảng viên";
       case 3:
-        return 'Sinh viên';
+        return "Sinh viên";
       default:
         return account.role.roleName;
     }
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
-    if (event.key === 'Enter' || event.key === ' ') {
+    if (event.key === "Enter" || event.key === " ") {
       handleUserMenu(event as any);
     }
   };
@@ -102,9 +121,18 @@ const HeaderPage: React.FC = () => {
   };
 
   return (
-    <AppBar position="static" color="default" sx={{ background: theme.palette.background.paper, boxShadow: theme.shadows[1] }}>
+    <AppBar
+      position="static"
+      color="default"
+      sx={{
+        background: theme.palette.background.paper,
+        boxShadow: theme.shadows[1],
+      }}
+    >
       <Container maxWidth="xl" disableGutters>
-        <Toolbar sx={{ justifyContent: "space-between", px: { xs: 1, sm: 2, md: 3 } }}>
+        <Toolbar
+          sx={{ justifyContent: "space-between", px: { xs: 1, sm: 2, md: 3 } }}
+        >
           {/* Logo */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <img
@@ -113,16 +141,27 @@ const HeaderPage: React.FC = () => {
               style={{ height: 40, marginRight: 12, cursor: "pointer" }}
               onClick={() => navigate("/")}
             />
-            <Typography variant="h6" color="primary" sx={{ fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/")}>
+            <Typography
+              variant="h6"
+              color="primary"
+              sx={{ fontWeight: 700, cursor: "pointer" }}
+              onClick={() => navigate("/")}
+            >
               T1 STUDENT
             </Typography>
           </Box>
 
           {/* List item */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2 } }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: { xs: 1, sm: 2 },
+            }}
+          >
             {/* Trang chủ */}
             <Tooltip title="Trang chủ">
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
                 <IconButton color="primary" onClick={() => navigate("/")}>
                   <HomeIcon />
                 </IconButton>
@@ -131,9 +170,9 @@ const HeaderPage: React.FC = () => {
                   sx={{
                     ml: 0.5,
                     mr: 1,
-                    cursor: 'pointer',
-                    display: { xs: 'none', sm: 'block' },
-                    color: theme.palette.text.primary
+                    cursor: "pointer",
+                    display: { xs: "none", sm: "block" },
+                    color: theme.palette.text.primary,
                   }}
                   onClick={() => navigate("/")}
                 >
@@ -144,7 +183,7 @@ const HeaderPage: React.FC = () => {
 
             {/* Tin tức */}
             <Tooltip title="Tin tức">
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
                 <IconButton color="primary" onClick={handleNotifyMenu}>
                   <NotificationsIcon />
                 </IconButton>
@@ -153,9 +192,9 @@ const HeaderPage: React.FC = () => {
                   sx={{
                     ml: 0.5,
                     mr: 1,
-                    cursor: 'pointer',
-                    display: { xs: 'none', sm: 'block' },
-                    color: theme.palette.text.primary
+                    cursor: "pointer",
+                    display: { xs: "none", sm: "block" },
+                    color: theme.palette.text.primary,
                   }}
                   onClick={handleNotifyMenu}
                 >
@@ -163,22 +202,47 @@ const HeaderPage: React.FC = () => {
                 </Typography>
               </Box>
             </Tooltip>
-            <Menu anchorEl={notifyEl} open={Boolean(notifyEl)} onClose={handleNotifyClose}>
-              <MenuItem onClick={handleNotifyClose} sx={{ color: theme.palette.text.primary }}>
-                <NotificationsIcon sx={{ mr: 1 }} />Thông báo học phí học kỳ 1
+            <Menu
+              anchorEl={notifyEl}
+              open={Boolean(notifyEl)}
+              onClose={handleNotifyClose}
+            >
+              <MenuItem
+                onClick={handleNotifyClose}
+                sx={{ color: theme.palette.text.primary }}
+              >
+                <NotificationsIcon sx={{ mr: 1 }} />
+                Thông báo học phí học kỳ 1
               </MenuItem>
-              <MenuItem onClick={handleNotifyClose} sx={{ color: theme.palette.text.primary }}>
-                <NotificationsIcon sx={{ mr: 1 }} />Lịch thi cuối kỳ đã được cập nhật
+              <MenuItem
+                onClick={handleNotifyClose}
+                sx={{ color: theme.palette.text.primary }}
+              >
+                <NotificationsIcon sx={{ mr: 1 }} />
+                Lịch thi cuối kỳ đã được cập nhật
               </MenuItem>
-              <MenuItem onClick={handleNotifyClose} sx={{ color: theme.palette.text.primary }}>
-                <NotificationsIcon sx={{ mr: 1 }} />Đăng ký học phần học kỳ 2
+              <MenuItem
+                onClick={handleNotifyClose}
+                sx={{ color: theme.palette.text.primary }}
+              >
+                <NotificationsIcon sx={{ mr: 1 }} />
+                Đăng ký học phần học kỳ 2
               </MenuItem>
             </Menu>
 
             {/* Toggle dark/light */}
-            <Tooltip title={mode === "light" ? "Chuyển sang dark mode" : "Chuyển sang light mode"}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <IconButton color="primary" onClick={() => dispatch(toggleMode())}>
+            <Tooltip
+              title={
+                mode === "light"
+                  ? "Chuyển sang dark mode"
+                  : "Chuyển sang light mode"
+              }
+            >
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <IconButton
+                  color="primary"
+                  onClick={() => dispatch(toggleMode())}
+                >
                   {mode === "light" ? <Brightness4Icon /> : <Brightness7Icon />}
                 </IconButton>
                 <Typography
@@ -186,13 +250,13 @@ const HeaderPage: React.FC = () => {
                   sx={{
                     ml: 0.5,
                     mr: 1,
-                    cursor: 'pointer',
-                    display: { xs: 'none', sm: 'block' },
-                    color: theme.palette.text.primary
+                    cursor: "pointer",
+                    display: { xs: "none", sm: "block" },
+                    color: theme.palette.text.primary,
                   }}
                   onClick={() => dispatch(toggleMode())}
                 >
-                  {mode === "light" ? 'Dark mode' : 'Light mode'}
+                  {mode === "light" ? "Dark mode" : "Light mode"}
                 </Typography>
               </Box>
             </Tooltip>
@@ -201,26 +265,46 @@ const HeaderPage: React.FC = () => {
             {isAuthenticated && account ? (
               /* User dropdown khi đã đăng nhập */
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Box 
-                  sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    cursor: "pointer",
+                  }}
                   onClick={handleUserMenu}
                   tabIndex={0}
                   role="button"
                   onKeyDown={handleKeyDown}
                 >
-                  <Avatar 
-                    src={account.avatarUrl || ""} 
-                    sx={{ width: 32, height: 32, bgcolor: theme.palette.primary.main, mr: 1 }}
+                  <Avatar
+                    src={account.avatarUrl || ""}
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      bgcolor: theme.palette.primary.main,
+                      mr: 1,
+                    }}
                   >
-                    {!account.avatarUrl && (account.fullName ? account.fullName.charAt(0).toUpperCase() : <AccountCircleIcon />)}
+                    {!account.avatarUrl &&
+                      (account.fullName ? (
+                        account.fullName.charAt(0).toUpperCase()
+                      ) : (
+                        <AccountCircleIcon />
+                      ))}
                   </Avatar>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Typography
                       variant="body2"
                       sx={{
                         fontWeight: 600,
                         color: theme.palette.text.primary,
-                        lineHeight: 1.2
+                        lineHeight: 1.2,
                       }}
                     >
                       {account.fullName || account.username}
@@ -229,8 +313,8 @@ const HeaderPage: React.FC = () => {
                       variant="caption"
                       sx={{
                         color: theme.palette.text.secondary,
-                        fontSize: '0.75rem',
-                        lineHeight: 1
+                        fontSize: "0.75rem",
+                        lineHeight: 1,
                       }}
                     >
                       {getRoleDisplayName()}
@@ -238,23 +322,30 @@ const HeaderPage: React.FC = () => {
                   </Box>
                   <ArrowDropDownIcon sx={{ ml: 0.5 }} />
                 </Box>
-                <Menu 
-                  anchorEl={anchorEl} 
-                  open={Boolean(anchorEl)} 
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl)}
                   onClose={handleUserClose}
                   PaperProps={{
                     sx: {
                       mt: 1,
                       minWidth: 200,
-                      '& .MuiMenuItem-root': {
+                      "& .MuiMenuItem-root": {
                         px: 2,
-                        py: 1
-                      }
-                    }
+                        py: 1,
+                      },
+                    },
                   }}
                 >
                   {/* User info header */}
-                  <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                  <Box
+                    sx={{
+                      px: 2,
+                      py: 1,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                       {account.fullName || account.username}
                     </Typography>
@@ -268,37 +359,37 @@ const HeaderPage: React.FC = () => {
                   </Box>
 
                   {/* Dashboard */}
-                  <MenuItem 
-                    onClick={() => { 
-                      navigate(getDashboardByRole()); 
-                      handleUserClose(); 
-                    }} 
+                  <MenuItem
+                    onClick={() => {
+                      navigate(getDashboardByRole());
+                      handleUserClose();
+                    }}
                     sx={{ color: theme.palette.text.primary }}
                   >
                     <DashboardIcon sx={{ mr: 1 }} /> Dashboard
                   </MenuItem>
 
                   {/* Thông tin cá nhân */}
-                  <MenuItem 
-                    onClick={() => { 
+                  <MenuItem
+                    onClick={() => {
                       if (account.role.roleId === 3) {
-                        navigate("/student/info"); 
+                        navigate("/student/info");
                       } else {
-                        navigate("/profile"); 
+                        navigate("/profile");
                       }
-                      handleUserClose(); 
-                    }} 
+                      handleUserClose();
+                    }}
                     sx={{ color: theme.palette.text.primary }}
                   >
                     <InfoIcon sx={{ mr: 1 }} /> Thông tin cá nhân
                   </MenuItem>
 
                   {/* Đổi mật khẩu */}
-                  <MenuItem 
-                    onClick={() => { 
-                      navigate("/change-password"); 
-                      handleUserClose(); 
-                    }} 
+                  <MenuItem
+                    onClick={() => {
+                      navigate("/change-password");
+                      handleUserClose();
+                    }}
                     sx={{ color: theme.palette.text.primary }}
                   >
                     <LockIcon sx={{ mr: 1 }} /> Đổi mật khẩu
@@ -307,13 +398,13 @@ const HeaderPage: React.FC = () => {
                   <Divider />
 
                   {/* Đăng xuất */}
-                  <MenuItem 
-                    onClick={handleLogout} 
-                    sx={{ 
+                  <MenuItem
+                    onClick={handleLogout}
+                    sx={{
                       color: theme.palette.error.main,
-                      '&:hover': {
-                        backgroundColor: theme.palette.error.light + '20'
-                      }
+                      "&:hover": {
+                        backgroundColor: theme.palette.error.light + "20",
+                      },
                     }}
                   >
                     <LogoutIcon sx={{ mr: 1 }} /> Đăng xuất
@@ -324,7 +415,7 @@ const HeaderPage: React.FC = () => {
               /* Login/Register buttons khi chưa đăng nhập */
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Tooltip title="Đăng nhập">
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
                     <IconButton color="primary" onClick={handleLogin}>
                       <LoginIcon />
                     </IconButton>
@@ -333,9 +424,9 @@ const HeaderPage: React.FC = () => {
                       sx={{
                         ml: 0.5,
                         mr: 1,
-                        cursor: 'pointer',
-                        display: { xs: 'none', sm: 'block' },
-                        color: theme.palette.text.primary
+                        cursor: "pointer",
+                        display: { xs: "none", sm: "block" },
+                        color: theme.palette.text.primary,
                       }}
                       onClick={handleLogin}
                     >
@@ -345,7 +436,7 @@ const HeaderPage: React.FC = () => {
                 </Tooltip>
 
                 <Tooltip title="Đăng ký">
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
                     <IconButton color="secondary" onClick={handleRegister}>
                       <PersonAddIcon />
                     </IconButton>
@@ -353,9 +444,9 @@ const HeaderPage: React.FC = () => {
                       variant="body2"
                       sx={{
                         ml: 0.5,
-                        cursor: 'pointer',
-                        display: { xs: 'none', sm: 'block' },
-                        color: theme.palette.text.primary
+                        cursor: "pointer",
+                        display: { xs: "none", sm: "block" },
+                        color: theme.palette.text.primary,
                       }}
                       onClick={handleRegister}
                     >

@@ -13,14 +13,17 @@ import Register from '../page/Register';
 import Forgot from '../page/Forgot';
 
 // Admin pages
-import AdminDashboard from '../page/Admin';
-import AdminUsers from '../page/Admin/usersInfor';
-
-// Placeholder components
-const AdminBookingTour = () => <div>Admin Booking Tour - Coming Soon</div>;
-const AdminBookingHotel = () => <div>Admin Booking Hotel - Coming Soon</div>;
-const AdminTour = () => <div>Admin Tour - Coming Soon</div>;
-const AdminHotel = () => <div>Admin Hotel - Coming Soon</div>;
+import AdminDashboard from '../page/Admin/Dashboard';
+import UserManagement from '../page/Admin/UserManagement';
+import CourseManagement from '../page/Admin/CourseManagement';
+import SystemSettings from '../page/Admin/SystemSettings';
+import CreateUser from '../page/Admin/CreateUser';
+import UserProfiles from '../page/Admin/UserProfiles';
+import StudentProfiles from '../page/Admin/StudentProfiles';
+import AdminStudentInfo from '../page/Admin/StudentInfo';
+import Classes from '../page/Admin/Classes';
+import TuitionList from '../page/Admin/TuitionList';
+import SendNotifications from '../page/Admin/SendNotifications';
 
 // Student pages
 import StudentDashboard from '../component/Student/Dashboard';
@@ -88,7 +91,8 @@ const AppRoutes = () => {
     }
     const userRoleId = account.role.roleId;
     switch (userRoleId) {
-      case 1: // Admin
+      case 1:
+      case 4: // Admin
         return '/admin';
       case 2: // Teacher
         return '/teacher';
@@ -132,18 +136,57 @@ const AppRoutes = () => {
           />
         </Route>
 
-        {/* Admin routes - Role ID 1 */}
+        {/* Admin routes - Role ID 1 or 4 */}
         <Route path="/admin" element={
-          <ProtectedRoute allowedRoles={[1]}>
+          <ProtectedRoute allowedRoles={[1, 4]}>
             <LayoutAdmin />
           </ProtectedRoute>
         }>
           <Route index element={<AdminDashboard />} />
-          <Route path="users" element={<AdminUsers />} />
-          <Route path="booking-tour" element={<AdminBookingTour />} />
-          <Route path="booking-hotel" element={<AdminBookingHotel />} />
-          <Route path="tour" element={<AdminTour />} />
-          <Route path="hotel" element={<AdminHotel />} />
+          
+          {/* Quản lý Tài khoản */}
+          <Route path="users" element={<UserManagement />} />
+          <Route path="create-user" element={<CreateUser />} />
+          <Route path="user-profiles" element={<UserProfiles />} />
+          
+          {/* Quản lý Hồ sơ Sinh viên */}
+          <Route path="students" element={<div>Danh sách sinh viên - Coming Soon</div>} />
+          <Route path="student-profiles" element={<StudentProfiles />} />
+          <Route path="student-info" element={<AdminStudentInfo />} />
+          
+          {/* Quản lý Đào tạo */}
+          <Route path="courses" element={<CourseManagement />} />
+          <Route path="classes" element={<Classes />} />
+          <Route path="curriculum" element={<div>Chương trình đào tạo - Coming Soon</div>} />
+          <Route path="schedule" element={<div>Lịch học - Coming Soon</div>} />
+          
+          {/* Phân quyền */}
+          <Route path="roles" element={<div>Quản lý vai trò - Coming Soon</div>} />
+          <Route path="user-permissions" element={<div>Phân quyền người dùng - Coming Soon</div>} />
+          <Route path="security-settings" element={<div>Cài đặt bảo mật - Coming Soon</div>} />
+          
+          {/* Quản lý Học phí */}
+          <Route path="tuition-list" element={<TuitionList />} />
+          <Route path="payments" element={<div>Thanh toán - Coming Soon</div>} />
+          <Route path="financial-reports" element={<div>Báo cáo tài chính - Coming Soon</div>} />
+          
+          {/* Quản lý Điểm số */}
+          <Route path="grades" element={<div>Nhập điểm - Coming Soon</div>} />
+          <Route path="grade-sheets" element={<div>Bảng điểm - Coming Soon</div>} />
+          <Route path="grade-statistics" element={<div>Thống kê điểm - Coming Soon</div>} />
+          
+          {/* Báo cáo Thống kê */}
+          <Route path="student-reports" element={<div>Báo cáo sinh viên - Coming Soon</div>} />
+          <Route path="academic-reports" element={<div>Báo cáo học tập - Coming Soon</div>} />
+          <Route path="system-statistics" element={<div>Thống kê hệ thống - Coming Soon</div>} />
+          
+          {/* Quản lý Thông báo */}
+          <Route path="send-notifications" element={<SendNotifications />} />
+          <Route path="notification-history" element={<div>Lịch sử thông báo - Coming Soon</div>} />
+          <Route path="email-settings" element={<div>Cài đặt email - Coming Soon</div>} />
+          
+          {/* Cài đặt hệ thống */}
+          <Route path="settings" element={<SystemSettings />} />
         </Route>
 
         {/* Teacher routes - Role ID 2 */}

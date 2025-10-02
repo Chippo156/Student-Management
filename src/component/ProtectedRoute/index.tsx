@@ -5,7 +5,7 @@ import { doLoadUserFromToken } from '../../redux/UserSlice';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: number[]; // Role IDs: 1=Admin, 2=Teacher, 3=Student
+  allowedRoles?: number[]; // Role IDs: 1,4=Admin, 2=Teacher, 3=Student
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles = [] }) => {
@@ -33,7 +33,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     if (!allowedRoles.includes(userRoleId)) {
       // Redirect based on user's actual role
       switch (userRoleId) {
-        case 1: // Admin
+        case 1:
+        case 4: // Admin
           return <Navigate to="/admin" replace />;
         case 2: // Teacher
           return <Navigate to="/teacher" replace />;
