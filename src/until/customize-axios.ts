@@ -10,18 +10,45 @@ const instance: AxiosInstance = axios.create({
 
 const NO_RETRY_HEADER = "x-no-retry";
 
-// const handleRefreshToken = async (): Promise<string | null> => {
-//   let res = await instance.get("/api/v1/auth/refresh");
-//   if (res && res.data) {
-//     return res.data.access_token;
-//   }
-//   return null;
-// };
+const handleRefreshToken = async (): Promise<string | null> => {
+  try {
+    const refreshToken = localStorage.getItem("refresh_token");
+    const userDataStr = localStorage.getItem("user_data");
+    
+    if (!refreshToken || !userDataStr) {
+      return null;
+    }
+
+    const userData = JSON.parse(userDataStr);
+    const userId = userData.userId;
+
+    const res = await instance.post("/api/v1/Auth/refresh-token", {
+      userId: userId,
+      refreshToken: refreshToken
+    });
+
+    if (res && res.data && res.data.success) {
+      const newAccessToken = res.data.data.accessToken;
+      const newRefreshToken = res.data.data.refreshToken;
+      
+      // Update localStorage with new tokens
+      localStorage.setItem("access_token", newAccessToken);
+      localStorage.setItem("refresh_token", newRefreshToken);
+      
+      return newAccessToken;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Refresh token failed:", error);
+    return null;
+  }
+};
 
 // Add a request interceptor
 instance.interceptors.request.use(
   (config: AxiosRequestConfig): AxiosRequestConfig => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("access_token");
     if (token && config.headers) {
       config.headers["Authorization"] = `Bearer ${token}`;
     } else if (config.headers) {
@@ -49,24 +76,33 @@ instance.interceptors.response.use(
       error.config.headers &&
       !error.config.headers[NO_RETRY_HEADER]
     ) {
-      // let access_token = await handleRefreshToken();
-      // error.config.headers["Authorization"] = `Bearer ${access_token}`;
-      // localStorage.setItem("access_token", access_token);
-      // error.config.headers[NO_RETRY_HEADER] = "true";
-      // return instance.request(error.config);
-      // return updateToken().then((token) => {
-      //   error.config.headers.xxxx <= set the token
-      //   return axios.request(config);
-      // });
+      const access_token = await handleRefreshToken();
+      if (access_token) {
+        error.config.headers["Authorization"] = `Bearer ${access_token}`;
+        error.config.headers[NO_RETRY_HEADER] = "true";
+        return instance.request(error.config);
+      } else {
+        // Refresh token failed, redirect to login
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("user_data");
+        window.location.href = "/login";
+      }
     }
-    // if (
-    //   error.config &&
-    //   error.response &&
-    //   error.response.status === 400 &&
-    //   error.config.url === "/api/v1/auth/refresh"
-    // ) {
-    //   window.location.href = "/login";
-    // }
+    
+    if (
+      error.config &&
+      error.response &&
+      error.response.status === 400 &&
+      error.config.url === "/api/v1/Auth/refresh-token"
+    ) {
+      // Refresh token is invalid, redirect to login
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user_data");
+      window.location.href = "/login";
+    }
+    
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     // Do something with response error
     return error?.response?.data ?? Promise.reject(error);

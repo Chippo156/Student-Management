@@ -1,37 +1,51 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAppSelector, useAppDispatch } from '../../redux/hooks';
+import { doLoadUserFromToken } from '../../redux/UserSlice';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: number[];
+  allowedRoles?: number[]; // Role IDs: 1=Admin, 2=Teacher, 3=Student
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles = [] }) => {
-  const isAuthenticated = useSelector((state: any) => state.user.isAuthenticated);
-  const userRole = useSelector((state: any) => state.user.account.role);
+  const dispatch = useAppDispatch();
+  const location = useLocation();
+  const { isAuthenticated, account } = useAppSelector((state) => state.user);
 
-  // Nếu chưa đăng nhập, chuyển hướng đến trang login
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  // Load user from token on component mount
+  useEffect(() => {
+    if (!isAuthenticated) {
+      dispatch(doLoadUserFromToken());
+    }
+  }, [dispatch, isAuthenticated]);
+
+  // If not authenticated, redirect to login
+  if (!isAuthenticated || !account) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Nếu có quy định vai trò và vai trò hiện tại không được phép
-  if (allowedRoles.length > 0 && !allowedRoles.includes(parseInt(userRole))) {
-    // Chuyển hướng đến trang phù hợp theo role
-    switch (parseInt(userRole)) {
-      case 1: // Admin
-        return <Navigate to="/admin" replace />;
-      case 2: // Giảng viên
-        return <Navigate to="/teacher" replace />;
-      case 3: // Sinh viên
-        return <Navigate to="/student" replace />;
-      default:
-        return <Navigate to="/login" replace />;
+  // Check role-based access
+  if (allowedRoles.length > 0) {
+    const userRoleId = account.role.roleId;
+    
+    // If user doesn't have required role, redirect to their dashboard
+    if (!allowedRoles.includes(userRoleId)) {
+      // Redirect based on user's actual role
+      switch (userRoleId) {
+        case 1: // Admin
+          return <Navigate to="/admin" replace />;
+        case 2: // Teacher
+          return <Navigate to="/teacher" replace />;
+        case 3: // Student
+          return <Navigate to="/student" replace />;
+        default:
+          return <Navigate to="/login" replace />;
+      }
     }
   }
 
-  return children;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

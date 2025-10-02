@@ -1,66 +1,80 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { doLoginAction } from '../../redux/UserSlice';
-import { authService } from '../../service/authService';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { loginUser, clearError } from '../../redux/UserSlice';
 import './login.scss';
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [rememberMe, setRememberMe] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { isLoading, error, isAuthenticated, account } = useAppSelector((state) => state.user);
+
+  // Helper function to get dashboard by role
+  const getDashboardByRole = (roleId: number): string => {
+    switch (roleId) {
+      case 1: // Admin
+        return '/admin';
+      case 2: // Teacher
+        return '/teacher';
+      case 3: // Student
+        return '/student';
+      default:
+        return '/login';
+    }
+  };
+
+  // Redirect if already authenticated based on role
+  useEffect(() => {
+    if (isAuthenticated && account && account.role) {
+      const dashboard = getDashboardByRole(account.role.roleId);
+      console.log('useEffect redirect to:', dashboard, 'role:', account.role.roleId);
+      navigate(dashboard, { replace: true });
+    }
+  }, [isAuthenticated, account, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && password) {
-      setLoading(true);
-      setError('');
+    if (username && password) {
+      dispatch(clearError());
       
       try {
-        const response = await authService.login({ email, password });
+        const result = await dispatch(loginUser({ username, password }));
         
-        if (response.data && response.data.result) {
-          const { token, user } = response.data.result;
+        console.log('Login result:', result);
+        console.log('Request status:', result.meta.requestStatus);
+        
+        if (result.meta.requestStatus === 'fulfilled') {
+          console.log('Login successful');
+          console.log('Payload:', result.payload);
           
-          // Dispatch login action
-          dispatch(doLoginAction({
-            access_token: token,
-            refresh_token: '',
-            username: user.username,
-            image: user.image || '',
-            role: user.role.toString(),
-            userId: user.id
-          }));
-
-          // Redirect based on role
-          switch (parseInt(user.role.toString())) {
-            case 1: // Admin
-              navigate('/admin');
-              break;
-            case 2: // Giảng viên
-              navigate('/teacher');
-              break;
-            case 3: // Sinh viên
-              navigate('/student');
-              break;
-            default:
-              navigate('/');
+          // Get user data from the fulfilled action
+          const userData = result.payload;
+          
+          // Navigate immediately after successful login
+          if (userData && userData.user && userData.user.role) {
+            const dashboard = getDashboardByRole(userData.user.role.roleId);
+            console.log('Immediate navigation to:', dashboard, 'role:', userData.user.role.roleId);
+            
+            // Use setTimeout to ensure state is updated before navigation
+            setTimeout(() => {
+              navigate(dashboard, { replace: true });
+            }, 100);
           }
-        } else {
-          setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+        } else if (result.meta.requestStatus === 'rejected') {
+          console.error('Login rejected:', result.payload);
         }
       } catch (error) {
         console.error('Login error:', error);
-        setError('Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.');
-      } finally {
-        setLoading(false);
       }
     }
+  };
+
+  const handleClearError = () => {
+    dispatch(clearError());
   };
 
   return (
@@ -70,20 +84,23 @@ const Login: React.FC = () => {
 
         {error && (
           <div className="error-message">
-            {error}
+            <span>{error}</span>
+            <button type="button" onClick={handleClearError} className="close-error">
+              ×
+            </button>
           </div>
         )}
 
         <div className="form-group">
-          <label htmlFor="email">Email</label>
+          <label htmlFor="username">Tên đăng nhập</label>
           <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            id="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             required
-            disabled={loading}
-            placeholder="Nhập email của bạn"
+            disabled={isLoading}
+            placeholder="Nhập tên đăng nhập"
           />
         </div>
 
@@ -95,7 +112,7 @@ const Login: React.FC = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            disabled={loading}
+            disabled={isLoading}
             placeholder="Nhập mật khẩu"
           />
         </div>
@@ -106,14 +123,14 @@ const Login: React.FC = () => {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              disabled={loading}
+              disabled={isLoading}
             />
             Ghi nhớ đăng nhập
           </label>
         </div>
 
-        <button type="submit" className="login-btn" disabled={loading}>
-          {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+        <button type="submit" className="login-btn" disabled={isLoading}>
+          {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
         </button>
 
         <div className="login-links">

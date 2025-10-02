@@ -7,9 +7,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { store } from "./redux/store";
 import getTheme from "./theme";
 import AppRoutes from "./routes";
+import ErrorBoundary from "./component/ErrorBoundary";
 import "./App.scss";
 import { RootState, AppDispatch } from "./redux/store";
-import { userService } from "./service/userService";
 import { doLoadUserFromToken, doLogoutAction } from "./redux/UserSlice";
 
 const AppContent: React.FC = () => {
@@ -22,34 +22,28 @@ const AppContent: React.FC = () => {
     return getTheme(themeMode);
   }, [themeMode]);
 
-  const handleGetUser = async (): Promise<void> => {
+  const handleLoadUser = (): void => {
     try {
       const token = localStorage.getItem("access_token");
-      if (token && !user.isAuthenticated) {
-        // Verify token và load user info
-        const response = await userService.getUserInfo();
-        if (response && response.data) {
-          dispatch(
-            doLoadUserFromToken({
-              username: response.data.username,
-              image: response.data.image,
-              role: response.data.role.toString(),
-              id: response.data.id,
-            })
-          );
-        }
+      const refreshToken = localStorage.getItem("refresh_token");
+      const userDataStr = localStorage.getItem("user_data");
+      
+      if (token && refreshToken && userDataStr && !user.isAuthenticated) {
+        // Load user from localStorage
+        dispatch(doLoadUserFromToken());
       }
     } catch (error) {
-      console.error("Get user info failed:", error);
-      // Token không hợp lệ, xóa và logout
+      console.error("Load user failed:", error);
+      // Clear invalid data
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user_data");
       dispatch(doLogoutAction());
     }
   };
 
   useEffect(() => {
-    handleGetUser();
+    handleLoadUser();
   }, []);
 
   // Smoothly animate theme switch and sync color-scheme
@@ -79,7 +73,9 @@ const AppContent: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppRoutes />
+      <ErrorBoundary>
+        <AppRoutes />
+      </ErrorBoundary>
     </ThemeProvider>
   );
 };

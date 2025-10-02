@@ -1,4 +1,4 @@
-import axios from "../until/customize-axios";
+import { AuthController } from './authController';
 
 interface LoginRequest {
   username: string;
@@ -41,13 +41,13 @@ interface LogoutResponse {
   result?: any;
 }
 
+// Legacy functions for backward compatibility
 export const loginUser = async (email: string, password: string): Promise<LoginResponse> => {
   try {
-    const response: LoginResponse = await axios.post("/auth/token", {
+    const response = await AuthController.login({
       username: email,
       password: password,
-    } as LoginRequest);
-
+    });
     return response;
   } catch (error) {
     console.error("Login error:", error);
@@ -57,9 +57,7 @@ export const loginUser = async (email: string, password: string): Promise<LoginR
 
 export const reloadUser = async (token: string): Promise<IntrospectResponse> => {
   try {
-    const response: IntrospectResponse = await axios.post("/auth/introspect", { 
-      token: token 
-    } as IntrospectRequest);
+    const response = await AuthController.introspectToken();
     return response;
   } catch (error) {
     console.error("Reload user error:", error);
@@ -69,9 +67,7 @@ export const reloadUser = async (token: string): Promise<IntrospectResponse> => 
 
 export const logoutUser = async (token: string): Promise<LogoutResponse> => {
   try {
-    const response: LogoutResponse = await axios.post("/auth/logout", { 
-      token: token 
-    } as LogoutRequest);
+    const response = await AuthController.logout();
     return response;
   } catch (error) {
     console.error("Logout error:", error);

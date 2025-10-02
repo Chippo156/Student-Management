@@ -2,7 +2,7 @@ import axios from "../until/customize-axios";
 
 // Auth interfaces
 export interface LoginRequest {
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -10,72 +10,157 @@ export interface RegisterRequest {
   email: string;
   password: string;
   username: string;
+  fullName: string;
+  phone?: string;
   role?: number;
 }
 
-export interface AuthResponse {
+export interface LoginResponse {
+  success: boolean;
+  code: number;
+  message: string;
   data: {
-    result: {
-      token: string;
-      user: {
-        id: string;
-        username: string;
-        email: string;
-        role: number;
-        image?: string;
+    token: {
+      accessToken: string;
+      refreshToken: string;
+    };
+    user: {
+      userId: number;
+      username: string;
+      fullName: string;
+      passwordHash: string;
+      email: string;
+      phone: string;
+      gender: number;
+      address: string;
+      avatarUrl: string;
+      accountStatus: number;
+      refreshToken: string;
+      refreshTokenExpiryTime: string;
+      createdAt: string;
+      role: {
+        roleId: number;
+        roleName: string;
+        description: string;
+        permissions: any[];
       };
     };
   };
 }
 
+export interface RefreshTokenRequest {
+  userId: number;
+  refreshToken: string;
+}
+
+export interface RefreshTokenResponse {
+  success: boolean;
+  code: number;
+  message: string;
+  data: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
 export const authService = {
-  login: async (data: LoginRequest): Promise<AuthResponse> => {
+  // Login
+  login: async (data: LoginRequest): Promise<LoginResponse> => {
     try {
-      const response = await axios.post("/auth/token", data);
+      const response = await axios.post("/api/v1/Auth/login", data);
       return response;
-    } catch (error) {
-      console.error("Login error:", error);
-      throw error;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Login failed');
     }
   },
 
-  register: async (data: RegisterRequest): Promise<AuthResponse> => {
+  // Register
+  register: async (data: RegisterRequest): Promise<any> => {
     try {
-      const response = await axios.post("/auth/register", data);
-      return response;
-    } catch (error) {
-      console.error("Register error:", error);
-      throw error;
+      const response = await axios.post("/api/v1/Auth/register", data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Registration failed');
     }
   },
 
-  introspect: async (token: string) => {
+  // Logout
+  logout: async (): Promise<any> => {
     try {
-      const response = await axios.post("/auth/introspect", { token });
-      return response;
-    } catch (error) {
-      console.error("Introspect error:", error);
-      throw error;
+      const response = await axios.post("/api/v1/Auth/logout");
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Logout failed');
     }
   },
 
-  logout: async () => {
+  // Refresh Token
+  refreshToken: async (data: RefreshTokenRequest): Promise<RefreshTokenResponse> => {
     try {
-      const response = await axios.post("/auth/logout");
-      return response;
-    } catch (error) {
-      console.error("Logout error:", error);
-      throw error;
+      const response = await axios.post("/api/v1/Auth/refresh-token", data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Token refresh failed');
     }
   },
 
-  refreshToken: async (token: string) => {
+  // Change Password
+  changePassword: async (data: ChangePasswordRequest): Promise<any> => {
     try {
-      const response = await axios.post("/auth/refresh", { token });
-      return response;
-    } catch (error) {
-      console.error("Refresh token error:", error);
-      throw error;
+      const response = await axios.post("/api/v1/Auth/change-password", data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Change password failed');
     }
   },
+
+  // Forgot Password
+  forgotPassword: async (data: ForgotPasswordRequest): Promise<any> => {
+    try {
+      const response = await axios.post("/api/v1/Auth/forgot-password", data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Forgot password failed');
+    }
+  },
+
+  // Introspect Token
+  introspect: async (token: string): Promise<any> => {
+    try {
+      const response = await axios.post("/api/v1/Auth/introspect", { token });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Token introspection failed');
+    }
+  },
+
+  // Get User Profile
+  getUserProfile: async (): Promise<any> => {
+    try {
+      const response = await axios.get("/api/v1/Auth/profile");
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Get user profile failed');
+    }
+  },
+
+  // Update User Profile
+  updateUserProfile: async (data: any): Promise<any> => {
+    try {
+      const response = await axios.put("/api/v1/Auth/profile", data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Update user profile failed');
+    }
+  }
 };

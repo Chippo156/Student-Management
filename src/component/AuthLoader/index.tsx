@@ -1,38 +1,32 @@
 import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { doLoadUserFromToken } from '../../redux/UserSlice';
-import { authService } from '../../service/authService';
 
 interface AuthLoaderProps {
   children: React.ReactNode;
 }
 
 const AuthLoader: React.FC<AuthLoaderProps> = ({ children }) => {
-  const dispatch = useDispatch();
-  const isAuthenticated = useSelector((state: any) => state.user.isAuthenticated);
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, account } = useAppSelector((state) => state.user);
 
   useEffect(() => {
     const loadUserFromToken = async () => {
       const token = localStorage.getItem('access_token');
+      const refreshToken = localStorage.getItem('refresh_token');
+      const userDataStr = localStorage.getItem('user_data');
       
-      if (token && !isAuthenticated) {
+      // Only load if we have tokens but user is not authenticated
+      if (token && refreshToken && userDataStr && !isAuthenticated) {
         try {
-          // Verify token với backend
-          const response = await authService.introspect(token);
-          
-          if (response.data && response.data.valid) {
-            // Token hợp lệ, load thông tin user
-            dispatch(doLoadUserFromToken(response.data.user));
-          } else {
-            // Token không hợp lệ, xóa khỏi localStorage
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-          }
+          // Load user from localStorage without API call
+          dispatch(doLoadUserFromToken());
         } catch (error) {
-          console.error('Error verifying token:', error);
-          // Lỗi xác thực token, xóa khỏi localStorage
+          console.error('Error loading user from token:', error);
+          // Clear invalid data
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user_data');
         }
       }
     };

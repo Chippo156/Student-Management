@@ -17,16 +17,16 @@ import {
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
-  Group as GroupIcon,
+  School as SchoolIcon,
+  Assignment as AssignmentIcon,
+  Schedule as ScheduleIcon,
+  People as PeopleIcon,
+  Grade as GradeIcon,
   Settings as SettingsIcon,
   Menu as MenuIcon,
   MenuOpen as MenuOpenIcon,
   ExpandLess,
-  ExpandMore,
-  People as PeopleIcon,
-  School as SchoolIcon,
-  Assignment as AssignmentIcon,
-  Tune as TuneIcon
+  ExpandMore
 } from "@mui/icons-material";
 import HeaderPage from "../Header";
 import Footer from "../Footer";
@@ -39,20 +39,16 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-interface OpenMenusState {
-  [key: string]: boolean;
-}
-
 const menuData: MenuItem[] = [
-  { label: "Dashboard", icon: <DashboardIcon />, key: "dashboard", path: "/admin" },
-  { label: "Quản lý người dùng", icon: <GroupIcon />, key: "users", path: "/admin/users" },
-  { label: "Quản lý môn học", icon: <SchoolIcon />, key: "courses", path: "/admin/course-management" },
-  { label: "Quản lý sinh viên", icon: <PeopleIcon />, key: "students", path: "/admin/student-management" },
-  { label: "Quản lý điểm số", icon: <AssignmentIcon />, key: "grades", path: "/admin/grade-management" },
-  { label: "Cài đặt hệ thống", icon: <SettingsIcon />, key: "settings", path: "/admin/system-settings" },
+  { label: "Dashboard", icon: <DashboardIcon />, key: "dashboard", path: "/teacher" },
+  { label: "Quản lý môn học", icon: <SchoolIcon />, key: "courses", path: "/teacher/courses" },
+  { label: "Lịch giảng dạy", icon: <ScheduleIcon />, key: "schedule", path: "/teacher/schedule" },
+  { label: "Học sinh", icon: <PeopleIcon />, key: "students", path: "/teacher/students" },
+  { label: "Điểm số", icon: <GradeIcon />, key: "grades", path: "/teacher/grades" },
+  { label: "Cài đặt", icon: <SettingsIcon />, key: "settings", path: "/teacher/settings" },
 ];
 
-const LayoutAdmin: React.FC = () => {
+const LayoutTeacher: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKey, setSelectedKey] = useState("dashboard");
   const navigate = useNavigate();
@@ -124,4 +120,4 @@ const LayoutAdmin: React.FC = () => {
   );
 };
 
-export default LayoutAdmin;
+export default LayoutTeacher;

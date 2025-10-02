@@ -1,4 +1,4 @@
-import axios from "../until/customize-axios";
+import { AuthController } from './authController';
 import { Dayjs } from "dayjs";
 
 interface RegisterRequest {
@@ -24,6 +24,7 @@ interface RegisterResponse {
   };
 }
 
+// Legacy function for backward compatibility
 export const registerUser = async (
   username: string,
   password: string,
@@ -36,17 +37,18 @@ export const registerUser = async (
   lastname: string
 ): Promise<RegisterResponse> => {
   try {
-    const response: RegisterResponse = await axios.post("/users/registration", {
+    const response = await AuthController.register({
       username: username,
       password: password,
       email: email,
       phone: phone,
       address: address,
-      dob: dob,
-      first_name: firstname,
-      last_name: lastname,
-      sex: sex,
-    } as RegisterRequest);
+      dateOfBirth: dob?.format('YYYY-MM-DD') || '',
+      firstName: firstname,
+      lastName: lastname,
+      gender: sex === 'male' ? 1 : sex === 'female' ? 2 : 0,
+      role: 3 // Default to student role
+    });
     
     return response;
   } catch (error) {

@@ -1,126 +1,150 @@
 import axios from "../until/customize-axios";
 
-// User interfaces
-export interface User {
-  id: string;
+export interface UserProfile {
+  userId: number;
   username: string;
+  fullName: string;
   email: string;
-  role: number;
-  image?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  phone: string;
+  gender: number;
+  address: string;
+  avatarUrl: string;
+  accountStatus: number;
+  role: {
+    roleId: number;
+    roleName: string;
+    description: string;
+  };
 }
 
 export interface UpdateUserRequest {
-  username?: string;
+  fullName?: string;
   email?: string;
-  image?: string;
+  phone?: string;
+  gender?: number;
+  address?: string;
+  avatarUrl?: string;
+}
+
+export interface GetUsersRequest {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: number;
+  status?: number;
 }
 
 export interface ChangePasswordRequest {
   oldPassword: string;
   newPassword: string;
-}
-
-export interface GetUsersParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  role?: number;
+  confirmPassword: string;
 }
 
 export const userService = {
-  getUserInfo: async () => {
+  // Get current user info
+  getUserInfo: async (): Promise<any> => {
     try {
-      const response = await axios.get("/users/my-info");
-      return response;
-    } catch (error) {
-      console.error("Get user info error:", error);
-      throw error;
+      const response = await axios.get("/api/v1/User/profile");
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Get user info failed');
     }
   },
 
-  updateUserInfo: async (data: UpdateUserRequest) => {
+  // Update user profile
+  updateProfile: async (data: UpdateUserRequest): Promise<any> => {
     try {
-      const response = await axios.put("/users/update", data);
-      return response;
-    } catch (error) {
-      console.error("Update user info error:", error);
-      throw error;
+      const response = await axios.put("/api/v1/User/profile", data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Update profile failed');
     }
   },
 
-  changePassword: async (data: ChangePasswordRequest) => {
+  // Change password
+  changePassword: async (data: ChangePasswordRequest): Promise<any> => {
     try {
-      const response = await axios.put("/users/change-password", data);
-      return response;
-    } catch (error) {
-      console.error("Change password error:", error);
-      throw error;
+      const response = await axios.post("/api/v1/User/change-password", data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Change password failed');
     }
   },
 
-  uploadAvatar: async (formData: FormData) => {
+  // Upload avatar
+  uploadAvatar: async (file: File): Promise<any> => {
     try {
-      const response = await axios.post("/users/upload-avatar", formData, {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      
+      const response = await axios.post("/api/v1/User/upload-avatar", formData, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          'Content-Type': 'multipart/form-data',
         },
       });
-      return response;
-    } catch (error) {
-      console.error("Upload avatar error:", error);
-      throw error;
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Upload avatar failed');
     }
   },
 
-  getAllUsers: async (params?: GetUsersParams) => {
+  // Get all users (Admin only)
+  getAllUsers: async (params: GetUsersRequest): Promise<any> => {
     try {
-      const response = await axios.get("/users", { params });
-      return response;
-    } catch (error) {
-      console.error("Get all users error:", error);
-      throw error;
+      const response = await axios.get("/api/v1/User/all", { params });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Get all users failed');
     }
   },
 
-  getUserById: async (id: string) => {
+  // Get user by ID (Admin only)
+  getUserById: async (userId: number): Promise<any> => {
     try {
-      const response = await axios.get(`/users/${id}`);
-      return response;
-    } catch (error) {
-      console.error("Get user by id error:", error);
-      throw error;
+      const response = await axios.get(`/api/v1/User/${userId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Get user by ID failed');
     }
   },
 
-  createUser: async (data: User) => {
+  // Create new user (Admin only)
+  createUser: async (userData: any): Promise<any> => {
     try {
-      const response = await axios.post("/users", data);
-      return response;
-    } catch (error) {
-      console.error("Create user error:", error);
-      throw error;
+      const response = await axios.post("/api/v1/User/create", userData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Create user failed');
     }
   },
 
-  updateUser: async (id: string, data: UpdateUserRequest) => {
+  // Update user (Admin only)
+  updateUser: async (userId: number, userData: any): Promise<any> => {
     try {
-      const response = await axios.put(`/users/${id}`, data);
-      return response;
-    } catch (error) {
-      console.error("Update user error:", error);
-      throw error;
+      const response = await axios.put(`/api/v1/User/${userId}`, userData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Update user failed');
     }
   },
 
-  deleteUser: async (id: string) => {
+  // Delete user (Admin only)
+  deleteUser: async (userId: number): Promise<any> => {
     try {
-      const response = await axios.delete(`/users/${id}`);
-      return response;
-    } catch (error) {
-      console.error("Delete user error:", error);
-      throw error;
+      const response = await axios.delete(`/api/v1/User/${userId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Delete user failed');
     }
   },
+
+  // Change user status (Admin only)
+  changeUserStatus: async (userId: number, status: number): Promise<any> => {
+    try {
+      const response = await axios.patch(`/api/v1/User/${userId}/status`, { status });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Change user status failed');
+    }
+  }
 };

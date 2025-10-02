@@ -27,6 +27,7 @@ import {
   Cell,
 } from "recharts";
 import { useTheme, alpha } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
 
 interface SubjectData {
   subject: string;
@@ -44,6 +45,7 @@ const academicData: SubjectData[] = [
 
 const Dashboard: React.FC = () => {
   const muiTheme = useTheme();
+  const navigate = useNavigate();
 
   const colors = useMemo(() => {
     const p = muiTheme.palette;
@@ -80,17 +82,21 @@ const Dashboard: React.FC = () => {
   };
 
   const menuItems = [
-    { icon: <CalendarOutlined />, text: "Lịch theo tuần" },
-    { icon: <BarChartOutlined />, text: "Kết quả học tập" },
-    { icon: <FileTextOutlined />, text: "Đăng ký học phần" },
-    { icon: <ReadOutlined />, text: "Hồ sơ điện tử" },
-    { icon: <DollarOutlined />, text: "Tra cứu công nợ" },
-    { icon: <CreditCardOutlined />, text: "Thanh toán trực tuyến" },
-    { icon: <FileTextOutlined />, text: "Phiếu thu tổng hợp" },
-    { icon: <ClockCircleOutlined />, text: "Lịch theo tiến độ" },
-    { icon: <BellOutlined />, text: "Nhắc nhở" },
-    { icon: <MessageOutlined />, text: "Khảo sát" },
+    { icon: <CalendarOutlined />, text: "Lịch theo tuần", path: "/student/schedule" },
+    { icon: <BarChartOutlined />, text: "Kết quả học tập", path: "/student/grades" },
+    { icon: <FileTextOutlined />, text: "Đăng ký học phần", path: "/student/register-courses" },
+    { icon: <ReadOutlined />, text: "Hồ sơ điện tử", path: "/student/info" },
+    { icon: <DollarOutlined />, text: "Tra cứu công nợ", path: "/student/debt" },
+    { icon: <CreditCardOutlined />, text: "Thanh toán trực tuyến", path: "/student/payment" },
+    { icon: <FileTextOutlined />, text: "Phiếu thu tổng hợp", path: "/student/receipt" },
+    { icon: <ClockCircleOutlined />, text: "Lịch theo tiến độ", path: "/student/progress-schedule" },
+    { icon: <BellOutlined />, text: "Nhắc nhở", path: "/student/notifications" },
+    { icon: <MessageOutlined />, text: "Khảo sát", path: "/student/survey" },
   ];
+
+  const handleMenuClick = (path: string) => {
+    navigate(path);
+  };
 
   const [hoveredRing, setHoveredRing] = useState<"inner" | "outer" | null>(
     null
@@ -259,7 +265,14 @@ const Dashboard: React.FC = () => {
             }}
           >
             {/* Nhắc nhở */}
-            <Card style={cardStyle} bodyStyle={{ padding: 12 }}>
+            <Card 
+              style={cardStyle} 
+              styles={{ 
+                body: { 
+                  padding: '12px' 
+                } 
+              }}
+            >
               <Row align="middle" justify="space-between">
                 <Col>
                   <div style={{ ...subTextStyle, fontSize: 13 }}>
@@ -297,7 +310,11 @@ const Dashboard: React.FC = () => {
               <Col span={12}>
                 <Card
                   style={{ ...cardStyle, textAlign: "center" }}
-                  bodyStyle={{ padding: 12 }}
+                  styles={{ 
+                    body: { 
+                      padding: '12px' 
+                    } 
+                  }}
                 >
                   <div
                     style={{
@@ -322,7 +339,11 @@ const Dashboard: React.FC = () => {
               <Col span={12}>
                 <Card
                   style={{ ...cardStyle, textAlign: "center" }}
-                  bodyStyle={{ padding: 12 }}
+                  styles={{ 
+                    body: { 
+                      padding: '12px' 
+                    } 
+                  }}
                 >
                   <div
                     style={{
@@ -369,15 +390,19 @@ const Dashboard: React.FC = () => {
               width: "100%",
               height: "100%",
               border: `1px solid ${alpha(colors.primary, 0.2)}`,
+              cursor: "pointer",
             }}
-            bodyStyle={{
-              padding: 16,
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
+            styles={{
+              body: {
+                padding: '16px',
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+              }
             }}
+            onClick={() => handleMenuClick(item.path)}
           >
             <div
               style={{
@@ -409,9 +434,11 @@ const Dashboard: React.FC = () => {
             style={{ ...cardStyle, height: "100%" }}
             title={<span style={sectionTitleStyle}>Kết quả học tập</span>}
             extra={<Tag>HK3 (2021 - 2022)</Tag>}
-            headStyle={{
-              borderBottom: `1px solid ${colors.border}`,
-              color: colors.fg,
+            styles={{
+              header: {
+                borderBottom: `1px solid ${colors.border}`,
+                color: colors.fg,
+              }
             }}
           >
             <div style={{ width: "100%", height: 320 }}>
@@ -436,7 +463,7 @@ const Dashboard: React.FC = () => {
                     align="center"
                     iconType="circle"
                     iconSize={8}
-                    wrapperStyle={{ color: colors.fg }}
+                    wrapperStyle={{ color: colors.fg,bottom: 16 }}
                   />
                   <Bar
                     dataKey="myScore"
@@ -571,7 +598,11 @@ const Dashboard: React.FC = () => {
             style={{ ...cardStyle, height: "100%" }}
             title={<span style={sectionTitleStyle}>Lớp học phần</span>}
             extra={<Tag>HK1 (2025 - 2026)</Tag>}
-            headStyle={{ borderBottom: `1px solid ${colors.border}` }}
+            styles={{ 
+              header: { 
+                borderBottom: `1px solid ${colors.border}` 
+              }
+            }}
           >
             <div
               style={{
