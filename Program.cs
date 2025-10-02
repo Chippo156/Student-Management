@@ -60,6 +60,16 @@ builder.Services.AddScoped<IGpaSnapshotService, GpaSnapshotService>();
 builder.Services.AddScoped<IGradeService, GradeService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -69,6 +79,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 
 }
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 
