@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
@@ -62,6 +63,7 @@ namespace StudentManagement.Controllers
         }
 
         [HttpGet("byToken")]
+        [Authorize]
         public async Task<ActionResult<Student>> GetStudentByMSSV()
         {
             if (User.Identity is not { IsAuthenticated: true })

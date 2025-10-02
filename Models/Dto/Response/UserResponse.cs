@@ -11,5 +11,6 @@ namespace StudentManagement.Models.Dto.Response
         public string? Address { get; set; }
         public string? AvatarUrl { get; set; }
         public AccountStatus AccountStatus { get; set; } = AccountStatus.Active;
+        public required Role Role { get; set; }
     }
 }

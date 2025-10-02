@@ -50,7 +50,9 @@ namespace StudentManagement.Services
                     Phone = user.Phone,
                     Address = user.Address,
                     AccountStatus = user.AccountStatus,
-                    AvatarUrl = user.AvatarUrl
+                    AvatarUrl = user.AvatarUrl,
+                    Role = user.Role
+                    
                 }
             };
 

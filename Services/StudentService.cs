@@ -56,7 +56,8 @@ namespace StudentManagement.Services
                         Phone = s.User.Phone,
                         Address = s.User.Address,
                         AccountStatus = s.User.AccountStatus,
-                        AvatarUrl = s.User.AvatarUrl
+                        AvatarUrl = s.User.AvatarUrl,
+                        Role = s.User.Role
                     },
                     ClassName = s.Class.ClassName,
                 }).ToListAsync();
@@ -79,7 +80,8 @@ namespace StudentManagement.Services
                         Phone = s.User.Phone,
                         Address = s.User.Address,
                         AccountStatus = s.User.AccountStatus,
-                        AvatarUrl = s.User.AvatarUrl
+                        AvatarUrl = s.User.AvatarUrl,
+                        Role = s.User.Role
                     },
                     ClassName = s.Class.ClassName,
                     ProgramName = s.Class.Program.ProgramName,
@@ -109,6 +111,8 @@ namespace StudentManagement.Services
                         Email = e.Student.User.Email,
                         Phone = e.Student.User.Phone,
                         AccountStatus = e.Student.User.AccountStatus,
+                        AvatarUrl = e.Student.User.AvatarUrl,
+                        Role = e.Student.User.Role
                     },
                 })
                 .ToListAsync();
@@ -132,7 +136,8 @@ namespace StudentManagement.Services
                         Phone = s.User.Phone,
                         Address = s.User.Address,
                         AccountStatus = s.User.AccountStatus,
-                        AvatarUrl = s.User.AvatarUrl
+                        AvatarUrl = s.User.AvatarUrl,
+                        Role = s.User.Role
                     },
                     ClassName = s.Class.ClassName,
                     ProgramName = s.Class.Program.ProgramName,

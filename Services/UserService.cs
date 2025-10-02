@@ -23,6 +23,7 @@ namespace StudentManagement.Services
                     Address = u.Address,
                     AccountStatus = u.AccountStatus,
                     AvatarUrl = u.AvatarUrl,
+                    Role = u.Role
                 })
                 .ToListAsync();
         }
@@ -40,6 +41,7 @@ namespace StudentManagement.Services
                     Address = u.Address,
                     AccountStatus = u.AccountStatus,
                     AvatarUrl = u.AvatarUrl,
+                    Role = u.Role
                 })
                 .FirstOrDefaultAsync();
         }
@@ -87,6 +89,7 @@ namespace StudentManagement.Services
                 Address = existingUser.Address,
                 AccountStatus = existingUser.AccountStatus,
                 AvatarUrl = existingUser.AvatarUrl,
+                Role = existingUser.Role
             };
         }
 
