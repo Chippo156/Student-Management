@@ -42,7 +42,16 @@ namespace StudentManagement.Services
             return new LoginResponse
             {
                 Token = tokenResponse,
-                User = user
+                User = new UserResponse
+                {
+                    Username = user.Username,
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    Phone = user.Phone,
+                    Address = user.Address,
+                    AccountStatus = user.AccountStatus,
+                    AvatarUrl = user.AvatarUrl
+                }
             };
 
         }

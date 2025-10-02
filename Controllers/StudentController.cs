@@ -4,6 +4,7 @@ using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
+using System.Security.Claims;
 
 namespace StudentManagement.Controllers
 {
@@ -58,6 +59,27 @@ namespace StudentManagement.Controllers
         {
             var students = await studentService.GetStudentsBySectionIdAsync(sectionId);
             return Ok(ApiResponse.SuccessResponse(students, "Section students retrieved successfully"));
+        }
+
+        [HttpGet("byToken")]
+        public async Task<ActionResult<Student>> GetStudentByMSSV()
+        {
+            if (User.Identity is not { IsAuthenticated: true })
+            {
+                return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "User is not authenticated.", null));
+            }
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid user ID in token.", null));
+            }
+            var student = await studentService.GetStudentByMSSV(UserNameStr);
+            if (student is null)
+            {
+                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, "Student not found for the provided access token.", null));
+            }
+            return Ok(ApiResponse.SuccessResponse(student, "Student retrieved successfully"));
         }
 
     }

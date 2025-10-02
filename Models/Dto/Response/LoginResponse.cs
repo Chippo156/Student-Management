@@ -3,6 +3,6 @@
     public class LoginResponse
     {
         public required TokenResponse Token { get; set; }
-        public required User User { get; set; }
+        public required UserResponse User { get; set; }
     }
 }
