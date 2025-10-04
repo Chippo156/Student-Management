@@ -27,8 +27,12 @@ namespace StudentManagement.Services
             {
                 return null;
             }
-            if (new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, request.Password)
-                == PasswordVerificationResult.Failed)
+            //if (new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, request.Password)
+            //    == PasswordVerificationResult.Failed)
+            //{
+            //    return null;
+            //}
+            if (user.PasswordHash != request.Password)
             {
                 return null;
             }
