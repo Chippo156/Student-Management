@@ -1,4 +1,6 @@
-﻿namespace StudentManagement.Models
+﻿using System.Text.Json.Serialization;
+
+namespace StudentManagement.Models
 {
     public class Assessment
     {

@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
+using System.Security.Claims;
 
 namespace StudentManagement.Controllers
 {
@@ -60,6 +62,18 @@ namespace StudentManagement.Controllers
                 return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Grade with ID {id} not found.", null));
             }
             return Ok(ApiResponse.SuccessResponse(null, "Grade deleted successfully"));
+        }
+        [HttpGet("semeter/{semeter}")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<Grade>>> GetStudentSemesterGradesBySections(int semeter)
+        {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+            var grades = await gradeService.GetStudentSemesterGradesBySectionsAsync(UserNameStr, semeter);
+            return Ok(ApiResponse.SuccessResponse(grades, "Semeter-student grades retrieved successfully"));
         }
     }
 }

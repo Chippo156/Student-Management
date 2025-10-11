@@ -8,6 +8,8 @@
         public string? ClassName { get; set; } = null!;
         public string? ProgramName { get; set; }
         public string? DepartmentName { get; set; }
+        public int? YearOfAddmision { get; set; }
+        public string? TrainningLevel { get; set; }
     }
 
 }

@@ -13,6 +13,7 @@ namespace StudentManagement.Models
         public Gender Gender { get; set; } = Gender.MALE;
         public string Address { get; set; } = string.Empty;
         public string AvatarUrl { get; set; } = string.Empty;
+        public string? PlaceOfBirth { get; set; }
 
         public AccountStatus AccountStatus { get; set; } = AccountStatus.Active;
         public string RefreshToken { get; set; } = string.Empty;

@@ -137,11 +137,15 @@ namespace StudentManagement.Services
                         Address = s.User.Address,
                         AccountStatus = s.User.AccountStatus,
                         AvatarUrl = s.User.AvatarUrl,
-                        Role = s.User.Role
+                        Role = s.User.Role,
+                        PlaceOfBirth = s.User.PlaceOfBirth
+
                     },
                     ClassName = s.Class.ClassName,
                     ProgramName = s.Class.Program.ProgramName,
-                    DepartmentName = s.Class.Program.Department.DepartmentName
+                    DepartmentName = s.Class.Program.Department.DepartmentName,
+                    TrainningLevel = s.Class.Program.DegreeLevel,
+                    YearOfAddmision = s.YearOfAdmission
                 })
                 .FirstOrDefaultAsync();
 

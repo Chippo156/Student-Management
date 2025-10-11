@@ -1,5 +1,6 @@
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 
 namespace StudentManagement.Services.Interface
 {
@@ -11,5 +12,7 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<Grade>> GetGradesByStudentAsync(int studentId);
         Task<IEnumerable<Grade>> GetGradesByAssessmentAsync(int assessmentId);
         Task<IEnumerable<Grade>> GetGradesBySectionAndStudentAsync(int sectionId, int studentId);
+        Task<IEnumerable<Grade>> GetGradesBySemeterAndStudentAsync(int semeter, int studentId);
+        Task<IEnumerable<StudentSectionGradesResponse>> GetStudentSemesterGradesBySectionsAsync(string mssv, int semesterId);
     }
 }

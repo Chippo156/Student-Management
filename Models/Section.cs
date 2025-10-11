@@ -1,4 +1,6 @@
-﻿namespace StudentManagement.Models
+﻿using System.Text.Json.Serialization;
+
+namespace StudentManagement.Models
 {
     public class Section
     {
@@ -9,6 +11,7 @@
         public Class Class { get; set; } = null!;
         public DateOnly StartDate { get; set; }
         public DateOnly EndDate { get; set; }
+        [JsonIgnore]
         public ICollection<Assessment> Assessments { get; set; } = new List<Assessment>();
     }
 }
