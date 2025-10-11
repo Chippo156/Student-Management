@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
+using System.Security.Claims;
 
 namespace StudentManagement.Controllers
 {
@@ -30,12 +32,18 @@ namespace StudentManagement.Controllers
             }
         }
 
-        [HttpGet("student/{studentId}/semester/{semesterId}/credits")]
+        [HttpGet("semester/{semesterId}/credits")]
+        [Authorize]
         public async Task<IActionResult> GetStudentSemesterStatistics(int studentId, int semesterId)
         {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
             try
             {
-                var statistics = await _reportService.GetStudentSemesterStatisticsAsync(studentId, semesterId);
+                var statistics = await _reportService.GetStudentSemesterStatisticsAsync(UserNameStr, semesterId);
                 return Ok(ApiResponse.SuccessResponse(statistics, "Student semester statistics retrieved successfully"));
             }
             catch (Exception ex)

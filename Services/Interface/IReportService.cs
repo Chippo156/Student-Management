@@ -5,6 +5,6 @@ namespace StudentManagement.Services.Interface
     public interface IReportService
     {
         Task<CreditStatisticsResponse> GetStudentCreditStatisticsAsync(int studentId);
-        Task<SemesterCreditDetail> GetStudentSemesterStatisticsAsync(int studentId, int semesterId);
+        Task<SemesterCreditDetail> GetStudentSemesterStatisticsAsync(string mssv, int semesterId);
     }
 }

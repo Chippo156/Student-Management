@@ -119,12 +119,12 @@ namespace StudentManagement.Services
             return response;
         }
 
-        public async Task<SemesterCreditDetail> GetStudentSemesterStatisticsAsync(int studentId, int semesterId)
+        public async Task<SemesterCreditDetail> GetStudentSemesterStatisticsAsync(string mssv, int semesterId)
         {
             // Kiểm tra sinh viên tồn tại
             var student = await _context.Students
-                .FirstOrDefaultAsync(s => s.Id == studentId)
-                ?? throw new Exception($"Student with ID {studentId} not found");
+                .FirstOrDefaultAsync(s => s.MSSV == mssv)
+                ?? throw new Exception($"Student with ID {mssv} not found");
 
             // Kiểm tra học kỳ tồn tại
             var semester = await _context.Semesters
@@ -136,7 +136,7 @@ namespace StudentManagement.Services
                 .Include(fr => fr.Section)
                     .ThenInclude(s => s.Course)
                 .Include(fr => fr.Section.Semester)
-                .Where(fr => fr.Student.Id == studentId && fr.Section.Semester.SemesterId == semesterId)
+                .Where(fr => fr.Student.MSSV == mssv && fr.Section.Semester.SemesterId == semesterId)
                 .ToListAsync();
 
             // Lấy đăng ký học trong học kỳ
@@ -144,12 +144,12 @@ namespace StudentManagement.Services
                 .Include(e => e.Section)
                     .ThenInclude(s => s.Course)
                 .Include(e => e.Section.Semester)
-                .Where(e => e.Student.Id == studentId && e.Section.Semester.SemesterId == semesterId)
+                .Where(e => e.Student.MSSV == mssv && e.Section.Semester.SemesterId == semesterId)
                 .ToListAsync();
 
             // Lấy GPA của học kỳ
             var semesterGpa = await _context.GpaSnapshots
-                .FirstOrDefaultAsync(g => g.Student.Id == studentId && g.Semester.SemesterId == semesterId);
+                .FirstOrDefaultAsync(g => g.Student.MSSV == mssv && g.Semester.SemesterId == semesterId);
 
             // Tạo response
             var semesterDetail = new SemesterCreditDetail
