@@ -104,5 +104,19 @@ namespace StudentManagement.Controllers
             var schedules = await scheduleService.GetSchedulesByDateAndStudentAsync(date, UserNameStr, scheduleTypeId);
             return Ok(ApiResponse.SuccessResponse(schedules, "Schedules retrieved successfully"));
         }
+
+        [HttpGet("countSchedule")]
+        [Authorize]
+        public
+            async Task<IActionResult> countSchedule()
+        {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+            var count = await scheduleService.countSchedule(UserNameStr);
+            return Ok(ApiResponse.SuccessResponse(count, "Count retrieved successfully"));
+        }
     }
 }

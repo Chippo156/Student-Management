@@ -25,6 +25,51 @@ namespace StudentManagement.Services
             return roomConflicts;
         }
 
+        public async Task<CountSchedule> countSchedule(string mssv)
+        {
+            // Get the current date
+            DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+
+            // Determine the start and end date of the current week
+            int dayOfWeek = (int)today.DayOfWeek;
+            int daysToSubtract = dayOfWeek == 0 ? 6 : dayOfWeek - 1;
+
+            DateOnly weekStart = today.AddDays(-daysToSubtract); // Monday of current week
+            DateOnly weekEnd = weekStart.AddDays(6);             // Sunday of current week
+
+            // Get all sections that the student is enrolled in and are active in the current week
+            var studentSections = await context.Enrollments
+                .Where(e => e.Student.MSSV == mssv)
+                .Include(e => e.Section)
+                .Where(e => e.Section.StartDate <= weekEnd && e.Section.EndDate >= weekStart)
+                .Select(e => e.Section.SectionId)
+                .Distinct()
+                .ToListAsync();
+
+            if (studentSections.Count == 0)
+            {
+                return new CountSchedule { CountScheduleOfWeek = 0, CountTestOfWeek = 0 };
+            }
+
+            // Get all schedules for these sections
+            var schedules = await context.Schedules
+                .Include(s => s.ScheduleType)
+                .Where(s => studentSections.Contains(s.Section.SectionId))
+                .ToListAsync();
+
+            // Count regular class schedules (assuming schedule type id 1 is for regular classes)
+            int regularScheduleCount = schedules.Count(s => s.ScheduleType.ScheduleTypeId != 3);
+
+            // Count test schedules (assuming schedule type id 2 is for tests/exams)
+            int testScheduleCount = schedules.Count(s => s.ScheduleType.ScheduleTypeId == 3);
+
+            return new CountSchedule
+            {
+                CountScheduleOfWeek = regularScheduleCount,
+                CountTestOfWeek = testScheduleCount
+            };
+        }
+
         public async Task<Schedule> CreateScheduleAsync(ScheduleRequest request)
         {
             var section = await context.Sections.FindAsync(request.SectionId)
