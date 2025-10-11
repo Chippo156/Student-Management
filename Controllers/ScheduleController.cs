@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
 using System.Runtime.InteropServices;
+using System.Security.Claims;
 
 namespace StudentManagement.Controllers
 {
@@ -90,10 +92,16 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(null, "Schedule deleted successfully"));
         }
 
-        [HttpGet("GetByDate/{studentId}")]
-        public async Task<IActionResult> GetSchedulesByDate([FromQuery] DateOnly date, [FromQuery] int scheduleTypeId, int studentId)
+        [HttpGet("GetByDate")]
+        [Authorize]
+        public async Task<IActionResult> GetSchedulesByDate([FromQuery] DateOnly date, [FromQuery] int scheduleTypeId)
         {
-            var schedules = await scheduleService.GetSchedulesByDateAndStudentAsync(date, studentId, scheduleTypeId);
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+            var schedules = await scheduleService.GetSchedulesByDateAndStudentAsync(date, UserNameStr, scheduleTypeId);
             return Ok(ApiResponse.SuccessResponse(schedules, "Schedules retrieved successfully"));
         }
     }

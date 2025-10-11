@@ -99,7 +99,7 @@ namespace StudentManagement.Services
                 .FirstOrDefaultAsync(s => s.ScheduleId == scheduleId);
         }
 
-        public async Task<IEnumerable<Schedule>> GetSchedulesByDateAndStudentAsync(DateOnly date, int studentId, int scheduleTypeId)
+        public async Task<IEnumerable<Schedule>> GetSchedulesByDateAndStudentAsync(DateOnly date, string mssv, int scheduleTypeId)
         {
             var scheduleType = await context.ScheduleTypes.FindAsync(scheduleTypeId);
             // Xác định ngày đầu tuần (thứ 2) và ngày cuối tuần (chủ nhật) dựa trên ngày được truyền vào
@@ -114,7 +114,7 @@ namespace StudentManagement.Services
 
             // Lấy tất cả section ID mà sinh viên đã đăng ký và nằm trong khoảng thời gian hiệu lực
             var studentSections = await context.Enrollments
-                .Where(e => e.Student.Id == studentId)
+                .Where(e => e.Student.MSSV == mssv)
                 .Include(e => e.Section)
                 .Where(e =>
                     // Kiểm tra xem tuần hiện tại có nằm trong khoảng thời gian của section hay không
@@ -124,25 +124,24 @@ namespace StudentManagement.Services
                 .Distinct()
                 .ToListAsync();
 
-            // Truy vấn lịch học trong tuần đó với điều kiện là các lịch học của các section mà sinh viên đã đăng ký
-            return await context.Schedules
+            var result = await context.Schedules
                 .Where(s =>
                     // Chỉ lấy lịch học của các section mà sinh viên đã đăng ký và trong thời gian hiệu lực
                     studentSections.Contains(s.Section.SectionId) &&
-                    (
-                        // Lịch học một lần có Date nằm trong tuần
-                        (s.Date.HasValue && s.Date >= weekStart && s.Date <= weekEnd) ||
-                        // HOẶC lịch học định kỳ có DayOfWeek trong tuần
-                        (!s.Date.HasValue && s.DayOfWeek.HasValue &&
-                         weekStart.AddDays((int)s.DayOfWeek.Value) <= weekEnd)
-                    )
-                    && s.ScheduleType.ScheduleTypeId == scheduleTypeId
+                    //(
+                    //    // HOẶC lịch học định kỳ có DayOfWeek trong tuần
+                    //    (!s.Date.HasValue && s.DayOfWeek.HasValue &&
+                    //     weekStart.AddDays((int)s.DayOfWeek.Value) <= weekEnd)
+                    //)
+                    s.ScheduleType.ScheduleTypeId == scheduleTypeId
                 )
                 .Include(s => s.Section)
                     .ThenInclude(s => s.Course)
                 .Include(s => s.Section.Lecturer)
                     .ThenInclude(l => l.User)
                 .ToListAsync();
+            // Truy vấn lịch học trong tuần đó với điều kiện là các lịch học của các section mà sinh viên đã đăng ký
+            return result;
         }
 
 

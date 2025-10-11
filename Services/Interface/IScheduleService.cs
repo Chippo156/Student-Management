@@ -13,7 +13,7 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<Schedule>> GetSchedulesBySectionAsync(int sectionId);
         Task<IEnumerable<Schedule>> GetSchedulesByLecturerAsync(int lecturerId);
         Task<IEnumerable<Schedule>> GetSchedulesByStudentAsync(int studentId);
-        Task<IEnumerable<Schedule>> GetSchedulesByDateAndStudentAsync(DateOnly date, int studentId, int scheduleTypeId);
+        Task<IEnumerable<Schedule>> GetSchedulesByDateAndStudentAsync(DateOnly date, string mssv, int scheduleTypeId);
 
         Task<bool> CheckScheduleConflictsAsync(int sectionId, DateOnly? dateEvent, DayOfWeek? dayOfWeek, TimeOnly startTime, TimeOnly endTime, string room);
     }

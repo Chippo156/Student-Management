@@ -11,6 +11,7 @@ namespace StudentManagement.Services
 {
     public class UserService(AppDbContext context, IFileService fileService) : IUserService
     {
+
         public async Task<IEnumerable<UserResponse>> GetAllUsersAsync()
         {
             return await context.Users
@@ -92,7 +93,5 @@ namespace StudentManagement.Services
                 Role = existingUser.Role
             };
         }
-
-
     }
 }
