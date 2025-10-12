@@ -18,5 +18,6 @@ namespace StudentManagement.Services.Interface
 
         Task<bool> CheckScheduleConflictsAsync(int sectionId, DateOnly? dateEvent, DayOfWeek? dayOfWeek, TimeOnly startTime, TimeOnly endTime, string room);
         Task<CountSchedule> countSchedule(string mssv);
+        Task<IEnumerable<ScheduleType>> GetAllScheduleType();
     }
 }

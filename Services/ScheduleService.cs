@@ -135,6 +135,11 @@ namespace StudentManagement.Services
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<ScheduleType>> GetAllScheduleType()
+        {
+            return await context.ScheduleTypes.ToListAsync();
+        }
+
         public async Task<Schedule?> GetScheduleByIdAsync(int scheduleId)
         {
             return await context.Schedules

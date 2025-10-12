@@ -120,5 +120,13 @@ namespace StudentManagement.Controllers
             var count = await scheduleService.countSchedule(UserNameStr);
             return Ok(ApiResponse.SuccessResponse(count, "Count retrieved successfully"));
         }
+
+        [HttpGet("GetScheduleType")]
+        [Authorize]
+        public async Task<IActionResult> GetScheduleType()
+        {
+            var scheduleTypes = await scheduleService.GetAllScheduleType();
+            return Ok(ApiResponse.SuccessResponse(scheduleTypes, "Schedule types retrieved successfully"));
+        }
     }
 }
