@@ -59,6 +59,8 @@ builder.Services.AddScoped<IFinalResultService, FinalResultService>();
 builder.Services.AddScoped<IGpaSnapshotService, GpaSnapshotService>();
 builder.Services.AddScoped<IGradeService, GradeService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<ISemesterService, SemesterService>();
+
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddCors(options =>
