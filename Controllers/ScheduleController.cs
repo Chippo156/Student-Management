@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
+using StudentManagement.Extensions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
@@ -102,7 +103,8 @@ namespace StudentManagement.Controllers
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
             }
             var schedules = await scheduleService.GetSchedulesByDateAndStudentAsync(date, UserNameStr, scheduleTypeId);
-            return Ok(ApiResponse.SuccessResponse(schedules, "Schedules retrieved successfully"));
+            var responseList = schedules.ToResponseList();
+            return Ok(ApiResponse.SuccessResponse(responseList, "Schedules retrieved successfully"));
         }
 
         [HttpGet("countSchedule")]
