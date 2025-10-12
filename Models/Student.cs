@@ -9,6 +9,7 @@ namespace StudentManagement.Models
         public string MSSV { get; set; } = string.Empty;
         public Class Class { get; set; } = null!;
         public int YearOfAdmission { get; set; }
-        public string TrainningLevel { get; set; } = string.Empty;
+        public DateOnly? DateOfAdmission { get; set; }
+        public StudentStatus StudentStatus { get; set; } = StudentStatus.Active;
     }
 }

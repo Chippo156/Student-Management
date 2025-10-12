@@ -5,6 +5,7 @@ using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
 using System;
+using System.Runtime.ConstrainedExecution;
 
 namespace StudentManagement.Services
 {
@@ -124,6 +125,8 @@ namespace StudentManagement.Services
         {
             return await context.Students
                 .Where(s => s.MSSV == MSSV)
+                .Include(s => s.User)
+                .AsNoTracking()
                 .Select(s => new StudentDetailDto
                 {
                     StudentId = s.Id,
@@ -138,8 +141,20 @@ namespace StudentManagement.Services
                         AccountStatus = s.User.AccountStatus,
                         AvatarUrl = s.User.AvatarUrl,
                         Role = s.User.Role,
-                        PlaceOfBirth = s.User.PlaceOfBirth
-
+                        PlaceOfBirth = s.User.PlaceOfBirth,
+                        DateOfBirth = s.User.DateOfBirth,
+                        CitizenIdCard = s.User.CitizenIdCard,
+                        IssuedDate = s.User.IssuedDate,
+                        Object = s.User.Object,
+                        PolicyArea = s.User.PolicyArea,
+                        DateOfJoinUnion = s.User.DateOfJoinUnion,
+                        DateOfJoinParty = s.User.DateOfJoinParty,
+                        AccountNumber = s.User.AccountNumber,
+                        BankName = s.User.BankName,
+                        Branch = s.User.Branch,
+                        AccountHolderName = s.User.AccountHolderName,
+                        Religion = s.User.Religion,
+                        Gender = s.User.Gender
                     },
                     ClassName = s.Class.ClassName,
                     ProgramName = s.Class.Program.ProgramName,
@@ -148,8 +163,6 @@ namespace StudentManagement.Services
                     YearOfAddmision = s.YearOfAdmission
                 })
                 .FirstOrDefaultAsync();
-
-
         }
     }
 }
