@@ -124,17 +124,6 @@ export const authService = {
     }
   },
 
-  // Forgot Password
-  forgotPassword: async (data: ForgotPasswordRequest): Promise<any> => {
-    try {
-      const response = await axios.post("/api/v1/Auth/forgot-password", data);
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Forgot password failed');
-    }
-  },
-
-  // Introspect Token
   introspect: async (token: string): Promise<any> => {
     try {
       const response = await axios.post("/api/v1/Auth/introspect", { token });

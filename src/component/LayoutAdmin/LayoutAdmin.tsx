@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -13,7 +12,7 @@ import {
   IconButton,
   Tooltip,
   Typography,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -42,10 +41,9 @@ import {
   TrendingUp as TrendingUpIcon,
   Notifications as NotificationsIcon,
   Announcement as AnnouncementIcon,
-  Email as EmailIcon
+  Email as EmailIcon,
 } from "@mui/icons-material";
 import HeaderPage from "../Header";
-import Footer from "../Footer";
 
 interface MenuItem {
   label: string;
@@ -60,11 +58,11 @@ interface OpenMenusState {
 }
 
 const menuData: MenuItem[] = [
-  { 
-    label: "Dashboard", 
-    icon: <DashboardIcon />, 
-    key: "dashboard", 
-    path: "/admin" 
+  {
+    label: "Dashboard",
+    icon: <DashboardIcon />,
+    key: "dashboard",
+    path: "/admin",
   },
   {
     label: "Quản lý Tài khoản",
@@ -72,10 +70,25 @@ const menuData: MenuItem[] = [
     key: "account-management",
     path: "/admin/account-management",
     children: [
-      { label: "Danh sách tài khoản", icon: <GroupIcon />, key: "users", path: "/admin/users" },
-      { label: "Tạo tài khoản mới", icon: <PersonAddIcon />, key: "create-user", path: "/admin/create-user" },
-      { label: "Quản lý profile", icon: <FolderSharedIcon />, key: "user-profiles", path: "/admin/user-profiles" }
-    ]
+      {
+        label: "Danh sách tài khoản",
+        icon: <GroupIcon />,
+        key: "users",
+        path: "/admin/users",
+      },
+      {
+        label: "Tạo tài khoản mới",
+        icon: <PersonAddIcon />,
+        key: "create-user",
+        path: "/admin/create-user",
+      },
+      {
+        label: "Quản lý profile",
+        icon: <FolderSharedIcon />,
+        key: "user-profiles",
+        path: "/admin/user-profiles",
+      },
+    ],
   },
   {
     label: "Quản lý Hồ sơ Sinh viên",
@@ -83,22 +96,57 @@ const menuData: MenuItem[] = [
     key: "student-management",
     path: "/admin/student-management",
     children: [
-      { label: "Danh sách sinh viên", icon: <PeopleIcon />, key: "students", path: "/admin/students" },
-      { label: "Hồ sơ sinh viên", icon: <FolderSharedIcon />, key: "student-profiles", path: "/admin/student-profiles" },
-      { label: "Thông tin cá nhân", icon: <AccountBoxIcon />, key: "student-info", path: "/admin/student-info" }
-    ]
+      {
+        label: "Danh sách sinh viên",
+        icon: <PeopleIcon />,
+        key: "students",
+        path: "/admin/students",
+      },
+      {
+        label: "Hồ sơ sinh viên",
+        icon: <FolderSharedIcon />,
+        key: "student-profiles",
+        path: "/admin/student-profiles",
+      },
+      {
+        label: "Thông tin cá nhân",
+        icon: <AccountBoxIcon />,
+        key: "student-info",
+        path: "/admin/student-info",
+      },
+    ],
   },
   {
     label: "Quản lý Đào tạo",
     icon: <SchoolIcon />,
     key: "education-management",
-    path: "/admin/education-management", 
+    path: "/admin/education-management",
     children: [
-      { label: "Quản lý môn học", icon: <MenuBookIcon />, key: "courses", path: "/admin/courses" },
-      { label: "Quản lý lớp học", icon: <ClassIcon />, key: "classes", path: "/admin/classes" },
-      { label: "Chương trình đào tạo", icon: <SchoolIcon />, key: "curriculum", path: "/admin/curriculum" },
-      { label: "Lịch học", icon: <AssignmentIcon />, key: "schedule", path: "/admin/schedule" }
-    ]
+      {
+        label: "Quản lý môn học",
+        icon: <MenuBookIcon />,
+        key: "courses",
+        path: "/admin/courses",
+      },
+      {
+        label: "Quản lý lớp học",
+        icon: <ClassIcon />,
+        key: "classes",
+        path: "/admin/classes",
+      },
+      {
+        label: "Chương trình đào tạo",
+        icon: <SchoolIcon />,
+        key: "curriculum",
+        path: "/admin/curriculum",
+      },
+      {
+        label: "Lịch học",
+        icon: <AssignmentIcon />,
+        key: "schedule",
+        path: "/admin/schedule",
+      },
+    ],
   },
   {
     label: "Phân quyền",
@@ -106,10 +154,25 @@ const menuData: MenuItem[] = [
     key: "permission-management",
     path: "/admin/permission-management",
     children: [
-      { label: "Quản lý vai trò", icon: <AdminPanelSettingsIcon />, key: "roles", path: "/admin/roles" },
-      { label: "Phân quyền người dùng", icon: <SecurityIcon />, key: "user-permissions", path: "/admin/user-permissions" },
-      { label: "Cài đặt bảo mật", icon: <TuneIcon />, key: "security-settings", path: "/admin/security-settings" }
-    ]
+      {
+        label: "Quản lý vai trò",
+        icon: <AdminPanelSettingsIcon />,
+        key: "roles",
+        path: "/admin/roles",
+      },
+      {
+        label: "Phân quyền người dùng",
+        icon: <SecurityIcon />,
+        key: "user-permissions",
+        path: "/admin/user-permissions",
+      },
+      {
+        label: "Cài đặt bảo mật",
+        icon: <TuneIcon />,
+        key: "security-settings",
+        path: "/admin/security-settings",
+      },
+    ],
   },
   {
     label: "Quản lý Học phí",
@@ -117,21 +180,51 @@ const menuData: MenuItem[] = [
     key: "tuition-management",
     path: "/admin/tuition-management",
     children: [
-      { label: "Danh sách học phí", icon: <PaymentIcon />, key: "tuition-list", path: "/admin/tuition-list" },
-      { label: "Thanh toán", icon: <ReceiptIcon />, key: "payments", path: "/admin/payments" },
-      { label: "Báo cáo tài chính", icon: <AssessmentIcon />, key: "financial-reports", path: "/admin/financial-reports" }
-    ]
+      {
+        label: "Danh sách học phí",
+        icon: <PaymentIcon />,
+        key: "tuition-list",
+        path: "/admin/tuition-list",
+      },
+      {
+        label: "Thanh toán",
+        icon: <ReceiptIcon />,
+        key: "payments",
+        path: "/admin/payments",
+      },
+      {
+        label: "Báo cáo tài chính",
+        icon: <AssessmentIcon />,
+        key: "financial-reports",
+        path: "/admin/financial-reports",
+      },
+    ],
   },
   {
     label: "Quản lý Điểm số",
     icon: <GradeIcon />,
-    key: "grade-management", 
+    key: "grade-management",
     path: "/admin/grade-management",
     children: [
-      { label: "Nhập điểm", icon: <GradeIcon />, key: "grades", path: "/admin/grades" },
-      { label: "Bảng điểm", icon: <AssessmentIcon />, key: "grade-sheets", path: "/admin/grade-sheets" },
-      { label: "Thống kê điểm", icon: <BarChartIcon />, key: "grade-statistics", path: "/admin/grade-statistics" }
-    ]
+      {
+        label: "Nhập điểm",
+        icon: <GradeIcon />,
+        key: "grades",
+        path: "/admin/grades",
+      },
+      {
+        label: "Bảng điểm",
+        icon: <AssessmentIcon />,
+        key: "grade-sheets",
+        path: "/admin/grade-sheets",
+      },
+      {
+        label: "Thống kê điểm",
+        icon: <BarChartIcon />,
+        key: "grade-statistics",
+        path: "/admin/grade-statistics",
+      },
+    ],
   },
   {
     label: "Báo cáo Thống kê",
@@ -139,10 +232,25 @@ const menuData: MenuItem[] = [
     key: "reports-statistics",
     path: "/admin/reports-statistics",
     children: [
-      { label: "Báo cáo sinh viên", icon: <AssessmentIcon />, key: "student-reports", path: "/admin/student-reports" },
-      { label: "Báo cáo học tập", icon: <BarChartIcon />, key: "academic-reports", path: "/admin/academic-reports" },
-      { label: "Thống kê hệ thống", icon: <TrendingUpIcon />, key: "system-statistics", path: "/admin/system-statistics" }
-    ]
+      {
+        label: "Báo cáo sinh viên",
+        icon: <AssessmentIcon />,
+        key: "student-reports",
+        path: "/admin/student-reports",
+      },
+      {
+        label: "Báo cáo học tập",
+        icon: <BarChartIcon />,
+        key: "academic-reports",
+        path: "/admin/academic-reports",
+      },
+      {
+        label: "Thống kê hệ thống",
+        icon: <TrendingUpIcon />,
+        key: "system-statistics",
+        path: "/admin/system-statistics",
+      },
+    ],
   },
   {
     label: "Quản lý Thông báo",
@@ -150,17 +258,32 @@ const menuData: MenuItem[] = [
     key: "notification-management",
     path: "/admin/notification-management",
     children: [
-      { label: "Gửi thông báo", icon: <AnnouncementIcon />, key: "send-notifications", path: "/admin/send-notifications" },
-      { label: "Lịch sử thông báo", icon: <NotificationsIcon />, key: "notification-history", path: "/admin/notification-history" },
-      { label: "Cài đặt email", icon: <EmailIcon />, key: "email-settings", path: "/admin/email-settings" }
-    ]
+      {
+        label: "Gửi thông báo",
+        icon: <AnnouncementIcon />,
+        key: "send-notifications",
+        path: "/admin/send-notifications",
+      },
+      {
+        label: "Lịch sử thông báo",
+        icon: <NotificationsIcon />,
+        key: "notification-history",
+        path: "/admin/notification-history",
+      },
+      {
+        label: "Cài đặt email",
+        icon: <EmailIcon />,
+        key: "email-settings",
+        path: "/admin/email-settings",
+      },
+    ],
   },
-  { 
-    label: "Cài đặt hệ thống", 
-    icon: <SettingsIcon />, 
-    key: "settings", 
-    path: "/admin/settings" 
-  }
+  {
+    label: "Cài đặt hệ thống",
+    icon: <SettingsIcon />,
+    key: "settings",
+    path: "/admin/settings",
+  },
 ];
 
 const LayoutAdmin: React.FC = () => {
@@ -175,7 +298,7 @@ const LayoutAdmin: React.FC = () => {
     const currentPath = location.pathname;
     // Tìm menu item phù hợp với đường dẫn hiện tại
     let foundKey = "dashboard";
-    
+
     for (const item of menuData) {
       if (item.path === currentPath) {
         foundKey = item.key;
@@ -186,22 +309,22 @@ const LayoutAdmin: React.FC = () => {
           if (child.path === currentPath) {
             foundKey = child.key;
             // Mở menu cha
-            setOpenMenus(prev => ({ ...prev, [item.key]: true }));
+            setOpenMenus((prev) => ({ ...prev, [item.key]: true }));
             break;
           }
         }
       }
     }
-    
+
     setSelectedKey(foundKey);
   }, [location.pathname]);
 
   const handleMenuClick = (item: MenuItem) => {
     if (item.children && item.children.length > 0) {
       // Toggle submenu
-      setOpenMenus(prev => ({
+      setOpenMenus((prev) => ({
         ...prev,
-        [item.key]: !prev[item.key]
+        [item.key]: !prev[item.key],
       }));
     } else {
       // Navigate to page
@@ -220,44 +343,44 @@ const LayoutAdmin: React.FC = () => {
         <ListItemButton
           selected={isSelected}
           onClick={() => handleMenuClick(item)}
-          sx={{ 
-            justifyContent: collapsed ? "center" : "flex-start", 
-            px: collapsed ? 1 : (isChild ? 3 : 2),
-            pl: collapsed ? 1 : (isChild ? 4 : 2),
-            minHeight: 48
+          sx={{
+            justifyContent: collapsed ? "center" : "flex-start",
+            px: collapsed ? 1 : isChild ? 3 : 2,
+            pl: collapsed ? 1 : isChild ? 4 : 2,
+            minHeight: 48,
           }}
         >
-          <ListItemIcon 
-            sx={{ 
-              color: theme.palette.text.primary, 
-              minWidth: 0, 
-              mr: collapsed ? 0 : 2, 
+          <ListItemIcon
+            sx={{
+              color: theme.palette.text.primary,
+              minWidth: 0,
+              mr: collapsed ? 0 : 2,
               justifyContent: "center",
-              fontSize: isChild ? '1.2rem' : '1.5rem'
+              fontSize: isChild ? "1.2rem" : "1.5rem",
             }}
           >
             {item.icon}
           </ListItemIcon>
           {!collapsed && (
             <>
-              <ListItemText 
-                primary={item.label} 
-                sx={{ 
-                  fontSize: isChild ? '0.875rem' : '1rem',
-                  '& .MuiListItemText-primary': {
-                    fontSize: isChild ? '0.875rem' : '1rem'
-                  }
+              <ListItemText
+                primary={item.label}
+                sx={{
+                  fontSize: isChild ? "0.875rem" : "1rem",
+                  "& .MuiListItemText-primary": {
+                    fontSize: isChild ? "0.875rem" : "1rem",
+                  },
                 }}
               />
               {hasChildren && (isOpen ? <ExpandLess /> : <ExpandMore />)}
             </>
           )}
         </ListItemButton>
-        
+
         {hasChildren && !collapsed && (
           <Collapse in={isOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {item.children?.map(child => renderMenuItem(child, true))}
+              {item.children?.map((child) => renderMenuItem(child, true))}
             </List>
           </Collapse>
         )}
@@ -269,7 +392,13 @@ const LayoutAdmin: React.FC = () => {
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <HeaderPage />
       <Container maxWidth="xl" disableGutters sx={{ flexGrow: 1 }}>
-        <Box sx={{ display: "flex", minHeight: "calc(100vh - 64px)", bgcolor: "background.default" }}>
+        <Box
+          sx={{
+            display: "flex",
+            minHeight: "calc(100vh - 64px)",
+            bgcolor: "background.default",
+          }}
+        >
           {/* Sidebar */}
           <Paper
             elevation={2}
@@ -286,11 +415,17 @@ const LayoutAdmin: React.FC = () => {
             }}
           >
             <List component="nav" sx={{ flex: 1 }}>
-              {menuData.map(item => renderMenuItem(item))}
+              {menuData.map((item) => renderMenuItem(item))}
             </List>
             <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
-              <Tooltip title={collapsed ? "Mở rộng menu" : "Thu gọn menu"} placement="right">
-                <IconButton onClick={() => setCollapsed((v) => !v)} size="small">
+              <Tooltip
+                title={collapsed ? "Mở rộng menu" : "Thu gọn menu"}
+                placement="right"
+              >
+                <IconButton
+                  onClick={() => setCollapsed((v) => !v)}
+                  size="small"
+                >
                   {collapsed ? <MenuIcon /> : <MenuOpenIcon />}
                 </IconButton>
               </Tooltip>
@@ -302,7 +437,6 @@ const LayoutAdmin: React.FC = () => {
           </Box>
         </Box>
       </Container>
-      <Footer />
     </Box>
   );
 };

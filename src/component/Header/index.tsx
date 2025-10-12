@@ -78,12 +78,11 @@ const HeaderPage: React.FC = () => {
     const userRoleId = account.role.roleId;
     switch (userRoleId) {
       case 1:
-      case 4: // Admin
         return "/admin";
       case 2: // Teacher
-        return "/teacher";
-      case 3: // Student
         return "/student";
+      case 3: // Student
+        return "/teacher";
       default:
         return "/login";
     }
@@ -95,12 +94,11 @@ const HeaderPage: React.FC = () => {
     const userRoleId = account.role.roleId;
     switch (userRoleId) {
       case 1:
-      case 4:
         return "Quản trị viên";
       case 2:
-        return "Giảng viên";
-      case 3:
         return "Sinh viên";
+      case 3:
+        return "Giảng viên";
       default:
         return account.role.roleName;
     }

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Card, Row, Col, Tag, Button } from "antd";
 import {
   CalendarOutlined,
@@ -28,6 +28,9 @@ import {
 } from "recharts";
 import { useTheme, alpha } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import { userService } from "../../../service/userService";
+import reportService from "../../../service/reportService";
+import scheduleService from "../../../service/scheduleService";
 
 interface SubjectData {
   subject: string;
@@ -35,17 +38,20 @@ interface SubjectData {
   avgScore: number;
 }
 
-const academicData: SubjectData[] = [
-  { subject: "Cấu trúc dữ liệu", myScore: 8.9, avgScore: 6.9 },
-  { subject: "Cơ sở dữ liệu", myScore: 9.5, avgScore: 8.2 },
-  { subject: "Mạng máy tính", myScore: 8.2, avgScore: 8.1 },
-  { subject: "Hệ điều hành", myScore: 9.0, avgScore: 8.3 },
-  { subject: "Lập trình Web", myScore: 10, avgScore: 9.0 },
-];
-
 const Dashboard: React.FC = () => {
   const muiTheme = useTheme();
   const navigate = useNavigate();
+
+  const [student, setStudent] = useState<any>(null);
+  const [semesterReport, setSemesterReport] = useState<any>(null);
+  const [scheduleCount, setScheduleCount] = useState<{
+    countScheduleOfWeek: number;
+    countTestOfWeek: number;
+  }>({
+    countScheduleOfWeek: 0,
+    countTestOfWeek: 0,
+  });
+  const [loading, setLoading] = useState(false);
 
   const colors = useMemo(() => {
     const p = muiTheme.palette;
@@ -82,21 +88,49 @@ const Dashboard: React.FC = () => {
   };
 
   const menuItems = [
-    { icon: <CalendarOutlined />, text: "Lịch theo tuần", path: "/student/schedule" },
-    { icon: <BarChartOutlined />, text: "Kết quả học tập", path: "/student/grades" },
-    { icon: <FileTextOutlined />, text: "Đăng ký học phần", path: "/student/register-courses" },
+    {
+      icon: <CalendarOutlined />,
+      text: "Lịch theo tuần",
+      path: "/student/schedule",
+    },
+    {
+      icon: <BarChartOutlined />,
+      text: "Kết quả học tập",
+      path: "/student/grades",
+    },
+    {
+      icon: <FileTextOutlined />,
+      text: "Đăng ký học phần",
+      path: "/student/register-courses",
+    },
     { icon: <ReadOutlined />, text: "Hồ sơ điện tử", path: "/student/info" },
-    { icon: <DollarOutlined />, text: "Tra cứu công nợ", path: "/student/debt" },
-    { icon: <CreditCardOutlined />, text: "Thanh toán trực tuyến", path: "/student/payment" },
-    { icon: <FileTextOutlined />, text: "Phiếu thu tổng hợp", path: "/student/receipt" },
-    { icon: <ClockCircleOutlined />, text: "Lịch theo tiến độ", path: "/student/progress-schedule" },
-    { icon: <BellOutlined />, text: "Nhắc nhở", path: "/student/notifications" },
+    {
+      icon: <DollarOutlined />,
+      text: "Tra cứu công nợ",
+      path: "/student/debt",
+    },
+    {
+      icon: <CreditCardOutlined />,
+      text: "Thanh toán trực tuyến",
+      path: "/student/payment",
+    },
+    {
+      icon: <FileTextOutlined />,
+      text: "Phiếu thu tổng hợp",
+      path: "/student/receipt",
+    },
+    {
+      icon: <ClockCircleOutlined />,
+      text: "Lịch theo tiến độ",
+      path: "/student/progress-schedule",
+    },
+    {
+      icon: <BellOutlined />,
+      text: "Nhắc nhở",
+      path: "/student/notifications",
+    },
     { icon: <MessageOutlined />, text: "Khảo sát", path: "/student/survey" },
   ];
-
-  const handleMenuClick = (path: string) => {
-    navigate(path);
-  };
 
   const [hoveredRing, setHoveredRing] = useState<"inner" | "outer" | null>(
     null
@@ -116,6 +150,36 @@ const Dashboard: React.FC = () => {
     [colors]
   );
 
+  useEffect(() => {
+    const fetchAll = async () => {
+      setLoading(true);
+      try {
+        const [studentRes, reportRes, scheduleRes] = await Promise.all([
+          userService.getUserInfo(),
+          reportService.getSemesterCredits("1"),
+          scheduleService.countScheduleOfWeek(),
+        ]);
+        setStudent(studentRes);
+        setSemesterReport(reportRes.data);
+        setScheduleCount(scheduleRes.data);
+      } catch {
+        setStudent(null);
+        setSemesterReport(null);
+        setScheduleCount({ countScheduleOfWeek: 0, countTestOfWeek: 0 });
+      }
+      setLoading(false);
+    };
+    fetchAll();
+  }, []);
+
+  const academicData: SubjectData[] = semesterReport?.courses
+    ? semesterReport.courses.map((course: any) => ({
+        subject: course.courseName,
+        myScore: course.gradePoint,
+        avgScore: course.classAverageScore,
+      }))
+    : [];
+
   return (
     <div style={{ minHeight: "100vh", padding: 24, background: colors.bgPage }}>
       {/* Header */}
@@ -126,7 +190,7 @@ const Dashboard: React.FC = () => {
               Dashboard
             </h1>
             <div style={{ ...subTextStyle, marginTop: 4 }}>
-              Chào mừng trở lại, Ngô Quốc Đạt
+              Chào mừng trở lại, {student?.user?.fullName || "Sinh viên"}
             </div>
           </div>
         </Col>
@@ -150,11 +214,24 @@ const Dashboard: React.FC = () => {
                       alignItems: "center",
                       justifyContent: "center",
                       boxShadow: `0 10px 25px ${alpha(colors.primary, 0.25)}`,
+                      overflow: "hidden",
                     }}
                   >
-                    <UserOutlined
-                      style={{ fontSize: 42, color: colors.primaryContrast }}
-                    />
+                    {student?.user?.avatarUrl ? (
+                      <img
+                        src={student.user.avatarUrl}
+                        alt="avatar"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <UserOutlined
+                        style={{ fontSize: 42, color: colors.primaryContrast }}
+                      />
+                    )}
                   </div>
                   <span
                     style={{
@@ -182,31 +259,43 @@ const Dashboard: React.FC = () => {
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           MSSV:
                         </span>
-                        <strong>21100801</strong>
+                        <strong>{student?.mssv || "Chưa có"}</strong>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Họ tên:
                         </span>
-                        <strong>Ngô Quốc Đạt</strong>
+                        <strong>{student?.user?.fullName || "Chưa có"}</strong>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Giới tính:
                         </span>
-                        <span style={{ color: colors.secondary }}>Nam</span>
-                      </div>
-                      <div>
-                        <span style={{ ...subTextStyle, marginRight: 6 }}>
-                          Ngày sinh:
+                        <span style={{ color: colors.secondary }}>
+                          {student?.user?.gender === 0
+                            ? "Nam"
+                            : student?.user?.gender === 1
+                            ? "Nữ"
+                            : "Chưa có"}
                         </span>
-                        <span>08/10/2003</span>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Nơi sinh:
                         </span>
-                        <span>Tỉnh Khánh Hòa</span>
+                        <span>{student?.user?.placeOfBirth || "Chưa có"}</span>
+                      </div>
+                      <div>
+                        <span style={{ ...subTextStyle, marginRight: 6 }}>
+                          SĐT:
+                        </span>
+                        <span>{student?.user?.phone || "Chưa có"}</span>
+                      </div>
+                      <div>
+                        <span style={{ ...subTextStyle, marginRight: 6 }}>
+                          Địa chỉ:
+                        </span>
+                        <span>{student?.user?.address || "Chưa có"}</span>
                       </div>
                     </div>
                   </Col>
@@ -214,37 +303,53 @@ const Dashboard: React.FC = () => {
                     <div style={{ display: "grid", rowGap: 8 }}>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
+                          Email:
+                        </span>
+                        <span>{student?.user?.email || "Chưa có"}</span>
+                      </div>
+                      <div>
+                        <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Lớp học:
                         </span>
                         <strong style={{ color: colors.primary }}>
-                          DHKTPM17C
+                          {student?.className || "Chưa có"}
                         </strong>
-                      </div>
-                      <div>
-                        <span style={{ ...subTextStyle, marginRight: 6 }}>
-                          Khóa học:
-                        </span>
-                        <span>2021 - 2022</span>
-                      </div>
-                      <div>
-                        <span style={{ ...subTextStyle, marginRight: 6 }}>
-                          Bậc đào tạo:
-                        </span>
-                        <span style={{ color: colors.success }}>Đại học</span>
-                      </div>
-                      <div>
-                        <span style={{ ...subTextStyle, marginRight: 6 }}>
-                          Loại hình:
-                        </span>
-                        <span style={{ color: colors.warning }}>Chính quy</span>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Ngành:
                         </span>
                         <strong style={{ color: colors.primary }}>
-                          Kỹ thuật phần mềm
+                          {student?.programName || "Chưa có"}
                         </strong>
+                      </div>
+                      <div>
+                        <span style={{ ...subTextStyle, marginRight: 6 }}>
+                          Bộ môn:
+                        </span>
+                        <span>{student?.departmentName || "Chưa có"}</span>
+                      </div>
+                      <div>
+                        <span style={{ ...subTextStyle, marginRight: 6 }}>
+                          Bậc đào tạo:
+                        </span>
+                        <span style={{ color: colors.success }}>
+                          {student?.trainningLevel === "Bachelor"
+                            ? "Đại học"
+                            : student?.trainningLevel || "Chưa có"}
+                        </span>
+                      </div>
+                      <div>
+                        <span style={{ ...subTextStyle, marginRight: 6 }}>
+                          Khóa học:
+                        </span>
+                        <span>
+                          {student?.yearOfAddmision
+                            ? `${student.yearOfAddmision}-${
+                                student.yearOfAddmision + 4
+                              }`
+                            : "Chưa có"}
+                        </span>
                       </div>
                     </div>
                   </Col>
@@ -254,7 +359,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Col>
 
-        {/* Right column */}
+        {/* Right column: Thay thế số lịch học/lịch thi bằng dữ liệu từ API */}
         <Col xs={24} lg={8}>
           <div
             style={{
@@ -265,12 +370,12 @@ const Dashboard: React.FC = () => {
             }}
           >
             {/* Nhắc nhở */}
-            <Card 
-              style={cardStyle} 
-              styles={{ 
-                body: { 
-                  padding: '12px' 
-                } 
+            <Card
+              style={cardStyle}
+              styles={{
+                body: {
+                  padding: "12px",
+                },
               }}
             >
               <Row align="middle" justify="space-between">
@@ -305,15 +410,15 @@ const Dashboard: React.FC = () => {
               </Button>
             </Card>
 
-            {/* 2 card nhỏ */}
+            {/* 2 card nhỏ: Lịch học/lịch thi tuần */}
             <Row gutter={[16, 16]}>
               <Col span={12}>
                 <Card
                   style={{ ...cardStyle, textAlign: "center" }}
-                  styles={{ 
-                    body: { 
-                      padding: '12px' 
-                    } 
+                  styles={{
+                    body: {
+                      padding: "12px",
+                    },
                   }}
                 >
                   <div
@@ -333,16 +438,18 @@ const Dashboard: React.FC = () => {
                   <div style={{ ...subTextStyle, marginBottom: 4 }}>
                     Lịch học
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 700 }}>0</div>
+                  <div style={{ fontSize: 18, fontWeight: 700 }}>
+                    {loading ? "..." : scheduleCount.countScheduleOfWeek}
+                  </div>
                 </Card>
               </Col>
               <Col span={12}>
                 <Card
                   style={{ ...cardStyle, textAlign: "center" }}
-                  styles={{ 
-                    body: { 
-                      padding: '12px' 
-                    } 
+                  styles={{
+                    body: {
+                      padding: "12px",
+                    },
                   }}
                 >
                   <div
@@ -362,7 +469,9 @@ const Dashboard: React.FC = () => {
                   <div style={{ ...subTextStyle, marginBottom: 4 }}>
                     Lịch thi
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 700 }}>0</div>
+                  <div style={{ fontSize: 18, fontWeight: 700 }}>
+                    {loading ? "..." : scheduleCount.countTestOfWeek}
+                  </div>
                 </Card>
               </Col>
             </Row>
@@ -394,15 +503,15 @@ const Dashboard: React.FC = () => {
             }}
             styles={{
               body: {
-                padding: '16px',
+                padding: "16px",
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-              }
+              },
             }}
-            onClick={() => handleMenuClick(item.path)}
+            onClick={() => navigate(item.path)}
           >
             <div
               style={{
@@ -433,12 +542,18 @@ const Dashboard: React.FC = () => {
           <Card
             style={{ ...cardStyle, height: "100%" }}
             title={<span style={sectionTitleStyle}>Kết quả học tập</span>}
-            extra={<Tag>HK3 (2021 - 2022)</Tag>}
+            extra={
+              <Tag>
+                {semesterReport?.semesterName
+                  ? semesterReport.semesterName
+                  : "Học kỳ"}
+              </Tag>
+            }
             styles={{
               header: {
                 borderBottom: `1px solid ${colors.border}`,
                 color: colors.fg,
-              }
+              },
             }}
           >
             <div style={{ width: "100%", height: 320 }}>
@@ -463,7 +578,7 @@ const Dashboard: React.FC = () => {
                     align="center"
                     iconType="circle"
                     iconSize={8}
-                    wrapperStyle={{ color: colors.fg,bottom: 16 }}
+                    wrapperStyle={{ color: colors.fg, bottom: 16 }}
                   />
                   <Bar
                     dataKey="myScore"
@@ -480,6 +595,15 @@ const Dashboard: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+            {/* Hiển thị thêm GPA nếu có */}
+            {semesterReport?.semesterGPA && (
+              <div style={{ marginTop: 16, fontWeight: 600 }}>
+                GPA học kỳ:{" "}
+                <span style={{ color: colors.primary }}>
+                  {semesterReport.semesterGPA}
+                </span>
+              </div>
+            )}
           </Card>
         </Col>
 
@@ -598,10 +722,10 @@ const Dashboard: React.FC = () => {
             style={{ ...cardStyle, height: "100%" }}
             title={<span style={sectionTitleStyle}>Lớp học phần</span>}
             extra={<Tag>HK1 (2025 - 2026)</Tag>}
-            styles={{ 
-              header: { 
-                borderBottom: `1px solid ${colors.border}` 
-              }
+            styles={{
+              header: {
+                borderBottom: `1px solid ${colors.border}`,
+              },
             }}
           >
             <div

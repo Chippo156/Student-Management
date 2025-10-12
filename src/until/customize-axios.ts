@@ -48,8 +48,11 @@ const handleRefreshToken = async (): Promise<string | null> => {
 // Add a request interceptor
 instance.interceptors.request.use(
   (config: AxiosRequestConfig): AxiosRequestConfig => {
+    // Only attach Authorization for non-public routes
+    const publicPaths = ["/api/v1/Auth/login", "/api/v1/Auth/register", "/api/v1/Auth/forgot-password", "/api/v1/Auth/refresh-token"];
+    const isPublic = publicPaths.some((path) => config.url?.includes(path));
     const token = localStorage.getItem("access_token");
-    if (token && config.headers) {
+    if (!isPublic && token && config.headers) {
       config.headers["Authorization"] = `Bearer ${token}`;
     } else if (config.headers) {
       delete config.headers["Authorization"];

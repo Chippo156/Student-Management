@@ -1,50 +1,48 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAppSelector } from '../redux/hooks';
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAppSelector } from "../redux/hooks";
 
 // Import components
-import ProtectedRoute from '../component/ProtectedRoute';
-import AuthLoader from '../component/AuthLoader';
+import ProtectedRoute from "../component/ProtectedRoute";
+import AuthLoader from "../component/AuthLoader";
 
 // Import pages
-import Home from '../page/Home';
-import Login from '../page/Login';
-import Register from '../page/Register';
-import Forgot from '../page/Forgot';
+import Home from "../page/Home";
+import Login from "../page/Login";
 
 // Admin pages
-import AdminDashboard from '../page/Admin/Dashboard';
-import UserManagement from '../page/Admin/UserManagement';
-import CourseManagement from '../page/Admin/CourseManagement';
-import SystemSettings from '../page/Admin/SystemSettings';
-import CreateUser from '../page/Admin/CreateUser';
-import UserProfiles from '../page/Admin/UserProfiles';
-import StudentProfiles from '../page/Admin/StudentProfiles';
-import AdminStudentInfo from '../page/Admin/StudentInfo';
-import Classes from '../page/Admin/Classes';
-import TuitionList from '../page/Admin/TuitionList';
-import SendNotifications from '../page/Admin/SendNotifications';
+import AdminDashboard from "../page/Admin/Dashboard";
+import UserManagement from "../page/Admin/UserManagement";
+import CourseManagement from "../page/Admin/CourseManagement";
+import SystemSettings from "../page/Admin/SystemSettings";
+import CreateUser from "../page/Admin/CreateUser";
+import UserProfiles from "../page/Admin/UserProfiles";
+import StudentProfiles from "../page/Admin/StudentProfiles";
+import AdminStudentInfo from "../page/Admin/StudentInfo";
+import Classes from "../page/Admin/Classes";
+import TuitionList from "../page/Admin/TuitionList";
+import SendNotifications from "../page/Admin/SendNotifications";
 
 // Student pages
-import StudentDashboard from '../component/Student/Dashboard';
-import StudentInfo from '../component/Student/Pages/StudentInfoPage';
-import BHYTPage from '../component/Student/Pages/BHYTPage';
-import GraduatePage from '../component/Student/Pages/GraduatePage';
-import StudentNotes from '../component/Student/Components/StudentNotes';
-import BankInfo from '../component/Student/Components/BankInfo';
-import StudentGrades from '../component/Student/Components/StudentGrades';
-import StudentSchedule from '../component/Student/Components/StudentSchedule';
+import StudentDashboard from "../component/Student/Dashboard";
+import StudentInfo from "../component/Student/Pages/StudentInfoPage";
+import BHYTPage from "../component/Student/Pages/BHYTPage";
+import GraduatePage from "../component/Student/Pages/GraduatePage";
+import StudentNotes from "../component/Student/Components/StudentNotes";
+import BankInfo from "../component/Student/Components/BankInfo";
+import StudentGrades from "../component/Student/Components/StudentGrades";
+import StudentSchedule from "../component/Student/Components/StudentSchedule";
 
 // Teacher pages
-import TeacherDashboard from '../component/Teacher/Dashboard';
-import TeacherCourses from '../component/Teacher/Pages/CoursesPage';
-import TeacherSchedule from '../component/Teacher/Pages/SchedulePage';
+import TeacherDashboard from "../component/Teacher/Dashboard";
+import TeacherCourses from "../component/Teacher/Pages/CoursesPage";
+import TeacherSchedule from "../component/Teacher/Pages/SchedulePage";
 
 // Layout components
-import LayoutUser from '../component/LayoutUser/LayoutUser';
-import LayoutAdmin from '../component/LayoutAdmin/LayoutAdmin';
-import LayoutStudent from '../component/LayoutStudent/LayoutStudent';
-import LayoutTeacher from '../component/LayoutTeacher/LayoutTeacher';
+import LayoutUser from "../component/LayoutUser/LayoutUser";
+import LayoutAdmin from "../component/LayoutAdmin/LayoutAdmin";
+import LayoutStudent from "../component/LayoutStudent/LayoutStudent";
+import LayoutTeacher from "../component/LayoutTeacher/LayoutTeacher";
 
 // Placeholder components for unfinished features
 const CurriculumPage = () => (
@@ -87,19 +85,18 @@ const AppRoutes = () => {
 
   const getDashboardByRole = () => {
     if (!account || !account.role) {
-      return '/login';
+      return "/login";
     }
     const userRoleId = account.role.roleId;
     switch (userRoleId) {
       case 1:
-      case 4: // Admin
-        return '/admin';
+        return "/admin";
       case 2: // Teacher
-        return '/teacher';
+        return "/student";
       case 3: // Student
-        return '/student';
+        return "/teacher";
       default:
-        return '/login';
+        return "/login";
     }
   };
 
@@ -120,129 +117,198 @@ const AppRoutes = () => {
         <Route path="/" element={<LayoutUser />}>
           {/* Trang mặc định - check role và redirect */}
           <Route index element={<HomePageHandler />} />
-          
+
           {/* Auth routes - chỉ hiển thị khi chưa đăng nhập */}
-          <Route 
-            path="login" 
-            element={!isAuthenticated ? <Login /> : <Navigate to={getDashboardByRole()} replace />} 
+          <Route
+            path="login"
+            element={
+              !isAuthenticated ? (
+                <Login />
+              ) : (
+                <Navigate to={getDashboardByRole()} replace />
+              )
+            }
           />
-          <Route 
-            path="register" 
-            element={!isAuthenticated ? <Register /> : <Navigate to={getDashboardByRole()} replace />} 
-          />
-          <Route 
-            path="forgot" 
-            element={!isAuthenticated ? <Forgot /> : <Navigate to={getDashboardByRole()} replace />} 
+          <Route
+            path="register"
+            element={
+              !isAuthenticated ? (
+                <Register />
+              ) : (
+                <Navigate to={getDashboardByRole()} replace />
+              )
+            }
           />
         </Route>
 
         {/* Admin routes - Role ID 1 or 4 */}
-        <Route path="/admin" element={
-          <ProtectedRoute allowedRoles={[1, 4]}>
-            <LayoutAdmin />
-          </ProtectedRoute>
-        }>
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={[1, 4]}>
+              <LayoutAdmin />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<AdminDashboard />} />
-          
+
           {/* Quản lý Tài khoản */}
           <Route path="users" element={<UserManagement />} />
           <Route path="create-user" element={<CreateUser />} />
           <Route path="user-profiles" element={<UserProfiles />} />
-          
+
           {/* Quản lý Hồ sơ Sinh viên */}
-          <Route path="students" element={<div>Danh sách sinh viên - Coming Soon</div>} />
+          <Route
+            path="students"
+            element={<div>Danh sách sinh viên - Coming Soon</div>}
+          />
           <Route path="student-profiles" element={<StudentProfiles />} />
           <Route path="student-info" element={<AdminStudentInfo />} />
-          
+
           {/* Quản lý Đào tạo */}
           <Route path="courses" element={<CourseManagement />} />
           <Route path="classes" element={<Classes />} />
-          <Route path="curriculum" element={<div>Chương trình đào tạo - Coming Soon</div>} />
+          <Route
+            path="curriculum"
+            element={<div>Chương trình đào tạo - Coming Soon</div>}
+          />
           <Route path="schedule" element={<div>Lịch học - Coming Soon</div>} />
-          
+
           {/* Phân quyền */}
-          <Route path="roles" element={<div>Quản lý vai trò - Coming Soon</div>} />
-          <Route path="user-permissions" element={<div>Phân quyền người dùng - Coming Soon</div>} />
-          <Route path="security-settings" element={<div>Cài đặt bảo mật - Coming Soon</div>} />
-          
+          <Route
+            path="roles"
+            element={<div>Quản lý vai trò - Coming Soon</div>}
+          />
+          <Route
+            path="user-permissions"
+            element={<div>Phân quyền người dùng - Coming Soon</div>}
+          />
+          <Route
+            path="security-settings"
+            element={<div>Cài đặt bảo mật - Coming Soon</div>}
+          />
+
           {/* Quản lý Học phí */}
           <Route path="tuition-list" element={<TuitionList />} />
-          <Route path="payments" element={<div>Thanh toán - Coming Soon</div>} />
-          <Route path="financial-reports" element={<div>Báo cáo tài chính - Coming Soon</div>} />
-          
+          <Route
+            path="payments"
+            element={<div>Thanh toán - Coming Soon</div>}
+          />
+          <Route
+            path="financial-reports"
+            element={<div>Báo cáo tài chính - Coming Soon</div>}
+          />
+
           {/* Quản lý Điểm số */}
           <Route path="grades" element={<div>Nhập điểm - Coming Soon</div>} />
-          <Route path="grade-sheets" element={<div>Bảng điểm - Coming Soon</div>} />
-          <Route path="grade-statistics" element={<div>Thống kê điểm - Coming Soon</div>} />
-          
+          <Route
+            path="grade-sheets"
+            element={<div>Bảng điểm - Coming Soon</div>}
+          />
+          <Route
+            path="grade-statistics"
+            element={<div>Thống kê điểm - Coming Soon</div>}
+          />
+
           {/* Báo cáo Thống kê */}
-          <Route path="student-reports" element={<div>Báo cáo sinh viên - Coming Soon</div>} />
-          <Route path="academic-reports" element={<div>Báo cáo học tập - Coming Soon</div>} />
-          <Route path="system-statistics" element={<div>Thống kê hệ thống - Coming Soon</div>} />
-          
+          <Route
+            path="student-reports"
+            element={<div>Báo cáo sinh viên - Coming Soon</div>}
+          />
+          <Route
+            path="academic-reports"
+            element={<div>Báo cáo học tập - Coming Soon</div>}
+          />
+          <Route
+            path="system-statistics"
+            element={<div>Thống kê hệ thống - Coming Soon</div>}
+          />
+
           {/* Quản lý Thông báo */}
           <Route path="send-notifications" element={<SendNotifications />} />
-          <Route path="notification-history" element={<div>Lịch sử thông báo - Coming Soon</div>} />
-          <Route path="email-settings" element={<div>Cài đặt email - Coming Soon</div>} />
-          
+          <Route
+            path="notification-history"
+            element={<div>Lịch sử thông báo - Coming Soon</div>}
+          />
+          <Route
+            path="email-settings"
+            element={<div>Cài đặt email - Coming Soon</div>}
+          />
+
           {/* Cài đặt hệ thống */}
           <Route path="settings" element={<SystemSettings />} />
         </Route>
 
         {/* Teacher routes - Role ID 2 */}
-        <Route path="/teacher" element={
-          <ProtectedRoute allowedRoles={[2]}>
-            <LayoutTeacher />
-          </ProtectedRoute>
-        }>
+        <Route
+          path="/teacher"
+          element={
+            <ProtectedRoute allowedRoles={[3]}>
+              <LayoutTeacher />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<TeacherDashboard />} />
           <Route path="courses" element={<TeacherCourses />} />
           <Route path="schedule" element={<TeacherSchedule />} />
         </Route>
 
         {/* Student routes - Role ID 3 */}
-        <Route path="/student" element={
-          <ProtectedRoute allowedRoles={[3]}>
-            <LayoutStudent />
-          </ProtectedRoute>
-        }>
+        <Route
+          path="/student"
+          element={
+            <ProtectedRoute allowedRoles={[2]}>
+              <LayoutStudent />
+            </ProtectedRoute>
+          }
+        >
           {/* Dashboard mặc định */}
           <Route index element={<StudentDashboard />} />
-          
+
           {/* Thông tin chung */}
           <Route path="info" element={<StudentInfo />} />
           <Route path="notes" element={<StudentNotes />} />
           <Route path="bank" element={<BankInfo />} />
           <Route path="bhyt" element={<BHYTPage />} />
           <Route path="graduate" element={<GraduatePage />} />
-          
+
           {/* Học tập */}
           <Route path="grades" element={<StudentGrades />} />
           <Route path="schedule" element={<StudentSchedule />} />
           <Route path="timeline" element={<TimelinePage />} />
-          
+
           {/* Đăng ký học phần */}
           <Route path="curriculum" element={<CurriculumPage />} />
           <Route path="register-courses" element={<RegisterCoursePage />} />
-          
+
           {/* Học phí */}
           <Route path="debt" element={<DebtPage />} />
           <Route path="payment" element={<PaymentPage />} />
         </Route>
 
         {/* Redirect authenticated users to appropriate dashboard */}
-        <Route path="/dashboard" element={
-          isAuthenticated ? 
-          <Navigate to={getDashboardByRole()} replace /> : 
-          <Navigate to="/login" replace />
-        } />
+        <Route
+          path="/dashboard"
+          element={
+            isAuthenticated ? (
+              <Navigate to={getDashboardByRole()} replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
 
         {/* 404 route - redirect based on authentication status */}
-        <Route path="*" element={
-          isAuthenticated ? 
-          <Navigate to={getDashboardByRole()} replace /> : 
-          <Navigate to="/login" replace />
-        } />
+        <Route
+          path="*"
+          element={
+            isAuthenticated ? (
+              <Navigate to={getDashboardByRole()} replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
       </Routes>
     </AuthLoader>
   );

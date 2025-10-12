@@ -12,7 +12,7 @@ import {
   IconButton,
   Tooltip,
   Typography,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import {
   Home as HomeIcon,
@@ -31,10 +31,9 @@ import {
   ExpandLess,
   ExpandMore,
   Menu as MenuIcon,
-  MenuOpen as MenuOpenIcon
+  MenuOpen as MenuOpenIcon,
 } from "@mui/icons-material";
 import HeaderPage from "../Header";
-import Footer from "../Footer";
 
 interface MenuItem {
   label: string;
@@ -61,11 +60,36 @@ const menuData: MenuItem[] = [
     key: "info",
     path: "",
     children: [
-      { label: "Thông tin sinh viên", icon: <InfoIcon />, key: "student-info", path: "/student/info" },
-      { label: "Ghi chú nhắc nhở", icon: <NoteIcon />, key: "note", path: "/student/notes" },
-      { label: "Cập nhật thông tin ngân hàng", icon: <AccountBalanceIcon />, key: "bank", path: "/student/bank" },
-      { label: "Cập nhật thông tin BHYT", icon: <LocalHospitalIcon />, key: "bhyt", path: "/student/bhyt" },
-      { label: "Đề xuất xét TN", icon: <CheckCircleIcon />, key: "graduate", path: "/student/graduate" },
+      {
+        label: "Thông tin sinh viên",
+        icon: <InfoIcon />,
+        key: "student-info",
+        path: "/student/info",
+      },
+      {
+        label: "Ghi chú nhắc nhở",
+        icon: <NoteIcon />,
+        key: "note",
+        path: "/student/notes",
+      },
+      {
+        label: "Cập nhật thông tin ngân hàng",
+        icon: <AccountBalanceIcon />,
+        key: "bank",
+        path: "/student/bank",
+      },
+      {
+        label: "Cập nhật thông tin BHYT",
+        icon: <LocalHospitalIcon />,
+        key: "bhyt",
+        path: "/student/bhyt",
+      },
+      {
+        label: "Đề xuất xét TN",
+        icon: <CheckCircleIcon />,
+        key: "graduate",
+        path: "/student/graduate",
+      },
     ],
   },
   {
@@ -74,9 +98,24 @@ const menuData: MenuItem[] = [
     key: "study",
     path: "",
     children: [
-      { label: "Kết quả học tập", icon: <AssignmentIcon />, key: "result", path: "/student/grades" },
-      { label: "Lịch theo tuần", icon: <CalendarMonthIcon />, key: "week-calendar", path: "/student/schedule" },
-      { label: "Lịch theo tiến độ", icon: <TimelineIcon />, key: "timeline-calendar", path: "/student/timeline" },
+      {
+        label: "Kết quả học tập",
+        icon: <AssignmentIcon />,
+        key: "result",
+        path: "/student/grades",
+      },
+      {
+        label: "Lịch theo tuần",
+        icon: <CalendarMonthIcon />,
+        key: "week-calendar",
+        path: "/student/schedule",
+      },
+      {
+        label: "Lịch theo tiến độ",
+        icon: <TimelineIcon />,
+        key: "timeline-calendar",
+        path: "/student/timeline",
+      },
     ],
   },
   {
@@ -85,8 +124,18 @@ const menuData: MenuItem[] = [
     key: "register",
     path: "",
     children: [
-      { label: "Chương trình khung", icon: <SchoolIcon />, key: "curriculum", path: "/student/curriculum" },
-      { label: "Đăng ký học phần", icon: <AssignmentIcon />, key: "register-course", path: "/student/register-courses" },
+      {
+        label: "Chương trình khung",
+        icon: <SchoolIcon />,
+        key: "curriculum",
+        path: "/student/curriculum",
+      },
+      {
+        label: "Đăng ký học phần",
+        icon: <AssignmentIcon />,
+        key: "register-course",
+        path: "/student/register-courses",
+      },
     ],
   },
   {
@@ -95,8 +144,18 @@ const menuData: MenuItem[] = [
     key: "fee",
     path: "",
     children: [
-      { label: "Tra cứu công nợ", icon: <SearchIcon />, key: "debt", path: "/student/debt" },
-      { label: "Thanh toán trực tuyến", icon: <CreditCardIcon />, key: "pay", path: "/student/payment" },
+      {
+        label: "Tra cứu công nợ",
+        icon: <SearchIcon />,
+        key: "debt",
+        path: "/student/debt",
+      },
+      {
+        label: "Thanh toán trực tuyến",
+        icon: <CreditCardIcon />,
+        key: "pay",
+        path: "/student/payment",
+      },
     ],
   },
 ];
@@ -112,7 +171,7 @@ const LayoutStudent: React.FC = () => {
   // Tự động set selected key dựa trên URL hiện tại
   useEffect(() => {
     const currentPath = location.pathname;
-    
+
     // Tìm menu item phù hợp với path hiện tại
     const findMenuItemByPath = (items: MenuItem[]): string | null => {
       for (const item of items) {
@@ -123,7 +182,7 @@ const LayoutStudent: React.FC = () => {
           for (const child of item.children) {
             if (child.path === currentPath) {
               // Mở parent menu nếu child được chọn
-              setOpenMenus(prev => ({ ...prev, [item.key]: true }));
+              setOpenMenus((prev) => ({ ...prev, [item.key]: true }));
               return child.key;
             }
           }
@@ -160,9 +219,19 @@ const LayoutStudent: React.FC = () => {
         <ListItemButton
           selected={selectedKey === item.key}
           onClick={() => handleMenuClick(item)}
-          sx={{ justifyContent: collapsed ? "center" : "flex-start", px: collapsed ? 1 : 2 }}
+          sx={{
+            justifyContent: collapsed ? "center" : "flex-start",
+            px: collapsed ? 1 : 2,
+          }}
         >
-          <ListItemIcon sx={{ color: theme.palette.text.primary, minWidth: 0, mr: collapsed ? 0 : 2, justifyContent: "center" }}>
+          <ListItemIcon
+            sx={{
+              color: theme.palette.text.primary,
+              minWidth: 0,
+              mr: collapsed ? 0 : 2,
+              justifyContent: "center",
+            }}
+          >
             {item.icon}
           </ListItemIcon>
           {!collapsed && <ListItemText primary={item.label} />}
@@ -203,7 +272,13 @@ const LayoutStudent: React.FC = () => {
 
       {/* Main Layout with Sidebar */}
       <Container maxWidth="xl" disableGutters sx={{ flexGrow: 1 }}>
-        <Box sx={{ display: "flex", minHeight: "calc(100vh - 64px)", bgcolor: "background.default" }}>
+        <Box
+          sx={{
+            display: "flex",
+            minHeight: "calc(100vh - 64px)",
+            bgcolor: "background.default",
+          }}
+        >
           {/* Sidebar */}
           <Paper
             elevation={2}
@@ -223,8 +298,14 @@ const LayoutStudent: React.FC = () => {
               {renderMenu(menuData)}
             </List>
             <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
-              <Tooltip title={collapsed ? "Mở rộng menu" : "Thu gọn menu"} placement="right">
-                <IconButton onClick={() => setCollapsed((v) => !v)} size="small">
+              <Tooltip
+                title={collapsed ? "Mở rộng menu" : "Thu gọn menu"}
+                placement="right"
+              >
+                <IconButton
+                  onClick={() => setCollapsed((v) => !v)}
+                  size="small"
+                >
                   {collapsed ? <MenuIcon /> : <MenuOpenIcon />}
                 </IconButton>
               </Tooltip>
@@ -237,9 +318,6 @@ const LayoutStudent: React.FC = () => {
           </Box>
         </Box>
       </Container>
-
-      {/* Footer */}
-      <Footer />
     </Box>
   );
 };

@@ -1,3 +1,4 @@
+import { notification } from "antd";
 import axios from "../until/customize-axios";
 
 export interface UserProfile {
@@ -44,10 +45,19 @@ export const userService = {
   // Get current user info
   getUserInfo: async (): Promise<any> => {
     try {
-      const response = await axios.get("/api/v1/User/profile");
-      return response.data;
+      const response = await axios.get("/api/Student/byToken");
+      if (response?.success === true) {
+        return response.data;
+      } else {
+        notification.open({
+          message: "Notification Title",
+          description:
+            "This is the content of the notification. This is the content of the notification. This is the content of the notification.",
+        });
+        return {};
+      }
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Get user info failed');
+      throw new Error(error.response?.data?.message || "Get user info failed");
     }
   },
 
@@ -57,7 +67,7 @@ export const userService = {
       const response = await axios.put("/api/v1/User/profile", data);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Update profile failed');
+      throw new Error(error.response?.data?.message || "Update profile failed");
     }
   },
 
@@ -67,7 +77,9 @@ export const userService = {
       const response = await axios.post("/api/v1/User/change-password", data);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Change password failed');
+      throw new Error(
+        error.response?.data?.message || "Change password failed"
+      );
     }
   },
 
@@ -75,16 +87,20 @@ export const userService = {
   uploadAvatar: async (file: File): Promise<any> => {
     try {
       const formData = new FormData();
-      formData.append('avatar', file);
-      
-      const response = await axios.post("/api/v1/User/upload-avatar", formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      formData.append("avatar", file);
+
+      const response = await axios.post(
+        "/api/v1/User/upload-avatar",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Upload avatar failed');
+      throw new Error(error.response?.data?.message || "Upload avatar failed");
     }
   },
 
@@ -94,7 +110,7 @@ export const userService = {
       const response = await axios.get("/api/v1/User/all", { params });
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Get all users failed');
+      throw new Error(error.response?.data?.message || "Get all users failed");
     }
   },
 
@@ -104,7 +120,7 @@ export const userService = {
       const response = await axios.get(`/api/v1/User/${userId}`);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Get user by ID failed');
+      throw new Error(error.response?.data?.message || "Get user by ID failed");
     }
   },
 
@@ -114,7 +130,7 @@ export const userService = {
       const response = await axios.post("/api/v1/User/create", userData);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Create user failed');
+      throw new Error(error.response?.data?.message || "Create user failed");
     }
   },
 
@@ -124,7 +140,7 @@ export const userService = {
       const response = await axios.put(`/api/v1/User/${userId}`, userData);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Update user failed');
+      throw new Error(error.response?.data?.message || "Update user failed");
     }
   },
 
@@ -134,17 +150,21 @@ export const userService = {
       const response = await axios.delete(`/api/v1/User/${userId}`);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Delete user failed');
+      throw new Error(error.response?.data?.message || "Delete user failed");
     }
   },
 
   // Change user status (Admin only)
   changeUserStatus: async (userId: number, status: number): Promise<any> => {
     try {
-      const response = await axios.patch(`/api/v1/User/${userId}/status`, { status });
+      const response = await axios.patch(`/api/v1/User/${userId}/status`, {
+        status,
+      });
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Change user status failed');
+      throw new Error(
+        error.response?.data?.message || "Change user status failed"
+      );
     }
-  }
+  },
 };

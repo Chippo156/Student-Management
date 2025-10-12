@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -13,7 +12,7 @@ import {
   IconButton,
   Tooltip,
   Typography,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -25,11 +24,8 @@ import {
   Settings as SettingsIcon,
   Menu as MenuIcon,
   MenuOpen as MenuOpenIcon,
-  ExpandLess,
-  ExpandMore
 } from "@mui/icons-material";
 import HeaderPage from "../Header";
-import Footer from "../Footer";
 
 interface MenuItem {
   label: string;
@@ -40,12 +36,42 @@ interface MenuItem {
 }
 
 const menuData: MenuItem[] = [
-  { label: "Dashboard", icon: <DashboardIcon />, key: "dashboard", path: "/teacher" },
-  { label: "Quản lý môn học", icon: <SchoolIcon />, key: "courses", path: "/teacher/courses" },
-  { label: "Lịch giảng dạy", icon: <ScheduleIcon />, key: "schedule", path: "/teacher/schedule" },
-  { label: "Học sinh", icon: <PeopleIcon />, key: "students", path: "/teacher/students" },
-  { label: "Điểm số", icon: <GradeIcon />, key: "grades", path: "/teacher/grades" },
-  { label: "Cài đặt", icon: <SettingsIcon />, key: "settings", path: "/teacher/settings" },
+  {
+    label: "Dashboard",
+    icon: <DashboardIcon />,
+    key: "dashboard",
+    path: "/teacher",
+  },
+  {
+    label: "Quản lý môn học",
+    icon: <SchoolIcon />,
+    key: "courses",
+    path: "/teacher/courses",
+  },
+  {
+    label: "Lịch giảng dạy",
+    icon: <ScheduleIcon />,
+    key: "schedule",
+    path: "/teacher/schedule",
+  },
+  {
+    label: "Học sinh",
+    icon: <PeopleIcon />,
+    key: "students",
+    path: "/teacher/students",
+  },
+  {
+    label: "Điểm số",
+    icon: <GradeIcon />,
+    key: "grades",
+    path: "/teacher/grades",
+  },
+  {
+    label: "Cài đặt",
+    icon: <SettingsIcon />,
+    key: "settings",
+    path: "/teacher/settings",
+  },
 ];
 
 const LayoutTeacher: React.FC = () => {
@@ -57,7 +83,7 @@ const LayoutTeacher: React.FC = () => {
 
   React.useEffect(() => {
     const currentPath = location.pathname;
-    const found = menuData.find(item => item.path === currentPath);
+    const found = menuData.find((item) => item.path === currentPath);
     if (found) setSelectedKey(found.key);
   }, [location.pathname]);
 
@@ -70,7 +96,13 @@ const LayoutTeacher: React.FC = () => {
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <HeaderPage />
       <Container maxWidth="xl" disableGutters sx={{ flexGrow: 1 }}>
-        <Box sx={{ display: "flex", minHeight: "calc(100vh - 64px)", bgcolor: "background.default" }}>
+        <Box
+          sx={{
+            display: "flex",
+            minHeight: "calc(100vh - 64px)",
+            bgcolor: "background.default",
+          }}
+        >
           {/* Sidebar */}
           <Paper
             elevation={2}
@@ -87,14 +119,24 @@ const LayoutTeacher: React.FC = () => {
             }}
           >
             <List component="nav" sx={{ flex: 1 }}>
-              {menuData.map(item => (
+              {menuData.map((item) => (
                 <ListItemButton
                   key={item.key}
                   selected={selectedKey === item.key}
                   onClick={() => handleMenuClick(item)}
-                  sx={{ justifyContent: collapsed ? "center" : "flex-start", px: collapsed ? 1 : 2 }}
+                  sx={{
+                    justifyContent: collapsed ? "center" : "flex-start",
+                    px: collapsed ? 1 : 2,
+                  }}
                 >
-                  <ListItemIcon sx={{ color: theme.palette.text.primary, minWidth: 0, mr: collapsed ? 0 : 2, justifyContent: "center" }}>
+                  <ListItemIcon
+                    sx={{
+                      color: theme.palette.text.primary,
+                      minWidth: 0,
+                      mr: collapsed ? 0 : 2,
+                      justifyContent: "center",
+                    }}
+                  >
                     {item.icon}
                   </ListItemIcon>
                   {!collapsed && <ListItemText primary={item.label} />}
@@ -102,8 +144,14 @@ const LayoutTeacher: React.FC = () => {
               ))}
             </List>
             <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
-              <Tooltip title={collapsed ? "Mở rộng menu" : "Thu gọn menu"} placement="right">
-                <IconButton onClick={() => setCollapsed((v) => !v)} size="small">
+              <Tooltip
+                title={collapsed ? "Mở rộng menu" : "Thu gọn menu"}
+                placement="right"
+              >
+                <IconButton
+                  onClick={() => setCollapsed((v) => !v)}
+                  size="small"
+                >
                   {collapsed ? <MenuIcon /> : <MenuOpenIcon />}
                 </IconButton>
               </Tooltip>
@@ -115,7 +163,6 @@ const LayoutTeacher: React.FC = () => {
           </Box>
         </Box>
       </Container>
-      <Footer />
     </Box>
   );
 };
