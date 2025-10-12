@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
+using System.Security.Claims;
 
 namespace StudentManagement.Controllers
 {
@@ -64,5 +67,19 @@ namespace StudentManagement.Controllers
             }
             return Ok(ApiResponse.SuccessResponse(null, "Enrollment deleted successfully"));
         }
+
+        [HttpGet("semester/{semesterId}")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<EnrollmentSemester>>> GetEnrollmentsBySemester(int semesterId)
+        {
+            var mssv = User.FindFirstValue(ClaimTypes.Name);
+            if (mssv == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+            var enrollments = await enrollmentService.GetEnrollmentBySemesterAsync(semesterId, mssv);
+            return Ok(ApiResponse.SuccessResponse(enrollments, "Enrollments for the semester retrieved successfully"));
+        }
+
     }
 }

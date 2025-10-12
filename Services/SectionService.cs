@@ -94,5 +94,7 @@ namespace StudentManagement.Services
                 .Where(s => s.Lecturer.Id == lecturerId)
                 .AsEnumerable());
         }
+
+        
     }
 }

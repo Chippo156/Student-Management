@@ -3,6 +3,7 @@ using StudentManagement.Data;
 using StudentManagement.Enum;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Services
@@ -66,6 +67,22 @@ namespace StudentManagement.Services
         {
             var enrollments = context.Enrollments.Where(e => e.Student.Id == courseId);
             return Task.FromResult(enrollments.AsEnumerable());
+        }
+        public Task<IEnumerable<EnrollmentSemester>> GetEnrollmentBySemesterAsync(int semesterId, string mssv)
+        {
+           var enrollments = context.Enrollments
+                .Include(e => e.Section)
+                    .ThenInclude(s => s.Course)
+                .Where(e => e.Section.Semester.SemesterId == semesterId && e.Student.MSSV == mssv)
+                .Select(e => new EnrollmentSemester
+                {
+                    courseCode = e.Section.Course.CourseCode,
+                    courseName = e.Section.Course.CourseName,
+                    creditsTheory = e.Section.Course.CreditsTheory,
+                    creditsLab = e.Section.Course.CreditsLab,   
+                });
+            return Task.FromResult(enrollments.AsEnumerable());
+
         }
     }
 }
