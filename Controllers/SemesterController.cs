@@ -22,7 +22,8 @@ namespace StudentManagement.Controllers
                 return BadRequest("MSSV query parameter is required.");
             }
             var semesters = await semesterService.GetSemestersByStudentAdmissionAsync(mssv);
-            return Ok(semesters);
+            return Ok(ApiResponse.SuccessResponse(semesters, "Semesters retrieved successfully"));
+
         }
     }
 }
