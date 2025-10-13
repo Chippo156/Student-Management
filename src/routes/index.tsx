@@ -13,8 +13,6 @@ import Login from "../page/Login";
 // Admin pages
 import AdminDashboard from "../page/Admin/Dashboard";
 import UserManagement from "../page/Admin/UserManagement";
-import CourseManagement from "../page/Admin/CourseManagement";
-import SystemSettings from "../page/Admin/SystemSettings";
 import CreateUser from "../page/Admin/CreateUser";
 import UserProfiles from "../page/Admin/UserProfiles";
 import StudentProfiles from "../page/Admin/StudentProfiles";
@@ -43,6 +41,8 @@ import LayoutUser from "../component/LayoutUser/LayoutUser";
 import LayoutAdmin from "../component/LayoutAdmin/LayoutAdmin";
 import LayoutStudent from "../component/LayoutStudent/LayoutStudent";
 import LayoutTeacher from "../component/LayoutTeacher/LayoutTeacher";
+import CourseManagement from "~/page/Admin/courseManagement";
+import SystemSettings from "~/page/Admin/systemSettings";
 
 // Placeholder components for unfinished features
 const CurriculumPage = () => (
@@ -129,23 +129,13 @@ const AppRoutes = () => {
               )
             }
           />
-          <Route
-            path="register"
-            element={
-              !isAuthenticated ? (
-                <Register />
-              ) : (
-                <Navigate to={getDashboardByRole()} replace />
-              )
-            }
-          />
         </Route>
 
         {/* Admin routes - Role ID 1 or 4 */}
         <Route
           path="/admin"
           element={
-            <ProtectedRoute allowedRoles={[1, 4]}>
+            <ProtectedRoute allowedRole={1}>
               <LayoutAdmin />
             </ProtectedRoute>
           }
@@ -243,7 +233,7 @@ const AppRoutes = () => {
         <Route
           path="/teacher"
           element={
-            <ProtectedRoute allowedRoles={[3]}>
+            <ProtectedRoute allowedRole={3}>
               <LayoutTeacher />
             </ProtectedRoute>
           }
@@ -257,7 +247,7 @@ const AppRoutes = () => {
         <Route
           path="/student"
           element={
-            <ProtectedRoute allowedRoles={[2]}>
+            <ProtectedRoute allowedRole={2}>
               <LayoutStudent />
             </ProtectedRoute>
           }

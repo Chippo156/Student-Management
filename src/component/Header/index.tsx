@@ -432,26 +432,6 @@ const HeaderPage: React.FC = () => {
                     </Typography>
                   </Box>
                 </Tooltip>
-
-                <Tooltip title="Đăng ký">
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <IconButton color="secondary" onClick={handleRegister}>
-                      <PersonAddIcon />
-                    </IconButton>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        ml: 0.5,
-                        cursor: "pointer",
-                        display: { xs: "none", sm: "block" },
-                        color: theme.palette.text.primary,
-                      }}
-                      onClick={handleRegister}
-                    >
-                      Đăng ký
-                    </Typography>
-                  </Box>
-                </Tooltip>
               </Box>
             )}
           </Box>

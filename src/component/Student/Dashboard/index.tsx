@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Card, Row, Col, Tag, Button } from "antd";
+import { Card, Row, Col, Tag, Button, Select } from "antd";
 import {
   CalendarOutlined,
   BarChartOutlined,
@@ -31,6 +31,8 @@ import { useNavigate } from "react-router-dom";
 import { userService } from "../../../service/userService";
 import reportService from "../../../service/reportService";
 import scheduleService from "../../../service/scheduleService";
+import { semesterService } from "../../../service/semesterService";
+import { Semester } from "~/types/database";
 
 interface SubjectData {
   subject: string;
@@ -52,6 +54,10 @@ const Dashboard: React.FC = () => {
     countTestOfWeek: 0,
   });
   const [loading, setLoading] = useState(false);
+  const [semesters, setSemesters] = useState<Semester[]>([]);
+  const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
+    null
+  );
 
   const colors = useMemo(() => {
     const p = muiTheme.palette;
@@ -172,6 +178,27 @@ const Dashboard: React.FC = () => {
     fetchAll();
   }, []);
 
+  useEffect(() => {
+    // Thêm fetch semesters
+    const fetchSemesters = async () => {
+      try {
+        const data = await semesterService.getStudentSemesters();
+        setSemesters(data);
+        if (data.length > 0)
+          setSelectedSemesterId(data[data.length - 1].semesterId);
+      } catch {
+        setSemesters([]);
+      }
+    };
+    fetchSemesters();
+  }, []);
+
+  // Khi chọn học kỳ mới
+  const handleSemesterChange = (value: number) => {
+    setSelectedSemesterId(value);
+    // TODO: fetch lại dữ liệu theo học kỳ nếu cần
+  };
+
   const academicData: SubjectData[] = semesterReport?.courses
     ? semesterReport.courses.map((course: any) => ({
         subject: course.courseName,
@@ -179,6 +206,21 @@ const Dashboard: React.FC = () => {
         avgScore: course.classAverageScore,
       }))
     : [];
+
+  useEffect(() => {
+    if (selectedSemesterId) {
+      setLoading(true);
+      // Gọi lại API lấy môn học theo học kỳ
+      reportService.getSemesterCredits(selectedSemesterId.toString())
+        .then((reportRes) => {
+          setSemesterReport(reportRes.data);
+        })
+        .catch(() => {
+          setSemesterReport(null);
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [selectedSemesterId]);
 
   return (
     <div style={{ minHeight: "100vh", padding: 24, background: colors.bgPage }}>
@@ -543,11 +585,16 @@ const Dashboard: React.FC = () => {
             style={{ ...cardStyle, height: "100%" }}
             title={<span style={sectionTitleStyle}>Kết quả học tập</span>}
             extra={
-              <Tag>
-                {semesterReport?.semesterName
-                  ? semesterReport.semesterName
-                  : "Học kỳ"}
-              </Tag>
+              <Select
+                style={{ minWidth: 120 }}
+                value={selectedSemesterId ?? undefined}
+                onChange={handleSemesterChange}
+                options={semesters.map((s) => ({
+                  value: s.semesterId,
+                  label: `${s.year} - ${s.term}`,
+                }))}
+                placeholder="Chọn học kỳ"
+              />
             }
             styles={{
               header: {
@@ -595,15 +642,6 @@ const Dashboard: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            {/* Hiển thị thêm GPA nếu có */}
-            {semesterReport?.semesterGPA && (
-              <div style={{ marginTop: 16, fontWeight: 600 }}>
-                GPA học kỳ:{" "}
-                <span style={{ color: colors.primary }}>
-                  {semesterReport.semesterGPA}
-                </span>
-              </div>
-            )}
           </Card>
         </Col>
 
@@ -721,45 +759,51 @@ const Dashboard: React.FC = () => {
           <Card
             style={{ ...cardStyle, height: "100%" }}
             title={<span style={sectionTitleStyle}>Lớp học phần</span>}
-            extra={<Tag>HK1 (2025 - 2026)</Tag>}
+            extra={
+              <Select
+                style={{ minWidth: 120 }}
+                value={selectedSemesterId ?? undefined}
+                onChange={handleSemesterChange}
+                options={semesters.map((s) => ({
+                  value: s.semesterId,
+                  label: `${s.year} - ${s.term}`,
+                }))}
+                placeholder="Chọn học kỳ"
+              />
+            }
             styles={{
               header: {
                 borderBottom: `1px solid ${colors.border}`,
               },
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: 10,
-                border: `1px solid ${colors.border}`,
-                borderRadius: 8,
-                marginBottom: 8,
-              }}
-            >
-              <span style={{ color: colors.primary, fontWeight: 600 }}>
-                420300309801
-              </span>
-              <Tag color="green">5 TC</Tag>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: 10,
-                border: `1px solid ${colors.border}`,
-                borderRadius: 8,
-              }}
-            >
-              <span style={{ color: colors.primary, fontWeight: 600 }}>
-                420301417001
-              </span>
-              <Tag color="blue">8 TC</Tag>
-            </div>
-            <Button type="link" style={{ marginTop: 8, padding: 0 }}>
-              Xem tất cả <RightOutlined />
-            </Button>
+            {semesterReport?.courses && semesterReport.courses.length > 0 ? (
+              semesterReport.courses.map((course: any) => (
+                <div
+                  key={course.courseId}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: 8,
+                    marginBottom: 8,
+                    padding: 10,
+                  }}
+                >
+                  <span style={{ color: colors.primary, fontWeight: 600 }}>
+                    {course.courseCode} - {course.courseName}
+                  </span>
+                  <Tag color="blue">{course.totalCredits} TC</Tag>
+                </div>
+              ))
+            ) : (
+              <div
+                style={{ color: colors.sub, textAlign: "center", padding: 12 }}
+              >
+                Không có lớp học phần
+              </div>
+            )}
           </Card>
         </Col>
       </Row>

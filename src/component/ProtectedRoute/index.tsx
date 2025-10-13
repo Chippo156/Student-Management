@@ -5,12 +5,12 @@ import { doLoadUserFromToken } from "../../redux/UserSlice";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: number[]; // Role IDs: 1,4=Admin, 2=Teacher, 3=Student
+  allowedRole?: number; // Role IDs: 1,4=Admin, 2=Teacher, 3=Student
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
-  allowedRoles = [],
+  allowedRole = 0,
 }) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
@@ -29,22 +29,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Check role-based access
-  if (allowedRoles.length > 0) {
-    const userRoleId = account.role.roleId;
+  const userRoleId = account.role.roleId;
 
-    // If user doesn't have required role, redirect to their dashboard
-    if (!allowedRoles.includes(userRoleId)) {
-      // Redirect based on user's actual role
-      switch (userRoleId) {
-        case 1:
-          return <Navigate to="/admin" replace />;
-        case 2: // Teacher
-          return <Navigate to="/student" replace />;
-        case 3: // Student
-          return <Navigate to="/teacher" replace />;
-        default:
-          return <Navigate to="/login" replace />;
-      }
+  // If user doesn't have required role, redirect to their dashboard
+  if (userRoleId !== allowedRole) {
+    // Redirect based on user's actual role
+    switch (userRoleId) {
+      case 1:
+        return <Navigate to="/admin" replace />;
+      case 2: // Teacher
+        return <Navigate to="/student" replace />;
+      case 3: // Student
+        return <Navigate to="/teacher" replace />;
+      default:
+        return <Navigate to="/login" replace />;
     }
   }
 

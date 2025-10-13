@@ -78,7 +78,7 @@ export const authService = {
   login: async (data: LoginRequest): Promise<LoginResponse> => {
     try {
       const response = await axios.post("/api/v1/Auth/login", data);
-      return response;
+      return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Login failed');
     }

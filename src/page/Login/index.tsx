@@ -50,31 +50,11 @@ const Login: React.FC = () => {
 
       try {
         const result = await dispatch(loginUser({ username, password }));
-
-        console.log("Login result:", result);
-        console.log("Request status:", result.meta.requestStatus);
-
         if (result.meta.requestStatus === "fulfilled") {
-          console.log("Login successful");
-          console.log("Payload:", result.payload);
-
-          // Get user data from the fulfilled action
-          const userData = result.payload;
-
-          // Navigate immediately after successful login
-          if (userData && userData.user && userData.user.role) {
+          const userData = result.payload as { user?: { role?: { roleId: number } } };
+          if (userData?.user?.role?.roleId) {
             const dashboard = getDashboardByRole(userData.user.role.roleId);
-            console.log(
-              "Immediate navigation to:",
-              dashboard,
-              "role:",
-              userData.user.role.roleId
-            );
-
-            // Use setTimeout to ensure state is updated before navigation
-            setTimeout(() => {
               navigate(dashboard, { replace: true });
-            }, 100);
           }
         } else if (result.meta.requestStatus === "rejected") {
           console.error("Login rejected:", result.payload);

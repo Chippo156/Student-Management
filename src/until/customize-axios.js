@@ -1,16 +1,15 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
-
-const baseURL: string =
+import axios from "axios"
+const baseURL =
   import.meta.env.VITE_APP_BE_API_URL || "https://localhost:7061";
 
-const instance: AxiosInstance = axios.create({
+const instance= axios.create({
   baseURL: baseURL,
   // withCredentials: true,
 });
 
 const NO_RETRY_HEADER = "x-no-retry";
 
-const handleRefreshToken = async (): Promise<string | null> => {
+const handleRefreshToken = async () => {
   try {
     const refreshToken = localStorage.getItem("refresh_token");
     const userDataStr = localStorage.getItem("user_data");
@@ -47,7 +46,7 @@ const handleRefreshToken = async (): Promise<string | null> => {
 
 // Add a request interceptor
 instance.interceptors.request.use(
-  (config: AxiosRequestConfig): AxiosRequestConfig => {
+  (config) => {
     // Only attach Authorization for non-public routes
     const publicPaths = ["/api/v1/Auth/login", "/api/v1/Auth/register", "/api/v1/Auth/forgot-password", "/api/v1/Auth/refresh-token"];
     const isPublic = publicPaths.some((path) => config.url?.includes(path));
@@ -59,19 +58,19 @@ instance.interceptors.request.use(
     }
     return config;
   },
-  (error: AxiosError): Promise<AxiosError> => {
+  (error) => {
     return Promise.reject(error);
   }
 );
 
 // Add a response interceptor
 instance.interceptors.response.use(
-  function (response: AxiosResponse): any {
+  function (response) {
     // Any status code that lie within the range of 2xx cause this function to trigger
     // Do something with response data
     return response && response.data ? response.data : response;
   },
-  async function (error: AxiosError): Promise<any> {
+  async function (error) {
     if (
       error.config &&
       error.response &&

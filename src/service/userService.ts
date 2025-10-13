@@ -46,16 +46,7 @@ export const userService = {
   getUserInfo: async (): Promise<any> => {
     try {
       const response = await axios.get("/api/Student/byToken");
-      if (response?.success === true) {
-        return response.data;
-      } else {
-        notification.open({
-          message: "Notification Title",
-          description:
-            "This is the content of the notification. This is the content of the notification. This is the content of the notification.",
-        });
-        return {};
-      }
+      return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Get user info failed");
     }
