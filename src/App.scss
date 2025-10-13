@@ -1,3 +1,18 @@
+/* Schedule color variables for dark/light mode */
+:root {
+  --schedule-class-bg: #f0f0f0;
+  --schedule-assignment-bg: #b7eb8f;
+  --schedule-meeting-bg: #bae7ff;
+  --schedule-exam-bg: #fff7a8;
+  --schedule-other-bg: #ffa39e;
+}
+.dark {
+  --schedule-class-bg: #232323;
+  --schedule-assignment-bg: #355c2a;
+  --schedule-meeting-bg: #2a4a5c;
+  --schedule-exam-bg: #5c4a2a;
+  --schedule-other-bg: #5c2a2a;
+}
 * {
   margin: 0;
   padding: 0;

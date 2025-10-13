@@ -39,12 +39,9 @@ export const loginUser = createAsyncThunk(
   'user/login',
   async (credentials: LoginRequest, { rejectWithValue }) => {
     try {
-      console.log('Redux: Starting login with credentials:', credentials);
       const response: LoginResponse = await authService.login(credentials);
-      console.log('Redux: Auth service response:', response);
-      
+      console.error('Redux: Login failed - API returned success=false:', response);
       if (!response.success) {
-        console.error('Redux: Login failed - API returned success=false:', response.message);
         return rejectWithValue(response.message);
       }
       

@@ -83,6 +83,24 @@ const getTypeText = (type: string) => {
       return type;
   }
 };
+// Map event type to legend color, using CSS variables for theme compatibility
+const getEventColor = (item: ScheduleItem) => {
+  // Use CSS variables for theme colors
+  switch (item.type) {
+    case "class":
+      return "var(--schedule-class-bg, #f0f0f0)";
+    case "assignment":
+      return "var(--schedule-assignment-bg, #b7eb8f)";
+    case "meeting":
+      return "var(--schedule-meeting-bg, #bae7ff)";
+    case "exam":
+      return "var(--schedule-exam-bg, #fff7a8)";
+    case "other":
+      return "var(--schedule-other-bg, #ffa39e)";
+    default:
+      return "var(--schedule-class-bg, #f0f0f0)";
+  }
+};
 
 const StudentSchedule: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -240,7 +258,14 @@ const StudentSchedule: React.FC = () => {
   const goNextWeek = () => setBaseDate(baseDate.add(1, "week"));
 
   return (
-    <div style={{ padding: "24px" }}>
+      <div style={{
+        padding: "24px",
+        maxWidth: "100%",
+        boxSizing: "border-box",
+        width: "100%",
+        minHeight: "100vh",
+        overflowX: "auto",
+      }}>
       <div
         style={{
           display: "flex",
@@ -251,37 +276,6 @@ const StudentSchedule: React.FC = () => {
       >
         <div>
           <Title level={2}>Lịch học, lịch thi theo tuần</Title>
-          <Text type="secondary">
-            Tuần: {weekDays[0].format("DD/MM/YYYY")} -{" "}
-            {weekDays[6].format("DD/MM/YYYY")}
-          </Text>
-        </div>
-
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <Button icon={<LeftOutlined />} onClick={goPrevWeek} />
-          <DatePicker
-            picker="week"
-            value={baseDate}
-            onChange={(d) => d && setBaseDate(d)}
-          />
-          <Button icon={<RightOutlined />} onClick={goNextWeek} />
-
-          <Select
-            value={filterType}
-            onChange={(v) => setFilterType(v)}
-            style={{ width: 160 }}
-          >
-            <Option value="all">Tất cả</Option>
-            <Option value="class">Lớp học</Option>
-            <Option value="exam">Thi cử</Option>
-            <Option value="assignment">Bài tập</Option>
-            <Option value="meeting">Họp</Option>
-            <Option value="other">Khác</Option>
-          </Select>
-
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            Thêm lịch
-          </Button>
         </div>
       </div>
 
@@ -350,23 +344,39 @@ const StudentSchedule: React.FC = () => {
           <Row gutter={16}>
             {todayItems.map((item) => (
               <Col span={8} key={item.id}>
-                <Card size="small" style={{ marginBottom: 16 }}>
-                  <Space direction="vertical" style={{ width: "100%" }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Text strong>{item.title}</Text>
-                      <Tag color={getTypeColor(item.type)}>
-                        {getTypeText(item.type)}
-                      </Tag>
-                    </div>
-                    <Text type="secondary">{item.time}</Text>
-                    <Text type="secondary">{item.location}</Text>
-                  </Space>
-                </Card>
+                <div
+                  style={{
+                    padding: 12,
+                    borderRadius: 6,
+                    background: getEventColor(item),
+                    marginBottom: 16,
+                  }}
+                >
+                  <Text strong style={{ display: "block" }}>
+                    {item.title}
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    Mã lớp: {item.subject}
+                  </Text>
+                  <Text
+                    type="secondary"
+                    style={{ fontSize: 12, display: "block" }}
+                  >
+                    Phòng: {item.location}
+                  </Text>
+                  <Text
+                    type="secondary"
+                    style={{ fontSize: 12, display: "block" }}
+                  >
+                    Thời gian: {item.time}
+                  </Text>
+                  <Text
+                    type="secondary"
+                    style={{ fontSize: 12, display: "block" }}
+                  >
+                    Ngày: {dayjs(item.date).format("DD/MM/YYYY")}
+                  </Text>
+                </div>
               </Col>
             ))}
           </Row>
@@ -374,7 +384,75 @@ const StudentSchedule: React.FC = () => {
       )}
 
       {/* Weekly calendar */}
-      <Card title="Lịch theo tuần" style={{ marginBottom: 16 }}>
+      <Card
+        title={
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <span>Lịch theo tuần</span>
+            <Space>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <Button icon={<LeftOutlined />} onClick={goPrevWeek} />
+                <DatePicker
+                  value={baseDate}
+                  onChange={(d) => {
+                    if (d) setBaseDate(dayjs(d).startOf("week"));
+                  }}
+                  format={date => date ? dayjs(date).format("DD/MM/YYYY") : ""}
+                />
+                <Button icon={<RightOutlined />} onClick={goNextWeek} />
+              </div>
+              <Button
+                type={filterType === "all" ? "primary" : "default"}
+                size="small"
+                onClick={() => setFilterType("all")}
+              >
+                Tất cả
+              </Button>
+              <Button
+                type={filterType === "class" ? "primary" : "default"}
+                size="small"
+                onClick={() => setFilterType("class")}
+              >
+                Lịch học
+              </Button>
+              <Button
+                type={filterType === "exam" ? "primary" : "default"}
+                size="small"
+                onClick={() => setFilterType("exam")}
+              >
+                Lịch thi
+              </Button>
+              <Button
+                type={filterType === "assignment" ? "primary" : "default"}
+                size="small"
+                onClick={() => setFilterType("assignment")}
+              >
+                Bài tập
+              </Button>
+              <Button
+                type={filterType === "meeting" ? "primary" : "default"}
+                size="small"
+                onClick={() => setFilterType("meeting")}
+              >
+                Họp
+              </Button>
+              <Button
+                type={filterType === "other" ? "primary" : "default"}
+                size="small"
+                onClick={() => setFilterType("other")}
+              >
+                Khác
+              </Button>
+            </Space>
+          </div>
+        }
+        style={{ marginBottom: 16 }}
+      >
         <div style={{ overflowX: "auto" }}>
           <div
             style={{
@@ -456,64 +534,36 @@ const StudentSchedule: React.FC = () => {
                             <div
                               key={ev.id}
                               style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "flex-start",
-                                gap: 8,
                                 padding: 8,
                                 borderRadius: 6,
-                                background: "#ffffff",
+                                background: getEventColor(ev),
+                                marginBottom: 4,
                               }}
                             >
-                              <div
-                                style={{ flex: 1, cursor: "pointer" }}
-                                onClick={() => handleEdit(ev)}
+                              <Text strong style={{ display: "block" }}>
+                                {ev.title}
+                              </Text>
+                              <Text type="secondary" style={{ fontSize: 12 }}>
+                                Mã lớp: {ev.subject}
+                              </Text>
+                              <Text
+                                type="secondary"
+                                style={{ fontSize: 12, display: "block" }}
                               >
-                                <Text strong style={{ display: "block" }}>
-                                  {ev.title}
-                                </Text>
-                                <div style={{ display: "flex", gap: 8 }}>
-                                  <Text
-                                    type="secondary"
-                                    style={{ fontSize: 12 }}
-                                  >
-                                    {ev.time}
-                                  </Text>
-                                  <Text
-                                    type="secondary"
-                                    style={{ fontSize: 12 }}
-                                  >
-                                    {ev.location}
-                                  </Text>
-                                </div>
-                              </div>
-                              <div>
-                                <Tag
-                                  color={getTypeColor(ev.type)}
-                                  style={{ whiteSpace: "nowrap" }}
-                                >
-                                  {getTypeText(ev.type)}
-                                </Tag>
-                                <div style={{ marginTop: 6 }}>
-                                  <Button
-                                    type="link"
-                                    size="small"
-                                    icon={<EditOutlined />}
-                                    onClick={() => handleEdit(ev)}
-                                  >
-                                    Sửa
-                                  </Button>
-                                  <Button
-                                    type="link"
-                                    size="small"
-                                    danger
-                                    icon={<DeleteOutlined />}
-                                    onClick={() => handleDelete(ev.id)}
-                                  >
-                                    Xóa
-                                  </Button>
-                                </div>
-                              </div>
+                                Phòng: {ev.location}
+                              </Text>
+                              <Text
+                                type="secondary"
+                                style={{ fontSize: 12, display: "block" }}
+                              >
+                                Thời gian: {ev.time}
+                              </Text>
+                              <Text
+                                type="secondary"
+                                style={{ fontSize: 12, display: "block" }}
+                              >
+                                Ngày: {dayjs(ev.date).format("DD/MM/YYYY")}
+                              </Text>
                             </div>
                           ))}
                         </div>
@@ -534,7 +584,7 @@ const StudentSchedule: React.FC = () => {
                 display: "inline-block",
                 width: 18,
                 height: 12,
-                background: "#f0f0f0",
+                background: "var(--schedule-class-bg, #f0f0f0)",
                 border: "1px solid #ddd",
               }}
             />{" "}
@@ -544,7 +594,7 @@ const StudentSchedule: React.FC = () => {
                 display: "inline-block",
                 width: 18,
                 height: 12,
-                background: "#b7eb8f",
+                background: "var(--schedule-assignment-bg, #b7eb8f)",
                 border: "1px solid #ddd",
               }}
             />{" "}
@@ -554,7 +604,7 @@ const StudentSchedule: React.FC = () => {
                 display: "inline-block",
                 width: 18,
                 height: 12,
-                background: "#bae7ff",
+                background: "var(--schedule-meeting-bg, #bae7ff)",
                 border: "1px solid #ddd",
               }}
             />{" "}
@@ -564,7 +614,7 @@ const StudentSchedule: React.FC = () => {
                 display: "inline-block",
                 width: 18,
                 height: 12,
-                background: "#fff7a8",
+                background: "var(--schedule-exam-bg, #fff7a8)",
                 border: "1px solid #ddd",
               }}
             />{" "}
@@ -574,7 +624,7 @@ const StudentSchedule: React.FC = () => {
                 display: "inline-block",
                 width: 18,
                 height: 12,
-                background: "#ffa39e",
+                background: "var(--schedule-other-bg, #ffa39e)",
                 border: "1px solid #ddd",
               }}
             />{" "}

@@ -1,4 +1,5 @@
 import axios from "../until/customize-axios";
+import { message } from "antd";
 
 // Auth interfaces
 export interface LoginRequest {
@@ -76,80 +77,80 @@ export interface ForgotPasswordRequest {
 export const authService = {
   // Login
   login: async (data: LoginRequest): Promise<LoginResponse> => {
-    try {
-      const response = await axios.post("/api/v1/Auth/login", data);
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Login failed');
+    const response = await axios.post("/api/v1/Auth/login", data);
+    if (!response.success) {
+      message.error(response.message || "Đăng nhập thất bại");
+      throw new Error(response.message || "Login failed");
     }
+    return response;
   },
 
   // Register
   register: async (data: RegisterRequest): Promise<any> => {
-    try {
-      const response = await axios.post("/api/v1/Auth/register", data);
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Registration failed');
+    const response = await axios.post("/api/v1/Auth/register", data);
+    if (!response.success) {
+      message.error(response.message || "Đăng ký thất bại");
+      throw new Error(response.message || "Registration failed");
     }
+    return response;
   },
 
   // Logout
   logout: async (): Promise<any> => {
-    try {
-      const response = await axios.post("/api/v1/Auth/logout");
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Logout failed');
+    const response = await axios.post("/api/v1/Auth/logout");
+    if (!response.success) {
+      message.error(response.message || "Đăng xuất thất bại");
+      throw new Error(response.message || "Logout failed");
     }
+    return response.data;
   },
 
   // Refresh Token
   refreshToken: async (data: RefreshTokenRequest): Promise<RefreshTokenResponse> => {
-    try {
-      const response = await axios.post("/api/v1/Auth/refresh-token", data);
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Token refresh failed');
+    const response = await axios.post("/api/v1/Auth/refresh-token", data);
+    if (!response.success) {
+      message.error(response.message || "Làm mới token thất bại");
+      throw new Error(response.message || "Token refresh failed");
     }
+    return response.data;
   },
 
   // Change Password
   changePassword: async (data: ChangePasswordRequest): Promise<any> => {
-    try {
-      const response = await axios.post("/api/v1/Auth/change-password", data);
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Change password failed');
+    const response = await axios.post("/api/v1/Auth/change-password", data);
+    if (!response.success) {
+      message.error(response.message || "Đổi mật khẩu thất bại");
+      throw new Error(response.message || "Change password failed");
     }
+    return response.data;
   },
 
   introspect: async (token: string): Promise<any> => {
-    try {
-      const response = await axios.post("/api/v1/Auth/introspect", { token });
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Token introspection failed');
+    const response = await axios.post("/api/v1/Auth/introspect", { token });
+    if (!response.success) {
+      message.error(response.message || "Kiểm tra token thất bại");
+      throw new Error(response.message || "Token introspection failed");
     }
+    return response.data;
   },
 
   // Get User Profile
   getUserProfile: async (): Promise<any> => {
-    try {
-      const response = await axios.get("/api/v1/Auth/profile");
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Get user profile failed');
+    const response = await axios.get("/api/v1/Auth/profile");
+    if (!response.success) {
+      message.error(response.message || "Lấy thông tin thất bại");
+      throw new Error(response.message || "Get user profile failed");
     }
+    return response.data;
   },
 
   // Update User Profile
   updateUserProfile: async (data: any): Promise<any> => {
-    try {
-      const response = await axios.put("/api/v1/Auth/profile", data);
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Update user profile failed');
+    const response = await axios.put("/api/v1/Auth/profile", data);
+    if (!response.success) {
+      message.error(response.message || "Cập nhật thông tin thất bại");
+      throw new Error(response.message || "Update user profile failed");
     }
+    return response.data;
   }
 };

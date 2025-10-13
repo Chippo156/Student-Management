@@ -1,20 +1,52 @@
-import { notification } from "antd";
+import { message } from "antd";
 import axios from "../until/customize-axios";
 
-export interface UserProfile {
-  userId: number;
+// Cấu trúc dữ liệu trả về từ BE cho getUserInfo
+export interface UserRole {
+  roleId: number;
+  roleName: string;
+  description: string;
+  permissions: any[];
+}
+
+export interface UserData {
   username: string;
   fullName: string;
   email: string;
   phone: string;
-  gender: number;
   address: string;
   avatarUrl: string;
+  gender: number;
+  placeOfBirth: string;
+  religion: string;
+  dateOfBirth: string;
+  citizenIdCard: string;
+  issuedDate: string;
+  object: string;
+  policyArea: string;
+  dateOfJoinUnion: string;
+  dateOfJoinParty: string;
+  accountNumber: string;
+  bankName: string;
+  branch: string;
+  accountHolderName: string;
   accountStatus: number;
-  role: {
-    roleId: number;
-    roleName: string;
-    description: string;
+  role: UserRole;
+}
+
+export interface GetUserInfoResponse {
+  success: boolean;
+  code: number;
+  message: string;
+  data: {
+    studentId: number;
+    user: UserData;
+    mssv: string;
+    className: string;
+    programName: string;
+    departmentName: string;
+    yearOfAddmision: number;
+    trainningLevel: string;
   };
 }
 
@@ -43,13 +75,13 @@ export interface ChangePasswordRequest {
 
 export const userService = {
   // Get current user info
-  getUserInfo: async (): Promise<any> => {
-    try {
-      const response = await axios.get("/api/Student/byToken");
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Get user info failed");
+  getUserInfo: async (): Promise<GetUserInfoResponse["data"]> => {
+    const response: GetUserInfoResponse = await axios.get("/api/Student/byToken");
+    if (!response.success) {
+      message.error(response.message || "Lấy thông tin người dùng thất bại");
+      throw new Error(response.message || "Get user info failed");
     }
+    return response.data;
   },
 
   // Update user profile
