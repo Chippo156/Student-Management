@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Row,
@@ -16,7 +16,7 @@ import {
   message,
   Tag,
   Divider,
-  Progress,
+  Spin,
 } from 'antd';
 import {
   UserOutlined,
@@ -25,91 +25,109 @@ import {
   MailOutlined,
   PhoneOutlined,
   HomeOutlined,
-  CalendarOutlined,
-  TrophyOutlined,
-  BookOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { userService } from '../../../service/userService';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-interface StudentInfo {
-  id: string;
-  studentCode: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  dateOfBirth: string;
-  gender: string;
-  address: string;
-  avatar: string;
-  faculty: string;
-  major: string;
-  className: string;
-  academicYear: string;
-  enrollmentDate: string;
-  status: string;
-  gpa: number;
-  totalCredits: number;
-  completedCredits: number;
-}
-
 const StudentInfoPage: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [studentInfo, setStudentInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [studentInfo, setStudentInfo] = useState<StudentInfo>({
-    id: '1',
-    studentCode: 'SV21112551',
-    fullName: 'Nguyễn Văn An',
-    email: 'an.nguyen@student.edu.vn',
-    phone: '0123456789',
-    dateOfBirth: '2003-10-08',
-    gender: 'Nam',
-    address: '123 Đường ABC, Quận 1, TP.HCM',
-    avatar: 'https://i.pravatar.cc/150?img=1',
-    faculty: 'Công nghệ thông tin',
-    major: 'Kỹ thuật phần mềm',
-    className: 'KTPM17C',
-    academicYear: '2021-2025',
-    enrollmentDate: '2021-09-01',
-    status: 'Đang học',
-    gpa: 3.45,
-    totalCredits: 140,
-    completedCredits: 95,
-  });
+  // Lấy dữ liệu từ API khi mount
+  useEffect(() => {
+    const fetchInfo = async () => {
+      setLoading(true);
+      try {
+        const data = await userService.getUserInfo();
+        setStudentInfo({
+          id: data.studentId,
+          studentCode: data.mssv,
+          fullName: data.user.fullName,
+          email: data.user.email,
+          phone: data.user.phone,
+          dateOfBirth: data.user.dateOfBirth,
+          gender: data.user.gender === 0 ? "Nam" : data.user.gender === 1 ? "Nữ" : "Khác",
+          address: data.user.address,
+          avatar: data.user.avatarUrl,
+          faculty: data.departmentName,
+          major: data.programName,
+          className: data.className,
+          academicYear: data.yearOfAddmision
+            ? `${data.yearOfAddmision}-${data.yearOfAddmision + 4}`
+            : "",
+          enrollmentDate: data.enrollmentDate || "",
+          status: data.status || "Đang học",
+          gpa: data.gpa ?? 0,
+          totalCredits: data.totalCredits ?? 0,
+          completedCredits: data.completedCredits ?? 0,
+          placeOfBirth: data.user.placeOfBirth,
+          religion: data.user.religion,
+          citizenIdCard: data.user.citizenIdCard,
+          issuedDate: data.user.issuedDate,
+          object: data.user.object,
+          policyArea: data.user.policyArea,
+          dateOfJoinUnion: data.user.dateOfJoinUnion,
+          dateOfJoinParty: data.user.dateOfJoinParty,
+          accountNumber: data.user.accountNumber,
+          bankName: data.user.bankName,
+          branch: data.user.branch,
+          accountHolderName: data.user.accountHolderName,
+          accountStatus: data.user.accountStatus,
+        });
+      } catch (err) {
+        message.error("Không thể lấy thông tin sinh viên!");
+        setStudentInfo(null);
+      }
+      setLoading(false);
+    };
+    fetchInfo();
+  }, []);
 
+  // Xử lý mở modal chỉnh sửa
   const handleEdit = () => {
+    if (!studentInfo) return;
     form.setFieldsValue({
       ...studentInfo,
-      dateOfBirth: dayjs(studentInfo.dateOfBirth),
-      enrollmentDate: dayjs(studentInfo.enrollmentDate),
+      dateOfBirth: studentInfo.dateOfBirth ? dayjs(studentInfo.dateOfBirth) : null,
+      enrollmentDate: studentInfo.enrollmentDate ? dayjs(studentInfo.enrollmentDate) : null,
     });
     setIsModalVisible(true);
   };
 
+  // Xử lý lưu thông tin chỉnh sửa
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
+      // Gọi API cập nhật nếu có
       setStudentInfo({
         ...studentInfo,
         ...values,
-        dateOfBirth: values.dateOfBirth.format('YYYY-MM-DD'),
-        enrollmentDate: values.enrollmentDate.format('YYYY-MM-DD'),
+        dateOfBirth: values.dateOfBirth ? values.dateOfBirth.format('YYYY-MM-DD') : "",
+        enrollmentDate: values.enrollmentDate ? values.enrollmentDate.format('YYYY-MM-DD') : "",
       });
       setIsModalVisible(false);
       message.success('Cập nhật thông tin thành công!');
     } catch (error) {
-      console.error('Validation failed:', error);
+      // Validation failed
     }
   };
 
+  // Xử lý upload avatar
   const uploadProps = {
     name: 'file',
     action: '/api/upload',
+    showUploadList: false,
     onChange(info: any) {
       if (info.file.status === 'done') {
+        setStudentInfo((prev: any) => ({
+          ...prev,
+          avatar: info.file.response.url,
+        }));
         message.success('Tải ảnh thành công!');
       } else if (info.file.status === 'error') {
         message.error('Tải ảnh thất bại!');
@@ -117,19 +135,35 @@ const StudentInfoPage: React.FC = () => {
     },
   };
 
+  if (loading) {
+    return (
+      <div style={{ padding: 48, textAlign: 'center' }}>
+        <Spin size="large" />
+        <div style={{ marginTop: 16 }}>Đang tải thông tin sinh viên...</div>
+      </div>
+    );
+  }
+
+  if (!studentInfo) {
+    return (
+      <div style={{ padding: 48, textAlign: 'center', color: '#faad14' }}>
+        Không có dữ liệu sinh viên!
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: '24px' }}>
       <Title level={2}>Thông tin sinh viên</Title>
-      
-      <Row gutter={24}>
+      <Row gutter={24} wrap>
         {/* Profile Card */}
-        <Col xs={24} lg={8}>
-          <Card style={{ textAlign: 'center', marginBottom: 24 }}>
+        <Col xs={24} md={8} style={{ minWidth: 0 }}>
+          <Card style={{ textAlign: 'center', marginBottom: 24, height: '100%' }}>
             <Avatar
               size={120}
               src={studentInfo.avatar}
               icon={<UserOutlined />}
-              style={{ marginBottom: 16 }}
+              style={{ marginBottom: 16, background: '#e6f7ff' }}
             />
             <Title level={4} style={{ margin: 0 }}>
               {studentInfo.fullName}
@@ -182,73 +216,64 @@ const StudentInfoPage: React.FC = () => {
         </Col>
 
         {/* Details Cards */}
-        <Col xs={24} lg={16}>
+        <Col xs={24} md={16} style={{ minWidth: 0 }}>
           <Card title="Thông tin cá nhân" style={{ marginBottom: 24 }}>
             <Descriptions bordered column={{ xs: 1, sm: 2 }}>
-              <Descriptions.Item label="Mã sinh viên" span={1}>
-                <Text strong>{studentInfo.studentCode}</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Họ và tên" span={1}>
-                <Text strong>{studentInfo.fullName}</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Ngày sinh" span={1}>
-                {dayjs(studentInfo.dateOfBirth).format('DD/MM/YYYY')}
-              </Descriptions.Item>
-              <Descriptions.Item label="Giới tính" span={1}>
-                {studentInfo.gender}
-              </Descriptions.Item>
-              <Descriptions.Item label="Email" span={1}>
-                <Text copyable>{studentInfo.email}</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Số điện thoại" span={1}>
-                <Text copyable>{studentInfo.phone}</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ" span={2}>
-                {studentInfo.address}
-              </Descriptions.Item>
+              <Descriptions.Item label="Mã sinh viên">{studentInfo.studentCode}</Descriptions.Item>
+              <Descriptions.Item label="Họ và tên">{studentInfo.fullName}</Descriptions.Item>
+              <Descriptions.Item label="Ngày sinh">{studentInfo.dateOfBirth ? dayjs(studentInfo.dateOfBirth).format('DD/MM/YYYY') : ""}</Descriptions.Item>
+              <Descriptions.Item label="Giới tính">{studentInfo.gender}</Descriptions.Item>
+              <Descriptions.Item label="Nơi sinh">{studentInfo.placeOfBirth}</Descriptions.Item>
+              <Descriptions.Item label="Tôn giáo">{studentInfo.religion}</Descriptions.Item>
+              <Descriptions.Item label="Số CCCD">{studentInfo.citizenIdCard}</Descriptions.Item>
+              <Descriptions.Item label="Ngày cấp CCCD">{studentInfo.issuedDate ? dayjs(studentInfo.issuedDate).format('DD/MM/YYYY') : ""}</Descriptions.Item>
+              <Descriptions.Item label="Đối tượng">{studentInfo.object}</Descriptions.Item>
+              <Descriptions.Item label="Khu vực chính sách">{studentInfo.policyArea}</Descriptions.Item>
+              <Descriptions.Item label="Ngày vào Đoàn">{studentInfo.dateOfJoinUnion ? dayjs(studentInfo.dateOfJoinUnion).format('DD/MM/YYYY') : ""}</Descriptions.Item>
+              <Descriptions.Item label="Ngày vào Đảng">{studentInfo.dateOfJoinParty ? dayjs(studentInfo.dateOfJoinParty).format('DD/MM/YYYY') : ""}</Descriptions.Item>
+              <Descriptions.Item label="Email"><Text copyable>{studentInfo.email}</Text></Descriptions.Item>
+              <Descriptions.Item label="Số điện thoại"><Text copyable>{studentInfo.phone}</Text></Descriptions.Item>
+              <Descriptions.Item label="Địa chỉ" span={2}>{studentInfo.address}</Descriptions.Item>
             </Descriptions>
           </Card>
 
-          <Card title="Thông tin học tập">
-            <Descriptions bordered column={{ xs: 1, sm: 2 }}>
-              <Descriptions.Item label="Khoa" span={1}>
-                <Tag color="green">{studentInfo.faculty}</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Chuyên ngành" span={1}>
-                <Tag color="blue">{studentInfo.major}</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Lớp" span={1}>
-                <Tag color="purple">{studentInfo.className}</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Khóa học" span={1}>
-                {studentInfo.academicYear}
-              </Descriptions.Item>
-              <Descriptions.Item label="Ngày nhập học" span={1}>
-                {dayjs(studentInfo.enrollmentDate).format('DD/MM/YYYY')}
-              </Descriptions.Item>
-              <Descriptions.Item label="Trạng thái" span={1}>
-                <Tag color={studentInfo.status === 'Đang học' ? 'green' : 'orange'}>
-                  {studentInfo.status}
+          <Card title="Thông tin học tập" style={{ marginBottom: 24 }}>
+            <Descriptions bordered column={{ xs: 1, sm: 2, md: 3 }}>
+              <Descriptions.Item label="Khoa">
+                <Tag color="green" style={{ maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block' }}>
+                  {studentInfo.faculty}
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="GPA" span={1}>
-                <Text strong style={{ color: studentInfo.gpa >= 3.5 ? '#52c41a' : '#faad14' }}>
-                  {studentInfo.gpa}/4.0
-                </Text>
+              <Descriptions.Item label="Chuyên ngành">
+                <Tag color="blue" style={{ maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block' }}>
+                  {studentInfo.major}
+                </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Tín chỉ" span={1}>
+              <Descriptions.Item label="Lớp">
+                <Tag color="purple">{studentInfo.className}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Khóa học">{studentInfo.academicYear}</Descriptions.Item>
+              <Descriptions.Item label="Ngày nhập học">{studentInfo.enrollmentDate ? dayjs(studentInfo.enrollmentDate).format('DD/MM/YYYY') : ""}</Descriptions.Item>
+              <Descriptions.Item label="Trạng thái">
+                <Tag color={studentInfo.status === 'Đang học' ? 'green' : 'orange'}>{studentInfo.status}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="GPA">
+                <Text strong style={{ color: studentInfo.gpa >= 3.5 ? '#52c41a' : '#faad14' }}>{studentInfo.gpa}/4.0</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="Tín chỉ">
                 <Text strong>{studentInfo.completedCredits}/{studentInfo.totalCredits}</Text>
               </Descriptions.Item>
             </Descriptions>
-
-            {/* Progress Section */}
             <div style={{ marginTop: 24 }}>
               <Title level={5}>Tiến độ học tập</Title>
               <Row gutter={16}>
                 <Col xs={24} sm={8}>
                   <div style={{ textAlign: 'center', padding: '20px' }}>
                     <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#1890ff' }}>
-                      {Math.round((studentInfo.completedCredits / studentInfo.totalCredits) * 100)}%
+                      {studentInfo.totalCredits > 0
+                        ? Math.round((studentInfo.completedCredits / studentInfo.totalCredits) * 100)
+                        : 0}
+                      %
                     </div>
                     <div style={{ color: '#666' }}>Hoàn thành chương trình</div>
                   </div>
@@ -264,13 +289,29 @@ const StudentInfoPage: React.FC = () => {
                 <Col xs={24} sm={8}>
                   <div style={{ textAlign: 'center', padding: '20px' }}>
                     <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#faad14' }}>
-                      {Math.ceil((studentInfo.totalCredits - studentInfo.completedCredits) / 15)}
+                      {studentInfo.totalCredits > 0
+                        ? Math.ceil((studentInfo.totalCredits - studentInfo.completedCredits) / 15)
+                        : 0}
                     </div>
                     <div style={{ color: '#666' }}>Học kỳ còn lại</div>
                   </div>
                 </Col>
               </Row>
             </div>
+          </Card>
+
+          <Card title="Thông tin tài khoản ngân hàng">
+            <Descriptions bordered column={{ xs: 1, sm: 2 }}>
+              <Descriptions.Item label="Số tài khoản">{studentInfo.accountNumber}</Descriptions.Item>
+              <Descriptions.Item label="Ngân hàng">{studentInfo.bankName}</Descriptions.Item>
+              <Descriptions.Item label="Chi nhánh">{studentInfo.branch}</Descriptions.Item>
+              <Descriptions.Item label="Chủ tài khoản">{studentInfo.accountHolderName}</Descriptions.Item>
+              <Descriptions.Item label="Trạng thái tài khoản">
+                <Tag color={studentInfo.accountStatus === 1 ? 'green' : 'red'}>
+                  {studentInfo.accountStatus === 1 ? 'Đang hoạt động' : 'Đã khóa'}
+                </Tag>
+              </Descriptions.Item>
+            </Descriptions>
           </Card>
         </Col>
       </Row>
