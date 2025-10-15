@@ -160,7 +160,8 @@ namespace StudentManagement.Services
                     ProgramName = s.Class.Program.ProgramName,
                     DepartmentName = s.Class.Program.Department.DepartmentName,
                     TrainningLevel = s.Class.Program.DegreeLevel,
-                    YearOfAddmision = s.YearOfAdmission
+                    YearOfAddmision = s.YearOfAdmission,
+                    TotalCreditsRequired = s.Class.Program.CreditsRequired
                 })
                 .FirstOrDefaultAsync();
         }

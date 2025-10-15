@@ -10,6 +10,7 @@
         public string? DepartmentName { get; set; }
         public int? YearOfAddmision { get; set; }
         public string? TrainningLevel { get; set; }
+        public int? TotalCreditsRequired { get; set; }
     }
 
 }

@@ -51,5 +51,44 @@ namespace StudentManagement.Controllers
                 return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, ex.Message, null));
             }
         }
+        [HttpGet("student/credits")]
+        [Authorize]
+        public async Task<IActionResult> GetMyCreditStatistics()
+        {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+            try
+            {
+                var statistics = await _reportService.GetStudentCreditStatisticsByMSSVAsync(UserNameStr);
+                return Ok(ApiResponse.SuccessResponse(statistics, "My credit statistics retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, ex.Message, null));
+            }
+        }
+
+        [HttpGet("students/academic-summary/{semesterId}")]
+        [Authorize]
+        public async Task<IActionResult> GetStudentAcademicSummary(int semesterId)
+        {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+            try
+            {
+                var summary = await _reportService.GetStudentAcademicSummaryAsync(UserNameStr, semesterId);
+                return Ok(ApiResponse.SuccessResponse(summary, "Academic summary retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
     }
 }

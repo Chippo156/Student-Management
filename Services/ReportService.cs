@@ -119,6 +119,29 @@ namespace StudentManagement.Services
             return response;
         }
 
+        public async Task<CreditStudentResponse> GetStudentCreditStatisticsByMSSVAsync(string mssv)
+        {
+            var student = await _context.Students
+                .Include(s => s.Class)
+                    .ThenInclude(c => c.Program)
+                .FirstOrDefaultAsync(s => s.MSSV == mssv)
+                ?? throw new Exception($"Student with MSSV {mssv} not found");
+
+            var finalResults = await _context.FinalResults
+                .Include(fr => fr.Section)
+                    .ThenInclude(s => s.Course)
+                .Where(fr => fr.Student.MSSV == mssv && fr.GradePoint >= 1.0)
+                .ToListAsync();
+
+            int totalCreditsCompleted = finalResults.Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab);
+
+            return new CreditStudentResponse
+            {
+                totalCreditRequired = student.Class.Program.CreditsRequired,
+                totalCreditCompleted = totalCreditsCompleted
+            };
+        }
+
         public async Task<SemesterCreditDetail> GetStudentSemesterStatisticsAsync(string mssv, int semesterId)
         {
             // Kiểm tra sinh viên tồn tại
@@ -192,6 +215,129 @@ namespace StudentManagement.Services
             }
 
             return semesterDetail;
+        }
+
+        public async Task<StudentAcademicSummaryResponse> GetStudentAcademicSummaryAsync(string mssv, int semesterId)
+        {
+            // Find the student
+            var student = await _context.Students
+                .Include(s => s.Class)
+                    .ThenInclude(c => c.Program)
+                .FirstOrDefaultAsync(s => s.MSSV == mssv)
+                ?? throw new Exception($"Student with MSSV {mssv} not found");
+
+            var response = new StudentAcademicSummaryResponse();
+            
+            // Get final results
+            IQueryable<FinalResult> finalResultsQuery = _context.FinalResults
+                .Include(fr => fr.Section)
+                    .ThenInclude(s => s.Course)
+                .Include(fr => fr.Section.Semester)
+                .Where(fr => fr.Student.MSSV == mssv);
+            
+            // If specific semester is requested, filter results
+            if (semesterId != 0)
+            {
+                finalResultsQuery = finalResultsQuery.Where(fr => fr.Section.Semester.SemesterId == semesterId);
+            }
+            
+            var finalResults = await finalResultsQuery.ToListAsync();
+            
+            // Get GPA snapshots
+            IQueryable<GpaSnapshot> gpaQuery = _context.GpaSnapshots
+                .Include(g => g.Semester)
+                .Where(g => g.Student.MSSV == mssv);
+                
+            if (semesterId != 0)
+            {
+                gpaQuery = gpaQuery.Where(g => g.Semester.SemesterId == semesterId);
+            }
+            
+            var gpaSnapshots = await gpaQuery.ToListAsync();
+            
+            // Calculate completed and failed credits
+            int completedCredits = finalResults
+                .Where(fr => fr.GradePoint >= 1.0) // Passing grade
+                .Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab);
+                
+            int failedCredits = finalResults
+                .Where(fr => fr.GradePoint < 1.0) // Failed grade
+                .Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab);
+            
+            // Get required credits for the program
+            int requiredCredits = student.Class.Program.CreditsRequired;
+            
+            // If looking at all semesters, use cumulative GPA from latest snapshot
+            if (semesterId == 0)
+            {
+                var latestGpa = gpaSnapshots
+                    .OrderByDescending(g => g.Semester.Year)
+                    .ThenByDescending(g => g.Semester.Term)
+                    .FirstOrDefault();
+                    
+                response.GPA = latestGpa?.Gpa ?? 0.0;
+                
+                // Add per-semester summaries
+                var semesters = finalResults
+                    .Select(fr => fr.Section.Semester)
+                    .Distinct()
+                    .OrderByDescending(s => s.Year)
+                    .ThenByDescending(s => s.Term)
+                    .ToList();
+                    
+                foreach (var semester in semesters)
+                {
+                    var semesterResults = finalResults
+                        .Where(fr => fr.Section.Semester.SemesterId == semester.SemesterId)
+                        .ToList();
+                        
+                    var semesterGpa = gpaSnapshots
+                        .FirstOrDefault(g => g.Semester.SemesterId == semester.SemesterId);
+                        
+                    var semesterSummary = new SemesterSummary
+                    {
+                        SemesterId = semester.SemesterId,
+                        SemesterName = $"{semester.Year} {semester.Term}",
+                        SemesterGPA = semesterGpa?.Gpa ?? 0.0,
+                        CompletedCredits = semesterResults
+                            .Where(fr => fr.GradePoint >= 1.0)
+                            .Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab),
+                        FailedCredits = semesterResults
+                            .Where(fr => fr.GradePoint < 1.0)
+                            .Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab)
+                    };
+                    
+                    response.SemesterSummaries.Add(semesterSummary);
+                }
+            }
+            else
+            {
+                // For a specific semester, use semester GPA
+                var semesterGpa = gpaSnapshots.FirstOrDefault();
+                response.GPA = semesterGpa?.Gpa ?? 0.0;
+            }
+            
+            // Set other fields in response
+            response.CompletedCredits = completedCredits;
+            response.FailedCredits = failedCredits;
+            response.CompletionRate = requiredCredits > 0 
+                ? Math.Round((double)completedCredits / requiredCredits * 100, 2) 
+                : 0;
+            
+            // Add failed courses
+            response.FailedCourses = finalResults
+                .Where(fr => fr.GradePoint < 1.0)
+                .Select(fr => new FailedCourseInfo
+                {
+                    CourseCode = fr.Section.Course.CourseCode,
+                    CourseName = fr.Section.Course.CourseName,
+                    Credits = fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab,
+                    GradeLetter = fr.GradeLetter,
+                    FinalScore = fr.FinalScore
+                })
+                .ToList();
+            
+            return response;
         }
     }
 }
