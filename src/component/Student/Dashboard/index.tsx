@@ -27,8 +27,9 @@ import {
   Cell,
 } from "recharts";
 import { useTheme, alpha } from "@mui/material/styles";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { userService } from "../../../service/userService";
+// user data now comes from Redux store (state.user.account)
 import reportService from "../../../service/reportService";
 import scheduleService from "../../../service/scheduleService";
 import { semesterService } from "../../../service/semesterService";
@@ -44,7 +45,18 @@ const Dashboard: React.FC = () => {
   const muiTheme = useTheme();
   const navigate = useNavigate();
 
-  const [student, setStudent] = useState<any>(null);
+  // read account from redux (populated on app init)
+  const account = useSelector((state: any) => state.user.account);
+  // Helper getters: prefer flat account fields, fallback to account.user.* for older shape
+  const acctFullName = account?.fullName || account?.user?.fullName;
+  const acctAvatar = account?.avatarUrl || account?.user?.avatarUrl;
+  const acctEmail = account?.email || account?.user?.email;
+  const acctPhone = account?.phone || account?.user?.phone;
+  const acctGender =
+    account && account.gender !== undefined
+      ? account.gender
+      : account?.user?.gender;
+  const acctPlaceOfBirth = account?.placeOfBirth || account?.user?.placeOfBirth;
   const [semesterReport, setSemesterReport] = useState<any>(null);
   const [scheduleCount, setScheduleCount] = useState<{
     countScheduleOfWeek: number;
@@ -160,16 +172,13 @@ const Dashboard: React.FC = () => {
     const fetchAll = async () => {
       setLoading(true);
       try {
-        const [studentRes, reportRes, scheduleRes] = await Promise.all([
-          userService.getUserInfo(),
+        const [reportRes, scheduleRes] = await Promise.all([
           reportService.getSemesterCredits("1"),
           scheduleService.countScheduleOfWeek(),
         ]);
-        setStudent(studentRes);
         setSemesterReport(reportRes.data);
         setScheduleCount(scheduleRes.data);
       } catch {
-        setStudent(null);
         setSemesterReport(null);
         setScheduleCount({ countScheduleOfWeek: 0, countTestOfWeek: 0 });
       }
@@ -177,7 +186,6 @@ const Dashboard: React.FC = () => {
     };
     fetchAll();
   }, []);
-
   useEffect(() => {
     // Thêm fetch semesters
     const fetchSemesters = async () => {
@@ -211,7 +219,8 @@ const Dashboard: React.FC = () => {
     if (selectedSemesterId) {
       setLoading(true);
       // Gọi lại API lấy môn học theo học kỳ
-      reportService.getSemesterCredits(selectedSemesterId.toString())
+      reportService
+        .getSemesterCredits(selectedSemesterId.toString())
         .then((reportRes) => {
           setSemesterReport(reportRes.data);
         })
@@ -232,7 +241,7 @@ const Dashboard: React.FC = () => {
               Dashboard
             </h1>
             <div style={{ ...subTextStyle, marginTop: 4 }}>
-              Chào mừng trở lại, {student?.user?.fullName || "Sinh viên"}
+              Chào mừng trở lại, {acctFullName || "Sinh viên"}
             </div>
           </div>
         </Col>
@@ -259,9 +268,9 @@ const Dashboard: React.FC = () => {
                       overflow: "hidden",
                     }}
                   >
-                    {student?.user?.avatarUrl ? (
+                    {acctAvatar ? (
                       <img
-                        src={student.user.avatarUrl}
+                        src={acctAvatar}
                         alt="avatar"
                         style={{
                           width: "100%",
@@ -301,22 +310,22 @@ const Dashboard: React.FC = () => {
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           MSSV:
                         </span>
-                        <strong>{student?.mssv || "Chưa có"}</strong>
+                        <strong>{account?.mssv || "Chưa có"}</strong>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Họ tên:
                         </span>
-                        <strong>{student?.user?.fullName || "Chưa có"}</strong>
+                        <strong>{acctFullName || "Chưa có"}</strong>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Giới tính:
                         </span>
                         <span style={{ color: colors.secondary }}>
-                          {student?.user?.gender === 0
+                          {acctGender === 0
                             ? "Nam"
-                            : student?.user?.gender === 1
+                            : acctGender === 1
                             ? "Nữ"
                             : "Chưa có"}
                         </span>
@@ -325,19 +334,23 @@ const Dashboard: React.FC = () => {
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Nơi sinh:
                         </span>
-                        <span>{student?.user?.placeOfBirth || "Chưa có"}</span>
+                        <span>{acctPlaceOfBirth || "Chưa có"}</span>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           SĐT:
                         </span>
-                        <span>{student?.user?.phone || "Chưa có"}</span>
+                        <span>{acctPhone || "Chưa có"}</span>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Địa chỉ:
                         </span>
-                        <span>{student?.user?.address || "Chưa có"}</span>
+                        <span>
+                          {account?.address ||
+                            account?.user?.address ||
+                            "Chưa có"}
+                        </span>
                       </div>
                     </div>
                   </Col>
@@ -347,14 +360,16 @@ const Dashboard: React.FC = () => {
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Email:
                         </span>
-                        <span>{student?.user?.email || "Chưa có"}</span>
+                        <span>{acctEmail || "Chưa có"}</span>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Lớp học:
                         </span>
                         <strong style={{ color: colors.primary }}>
-                          {student?.className || "Chưa có"}
+                          {account?.className ||
+                            account?.className ||
+                            "Chưa có"}
                         </strong>
                       </div>
                       <div>
@@ -362,23 +377,23 @@ const Dashboard: React.FC = () => {
                           Ngành:
                         </span>
                         <strong style={{ color: colors.primary }}>
-                          {student?.programName || "Chưa có"}
+                          {account?.programName || "Chưa có"}
                         </strong>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Bộ môn:
                         </span>
-                        <span>{student?.departmentName || "Chưa có"}</span>
+                        <span>{account?.departmentName || "Chưa có"}</span>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Bậc đào tạo:
                         </span>
                         <span style={{ color: colors.success }}>
-                          {student?.trainningLevel === "Bachelor"
+                          {account?.trainningLevel === "Bachelor"
                             ? "Đại học"
-                            : student?.trainningLevel || "Chưa có"}
+                            : account?.trainningLevel || "Chưa có"}
                         </span>
                       </div>
                       <div>
@@ -386,9 +401,9 @@ const Dashboard: React.FC = () => {
                           Khóa học:
                         </span>
                         <span>
-                          {student?.yearOfAddmision
-                            ? `${student.yearOfAddmision}-${
-                                student.yearOfAddmision + 4
+                          {account?.yearOfAddmision
+                            ? `${account.yearOfAddmision}-${
+                                account.yearOfAddmision + 4
                               }`
                             : "Chưa có"}
                         </span>
@@ -714,42 +729,48 @@ const Dashboard: React.FC = () => {
                   pointerEvents: "none",
                 }}
               >
-                {hoveredRing === "outer" ? (
-                  <>
-                    <div
-                      style={{
-                        fontSize: 22,
-                        fontWeight: 700,
-                        color: colors.fg,
-                      }}
-                    >
-                      143/156
-                    </div>
-                    <div style={{ fontSize: 12, color: colors.sub }}>
-                      Tín chỉ
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div
-                      style={{
-                        fontSize: 28,
-                        fontWeight: 700,
-                        color: colors.fg,
-                      }}
-                    >
-                      92%
-                    </div>
-                    <div style={{ fontSize: 12, color: colors.sub }}>
-                      Hoàn thành
-                    </div>
-                  </>
-                )}
+                {(() => {
+                  const completed = 143; // TODO: replace with real completed credits if available
+                  const total = account?.totalCreditsRequired || 0;
+                  const pct =
+                    total > 0 ? Math.round((completed / total) * 100) : 0;
+                  return hoveredRing === "outer" ? (
+                    <>
+                      <div
+                        style={{
+                          fontSize: 22,
+                          fontWeight: 700,
+                          color: colors.fg,
+                        }}
+                      >
+                        {completed}/{total || "--"}
+                      </div>
+                      <div style={{ fontSize: 12, color: colors.sub }}>
+                        Tín chỉ
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div
+                        style={{
+                          fontSize: 28,
+                          fontWeight: 700,
+                          color: colors.fg,
+                        }}
+                      >
+                        {pct}%
+                      </div>
+                      <div style={{ fontSize: 12, color: colors.sub }}>
+                        Hoàn thành
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
             <div style={{ marginTop: 8, color: colors.sub }}>
               <span style={{ color: colors.fg, fontWeight: 600 }}>143</span> /
-              156 tín chỉ
+              {account?.totalCreditsRequired || "--"} tín chỉ
             </div>
           </Card>
         </Col>
