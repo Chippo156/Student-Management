@@ -51,7 +51,7 @@ namespace StudentManagement.Controllers
                 return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, ex.Message, null));
             }
         }
-        [HttpGet("student/credits")]
+        [HttpGet("student/getAllCreditsByStudent")]
         [Authorize]
         public async Task<IActionResult> GetMyCreditStatistics()
         {
