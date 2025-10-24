@@ -26,10 +26,10 @@ const AppContent: React.FC = () => {
     try {
       const token = localStorage.getItem("access_token");
       const refreshToken = localStorage.getItem("refresh_token");
-      const userDataStr = localStorage.getItem("user_data");
-      
-      if (token && refreshToken && userDataStr && !user.isAuthenticated) {
-        // Load user from localStorage
+      const userId = localStorage.getItem("user_id");
+
+      if (token && refreshToken && userId && !user.isAuthenticated) {
+        // Load minimal user (tokens) into redux; full profile should be fetched by AuthLoader/App init
         dispatch(doLoadUserFromToken());
       }
     } catch (error) {
@@ -37,7 +37,7 @@ const AppContent: React.FC = () => {
       // Clear invalid data
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
-      localStorage.removeItem("user_data");
+      localStorage.removeItem("user_id");
       dispatch(doLogoutAction());
     }
   };

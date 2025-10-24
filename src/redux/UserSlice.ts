@@ -55,15 +55,13 @@ export const loginUser = createAsyncThunk(
   async (credentials: LoginRequest, { rejectWithValue }) => {
     try {
       const response: LoginResponse = await authService.login(credentials);
-      console.error(
-        "Redux: Login failed - API returned success=false:",
-        response
-      );
+
       if (!response.success) {
+        // API returned success=false -> forward message to rejected action
         return rejectWithValue(response.message);
       }
 
-      console.log("Redux: Login successful, returning data:", response.data);
+      // success: return payload.data (expected shape: { token, user })
       return response.data;
     } catch (error: any) {
       console.error("Redux: Login error caught:", error);
@@ -75,7 +73,7 @@ export const loginUser = createAsyncThunk(
 // Async thunk for logout
 export const logoutUser = createAsyncThunk(
   "user/logout",
-  async (_, { rejectWithValue }) => {
+  async () => {
     try {
       await authService.logout();
     } catch (error: any) {
@@ -127,6 +125,9 @@ export const userSlice = createSlice({
       // persist tokens ONLY
       localStorage.setItem("access_token", token.accessToken);
       localStorage.setItem("refresh_token", token.refreshToken);
+  // persist user id for refresh flow
+  const persistedUserId = user.studentId ?? user.user?.userId ?? undefined;
+  if (persistedUserId) localStorage.setItem("user_id", String(persistedUserId));
     },
 
     doGetAccountAction: (
@@ -148,6 +149,7 @@ export const userSlice = createSlice({
     doLogoutAction: (state) => {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user_id");
       state.isAuthenticated = false;
       state.account = null;
       state.error = null;
@@ -202,8 +204,8 @@ export const userSlice = createSlice({
         state.isAuthenticated = true;
 
         // action.payload expected to include { token: {accessToken, refreshToken}, user: data }
-        const token = action.payload.token;
-        const user = action.payload.user;
+  const token = (action.payload as any).token;
+  const user = (action.payload as any).user;
 
         state.account = {
           accessToken: token.accessToken,
@@ -231,6 +233,9 @@ export const userSlice = createSlice({
         // Persist tokens only
         localStorage.setItem("access_token", token.accessToken);
         localStorage.setItem("refresh_token", token.refreshToken);
+  // persist user id for refresh flow
+  const persistedUserId = user.studentId ?? user.user?.userId ?? undefined;
+  if (persistedUserId) localStorage.setItem("user_id", String(persistedUserId));
 
         // DO NOT store user_data in localStorage any more
       })
@@ -249,6 +254,7 @@ export const userSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state) => {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        localStorage.removeItem("user_id");
         state.isAuthenticated = false;
         state.account = null;
         state.error = null;

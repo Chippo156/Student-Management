@@ -131,23 +131,23 @@ export const adminService = {
     }
   },
 
-  changeUserStatus: async (userId: number, status: number): Promise<any> => {
-    try {
-      const response = await axios.patch(`/api/v1/Admin/users/${userId}/status`, { status });
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Change user status failed');
-    }
-  },
+  // changeUserStatus: async (userId: number, status: number): Promise<any> => {
+  //   try {
+  //     const response = await axios.patch(`/api/v1/Admin/users/${userId}/status`, { status });
+  //     return response.data;
+  //   } catch (error: any) {
+  //     throw new Error(error.response?.data?.message || 'Change user status failed');
+  //   }
+  // },
 
-  resetUserPassword: async (userId: number, newPassword: string): Promise<any> => {
-    try {
-      const response = await axios.patch(`/api/v1/Admin/users/${userId}/reset-password`, { newPassword });
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Reset user password failed');
-    }
-  },
+  // resetUserPassword: async (userId: number, newPassword: string): Promise<any> => {
+  //   try {
+  //     const response = await axios.patch(`/api/v1/Admin/users/${userId}/reset-password`, { newPassword });
+  //     return response.data;
+  //   } catch (error: any) {
+  //     throw new Error(error.response?.data?.message || 'Reset user password failed');
+  //   }
+  // },
 
   // Student Management
   getAllStudents: async (params?: {

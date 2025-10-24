@@ -37,7 +37,7 @@ const reportService = {
       // Có thể dùng message.error nếu dùng Ant Design
       throw new Error(res.message || "Không lấy được dữ liệu học kỳ");
     }
-    return res.data;
+    return res as SemesterCreditsResponse;
   },
 };
 

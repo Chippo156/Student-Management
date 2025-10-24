@@ -77,12 +77,12 @@ export interface ForgotPasswordRequest {
 export const authService = {
   // Login
   login: async (data: LoginRequest): Promise<LoginResponse> => {
-    const response = await axios.post("/api/v1/Auth/login", data);
+    const response = await axios.post<LoginResponse["data"]>("/api/v1/Auth/login", data);
     if (!response.success) {
       message.error(response.message || "Đăng nhập thất bại");
       throw new Error(response.message || "Login failed");
     }
-    return response;
+    return response as LoginResponse;
   },
 
   // Register
@@ -112,7 +112,7 @@ export const authService = {
       message.error(response.message || "Làm mới token thất bại");
       throw new Error(response.message || "Token refresh failed");
     }
-    return response.data;
+    return response as RefreshTokenResponse;
   },
 
   // Change Password
