@@ -11,6 +11,7 @@ namespace StudentManagement.Models
         public Class Class { get; set; } = null!;
         public DateOnly StartDate { get; set; }
         public DateOnly EndDate { get; set; }
+        public int Capacity { get; set; }
         [JsonIgnore]
         public ICollection<Assessment> Assessments { get; set; } = new List<Assessment>();
     }

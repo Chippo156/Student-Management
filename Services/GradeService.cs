@@ -174,7 +174,7 @@ namespace StudentManagement.Services
                     CourseCode = section.Course.CourseCode,
                     CourseName = section.Course.CourseName,
                     Credits = section.Course.CreditsTheory + section.Course.CreditsLab,
-                    FinalScore = finalResult?.FinalScore,
+                    FinalScore = Math.Round(finalResult?.FinalScore ?? 0, 2),
                     GradeLetter = finalResult?.GradeLetter
                 };
 
@@ -187,7 +187,9 @@ namespace StudentManagement.Services
                     {
                         AssessmentName = assessment.Title,
                         AssessmentType = assessment.AssessmentType?.Title ?? "Unknown",
-                        Score = grade?.Score ?? 0 // If no grade, default to 0
+                        Score = grade?.Score ?? 0, // If no grade, default to 0
+                        Weight = assessment.Weight,
+                        AssessmentId = assessment.AssessmentId
                     });
                 }
 

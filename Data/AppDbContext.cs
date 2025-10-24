@@ -36,6 +36,7 @@ namespace StudentManagement.Data
         public DbSet<Assessment> Assessment { get; set; } = null!;
         public DbSet<ScheduleType> ScheduleTypes { get; set; } = null!;
         public DbSet<AssessmentType> AssessmentTypes { get; set; } = null!;
+        public DbSet<RegistrationPeriod> RegistrationPeriods { get; set; } = null!;
 
     }
 }

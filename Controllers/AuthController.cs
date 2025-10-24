@@ -47,12 +47,13 @@ namespace StudentManagement.Controllers
 
         [HttpPost]
         [Route("refresh-token")]
+        [AllowAnonymous]
         public async Task<ActionResult<TokenResponse>> RefreshToken(RefreshTokenRequest refreshTokenRequest)
         {
             var result = await authService.RefreshTokenAsync(refreshTokenRequest);
             if (result is null)
             {
-                return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "Invalid refresh token.", null));
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Refresh token failed", null));
             }
             return Ok(ApiResponse.SuccessResponse(result, "Refresh token success"));
         }

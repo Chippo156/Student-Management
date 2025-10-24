@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StudentManagement.Data;
 
@@ -11,9 +12,11 @@ using StudentManagement.Data;
 namespace StudentManagement.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251018052617_addLecturerCode")]
+    partial class addLecturerCode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -620,38 +623,6 @@ namespace StudentManagement.Migrations
                     b.ToTable("Prerequisites");
                 });
 
-            modelBuilder.Entity("StudentManagement.Models.RegistrationPeriod", b =>
-                {
-                    b.Property<int>("RegistrationPeriodId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RegistrationPeriodId"));
-
-                    b.Property<int>("DepartmentId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsOpen")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("SemesterId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("RegistrationPeriodId");
-
-                    b.HasIndex("DepartmentId");
-
-                    b.HasIndex("SemesterId");
-
-                    b.ToTable("RegistrationPeriods");
-                });
-
             modelBuilder.Entity("StudentManagement.Models.Role", b =>
                 {
                     b.Property<int>("RoleId")
@@ -739,9 +710,6 @@ namespace StudentManagement.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SectionId"));
-
-                    b.Property<int>("Capacity")
-                        .HasColumnType("int");
 
                     b.Property<int>("ClassId")
                         .HasColumnType("int");
@@ -1205,25 +1173,6 @@ namespace StudentManagement.Migrations
                     b.Navigation("Course");
 
                     b.Navigation("PrerequisiteCourse");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.RegistrationPeriod", b =>
-                {
-                    b.HasOne("StudentManagement.Models.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StudentManagement.Models.Semester", "Semester")
-                        .WithMany()
-                        .HasForeignKey("SemesterId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Department");
-
-                    b.Navigation("Semester");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Schedule", b =>
