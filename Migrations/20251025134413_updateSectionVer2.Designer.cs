@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StudentManagement.Data;
 
@@ -11,9 +12,11 @@ using StudentManagement.Data;
 namespace StudentManagement.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251025134413_updateSectionVer2")]
+    partial class updateSectionVer2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -750,6 +753,9 @@ namespace StudentManagement.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsOpen")
+                        .HasColumnType("bit");
+
                     b.Property<int>("SemesterId")
                         .HasColumnType("int");
 
@@ -876,9 +882,6 @@ namespace StudentManagement.Migrations
 
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
 
                     b.HasKey("SectionId");
 
@@ -1176,7 +1179,7 @@ namespace StudentManagement.Migrations
             modelBuilder.Entity("StudentManagement.Models.Enrollment", b =>
                 {
                     b.HasOne("StudentManagement.Models.Section", "Section")
-                        .WithMany("Enrollments")
+                        .WithMany()
                         .HasForeignKey("SectionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1367,7 +1370,7 @@ namespace StudentManagement.Migrations
                         .IsRequired();
 
                     b.HasOne("StudentManagement.Models.Section", "Section")
-                        .WithMany("Schedules")
+                        .WithMany()
                         .HasForeignKey("SectionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1445,10 +1448,6 @@ namespace StudentManagement.Migrations
             modelBuilder.Entity("StudentManagement.Models.Section", b =>
                 {
                     b.Navigation("Assessments");
-
-                    b.Navigation("Enrollments");
-
-                    b.Navigation("Schedules");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.User", b =>

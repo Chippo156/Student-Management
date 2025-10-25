@@ -3,6 +3,8 @@ using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace StudentManagement.Controllers
 {
@@ -52,6 +54,7 @@ namespace StudentManagement.Controllers
             }
             return Ok(ApiResponse.SuccessResponse(null, "Section deleted successfully"));
         }
+
         [HttpGet("lecturer/{lecturerId}")]
         public async Task<ActionResult<IEnumerable<Section>>> GetSectionsByLecturer(int lecturerId)
         {
@@ -59,5 +62,50 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(sections, "Lecturer sections retrieved successfully"));
         }
 
+        [HttpGet("GetSectionsByCurriculumCourseAndSemester/{curriculumCourseId}/{semesterId}")]
+        [Authorize]
+        public async Task<IActionResult> GetSectionsByCurriculumCourseAndSemester(int curriculumCourseId, int semesterId)
+        {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+
+            try
+            {
+                var sections = await sectionService.GetSectionsByCurriculumCourseAndSemesterAsync(curriculumCourseId, semesterId, UserNameStr);
+                return Ok(ApiResponse.SuccessResponse(sections, "Sections with registration status retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+
+        [HttpGet("GetSectionScheduleWithRegistration/{sectionId}")]
+        [Authorize]
+        public async Task<IActionResult> GetSectionScheduleWithRegistration(int sectionId)
+        {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+
+            try
+            {
+                var schedule = await sectionService.GetSectionScheduleWithRegistrationAsync(sectionId, UserNameStr);
+                if (schedule == null)
+                {
+                    return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Section with ID {sectionId} not found", null));
+                }
+                return Ok(ApiResponse.SuccessResponse(schedule, "Section schedule with registration status retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
     }
 }
