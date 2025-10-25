@@ -4,8 +4,6 @@ namespace StudentManagement.Models.Dto.Request
 {
     public class BankAccountRequest
     {
-        [Required]
-        public int UserId { get; set; }
         
         [Required]
         [StringLength(50)]
@@ -14,11 +12,14 @@ namespace StudentManagement.Models.Dto.Request
         [Required]
         [StringLength(100)]
         public string BankName { get; set; } = string.Empty;
-        
+
+        public string BankCode { get; set; } = string.Empty;
+
         [Required]
         [StringLength(100)]
         public string Branch { get; set; } = string.Empty;
-        
+        public DateOnly? DateCreateAccount { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+
         [Required]
         [StringLength(100)]
         public string AccountHolderName { get; set; } = string.Empty;

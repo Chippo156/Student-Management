@@ -9,15 +9,15 @@ namespace StudentManagement.Services
 {
     public class BankAccountService(AppDbContext context) : IBankAccountService
     {
-        public async Task<BankAccount> CreateBankAccountAsync(BankAccountRequest request)
+        public async Task<BankAccount> CreateBankAccountAsync(int userId, BankAccountRequest request)
         {
-            var user = await context.Users.FindAsync(request.UserId)
+            var user = await context.Users.FindAsync(userId)
                 ?? throw new Exception("User not found");
 
             // If this is set as default, remove default from other accounts
             if (request.IsDefault)
             {
-                await RemoveDefaultFromOtherAccountsAsync(request.UserId);
+                await RemoveDefaultFromOtherAccountsAsync(userId);
             }
 
             var bankAccount = new BankAccount
@@ -109,6 +109,7 @@ namespace StudentManagement.Services
             bankAccount.Branch = request.Branch;
             bankAccount.AccountHolderName = request.AccountHolderName;
             bankAccount.IsDefault = request.IsDefault;
+            bankAccount.BankCode = request.BankCode;
 
             context.BankAccounts.Update(bankAccount);
             await context.SaveChangesAsync();

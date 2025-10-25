@@ -33,11 +33,15 @@ namespace StudentManagement.Controllers
         }
 
         [HttpPost("user/CreateBankAccount")]
+        [Authorize]
         public async Task<IActionResult> CreateBankAccount(BankAccountRequest request)
         {
             try
             {
-                var createdAccount = await bankAccountService.CreateBankAccountAsync(request);
+                var (isValid, errorResult, userId) = GetAuthenticatedUserId();
+                if (!isValid)
+                    return errorResult!;
+                var createdAccount = await bankAccountService.CreateBankAccountAsync(userId,request);
                 return Ok(ApiResponse.SuccessResponse(createdAccount, "Bank account created successfully"));
             }
             catch (Exception ex)

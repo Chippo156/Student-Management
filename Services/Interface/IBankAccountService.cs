@@ -6,7 +6,7 @@ namespace StudentManagement.Services.Interface
 {
     public interface IBankAccountService
     {
-        Task<BankAccount> CreateBankAccountAsync(BankAccountRequest request);
+        Task<BankAccount> CreateBankAccountAsync(int userId, BankAccountRequest request);
         Task<BankAccount?> UpdateBankAccountAsync(int bankAccountId, BankAccountRequest request);
         Task<bool> DeleteBankAccountAsync(int bankAccountId);
         Task<BankAccountResponse?> GetBankAccountByIdAsync(int bankAccountId);
