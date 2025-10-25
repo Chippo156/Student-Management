@@ -60,6 +60,8 @@ builder.Services.AddScoped<IGpaSnapshotService, GpaSnapshotService>();
 builder.Services.AddScoped<IGradeService, GradeService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISemesterService, SemesterService>();
+builder.Services.AddScoped<IBankAccountService, BankAccountService>();
+builder.Services.AddScoped<IFamilyRelationshipService, FamilyRelationshipService>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -78,8 +80,14 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
-
+    app.MapScalarApiReference(options =>
+    {
+        options.Title = "Student Management API";
+        options.Theme = ScalarTheme.BluePlanet;
+        options.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.HttpClient);
+        
+    });
+    
 }
 app.UseCors("AllowAll");
 
