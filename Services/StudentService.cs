@@ -44,7 +44,7 @@ namespace StudentManagement.Services
         public async Task<IEnumerable<StudentDetailDto>> GetAllStudentsAsync()
         {
             return await context.Students.Select(
-                
+
                 s => new StudentDetailDto
                 {
                     StudentId = s.Id,
@@ -64,8 +64,8 @@ namespace StudentManagement.Services
                 }).ToListAsync();
         }
 
-     
-            public async Task<StudentDetailDto?> GetStudentByIdAsync(int studentId)
+
+        public async Task<StudentDetailDto?> GetStudentByIdAsync(int studentId)
         {
             return await context.Students
                 .Where(s => s.Id == studentId)
@@ -122,7 +122,7 @@ namespace StudentManagement.Services
         }
 
         public async Task<StudentDetailDto?> GetStudentByMSSV(string MSSV)
-        {       
+        {
             var bankAccount = await context.BankAccounts
                 .Where(b => b.IsDefault == true)
                 .ToListAsync();
@@ -181,5 +181,115 @@ namespace StudentManagement.Services
                 })
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<StudentDetailDto?> UpdateStudentInformationAsync(string mssv, StudentUpdateRequest request)
+        {
+            using var transaction = await context.Database.BeginTransactionAsync();
+
+            try
+            {
+                // Get student with all related data
+                var student = await context.Students
+                    .Include(s => s.User)
+                        .ThenInclude(u => u.BankAccounts)
+                    .Include(s => s.Class)
+                        .ThenInclude(c => c.Program)
+                            .ThenInclude(p => p.Department)
+                    .FirstOrDefaultAsync(s => s.MSSV == mssv);
+
+                if (student == null)
+                {
+                    return null;
+                }
+
+                // Update User Information
+                student.User.FullName = request.FullName;
+                student.User.Email = request.Email;
+                student.User.Phone = request.Phone;
+                student.User.Gender = request.Gender;
+                student.User.Address = request.Address;
+                student.User.PlaceOfBirth = request.PlaceOfBirth;
+                student.User.Religion = request.Religion;
+                student.User.DateOfBirth = request.DateOfBirth;
+                student.User.CitizenIdCard = request.CitizenIdCard;
+                student.User.IssuedDate = request.IssuedDate;
+                student.User.IssuedPlace = request.IssuedPlace;
+                student.User.Object = request.Object;
+                student.User.PolicyArea = request.PolicyArea;
+                student.User.DateOfJoinUnion = request.DateOfJoinUnion;
+                student.User.DateOfJoinParty = request.DateOfJoinParty;
+
+                // Update avatar if provided
+                if (!string.IsNullOrEmpty(request.AvatarUrl))
+                {
+                    student.User.AvatarUrl = request.AvatarUrl;
+                }
+
+                // Save changes
+                context.Students.Update(student);
+                await context.SaveChangesAsync();
+
+                // Commit transaction
+                await transaction.CommitAsync();
+
+                // Return updated student information
+                return new StudentDetailDto
+                {
+                    StudentId = student.Id,
+                    MSSV = student.MSSV,
+                    User = new UserResponse
+                    {
+                        Username = student.User.Username,
+                        FullName = student.User.FullName,
+                        Email = student.User.Email,
+                        Phone = student.User.Phone,
+                        Address = student.User.Address,
+                        AccountStatus = student.User.AccountStatus,
+                        AvatarUrl = student.User.AvatarUrl,
+                        Role = student.User.Role,
+                        PlaceOfBirth = student.User.PlaceOfBirth,
+                        DateOfBirth = student.User.DateOfBirth,
+                        CitizenIdCard = student.User.CitizenIdCard,
+                        IssuedDate = student.User.IssuedDate,
+                        Object = student.User.Object,
+                        PolicyArea = student.User.PolicyArea,
+                        DateOfJoinUnion = student.User.DateOfJoinUnion,
+                        DateOfJoinParty = student.User.DateOfJoinParty,
+                        BankAccount = student.User.BankAccounts
+                          .Where(b => b.IsDefault == true)
+                         .Select(b => new BankAccountResponse
+                         {
+                             Id = b.Id,
+                             UserId = b.Id,
+                             AccountNumber = b.AccountNumber,
+                             BankName = b.BankName,
+                             Branch = b.Branch,
+                             AccountHolderName = b.AccountHolderName,
+                             IsDefault = b.IsDefault,
+                             BankCode = b.BankCode,
+                             AccountStatus = b.AccountStatus,
+                             DateCreateAccount = b.DateCreateAccount
+                         }).FirstOrDefault(),
+                        Religion = student.User.Religion,
+                        Gender = student.User.Gender
+                    },
+                    ClassName = student.Class.ClassName,
+                    ProgramName = student.Class.Program.ProgramName,
+                    DepartmentName = student.Class.Program.Department.DepartmentName,
+                    TrainningLevel = student.Class.Program.DegreeLevel,
+                    YearOfAdmission = student.YearOfAdmission,
+                    TotalCreditsRequired = student.Class.Program.CreditsRequired,
+                    DateOfAdmission = student.DateOfAdmission
+
+                };
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+       
     }
 }

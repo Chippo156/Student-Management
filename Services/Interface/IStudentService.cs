@@ -12,5 +12,6 @@ namespace StudentManagement.Services.Interface
         Task<bool> DeleteStudentAsync(int studentId);
         Task<IEnumerable<StudentDetailDto>> GetStudentsBySectionIdAsync(int sectionId);
         Task<StudentDetailDto?> GetStudentByMSSV(string MSSV);
+        Task<StudentDetailDto?> UpdateStudentInformationAsync(string mssv, StudentUpdateRequest request);
     }
 }

@@ -84,5 +84,30 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(student, "Student retrieved successfully"));
         }
 
+        [HttpPut("UpdateStudentInformation")]
+        [Authorize]
+        public async Task<IActionResult> UpdateMyInformation(StudentUpdateRequest request)
+        {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+
+            try
+            {
+                var updatedStudent = await studentService.UpdateStudentInformationAsync(UserNameStr, request);
+                if (updatedStudent == null)
+                {
+                    return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, "Student not found.", null));
+                }
+                
+                return Ok(ApiResponse.SuccessResponse(updatedStudent, "Student information updated successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
     }
 }
