@@ -122,7 +122,11 @@ namespace StudentManagement.Services
         }
 
         public async Task<StudentDetailDto?> GetStudentByMSSV(string MSSV)
-        {
+        {       
+            var bankAccount = await context.BankAccounts
+                .Where(b => b.IsDefault == true)
+                .ToListAsync();
+
             return await context.Students
                 .Where(s => s.MSSV == MSSV)
                 .Include(s => s.User)
@@ -149,10 +153,21 @@ namespace StudentManagement.Services
                         PolicyArea = s.User.PolicyArea,
                         DateOfJoinUnion = s.User.DateOfJoinUnion,
                         DateOfJoinParty = s.User.DateOfJoinParty,
-                        AccountNumber = s.User.AccountNumber,
-                        BankName = s.User.BankName,
-                        Branch = s.User.Branch,
-                        AccountHolderName = s.User.AccountHolderName,
+                        BankAccount = s.User.BankAccounts
+                          .Where(b => b.IsDefault == true)
+                         .Select(b => new BankAccountResponse
+                         {
+                             Id = b.Id,
+                             UserId = b.Id,
+                             AccountNumber = b.AccountNumber,
+                             BankName = b.BankName,
+                             Branch = b.Branch,
+                             AccountHolderName = b.AccountHolderName,
+                             IsDefault = b.IsDefault,
+                             BankCode = b.BankCode,
+                             AccountStatus = b.AccountStatus,
+                             DateCreateAccount = b.DateCreateAccount
+                         }).FirstOrDefault(),
                         Religion = s.User.Religion,
                         Gender = s.User.Gender
                     },
