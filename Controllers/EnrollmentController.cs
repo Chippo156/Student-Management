@@ -81,5 +81,33 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(enrollments, "Enrollments for the semester retrieved successfully"));
         }
 
+        [HttpPost("EnrollInCourse")]
+        [Authorize]
+        public async Task<IActionResult> EnrollInCourse(CourseEnrollmentRequest request)
+        {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+
+            try
+            {
+                var result = await enrollmentService.EnrollInCourseAsync(UserNameStr, request);
+                
+                if (result.IsSuccess)
+                {
+                    return Ok(ApiResponse.SuccessResponse(result, result.Message));
+                }
+                else
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, result.Message, result.Errors));
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
     }
 }

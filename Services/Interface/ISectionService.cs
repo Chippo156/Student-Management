@@ -1,5 +1,6 @@
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 
 namespace StudentManagement.Services.Interface
 {
@@ -11,5 +12,7 @@ namespace StudentManagement.Services.Interface
         Task<bool> DeleteSectionAsync(int sectionId);
         Task<IEnumerable<Section>> GetSectionsByCourseAsync(int courseId);
         Task<IEnumerable<Section>> GetSectionsByLecturerAsync(int lecturerId);
+        Task<IEnumerable<SectionDetailWithRegistrationResponse>> GetSectionsByCurriculumCourseAndSemesterAsync(int curriculumCourseId, int semesterId, string studentMSSV);
+        Task<SectionScheduleWithRegistrationResponse?> GetSectionScheduleWithRegistrationAsync(int sectionId, string studentMSSV);
     }
 }

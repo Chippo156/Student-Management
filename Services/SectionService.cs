@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Services
@@ -95,6 +96,150 @@ namespace StudentManagement.Services
                 .AsEnumerable());
         }
 
-        
+        public async Task<IEnumerable<SectionDetailWithRegistrationResponse>> GetSectionsByCurriculumCourseAndSemesterAsync(int curriculumCourseId, int semesterId, string studentMSSV)
+        {
+            // Get student to determine their department
+            var student = await context.Students
+                .Include(s => s.Class)
+                    .ThenInclude(c => c.Program)
+                        .ThenInclude(p => p.Department)
+                .FirstOrDefaultAsync(s => s.MSSV == studentMSSV)
+                ?? throw new Exception($"Student with MSSV {studentMSSV} not found");
+
+            // Verify curriculum course exists
+            var curriculumCourse = await context.CurriculumCourses
+                .Include(cc => cc.Course)
+                .Include(cc => cc.Program)
+                .FirstOrDefaultAsync(cc => cc.Id == curriculumCourseId)
+                ?? throw new Exception("Curriculum course not found");
+
+            // Check if registration period is active for the student's department and semester
+            var registrationPeriod = await context.RegistrationPeriods
+                .Include(rp => rp.Semester)
+                .Include(rp => rp.Department)
+                .FirstOrDefaultAsync(rp => 
+                    rp.Semester.SemesterId == semesterId && 
+                    rp.Department.DepartmentId == student.Class.Program.Department.DepartmentId);
+
+            bool isRegistrationOpen = registrationPeriod?.IsActive ?? false;
+
+            // Get all sections for this curriculum course in the specified semester
+            var sections = await context.Sections
+                .Include(s => s.CurriculumCourse)
+                    .ThenInclude(cc => cc.Course)
+                .Include(s => s.Lecturer)
+                    .ThenInclude(l => l.User)
+                .Include(s => s.Semester)
+                .Where(s => s.CurriculumCourse.Id == curriculumCourseId && 
+                        s.Semester.SemesterId == semesterId)
+                .ToListAsync();
+
+            var response = sections.Select(s => new SectionDetailWithRegistrationResponse
+            {
+                SectionId = s.SectionId,
+                MaxCapacity = s.Capacity,
+                CurrentEnrollment = s.EnrolledCount,
+                StartDate = s.StartDate,
+                EndDate = s.EndDate,
+                
+                // Course information
+                CourseCode = s.CurriculumCourse.Course.CourseCode,
+                CourseName = s.CurriculumCourse.Course.CourseName,
+                CreditsTheory = s.CurriculumCourse.Course.CreditsTheory,
+                CreditsLab = s.CurriculumCourse.Course.CreditsLab,
+                TotalCredits = s.CurriculumCourse.Course.CreditsTheory + s.CurriculumCourse.Course.CreditsLab,
+                
+                // Lecturer information
+                LecturerName = s.Lecturer?.User?.FullName ?? "Not Assigned",
+                LecturerEmail = s.Lecturer?.User?.Email ?? "",
+                
+                // Semester information
+                SemesterId = s.Semester.SemesterId,
+                SemesterName = $"{s.Semester.Year} - {s.Semester.Term}",
+                Year = s.Semester.Year,
+                Term = s.Semester.Term,
+                
+                // Registration status
+                IsRegistrationOpen = isRegistrationOpen,
+                RegistrationStartDate = registrationPeriod?.StartDate,
+                RegistrationEndDate = registrationPeriod?.EndDate
+            })
+            .OrderBy(s => s.SectionName)
+            .ToList();
+
+            return response;
+        }
+
+        public async Task<SectionScheduleWithRegistrationResponse?> GetSectionScheduleWithRegistrationAsync(int sectionId, string studentMSSV)
+        {
+            // Get student to determine their department
+            var student = await context.Students
+                .Include(s => s.Class)
+                    .ThenInclude(c => c.Program)
+                        .ThenInclude(p => p.Department)
+                .FirstOrDefaultAsync(s => s.MSSV == studentMSSV)
+                ?? throw new Exception($"Student with MSSV {studentMSSV} not found");
+
+            // Get section with related data
+            var section = await context.Sections
+                .Include(s => s.CurriculumCourse)
+                    .ThenInclude(cc => cc.Course)
+                .Include(s => s.Lecturer)
+                    .ThenInclude(l => l.User)
+                .Include(s => s.Semester)
+                .FirstOrDefaultAsync(s => s.SectionId == sectionId);
+
+            if (section == null)
+                return null;
+
+            // Check if registration period is active for the student's department and semester
+            var registrationPeriod = await context.RegistrationPeriods
+                .Include(rp => rp.Semester)
+                .Include(rp => rp.Department)
+                .FirstOrDefaultAsync(rp => 
+                    rp.Semester.SemesterId == section.Semester.SemesterId && 
+                    rp.Department.DepartmentId == student.Class.Program.Department.DepartmentId);
+
+            bool isRegistrationOpen = registrationPeriod?.IsActive ?? false;
+
+            // Get all schedules for this section
+            var schedules = await context.Schedules
+                .Include(sch => sch.ScheduleType)
+                .Where(sch => sch.Section.SectionId == sectionId)
+                .OrderBy(sch => sch.DayOfWeek)
+                .ThenBy(sch => sch.StartTime)
+                .ThenBy(sch => sch.Date)
+                .ToListAsync();
+
+            var scheduleDetails = schedules.Select(sch => new ScheduleDetailInfo
+            {
+                ScheduleId = sch.ScheduleId,
+                ScheduleTypeName = sch.ScheduleType.Name,
+                DayOfWeek = sch.DayOfWeek,
+                DayOfWeekName = sch.DayOfWeek?.ToString() ?? "",
+                Date = sch.Date,
+                StartTime = sch.StartTime,
+                EndTime = sch.EndTime,
+                Room = sch.Room,
+                OnlineLink = sch.OnlineLink
+            }).ToList();
+
+            return new SectionScheduleWithRegistrationResponse
+            {
+                SectionId = section.SectionId,
+                CourseCode = section.CurriculumCourse.Course.CourseCode,
+                CourseName = section.CurriculumCourse.Course.CourseName,
+                LecturerName = section.Lecturer?.User?.FullName ?? "Not Assigned",
+                SemesterId = section.Semester.SemesterId,
+                SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
+                
+                // Registration status
+                IsRegistrationOpen = isRegistrationOpen,
+                RegistrationStartDate = registrationPeriod?.StartDate,
+                RegistrationEndDate = registrationPeriod?.EndDate,
+                
+                Schedules = scheduleDetails
+            };
+        }
     }
 }

@@ -205,6 +205,7 @@ namespace StudentManagement.Services
 
                 var courseResponse = new CourseByStudentDepartmentResponse
                 {
+                    CurriculumCourseId = curriculumCourse.Id,
                     CourseId = course.CourseId,
                     CourseCode = course.CourseCode,
                     CourseName = course.CourseName,

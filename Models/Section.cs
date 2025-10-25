@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using StudentManagement.Enum;
+using System.Text.Json.Serialization;
 
 namespace StudentManagement.Models
 {
@@ -12,7 +13,13 @@ namespace StudentManagement.Models
         public DateOnly StartDate { get; set; }
         public DateOnly EndDate { get; set; }
         public int Capacity { get; set; }
+        public int EnrolledCount { get; set; }
+        public SectionStatus Status { get; set; } = SectionStatus.IsPreparing;
         [JsonIgnore]
         public ICollection<Assessment> Assessments { get; set; } = new List<Assessment>();
+        [JsonIgnore]
+        public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
+        [JsonIgnore]
+        public ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
     }
 }

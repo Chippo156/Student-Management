@@ -4,6 +4,7 @@ namespace StudentManagement.Models.Dto.Response
 {
     public class CourseByStudentDepartmentResponse
     {
+        public int CurriculumCourseId { get; set; }
         public int CourseId { get; set; }
         public string CourseCode { get; set; } = string.Empty;
         public string CourseName { get; set; } = string.Empty;

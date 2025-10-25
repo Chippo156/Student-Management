@@ -13,6 +13,6 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<Enrollment>> GetEnrollmentsByStudentIdAsync(int studentId);
         Task<IEnumerable<Enrollment>> GetEnrollmentsByCourseIdAsync(int courseId);
         Task<IEnumerable<EnrollmentSemester>> GetEnrollmentBySemesterAsync(int semesterId, string mssv);
-
+        Task<EnrollmentResultResponse> EnrollInCourseAsync(string mssv, CourseEnrollmentRequest request);
     }
 }
