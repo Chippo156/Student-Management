@@ -14,5 +14,6 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<Grade>> GetGradesBySectionAndStudentAsync(int sectionId, int studentId);
         Task<IEnumerable<Grade>> GetGradesBySemeterAndStudentAsync(int semeter, int studentId);
         Task<IEnumerable<StudentSectionGradesResponse>> GetStudentSemesterGradesBySectionsAsync(string mssv, int semesterId);
+        Task<StudentAllGradesResponse> GetAllStudentGradesByMSSVAsync(string mssv);
     }
 }

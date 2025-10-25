@@ -18,6 +18,7 @@ namespace StudentManagement.Models.Dto.Response
 
         public string? CitizenIdCard { get; set; } = string.Empty;
         public DateOnly? IssuedDate { get; set; }
+        public string? IssuedPlace { get; set; } = string.Empty;
         public string? Object { get; set; } = string.Empty;
         public string? PolicyArea { get; set; }
         public DateOnly? DateOfJoinUnion { get; set; }

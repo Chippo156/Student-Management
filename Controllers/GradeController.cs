@@ -63,6 +63,7 @@ namespace StudentManagement.Controllers
             }
             return Ok(ApiResponse.SuccessResponse(null, "Grade deleted successfully"));
         }
+
         [HttpGet("semeter/{semeter}")]
         [Authorize]
         public async Task<ActionResult<IEnumerable<Grade>>> GetStudentSemesterGradesBySections(int semeter)
@@ -74,6 +75,27 @@ namespace StudentManagement.Controllers
             }
             var grades = await gradeService.GetStudentSemesterGradesBySectionsAsync(UserNameStr, semeter);
             return Ok(ApiResponse.SuccessResponse(grades, "Semeter-student grades retrieved successfully"));
+        }
+
+        [HttpGet("GetMyAllGrades")]
+        [Authorize]
+        public async Task<IActionResult> GetMyAllGrades()
+        {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+
+            try
+            {
+                var allGrades = await gradeService.GetAllStudentGradesByMSSVAsync(UserNameStr);
+                return Ok(ApiResponse.SuccessResponse(allGrades, "All student grades retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
         }
     }
 }

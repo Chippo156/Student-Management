@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
@@ -126,11 +126,11 @@ namespace StudentManagement.Services
 
         public async Task<IEnumerable<Grade>> GetGradesBySemeterAndStudentAsync(int semeter, int studentId)
         {
-           return await context.Grades
-                .Include(g =>  g.Assessment)
-                    .ThenInclude(a => a.Section)
-                .Where(g => g.Student.Id == studentId && g.Assessment.Section.Semester.SemesterId == semeter)
-                .ToListAsync();
+            return await context.Grades
+                 .Include(g => g.Assessment)
+                     .ThenInclude(a => a.Section)
+                 .Where(g => g.Student.Id == studentId && g.Assessment.Section.Semester.SemesterId == semeter)
+                 .ToListAsync();
 
         }
         public async Task<IEnumerable<StudentSectionGradesResponse>> GetStudentSemesterGradesBySectionsAsync(string mssv, int semesterId)
@@ -194,6 +194,151 @@ namespace StudentManagement.Services
                 }
 
                 response.Add(sectionGrades);
+            }
+
+            return response;
+        }
+
+        public async Task<StudentAllGradesResponse> GetAllStudentGradesByMSSVAsync(string mssv)
+        {
+            // Get student information
+            var student = await context.Students
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.MSSV == mssv)
+                ?? throw new Exception($"Student with MSSV {mssv} not found");
+
+            // Get all grades for this student with related data
+            var allGrades = await context.Grades
+                .Include(g => g.Student)
+                .Include(g => g.Assessment)
+                    .ThenInclude(a => a.AssessmentType)
+                .Include(g => g.Assessment.Section)
+                    .ThenInclude(s => s.Course)
+                .Include(g => g.Assessment.Section.Semester)
+                .Where(g => g.Student.MSSV == mssv)
+                .ToListAsync();
+
+            // Get all final results for this student
+            var finalResults = await context.FinalResults
+                .Include(fr => fr.Section)
+                    .ThenInclude(s => s.Course)
+                .Include(fr => fr.Section.Semester)
+                .Where(fr => fr.Student.MSSV == mssv)
+                .ToListAsync();
+
+            // Get GPA snapshots
+            var gpaSnapshots = await context.GpaSnapshots
+                .Include(g => g.Semester)
+                .Where(g => g.Student.MSSV == mssv)
+                .ToListAsync();
+
+            var response = new StudentAllGradesResponse
+            {
+                MSSV = student.MSSV,
+                StudentName = student.User.FullName
+            };
+
+            // Group grades by semester
+            var gradesBySemester = allGrades
+                .GroupBy(g => g.Assessment.Section.Semester)
+                .OrderByDescending(g => g.Key.Year)
+                .ThenByDescending(g => g.Key.Term);
+
+            foreach (var semesterGroup in gradesBySemester)
+            {
+                var semester = semesterGroup.Key;
+                var semesterGrades = semesterGroup.ToList();
+
+                // Get GPA for this semester
+                var semesterGpa = gpaSnapshots
+                    .FirstOrDefault(g => g.Semester.SemesterId == semester.SemesterId);
+
+                var semesterDetail = new SemesterGradesDetail
+                {
+                    SemesterId = semester.SemesterId,
+                    SemesterName = $"{semester.Year} - {semester.Term}",
+                    Year = semester.Year,
+                    Term = semester.Term,
+                    SemesterGPA = semesterGpa?.Gpa ?? 0.0
+                };
+
+                // Group all grades by section (course)
+                var gradesBySection = semesterGrades
+                    .GroupBy(g => g.Assessment.Section)
+                    .OrderBy(g => g.Key.Course.CourseCode);
+
+                foreach (var sectionGroup in gradesBySection)
+                {
+                    var section = sectionGroup.Key;
+                    var sectionGrades = sectionGroup.ToList();
+
+                    // Get final result for this section
+                    var finalResult = finalResults
+                        .FirstOrDefault(fr => fr.Section.SectionId == section.SectionId);
+
+                    var courseGradeDetail = new CourseGradesDetail
+                    {
+                        SectionId = section.SectionId,
+                        CourseCode = section.Course.CourseCode,
+                        CourseName = section.Course.CourseName,
+                        Credits = section.Course.CreditsTheory + section.Course.CreditsLab,
+                        FinalScore = Math.Round(finalResult?.FinalScore ?? 0, 2),
+                        GradeLetter = finalResult?.GradeLetter
+                    };
+
+                    // Group grades by assessment type
+                    var gradesByAssessmentType = sectionGrades
+                        .GroupBy(g => g.Assessment.AssessmentType.AssessmentTypeId)
+                        .OrderBy(g => g.Key);
+
+                    foreach (var assessmentTypeGroup in gradesByAssessmentType)
+                    {
+                        var assessmentTypeId = assessmentTypeGroup.Key;
+                        var assessmentGrades = assessmentTypeGroup.ToList();
+
+                        if (assessmentTypeId == 1)
+                        {
+                            // For Assessment Type 1, create one entry with details array
+                            var type1Grades = assessmentGrades.Select(g => new RegularPointsDetail
+                            {
+                                GradeId = g.GradeId,
+                                AssessmentId = g.Assessment.AssessmentId,
+                                AssessmentName = g.Assessment.Title,
+                                Score = g.Score,
+                            }).ToList();
+
+                            var firstGrade = assessmentGrades.First();
+                            courseGradeDetail.Assessments.Add(new CourseAssessmentGrade
+                            {
+                                AssessmentName = "Điểm thường kỳ",
+                                AssessmentType = firstGrade.Assessment.AssessmentType.Title,
+                                AssessmentTypeId = assessmentTypeId,
+                                RegularPointsDetails = type1Grades
+                            });
+                        }
+                        else
+                        {
+                            // For other assessment types, add individual entries
+                            foreach (var grade in assessmentGrades)
+                            {
+                                courseGradeDetail.Assessments.Add(new CourseAssessmentGrade
+                                {
+                                    GradeId = grade.GradeId,
+                                    AssessmentId = grade.Assessment.AssessmentId,
+                                    AssessmentName = grade.Assessment.Title,
+                                    AssessmentType = grade.Assessment.AssessmentType.Title,
+                                    AssessmentTypeId = grade.Assessment.AssessmentType.AssessmentTypeId,
+                                    Score = Math.Round(grade?.Score ?? 0, 2),
+                                    RegularPointsDetails = null // No details for non-Type1 assessments
+                                });
+                            }
+                        }
+                    }
+
+                    semesterDetail.CourseGrades.Add(courseGradeDetail);
+                }
+
+                response.SemesterGrades.Add(semesterDetail);
             }
 
             return response;
