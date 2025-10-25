@@ -25,5 +25,24 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(semesters, "Semesters retrieved successfully"));
 
         }
+
+        [HttpGet("student/enrollment/GetSemesterByStudentAndAcceptRegister")]
+        public async Task<IActionResult> GetSemestersByStudentAndAccpet()
+        {
+            var mssv = User.FindFirstValue(ClaimTypes.Name);
+            if (mssv == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+            if (string.IsNullOrWhiteSpace(mssv))
+            {
+                return BadRequest("MSSV query parameter is required.");
+            }
+            var semesters = await semesterService.GetSemestersByStudentAdmissionAndEnrollmentAsync(mssv);
+            return Ok(ApiResponse.SuccessResponse(semesters, "Semesters retrieved successfully"));
+
+        }
     }
+
+
 }

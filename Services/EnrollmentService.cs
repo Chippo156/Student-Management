@@ -58,7 +58,7 @@ namespace StudentManagement.Services
         public async Task<IEnumerable<Enrollment>> GetEnrollmentsByStudentIdAsync(int studentId)
         {
             var enrollments = context.Enrollments.Where(e => e.Student.Id == studentId)
-                .Include(e => e.Section.Course)
+                .Include(e => e.Section.CurriculumCourse)
                 .Include(e => e.Section.Lecturer.User);
             return await enrollments.ToListAsync();
         }
@@ -72,14 +72,14 @@ namespace StudentManagement.Services
         {
            var enrollments = context.Enrollments
                 .Include(e => e.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Where(e => e.Section.Semester.SemesterId == semesterId && e.Student.MSSV == mssv)
                 .Select(e => new EnrollmentSemester
                 {
-                    courseCode = e.Section.Course.CourseCode,
-                    courseName = e.Section.Course.CourseName,
-                    creditsTheory = e.Section.Course.CreditsTheory,
-                    creditsLab = e.Section.Course.CreditsLab,   
+                    courseCode = e.Section.CurriculumCourse.Course.CourseCode,
+                    courseName = e.Section.CurriculumCourse.Course.CourseName,
+                    creditsTheory = e.Section.CurriculumCourse.Course.CreditsTheory,
+                    creditsLab = e.Section.CurriculumCourse.Course.CreditsLab,   
                 });
             return Task.FromResult(enrollments.AsEnumerable());
 

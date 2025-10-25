@@ -41,7 +41,7 @@ namespace StudentManagement.Services
         {
             return await context.Assessment
                 .Include(a => a.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .ToListAsync();
         }
 
@@ -49,7 +49,7 @@ namespace StudentManagement.Services
         {
             return await context.Assessment
                 .Include(a => a.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .FirstOrDefaultAsync(a => a.AssessmentId == assessmentId);
         }
 

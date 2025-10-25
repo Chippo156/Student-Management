@@ -47,7 +47,7 @@ namespace StudentManagement.Services
 
             return await context.FinalResults
                 .Include(f => f.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Include(f => f.Student)
                     .ThenInclude(s => s.User)
                 .ToListAsync();
@@ -57,7 +57,7 @@ namespace StudentManagement.Services
         {
             return await context.FinalResults
                 .Include(f => f.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Include(f => f.Student)
                     .ThenInclude(s => s.User)
                 .FirstOrDefaultAsync(f => f.FinalResultId == finalResultId);
@@ -77,7 +77,7 @@ namespace StudentManagement.Services
         {
             return await context.FinalResults
                 .Include(f => f.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Include(f => f.Student)
                 .Where(f => f.Student.Id == studentId)
                 .ToListAsync();

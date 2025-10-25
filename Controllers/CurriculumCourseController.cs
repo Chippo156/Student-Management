@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
+using StudentManagement.Enum;
 
 namespace StudentManagement.Controllers
 {
@@ -70,6 +73,30 @@ namespace StudentManagement.Controllers
                 return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Curriculum course with ID {id} not found", null));
             }
             return Ok(ApiResponse.SuccessResponse(null, "Curriculum course deleted successfully"));
+        }
+
+        [HttpGet("GetCoursesByStudentDepartment")]
+        [Authorize]
+        public async Task<IActionResult> GetCoursesByMyDepartment(
+            [FromQuery] int? semesterId = null, 
+            [FromQuery] CourseFilterType? filterType = null)
+            {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+
+            try
+            {
+                var courses = await curriculumCourseService.GetCoursesByStudentDepartmentAsync(UserNameStr, semesterId, filterType);
+                
+                return Ok(ApiResponse.SuccessResponse(courses, "Department courses with curriculum and prerequisites retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
         }
     }
 }

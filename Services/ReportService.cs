@@ -28,7 +28,7 @@ namespace StudentManagement.Services
             // Lấy tất cả kết quả học tập của sinh viên
             var finalResults = await _context.FinalResults
                 .Include(fr => fr.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Include(fr => fr.Section.Semester)
                 .Where(fr => fr.Student.Id == studentId)
                 .ToListAsync();
@@ -36,7 +36,7 @@ namespace StudentManagement.Services
             // Lấy tất cả enrollment của sinh viên
             var enrollments = await _context.Enrollments
                 .Include(e => e.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Include(e => e.Section.Semester)
                 .Where(e => e.Student.Id == studentId)
                 .ToListAsync();
@@ -49,13 +49,13 @@ namespace StudentManagement.Services
                 .FirstOrDefaultAsync();
 
             // Tính toán thống kê tín chỉ
-            int totalCreditsRegistered = enrollments.Sum(e => e.Section.Course.CreditsTheory + e.Section.Course.CreditsLab);
-            int totalCreditsCompleted = finalResults.Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab);
+            int totalCreditsRegistered = enrollments.Sum(e => e.Section.CurriculumCourse.Course.CreditsTheory + e.Section.CurriculumCourse.Course.CreditsLab);
+            int totalCreditsCompleted = finalResults.Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab);
             
             // Tính tín chỉ đạt (điểm chữ từ D trở lên hoặc GradePoint >= 1.0)
             int totalCreditsPassed = finalResults
                 .Where(fr => fr.GradePoint >= 1.0)
-                .Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab);
+                .Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab);
 
             // Tạo response
             var response = new CreditStatisticsResponse
@@ -92,9 +92,9 @@ namespace StudentManagement.Services
                     SemesterName = $"{semester.Year} - {semester.Term}",
                     Year = semester.Year,
                     Term = semester.Term,
-                    CreditsRegistered = semesterEnrollments.Sum(e => e.Section.Course.CreditsTheory + e.Section.Course.CreditsLab),
-                    CreditsCompleted = semesterResults.Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab),
-                    CreditsPassed = semesterResults.Where(fr => fr.GradePoint >= 1.0).Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab),
+                    CreditsRegistered = semesterEnrollments.Sum(e => e.Section.CurriculumCourse.Course.CreditsTheory + e.Section.CurriculumCourse.Course.CreditsLab),
+                    CreditsCompleted = semesterResults.Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab),
+                    CreditsPassed = semesterResults.Where(fr => fr.GradePoint >= 1.0).Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab),
                     SemesterGPA = semesterGpa?.Gpa ?? 0.0
                 };
 
@@ -103,11 +103,11 @@ namespace StudentManagement.Services
                 {
                     semesterDetail.Courses.Add(new CourseDetail
                     {
-                        CourseId = result.Section.Course.CourseId,
-                        CourseCode = result.Section.Course.CourseCode,
-                        CourseName = result.Section.Course.CourseName,
-                        CreditsTheory = result.Section.Course.CreditsTheory,
-                        CreditsLab = result.Section.Course.CreditsLab,
+                        CourseId = result.Section.CurriculumCourse.Course.CourseId,
+                        CourseCode = result.Section.CurriculumCourse.Course.CourseCode,
+                        CourseName = result.Section.CurriculumCourse.Course.CourseName,
+                        CreditsTheory = result.Section.CurriculumCourse.Course.CreditsTheory,
+                        CreditsLab = result.Section.CurriculumCourse.Course.CreditsLab,
                         GradeLetter = result.GradeLetter,
                         GradePoint = result.GradePoint
                     });
@@ -129,11 +129,11 @@ namespace StudentManagement.Services
 
             var finalResults = await _context.FinalResults
                 .Include(fr => fr.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Where(fr => fr.Student.MSSV == mssv && fr.GradePoint >= 1.0)
                 .ToListAsync();
 
-            int totalCreditsCompleted = finalResults.Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab);
+            int totalCreditsCompleted = finalResults.Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab);
 
             return new CreditStudentResponse
             {
@@ -157,7 +157,7 @@ namespace StudentManagement.Services
             // Lấy kết quả học tập trong học kỳ
             var semesterResults = await _context.FinalResults
                 .Include(fr => fr.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Include(fr => fr.Section.Semester)
                 .Where(fr => fr.Student.MSSV == mssv && fr.Section.Semester.SemesterId == semesterId)
                 .ToListAsync();
@@ -165,7 +165,7 @@ namespace StudentManagement.Services
             // Lấy đăng ký học trong học kỳ
             var semesterEnrollments = await _context.Enrollments
                 .Include(e => e.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Include(e => e.Section.Semester)
                 .Where(e => e.Student.MSSV == mssv && e.Section.Semester.SemesterId == semesterId)
                 .ToListAsync();
@@ -180,9 +180,9 @@ namespace StudentManagement.Services
                 SemesterName = $"{semester.Year} - {semester.Term}",
                 Year = semester.Year,
                 Term = semester.Term,
-                CreditsRegistered = semesterEnrollments.Sum(e => e.Section.Course.CreditsTheory + e.Section.Course.CreditsLab),
-                CreditsCompleted = semesterResults.Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab),
-                CreditsPassed = semesterResults.Where(fr => fr.GradePoint >= 1.0).Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab),
+                CreditsRegistered = semesterEnrollments.Sum(e => e.Section.CurriculumCourse.Course.CreditsTheory + e.Section.CurriculumCourse.Course.CreditsLab),
+                CreditsCompleted = semesterResults.Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab),
+                CreditsPassed = semesterResults.Where(fr => fr.GradePoint >= 1.0).Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab),
                 SemesterGPA = semesterGpa?.Gpa ?? 0.0
             };
 
@@ -203,11 +203,11 @@ namespace StudentManagement.Services
 
                 semesterDetail.Courses.Add(new CourseDetail
                 {
-                    CourseId = result.Section.Course.CourseId,
-                    CourseCode = result.Section.Course.CourseCode,
-                    CourseName = result.Section.Course.CourseName,
-                    CreditsTheory = result.Section.Course.CreditsTheory,
-                    CreditsLab = result.Section.Course.CreditsLab,
+                    CourseId = result.Section.CurriculumCourse.Course.CourseId,
+                    CourseCode = result.Section.CurriculumCourse.Course.CourseCode,
+                    CourseName = result.Section.CurriculumCourse.Course.CourseName,
+                    CreditsTheory = result.Section.CurriculumCourse.Course.CreditsTheory,
+                    CreditsLab = result.Section.CurriculumCourse.Course.CreditsLab,
                     GradeLetter = result.GradeLetter,
                     GradePoint = result.FinalScore,
                     ClassAverageScore = Math.Round(classAverageScore, 2) // Làm tròn đến 2 chữ số thập phân
@@ -231,7 +231,7 @@ namespace StudentManagement.Services
             // Get final results
             IQueryable<FinalResult> finalResultsQuery = _context.FinalResults
                 .Include(fr => fr.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Include(fr => fr.Section.Semester)
                 .Where(fr => fr.Student.MSSV == mssv);
             
@@ -258,11 +258,11 @@ namespace StudentManagement.Services
             // Calculate completed and failed credits
             int completedCredits = finalResults
                 .Where(fr => fr.GradePoint >= 1.0) // Passing grade
-                .Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab);
+                .Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab);
                 
             int failedCredits = finalResults
                 .Where(fr => fr.GradePoint < 1.0) // Failed grade
-                .Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab);
+                .Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab);
             
             // Get required credits for the program
             int requiredCredits = student.Class.Program.CreditsRequired;
@@ -301,10 +301,10 @@ namespace StudentManagement.Services
                         SemesterGPA = semesterGpa?.Gpa ?? 0.0,
                         CompletedCredits = semesterResults
                             .Where(fr => fr.GradePoint >= 1.0)
-                            .Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab),
+                            .Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab),
                         FailedCredits = semesterResults
                             .Where(fr => fr.GradePoint < 1.0)
-                            .Sum(fr => fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab)
+                            .Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab)
                     };
                     
                     response.SemesterSummaries.Add(semesterSummary);
@@ -329,9 +329,9 @@ namespace StudentManagement.Services
                 .Where(fr => fr.GradePoint < 1.0)
                 .Select(fr => new FailedCourseInfo
                 {
-                    CourseCode = fr.Section.Course.CourseCode,
-                    CourseName = fr.Section.Course.CourseName,
-                    Credits = fr.Section.Course.CreditsTheory + fr.Section.Course.CreditsLab,
+                    CourseCode = fr.Section.CurriculumCourse.Course.CourseCode,
+                    CourseName = fr.Section.CurriculumCourse.Course.CourseName,
+                    Credits = fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab,
                     GradeLetter = fr.GradeLetter,
                     FinalScore = fr.FinalScore
                 })

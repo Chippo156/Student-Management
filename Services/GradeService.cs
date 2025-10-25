@@ -138,7 +138,7 @@ namespace StudentManagement.Services
             // Get all enrollments for this student in the specified semester
             var enrollments = await context.Enrollments
                 .Include(e => e.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Include(e => e.Section.Lecturer)
                     .ThenInclude(l => l.User)
                 .Include(e => e.Section.Semester)
@@ -171,9 +171,9 @@ namespace StudentManagement.Services
                 var sectionGrades = new StudentSectionGradesResponse
                 {
                     SectionId = section.SectionId,
-                    CourseCode = section.Course.CourseCode,
-                    CourseName = section.Course.CourseName,
-                    Credits = section.Course.CreditsTheory + section.Course.CreditsLab,
+                    CourseCode = section.CurriculumCourse.Course.CourseCode,
+                    CourseName = section.CurriculumCourse.Course.CourseName,
+                    Credits = section.CurriculumCourse.Course.CreditsTheory + section.CurriculumCourse.Course.CreditsLab,
                     FinalScore = Math.Round(finalResult?.FinalScore ?? 0, 2),
                     GradeLetter = finalResult?.GradeLetter
                 };
@@ -213,7 +213,7 @@ namespace StudentManagement.Services
                 .Include(g => g.Assessment)
                     .ThenInclude(a => a.AssessmentType)
                 .Include(g => g.Assessment.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Include(g => g.Assessment.Section.Semester)
                 .Where(g => g.Student.MSSV == mssv)
                 .ToListAsync();
@@ -221,7 +221,7 @@ namespace StudentManagement.Services
             // Get all final results for this student
             var finalResults = await context.FinalResults
                 .Include(fr => fr.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Include(fr => fr.Section.Semester)
                 .Where(fr => fr.Student.MSSV == mssv)
                 .ToListAsync();
@@ -265,7 +265,7 @@ namespace StudentManagement.Services
                 // Group all grades by section (course)
                 var gradesBySection = semesterGrades
                     .GroupBy(g => g.Assessment.Section)
-                    .OrderBy(g => g.Key.Course.CourseCode);
+                    .OrderBy(g => g.Key.CurriculumCourse.Course.CourseCode);
 
                 foreach (var sectionGroup in gradesBySection)
                 {
@@ -279,9 +279,9 @@ namespace StudentManagement.Services
                     var courseGradeDetail = new CourseGradesDetail
                     {
                         SectionId = section.SectionId,
-                        CourseCode = section.Course.CourseCode,
-                        CourseName = section.Course.CourseName,
-                        Credits = section.Course.CreditsTheory + section.Course.CreditsLab,
+                        CourseCode = section.CurriculumCourse.Course.CourseCode,
+                        CourseName = section.CurriculumCourse.Course.CourseName,
+                        Credits = section.CurriculumCourse.Course.CreditsTheory + section.CurriculumCourse.Course.CreditsLab,
                         FinalScore = Math.Round(finalResult?.FinalScore ?? 0, 2),
                         GradeLetter = finalResult?.GradeLetter
                     };

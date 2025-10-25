@@ -5,7 +5,7 @@ namespace StudentManagement.Models.Dto.Request
     public class SectionRequest
     {
         [Required(ErrorMessage = "Course ID is required")]
-        public int CourseId { get; set; }
+        public int CurriculumCourseId { get; set; }
         
         [Required(ErrorMessage = "Lecturer ID is required")]
         public int LecturerId { get; set; }

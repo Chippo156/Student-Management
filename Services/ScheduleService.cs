@@ -135,7 +135,7 @@ namespace StudentManagement.Services
         {
             return await context.Schedules
                 .Include(s => s.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Include(s => s.Section.Lecturer)
                 .ToListAsync();
         }
@@ -149,7 +149,7 @@ namespace StudentManagement.Services
         {
             return await context.Schedules
                 .Include(s => s.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse)
                 .Include(s => s.Section.Lecturer)
                 .FirstOrDefaultAsync(s => s.ScheduleId == scheduleId);
         }
@@ -186,7 +186,7 @@ namespace StudentManagement.Services
                     )
                     .Include(s => s.ScheduleType)
                     .Include(s => s.Section)
-                        .ThenInclude(s => s.Course)
+                        .ThenInclude(s => s.CurriculumCourse.Course)
                     .Include(s => s.Section.Lecturer)
                         .ThenInclude(l => l.User)
                     .ToListAsync();
@@ -201,7 +201,7 @@ namespace StudentManagement.Services
                     )
                     .Include(s=> s.ScheduleType)
                     .Include(s => s.Section)
-                        .ThenInclude(s => s.Course)
+                        .ThenInclude(s => s.CurriculumCourse.Course)
                     .Include(s => s.Section.Lecturer)
                         .ThenInclude(l => l.User)
                     .ToListAsync();
@@ -222,7 +222,7 @@ namespace StudentManagement.Services
                     .Include(s => s.ScheduleType)
 
                     .Include(s => s.Section)
-                        .ThenInclude(s => s.Course)
+                        .ThenInclude(s => s.CurriculumCourse.Course)
                     .Include(s => s.Section.Lecturer)
                         .ThenInclude(l => l.User)
                     .ToListAsync();
@@ -238,7 +238,7 @@ namespace StudentManagement.Services
                     .Include(s => s.ScheduleType)
 
                     .Include(s => s.Section)
-                        .ThenInclude(s => s.Course)
+                        .ThenInclude(s => s.CurriculumCourse.Course)
                     .Include(s => s.Section.Lecturer)
                         .ThenInclude(l => l.User)
                     .ToListAsync();
@@ -252,7 +252,7 @@ namespace StudentManagement.Services
         {
             return await context.Schedules
                 .Include(s => s.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse.Course)
                 .Include(s => s.Section.Lecturer)
                 .Where(s => s.Section.Lecturer.Id == lecturerId)
                 .ToListAsync();
@@ -262,7 +262,7 @@ namespace StudentManagement.Services
         {
             return await context.Schedules
                 .Include(s => s.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse.Course)
                 .Include(s => s.Section.Lecturer)
                 .Where(s => s.Section.SectionId == sectionId)
                 .ToListAsync();
@@ -280,7 +280,7 @@ namespace StudentManagement.Services
                       schedule => schedule.Section.SectionId,
                       (sectionId, schedule) => schedule)
                 .Include(s => s.Section)
-                    .ThenInclude(s => s.Course)
+                    .ThenInclude(s => s.CurriculumCourse.Course)
                 .Include(s => s.Section.Lecturer)
                
                 .ToListAsync();

@@ -10,10 +10,10 @@ namespace StudentManagement.Services
     {
         public async Task<Section> CreateSectionAsync(SectionRequest request)
         {
-            var course = await context.Courses.FindAsync(request.CourseId);
-            if (course is null)
+            var curriculumCourse = await context.CurriculumCourses.FindAsync(request.CurriculumCourseId);
+            if (curriculumCourse is null)
             {
-                throw new Exception("Course not found");
+                throw new Exception("CurriculumCourse not found");
             }
 
             var lecturer = await context.Lecturers.FindAsync(request.LecturerId);
@@ -38,7 +38,7 @@ namespace StudentManagement.Services
 
             Section newSection = new Section
             {
-                Course = course,
+                CurriculumCourse = curriculumCourse,
                 Lecturer = lecturer,
                 Semester = existingSemester,
                 Class = classSection,
@@ -64,7 +64,7 @@ namespace StudentManagement.Services
         public async Task<IEnumerable<Section>> GetAllSectionsAsync()
         {
             return await context.Sections
-                .Include(s => s.Course)
+                .Include(s => s.CurriculumCourse)
                 .Include(s => s.Lecturer)
                 .Include(s => s.Semester)
                 .ToListAsync();
@@ -73,7 +73,7 @@ namespace StudentManagement.Services
         public async Task<Section?> GetSectionByIdAsync(int sectionId)
         {
             return await context.Sections
-                .Include(s => s.Course)
+                .Include(s => s.CurriculumCourse)
                 .Include(s => s.Lecturer)
                 .FirstOrDefaultAsync(s => s.SectionId == sectionId);
         }
@@ -81,16 +81,16 @@ namespace StudentManagement.Services
         public async Task<IEnumerable<Section>> GetSectionsByCourseAsync(int courseId)
         {
             return await context.Sections
-                .Include(s => s.Course)
+                .Include(s => s.CurriculumCourse)
                 .Include(s => s.Lecturer)
-                .Where(s => s.Course.CourseId == courseId)
+                .Where(s => s.CurriculumCourse.Course.CourseId == courseId)
                 .ToListAsync();
         }
 
         public Task<IEnumerable<Section>> GetSectionsByLecturerAsync(int lecturerId)
         {
             return Task.FromResult(context.Sections
-                .Include(s => s.Course)
+                .Include(s => s.CurriculumCourse)
                 .Where(s => s.Lecturer.Id == lecturerId)
                 .AsEnumerable());
         }

@@ -10,9 +10,9 @@ namespace StudentManagement.Extensions
             return new ScheduleResponse
             {
                 ScheduleId = schedule.ScheduleId,
-                CourseId = schedule.Section.Course.CourseId,
-                CourseCode = schedule.Section.Course.CourseCode,
-                CourseName = schedule.Section.Course.CourseName,
+                CourseId = schedule.Section.CurriculumCourse.Course.CourseId,
+                CourseCode = schedule.Section.CurriculumCourse.Course.CourseCode,
+                CourseName = schedule.Section.CurriculumCourse.Course.CourseName,
                 ScheduleTypeId = schedule.ScheduleType.ScheduleTypeId,
                 ScheduleTypeName = schedule.ScheduleType.Name ?? "Unknown",
                 Date = schedule.Date,
