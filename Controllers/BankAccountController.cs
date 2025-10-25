@@ -79,9 +79,12 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(null, "Bank account deleted successfully"));
         }
 
-        [HttpPut("user/{userId}/set-default/{bankAccountId}")]
-        public async Task<IActionResult> SetDefaultBankAccount(int userId, int bankAccountId)
+        [HttpPut("user/SetBankAccountDefault/{bankAccountId}")]
+        public async Task<IActionResult> SetDefaultBankAccount(int bankAccountId)
         {
+            var (isValid, errorResult, userId) = GetAuthenticatedUserId();
+            if (!isValid)
+                return errorResult!;
             var isUpdated = await bankAccountService.SetDefaultBankAccountAsync(userId, bankAccountId);
             if (!isUpdated)
             {
