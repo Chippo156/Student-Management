@@ -1,5 +1,6 @@
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 
 namespace StudentManagement.Services.Interface
 {
@@ -11,5 +12,6 @@ namespace StudentManagement.Services.Interface
         Task<AcademicProgram?> UpdateProgramAsync(int programId, AcademicProgramRequest request);
         Task<bool> DeleteProgramAsync(int programId);
         Task<IEnumerable<AcademicProgram>> GetProgramsByDepartmentAsync(int departmentId);
+        Task<ProgramCurriculumResponse> GetProgramCurriculumAsync(int programId);
     }
 }

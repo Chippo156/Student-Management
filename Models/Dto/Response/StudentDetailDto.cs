@@ -6,6 +6,7 @@
         public UserResponse User { get; set; } = null!;
         public string MSSV { get; set; } = null!;
         public string? ClassName { get; set; } = null!;
+        public int ProgramId { get; set; }
         public string? ProgramName { get; set; }
         public string? DepartmentName { get; set; }
         public int? YearOfAdmission { get; set; }

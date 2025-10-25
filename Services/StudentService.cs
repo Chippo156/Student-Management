@@ -172,6 +172,7 @@ namespace StudentManagement.Services
                         Gender = s.User.Gender
                     },
                     ClassName = s.Class.ClassName,
+                    ProgramId = s.Class.Program.AcademicProgramId,  
                     ProgramName = s.Class.Program.ProgramName,
                     DepartmentName = s.Class.Program.Department.DepartmentName,
                     TrainningLevel = s.Class.Program.DegreeLevel,

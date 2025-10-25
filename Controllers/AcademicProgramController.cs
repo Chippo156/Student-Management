@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
@@ -8,7 +10,7 @@ namespace StudentManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AcademicProgramController(IAcademicProgramService programService) : ControllerBase
+    public class AcademicProgramController(IAcademicProgramService programService, IStudentService studentService) : ControllerBase
     {
         [HttpGet]
         public async Task<IActionResult> GetAllPrograms()
@@ -63,6 +65,34 @@ namespace StudentManagement.Controllers
                 return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Academic program with ID {id} not found", null));
             }
             return Ok(ApiResponse.SuccessResponse(null, "Academic program deleted successfully"));
+        }
+
+        [HttpGet("GetMyProgramCurriculum")]
+        [Authorize]
+        public async Task<IActionResult> GetMyProgramCurriculum()
+        {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+
+            try
+            {
+                // Get student's program ID
+                var student = await studentService.GetStudentByMSSV(UserNameStr);
+                if (student == null)
+                {
+                    return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, "Student not found.", null));
+                }
+
+                var curriculum = await programService.GetProgramCurriculumAsync(student.ProgramId);
+                return Ok(ApiResponse.SuccessResponse(curriculum, "Your program curriculum retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
         }
     }
 }
