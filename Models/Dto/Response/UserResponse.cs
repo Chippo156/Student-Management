@@ -22,10 +22,8 @@ namespace StudentManagement.Models.Dto.Response
         public string? PolicyArea { get; set; }
         public DateOnly? DateOfJoinUnion { get; set; }
         public DateOnly? DateOfJoinParty { get; set; }
-        public string? AccountNumber { get; set; } = string.Empty;
-        public string? BankName { get; set; } = string.Empty;
-        public string? Branch { get; set; } = string.Empty;
-        public string? AccountHolderName { get; set; } = string.Empty;
+        public BankAccountResponse? BankAccount { get; set; }
+
         public AccountStatus AccountStatus { get; set; } = AccountStatus.Active;
         public required Role Role { get; set; }
     }

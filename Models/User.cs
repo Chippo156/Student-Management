@@ -20,19 +20,17 @@ namespace StudentManagement.Models
 
         public string? CitizenIdCard { get; set; } = string.Empty;
         public DateOnly? IssuedDate { get; set; }
+        public string? IssuedPlace { get; set; } = string.Empty;
         public string? Object { get; set; } = string.Empty;
         public string? PolicyArea { get; set; }
         public DateOnly? DateOfJoinUnion { get; set; }
         public DateOnly? DateOfJoinParty { get; set; }
-        public string? AccountNumber { get; set; } = string.Empty;
-        public string? BankName { get; set; } = string.Empty;
-        public string? Branch { get; set; } = string.Empty;
-        public string? AccountHolderName { get; set; } = string.Empty; 
         public AccountStatus AccountStatus { get; set; } = AccountStatus.Active;
         public string? RefreshToken { get; set; } = string.Empty;
         public DateTime RefreshTokenExpiryTime { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public Role Role { get; set; } = null!;
+        public ICollection<BankAccount> BankAccounts { get; set; } = new List<BankAccount>();
     }
 }

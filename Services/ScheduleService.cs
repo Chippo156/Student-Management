@@ -51,17 +51,22 @@ namespace StudentManagement.Services
                 return new CountSchedule { CountScheduleOfWeek = 0, CountTestOfWeek = 0 };
             }
 
-            // Get all schedules for these sections
-            var schedules = await context.Schedules
+            // Count regular class schedules (recurring schedules with DayOfWeek)
+            int regularScheduleCount = await context.Schedules
                 .Include(s => s.ScheduleType)
-                .Where(s => studentSections.Contains(s.Section.SectionId))
-                .ToListAsync();
+                .Where(s => studentSections.Contains(s.Section.SectionId) &&
+                           s.ScheduleType.ScheduleTypeId != 3 && // Not exam schedules
+                           s.DayOfWeek.HasValue) // Regular recurring schedules
+                .CountAsync();
 
-            // Count regular class schedules (assuming schedule type id 1 is for regular classes)
-            int regularScheduleCount = schedules.Count(s => s.ScheduleType.ScheduleTypeId != 3);
-
-            // Count test schedules (assuming schedule type id 2 is for tests/exams)
-            int testScheduleCount = schedules.Count(s => s.ScheduleType.ScheduleTypeId == 3);
+            // Count test schedules (one-time events with specific dates in current week)
+            int testScheduleCount = await context.Schedules
+                .Include(s => s.ScheduleType)
+                .Where(s => studentSections.Contains(s.Section.SectionId) &&
+                           s.ScheduleType.ScheduleTypeId == 3 && // Exam schedules
+                           s.Date.HasValue && // Has specific date
+                           s.Date >= weekStart && s.Date <= weekEnd) // Within current week
+                .CountAsync();
 
             return new CountSchedule
             {
