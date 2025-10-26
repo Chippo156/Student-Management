@@ -5,8 +5,6 @@ namespace StudentManagement.Models.Dto.Request
 {
     public class FamilyRelationshipRequest
     {
-        [Required]
-        public int StudentId { get; set; }
         
         [Required]
         [StringLength(100)]

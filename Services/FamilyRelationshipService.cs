@@ -10,9 +10,10 @@ namespace StudentManagement.Services
 {
     public class FamilyRelationshipService(AppDbContext context) : IFamilyRelationshipService
     {
-        public async Task<FamilyRelationship> CreateFamilyRelationshipAsync(FamilyRelationshipRequest request)
+        public async Task<FamilyRelationship> CreateFamilyRelationshipAsync(string mssv, FamilyRelationshipRequest request)
         {
-            var student = await context.Students.FindAsync(request.StudentId)
+            var student = await context.Students
+                .FirstOrDefaultAsync(s => s.MSSV == mssv)
                 ?? throw new Exception("Student not found");
 
             var familyRelationship = new FamilyRelationship
@@ -65,7 +66,7 @@ namespace StudentManagement.Services
         }
 
 
-        public async Task<FamilyRelationship?> UpdateFamilyRelationshipAsync(int familyRelationshipId, FamilyRelationshipRequest request)
+        public async Task<FamilyRelationship?> UpdateFamilyRelationshipAsync(string mssv, int familyRelationshipId, FamilyRelationshipRequest request)
         {
             var familyRelationship = await context.FamilyRelationships.FindAsync(familyRelationshipId);
             if (familyRelationship == null)

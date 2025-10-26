@@ -17,7 +17,12 @@ namespace StudentManagement.Controllers
         {
             try
             {
-                var createdRelationship = await familyRelationshipService.CreateFamilyRelationshipAsync(request);
+                var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+                if (UserNameStr == null)
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+                }
+                var createdRelationship = await familyRelationshipService.CreateFamilyRelationshipAsync(UserNameStr, request);
                 return CreatedAtAction(
                     nameof(GetFamilyRelationshipById),
                     new { id = createdRelationship.FamilyRelationshipId },
@@ -35,7 +40,12 @@ namespace StudentManagement.Controllers
         {
             try
             {
-                var updatedRelationship = await familyRelationshipService.UpdateFamilyRelationshipAsync(id, request);
+                var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+                if (UserNameStr == null)
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+                }
+                var updatedRelationship = await familyRelationshipService.UpdateFamilyRelationshipAsync(UserNameStr, id, request);
                 if (updatedRelationship == null)
                 {
                     return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Family relationship with ID {id} not found.", null));
