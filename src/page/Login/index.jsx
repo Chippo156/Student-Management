@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { loginUser, clearError } from "../../redux/UserSlice";
-import "./login.scss";
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { loginUser, clearError } from '../../redux/UserSlice';
+import './login.scss';
 
-const Login: React.FC = () => {
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [rememberMe, setRememberMe] = useState<boolean>(false);
+const Login = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -16,16 +16,16 @@ const Login: React.FC = () => {
   );
 
   // Helper function to get dashboard by role
-  const getDashboardByRole = (roleId: number): string => {
+  const getDashboardByRole = (roleId) => {
     switch (roleId) {
       case 1: // Admin
-        return "/admin";
+        return '/admin';
       case 2:
-        return "/student";
+        return '/student';
       case 3:
-        return "/teacher";
+        return '/teacher';
       default:
-        return "/login";
+        return '/login';
     }
   };
 
@@ -34,33 +34,33 @@ const Login: React.FC = () => {
     if (isAuthenticated && account && account.role) {
       const dashboard = getDashboardByRole(account.role.roleId);
       console.log(
-        "useEffect redirect to:",
+        'useEffect redirect to:',
         dashboard,
-        "role:",
+        'role:',
         account.role.roleId
       );
       navigate(dashboard, { replace: true });
     }
   }, [isAuthenticated, account, navigate]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (username && password) {
       dispatch(clearError());
 
       try {
         const result = await dispatch(loginUser({ username, password }));
-        if (result.meta.requestStatus === "fulfilled") {
-          const userData = result.payload as { user?: { role?: { roleId: number } } };
+        if (result.meta.requestStatus === 'fulfilled') {
+          const userData = result.payload;
           if (userData?.user?.role?.roleId) {
             const dashboard = getDashboardByRole(userData.user.role.roleId);
-              navigate(dashboard, { replace: true });
+            navigate(dashboard, { replace: true });
           }
-        } else if (result.meta.requestStatus === "rejected") {
-          console.error("Login rejected:", result.payload);
+        } else if (result.meta.requestStatus === 'rejected') {
+          console.error('Login rejected:', result.payload);
         }
       } catch (error) {
-        console.error("Login error:", error);
+        console.error('Login error:', error);
       }
     }
   };
@@ -126,7 +126,7 @@ const Login: React.FC = () => {
         </div>
 
         <button type="submit" className="login-btn" disabled={isLoading}>
-          {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+          {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
         </button>
       </form>
     </div>

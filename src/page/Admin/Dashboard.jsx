@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Box,
   Grid,
@@ -15,7 +15,7 @@ import {
   ListItemSecondaryAction,
   IconButton,
   Chip,
-} from "@mui/material";
+} from '@mui/material';
 import {
   BarChart,
   Bar,
@@ -30,7 +30,7 @@ import {
   Cell,
   LineChart,
   Line,
-} from "recharts";
+} from 'recharts';
 import {
   People as PeopleIcon,
   School as SchoolIcon,
@@ -41,7 +41,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
   Error as ErrorIcon,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
 const AdminDashboard = () => {
   const theme = useTheme();
@@ -49,99 +49,99 @@ const AdminDashboard = () => {
   // Sample data - in real app, this would come from API
   const statsData = [
     {
-      title: "Tổng số sinh viên",
-      value: "1,234",
+      title: 'Tổng số sinh viên',
+      value: '1,234',
       icon: <PeopleIcon />,
       color: theme.palette.primary.main,
-      change: "+12%",
+      change: '+12%',
     },
     {
-      title: "Tổng số giảng viên",
-      value: "89",
+      title: 'Tổng số giảng viên',
+      value: '89',
       icon: <SchoolIcon />,
       color: theme.palette.secondary.main,
-      change: "+5%",
+      change: '+5%',
     },
     {
-      title: "Số khóa học",
-      value: "156",
+      title: 'Số khóa học',
+      value: '156',
       icon: <AssignmentIcon />,
       color: theme.palette.success.main,
-      change: "+8%",
+      change: '+8%',
     },
     {
-      title: "Tỷ lệ hoàn thành",
-      value: "94.5%",
+      title: 'Tỷ lệ hoàn thành',
+      value: '94.5%',
       icon: <TrendingUpIcon />,
       color: theme.palette.warning.main,
-      change: "+2.1%",
+      change: '+2.1%',
     },
   ];
 
   const enrollmentData = [
-    { month: "T1", students: 65, teachers: 8 },
-    { month: "T2", students: 59, teachers: 7 },
-    { month: "T3", students: 80, teachers: 9 },
-    { month: "T4", students: 81, teachers: 10 },
-    { month: "T5", students: 56, teachers: 8 },
-    { month: "T6", students: 95, teachers: 12 },
-    { month: "T7", students: 120, teachers: 15 },
-    { month: "T8", students: 140, teachers: 18 },
-    { month: "T9", students: 160, teachers: 20 },
-    { month: "T10", students: 145, teachers: 19 },
-    { month: "T11", students: 130, teachers: 17 },
-    { month: "T12", students: 150, teachers: 21 },
+    { month: 'T1', students: 65, teachers: 8 },
+    { month: 'T2', students: 59, teachers: 7 },
+    { month: 'T3', students: 80, teachers: 9 },
+    { month: 'T4', students: 81, teachers: 10 },
+    { month: 'T5', students: 56, teachers: 8 },
+    { month: 'T6', students: 95, teachers: 12 },
+    { month: 'T7', students: 120, teachers: 15 },
+    { month: 'T8', students: 140, teachers: 18 },
+    { month: 'T9', students: 160, teachers: 20 },
+    { month: 'T10', students: 145, teachers: 19 },
+    { month: 'T11', students: 130, teachers: 17 },
+    { month: 'T12', students: 150, teachers: 21 },
   ];
 
   const departmentData = [
-    { name: "Công nghệ thông tin", value: 450, color: "#8884d8" },
-    { name: "Kinh tế", value: 320, color: "#82ca9d" },
-    { name: "Ngoại ngữ", value: 280, color: "#ffc658" },
-    { name: "Khoa học tự nhiên", value: 184, color: "#ff7300" },
+    { name: 'Công nghệ thông tin', value: 450, color: '#8884d8' },
+    { name: 'Kinh tế', value: 320, color: '#82ca9d' },
+    { name: 'Ngoại ngữ', value: 280, color: '#ffc658' },
+    { name: 'Khoa học tự nhiên', value: 184, color: '#ff7300' },
   ];
 
   const recentActivities = [
     {
       id: 1,
-      user: "Nguyễn Văn A",
-      action: "đã đăng ký khóa học",
-      course: "Lập trình Java",
-      time: "2 giờ trước",
-      type: "success",
+      user: 'Nguyễn Văn A',
+      action: 'đã đăng ký khóa học',
+      course: 'Lập trình Java',
+      time: '2 giờ trước',
+      type: 'success',
     },
     {
       id: 2,
-      user: "Trần Thị B",
-      action: "đã hoàn thành bài kiểm tra",
-      course: "Cơ sở dữ liệu",
-      time: "3 giờ trước",
-      type: "info",
+      user: 'Trần Thị B',
+      action: 'đã hoàn thành bài kiểm tra',
+      course: 'Cơ sở dữ liệu',
+      time: '3 giờ trước',
+      type: 'info',
     },
     {
       id: 3,
-      user: "Lê Văn C",
-      action: "cần hỗ trợ",
-      course: "Toán cao cấp",
-      time: "5 giờ trước",
-      type: "warning",
+      user: 'Lê Văn C',
+      action: 'cần hỗ trợ',
+      course: 'Toán cao cấp',
+      time: '5 giờ trước',
+      type: 'warning',
     },
     {
       id: 4,
-      user: "Phạm Thị D",
-      action: "đã nộp bài tập",
-      course: "Tiếng Anh B1",
-      time: "1 ngày trước",
-      type: "success",
+      user: 'Phạm Thị D',
+      action: 'đã nộp bài tập',
+      course: 'Tiếng Anh B1',
+      time: '1 ngày trước',
+      type: 'success',
     },
   ];
 
   const getActivityIcon = (type) => {
     switch (type) {
-      case "success":
+      case 'success':
         return <CheckCircleIcon color="success" />;
-      case "warning":
+      case 'warning':
         return <WarningIcon color="warning" />;
-      case "error":
+      case 'error':
         return <ErrorIcon color="error" />;
       default:
         return <PersonIcon color="primary" />;
@@ -150,14 +150,14 @@ const AdminDashboard = () => {
 
   const getActivityColor = (type) => {
     switch (type) {
-      case "success":
-        return "success";
-      case "warning":
-        return "warning";
-      case "error":
-        return "error";
+      case 'success':
+        return 'success';
+      case 'warning':
+        return 'warning';
+      case 'error':
+        return 'error';
       default:
-        return "primary";
+        return 'primary';
     }
   };
 
@@ -173,7 +173,7 @@ const AdminDashboard = () => {
           <Grid item xs={12} sm={6} md={3} key={index}>
             <Card
               sx={{
-                height: "100%",
+                height: '100%',
                 background: `linear-gradient(135deg, ${stat.color}20 0%, ${stat.color}05 100%)`,
                 border: `1px solid ${stat.color}30`,
               }}
@@ -195,7 +195,7 @@ const AdminDashboard = () => {
                     <Typography
                       variant="h4"
                       component="div"
-                      sx={{ fontWeight: "bold" }}
+                      sx={{ fontWeight: 'bold' }}
                     >
                       {stat.value}
                     </Typography>
@@ -219,7 +219,7 @@ const AdminDashboard = () => {
       <Grid container spacing={3}>
         {/* Enrollment Chart */}
         <Grid item xs={12} lg={8}>
-          <Paper sx={{ p: 3, height: "400px" }}>
+          <Paper sx={{ p: 3, height: '400px' }}>
             <Typography variant="h6" gutterBottom>
               Thống kê đăng ký theo tháng
             </Typography>
@@ -247,7 +247,7 @@ const AdminDashboard = () => {
 
         {/* Department Distribution */}
         <Grid item xs={12} lg={4}>
-          <Paper sx={{ p: 3, height: "400px" }}>
+          <Paper sx={{ p: 3, height: '400px' }}>
             <Typography variant="h6" gutterBottom>
               Phân bố theo khoa
             </Typography>
@@ -277,15 +277,15 @@ const AdminDashboard = () => {
 
         {/* Recent Activities */}
         <Grid item xs={12} lg={6}>
-          <Paper sx={{ p: 3, height: "400px" }}>
+          <Paper sx={{ p: 3, height: '400px' }}>
             <Typography variant="h6" gutterBottom>
               Hoạt động gần đây
             </Typography>
-            <List sx={{ height: "300px", overflow: "auto" }}>
+            <List sx={{ height: '300px', overflow: 'auto' }}>
               {recentActivities.map((activity) => (
                 <ListItem key={activity.id} divider>
                   <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: "transparent" }}>
+                    <Avatar sx={{ bgcolor: 'transparent' }}>
                       {getActivityIcon(activity.type)}
                     </Avatar>
                   </ListItemAvatar>
@@ -300,7 +300,7 @@ const AdminDashboard = () => {
                           {activity.user}
                         </Typography>
                         <Typography component="span" variant="body2">
-                          {" " + activity.action + " "}
+                          {' ' + activity.action + ' '}
                         </Typography>
                         <Chip
                           label={activity.course}
@@ -325,7 +325,7 @@ const AdminDashboard = () => {
 
         {/* Performance Trend */}
         <Grid item xs={12} lg={6}>
-          <Paper sx={{ p: 3, height: "400px" }}>
+          <Paper sx={{ p: 3, height: '400px' }}>
             <Typography variant="h6" gutterBottom>
               Xu hướng hiệu suất
             </Typography>

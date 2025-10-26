@@ -1,13 +1,9 @@
-import React, { useEffect } from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import { useAppSelector, useAppDispatch } from "../../redux/hooks";
-import { doLoadUserFromToken } from "../../redux/UserSlice";
+import React, { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAppSelector, useAppDispatch } from '../../redux/hooks';
+import { doLoadUserFromToken } from '../../redux/UserSlice';
 
-
-const ProtectedRoute = ({
-  children,
-  allowedRole = 0,
-}) => {
+const ProtectedRoute = ({ children, allowedRole = 0 }) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const { isAuthenticated, account } = useAppSelector((state) => state.user);

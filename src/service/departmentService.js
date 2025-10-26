@@ -1,4 +1,4 @@
-import axios from "../until/customize-axios";
+import axios from '../until/customize-axios';
 
 export const departmentService = {
   // getAllDepartments: async (params: any) => {

@@ -1,14 +1,14 @@
-import React, { useEffect, useMemo } from "react";
-import { BrowserRouter } from "react-router-dom";
-import { Provider, useDispatch, useSelector } from "react-redux";
-import { ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import { store } from "./redux/store";
-import getTheme from "./theme";
-import AppRoutes from "./routes";
-import ErrorBoundary from "./component/ErrorBoundary";
-import "./App.scss";
-import { doLoadUserFromToken, doLogoutAction } from "./redux/UserSlice";
+import React, { useEffect, useMemo } from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import { Provider, useDispatch, useSelector } from 'react-redux';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { store } from './redux/store';
+import getTheme from './theme';
+import AppRoutes from './routes';
+import ErrorBoundary from './component/ErrorBoundary';
+import './App.scss';
+import { doLoadUserFromToken, doLogoutAction } from './redux/UserSlice';
 
 const AppContent = () => {
   const dispatch = useDispatch();
@@ -20,18 +20,18 @@ const AppContent = () => {
 
   const handleLoadUser = () => {
     try {
-      const token = localStorage.getItem("access_token");
-      const refreshToken = localStorage.getItem("refresh_token");
-      const userId = localStorage.getItem("user_id");
+      const token = localStorage.getItem('access_token');
+      const refreshToken = localStorage.getItem('refresh_token');
+      const userId = localStorage.getItem('user_id');
 
       if (token && refreshToken && userId && !user.isAuthenticated) {
         dispatch(doLoadUserFromToken());
       }
     } catch (error) {
-      console.error("Load user failed:", error);
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      localStorage.removeItem("user_id");
+      console.error('Load user failed:', error);
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user_id');
       dispatch(doLogoutAction());
     }
   };
@@ -43,20 +43,20 @@ const AppContent = () => {
   // Smoothly animate theme switch and sync color-scheme
   useEffect(() => {
     const root = document.documentElement;
-    if (theme.palette.mode === "dark") {
-      root.classList.add("dark");
-      root.style.colorScheme = "dark";
+    if (theme.palette.mode === 'dark') {
+      root.classList.add('dark');
+      root.style.colorScheme = 'dark';
     } else {
-      root.classList.remove("dark");
-      root.style.colorScheme = "light";
+      root.classList.remove('dark');
+      root.style.colorScheme = 'light';
     }
 
     document.body.style.backgroundColor = theme.palette.background.default;
     document.body.style.color = theme.palette.text.primary;
 
-    document.body.classList.add("theme-transition");
+    document.body.classList.add('theme-transition');
     const t = window.setTimeout(() => {
-      document.body.classList.remove("theme-transition");
+      document.body.classList.remove('theme-transition');
     }, 350);
 
     return () => window.clearTimeout(t);

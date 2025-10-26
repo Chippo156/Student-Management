@@ -12,7 +12,12 @@ import {
   message,
   Tag,
 } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import {
+  EditOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
@@ -164,7 +169,12 @@ const StudentManagement = () => {
   );
 
   const columns = [
-    { title: 'Mã SV', dataIndex: 'studentCode', key: 'studentCode', width: 100 },
+    {
+      title: 'Mã SV',
+      dataIndex: 'studentCode',
+      key: 'studentCode',
+      width: 100,
+    },
     { title: 'Họ và tên', dataIndex: 'fullName', key: 'fullName', width: 180 },
     { title: 'Email', dataIndex: 'email', key: 'email', width: 200 },
     { title: 'Số điện thoại', dataIndex: 'phone', key: 'phone', width: 120 },
@@ -212,7 +222,12 @@ const StudentManagement = () => {
             okText="Xóa"
             cancelText="Hủy"
           >
-            <Button type="primary" danger size="small" icon={<DeleteOutlined />} />
+            <Button
+              type="primary"
+              danger
+              size="small"
+              icon={<DeleteOutlined />}
+            />
           </Popconfirm>
         </Space>
       ),
@@ -305,7 +320,9 @@ const StudentManagement = () => {
           <Form.Item
             name="phone"
             label="Số điện thoại"
-            rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập số điện thoại!' },
+            ]}
           >
             <Input placeholder="Nhập số điện thoại" />
           </Form.Item>
@@ -345,7 +362,13 @@ const StudentManagement = () => {
               },
             ]}
           >
-            <Input type="number" placeholder="Nhập GPA" step="0.1" min="0" max="4" />
+            <Input
+              type="number"
+              placeholder="Nhập GPA"
+              step="0.1"
+              min="0"
+              max="4"
+            />
           </Form.Item>
 
           <Form.Item
@@ -363,7 +386,9 @@ const StudentManagement = () => {
           <Form.Item
             name="enrollmentDate"
             label="Ngày nhập học"
-            rules={[{ required: true, message: 'Vui lòng chọn ngày nhập học!' }]}
+            rules={[
+              { required: true, message: 'Vui lòng chọn ngày nhập học!' },
+            ]}
           >
             <DatePicker
               style={{ width: '100%' }}

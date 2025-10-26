@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
@@ -27,7 +27,7 @@ import {
   MenuItem,
   TablePagination,
   InputAdornment,
-} from "@mui/material";
+} from '@mui/material';
 import {
   FolderShared as FolderSharedIcon,
   Search as SearchIcon,
@@ -35,12 +35,12 @@ import {
   Visibility as VisibilityIcon,
   FilterList as FilterListIcon,
   Person as PersonIcon,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
 const UserProfiles = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -49,59 +49,59 @@ const UserProfiles = () => {
   // Sample data
   const profiles = [
     {
-      id: "1",
-      fullName: "Nguyễn Văn Admin",
-      email: "admin@university.edu.vn",
-      role: "Admin",
-      department: "Quản lý hệ thống",
-      status: "active",
-      lastLogin: "2024-10-02 09:30:00",
-      phone: "0901234567",
-      address: "Hà Nội",
-      joinDate: "2023-01-15",
+      id: '1',
+      fullName: 'Nguyễn Văn Admin',
+      email: 'admin@university.edu.vn',
+      role: 'Admin',
+      department: 'Quản lý hệ thống',
+      status: 'active',
+      lastLogin: '2024-10-02 09:30:00',
+      phone: '0901234567',
+      address: 'Hà Nội',
+      joinDate: '2023-01-15',
     },
     {
-      id: "2",
-      fullName: "Trần Thị Hương",
-      email: "huong.tran@university.edu.vn",
-      role: "Giảng viên",
-      department: "Công nghệ thông tin",
-      status: "active",
-      lastLogin: "2024-10-01 14:22:00",
-      phone: "0912345678",
-      address: "TP.HCM",
-      joinDate: "2022-09-01",
+      id: '2',
+      fullName: 'Trần Thị Hương',
+      email: 'huong.tran@university.edu.vn',
+      role: 'Giảng viên',
+      department: 'Công nghệ thông tin',
+      status: 'active',
+      lastLogin: '2024-10-01 14:22:00',
+      phone: '0912345678',
+      address: 'TP.HCM',
+      joinDate: '2022-09-01',
     },
     {
-      id: "3",
-      fullName: "Lê Văn Minh",
-      email: "minh.le@student.university.edu.vn",
-      role: "Sinh viên",
-      department: "Công nghệ thông tin",
-      status: "active",
-      lastLogin: "2024-10-02 08:15:00",
-      phone: "0923456789",
-      address: "Đà Nẵng",
-      joinDate: "2023-09-15",
+      id: '3',
+      fullName: 'Lê Văn Minh',
+      email: 'minh.le@student.university.edu.vn',
+      role: 'Sinh viên',
+      department: 'Công nghệ thông tin',
+      status: 'active',
+      lastLogin: '2024-10-02 08:15:00',
+      phone: '0923456789',
+      address: 'Đà Nẵng',
+      joinDate: '2023-09-15',
     },
     {
-      id: "4",
-      fullName: "Phạm Thị Lan",
-      email: "lan.pham@university.edu.vn",
-      role: "Giảng viên",
-      department: "Kinh tế",
-      status: "inactive",
-      lastLogin: "2024-09-28 16:45:00",
-      phone: "0934567890",
-      address: "Cần Thơ",
-      joinDate: "2021-03-10",
+      id: '4',
+      fullName: 'Phạm Thị Lan',
+      email: 'lan.pham@university.edu.vn',
+      role: 'Giảng viên',
+      department: 'Kinh tế',
+      status: 'inactive',
+      lastLogin: '2024-09-28 16:45:00',
+      phone: '0934567890',
+      address: 'Cần Thơ',
+      joinDate: '2021-03-10',
     },
   ];
 
-  const roles = ["Admin", "Giảng viên", "Sinh viên"];
+  const roles = ['Admin', 'Giảng viên', 'Sinh viên'];
   const statuses = [
-    { value: "active", label: "Hoạt động" },
-    { value: "inactive", label: "Không hoạt động" },
+    { value: 'active', label: 'Hoạt động' },
+    { value: 'inactive', label: 'Không hoạt động' },
   ];
 
   const filteredProfiles = profiles.filter((profile) => {
@@ -120,29 +120,29 @@ const UserProfiles = () => {
 
   const getRoleColor = (role) => {
     switch (role) {
-      case "Admin":
-        return "error";
-      case "Giảng viên":
-        return "primary";
-      case "Sinh viên":
-        return "success";
+      case 'Admin':
+        return 'error';
+      case 'Giảng viên':
+        return 'primary';
+      case 'Sinh viên':
+        return 'success';
       default:
-        return "default";
+        return 'default';
     }
   };
 
   const getStatusColor = (status) => {
-    return status === "active" ? "success" : "default";
+    return status === 'active' ? 'success' : 'default';
   };
 
   const getStatusLabel = (status) => {
-    return status === "active" ? "Hoạt động" : "Không hoạt động";
+    return status === 'active' ? 'Hoạt động' : 'Không hoạt động';
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: "100%", overflow: "hidden" }}>
+    <Box sx={{ p: 3, maxWidth: '100%', overflow: 'hidden' }}>
       <Box display="flex" alignItems="center" gap={2} mb={3}>
-        <Avatar sx={{ bgcolor: "primary.main" }}>
+        <Avatar sx={{ bgcolor: 'primary.main' }}>
           <FolderSharedIcon />
         </Avatar>
         <Typography variant="h4" component="h1">
@@ -208,9 +208,9 @@ const UserProfiles = () => {
               variant="outlined"
               startIcon={<FilterListIcon />}
               onClick={() => {
-                setSearchTerm("");
-                setRoleFilter("");
-                setStatusFilter("");
+                setSearchTerm('');
+                setRoleFilter('');
+                setStatusFilter('');
               }}
             >
               Xóa bộ lọc
@@ -220,8 +220,8 @@ const UserProfiles = () => {
       </Paper>
 
       {/* Profiles Table */}
-      <Paper sx={{ width: "100%", overflow: "hidden" }}>
-        <TableContainer sx={{ maxHeight: "calc(100vh - 400px)" }}>
+      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+        <TableContainer sx={{ maxHeight: 'calc(100vh - 400px)' }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -240,7 +240,7 @@ const UserProfiles = () => {
                   <TableRow key={profile.id} hover>
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={2}>
-                        <Avatar sx={{ bgcolor: "primary.main" }}>
+                        <Avatar sx={{ bgcolor: 'primary.main' }}>
                           <PersonIcon />
                         </Avatar>
                         <Box>
@@ -270,10 +270,14 @@ const UserProfiles = () => {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
-                        {new Date(profile.lastLogin).toLocaleDateString("vi-VN")}
+                        {new Date(profile.lastLogin).toLocaleDateString(
+                          'vi-VN'
+                        )}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {new Date(profile.lastLogin).toLocaleTimeString("vi-VN")}
+                        {new Date(profile.lastLogin).toLocaleTimeString(
+                          'vi-VN'
+                        )}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
@@ -356,19 +360,19 @@ const UserProfiles = () => {
                         <strong>Vai trò:</strong> {selectedUser.role}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Khoa/Phòng ban:</strong>{" "}
+                        <strong>Khoa/Phòng ban:</strong>{' '}
                         {selectedUser.department}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Ngày gia nhập:</strong>{" "}
+                        <strong>Ngày gia nhập:</strong>{' '}
                         {new Date(selectedUser.joinDate).toLocaleDateString(
-                          "vi-VN"
+                          'vi-VN'
                         )}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Đăng nhập cuối:</strong>{" "}
+                        <strong>Đăng nhập cuối:</strong>{' '}
                         {new Date(selectedUser.lastLogin).toLocaleString(
-                          "vi-VN"
+                          'vi-VN'
                         )}
                       </Typography>
                     </Box>

@@ -30,7 +30,7 @@ import {
   List,
   ListItem,
   ListItemText,
-  Fab
+  Fab,
 } from '@mui/material';
 import {
   Class as ClassIcon,
@@ -42,10 +42,8 @@ import {
   School as SchoolIcon,
   Add as AddIcon,
   Groups as GroupsIcon,
-  Schedule as ScheduleIcon
+  Schedule as ScheduleIcon,
 } from '@mui/icons-material';
-
-
 
 const Classes = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -74,7 +72,7 @@ const Classes = () => {
       room: 'A101',
       status: 'active',
       startDate: '2024-09-01',
-      endDate: '2024-12-20'
+      endDate: '2024-12-20',
     },
     {
       id: '2',
@@ -91,7 +89,7 @@ const Classes = () => {
       room: 'B203',
       status: 'active',
       startDate: '2024-09-01',
-      endDate: '2024-12-20'
+      endDate: '2024-12-20',
     },
     {
       id: '3',
@@ -108,7 +106,7 @@ const Classes = () => {
       room: 'C105',
       status: 'active',
       startDate: '2024-09-01',
-      endDate: '2024-12-20'
+      endDate: '2024-12-20',
     },
     {
       id: '4',
@@ -125,26 +123,35 @@ const Classes = () => {
       room: 'D201',
       status: 'completed',
       startDate: '2024-02-01',
-      endDate: '2024-05-30'
-    }
+      endDate: '2024-05-30',
+    },
   ];
 
-  const departments = ['Công nghệ thông tin', 'Kinh tế', 'Ngoại ngữ', 'Khoa học tự nhiên', 'Kỹ thuật', 'Y khoa'];
+  const departments = [
+    'Công nghệ thông tin',
+    'Kinh tế',
+    'Ngoại ngữ',
+    'Khoa học tự nhiên',
+    'Kỹ thuật',
+    'Y khoa',
+  ];
   const years = [1, 2, 3, 4, 5];
   const statuses = [
     { value: 'active', label: 'Đang diễn ra' },
     { value: 'inactive', label: 'Tạm dừng' },
-    { value: 'completed', label: 'Đã kết thúc' }
+    { value: 'completed', label: 'Đã kết thúc' },
   ];
 
-  const filteredClasses = classes.filter(classInfo => {
-    const matchesSearch = classInfo.className.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         classInfo.classCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         classInfo.instructor.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDepartment = !departmentFilter || classInfo.department === departmentFilter;
+  const filteredClasses = classes.filter((classInfo) => {
+    const matchesSearch =
+      classInfo.className.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      classInfo.classCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      classInfo.instructor.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDepartment =
+      !departmentFilter || classInfo.department === departmentFilter;
     const matchesStatus = !statusFilter || classInfo.status === statusFilter;
     const matchesYear = !yearFilter || classInfo.year.toString() === yearFilter;
-    
+
     return matchesSearch && matchesDepartment && matchesStatus && matchesYear;
   });
 
@@ -155,15 +162,19 @@ const Classes = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active': return 'success';
-      case 'inactive': return 'warning';
-      case 'completed': return 'default';
-      default: return 'default';
+      case 'active':
+        return 'success';
+      case 'inactive':
+        return 'warning';
+      case 'completed':
+        return 'default';
+      default:
+        return 'default';
     }
   };
 
   const getStatusLabel = (status) => {
-    const statusObj = statuses.find(s => s.value === status);
+    const statusObj = statuses.find((s) => s.value === status);
     return statusObj ? statusObj.label : status;
   };
 
@@ -176,7 +187,12 @@ const Classes = () => {
 
   return (
     <Box sx={{ p: 3, maxWidth: '100%', overflow: 'hidden' }}>
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        mb={3}
+      >
         <Box display="flex" alignItems="center" gap={2}>
           <Avatar sx={{ bgcolor: 'primary.main' }}>
             <ClassIcon />
@@ -296,74 +312,83 @@ const Classes = () => {
               {filteredClasses
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((classInfo) => (
-                <TableRow key={classInfo.id} hover>
-                  <TableCell>
-                    <Box>
+                  <TableRow key={classInfo.id} hover>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" fontWeight="bold">
+                          {classInfo.className}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {classInfo.classCode} • {classInfo.semester}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
                       <Typography variant="body2" fontWeight="bold">
-                        {classInfo.className}
+                        {classInfo.department}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {classInfo.classCode} • {classInfo.semester}
+                        {classInfo.major} - Năm {classInfo.year}
                       </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="bold">
-                      {classInfo.department}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {classInfo.major} - Năm {classInfo.year}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
-                        <PersonIcon fontSize="small" />
-                      </Avatar>
+                    </TableCell>
+                    <TableCell>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Avatar
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            bgcolor: 'secondary.main',
+                          }}
+                        >
+                          <PersonIcon fontSize="small" />
+                        </Avatar>
+                        <Typography variant="body2">
+                          {classInfo.instructor}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <GroupsIcon color="action" />
+                        <Chip
+                          label={`${classInfo.studentCount}/${classInfo.maxStudents}`}
+                          color={getCapacityColor(
+                            classInfo.studentCount,
+                            classInfo.maxStudents
+                          )}
+                          size="small"
+                        />
+                      </Box>
+                    </TableCell>
+                    <TableCell>
                       <Typography variant="body2">
-                        {classInfo.instructor}
+                        {classInfo.schedule}
                       </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <GroupsIcon color="action" />
+                      <Typography variant="caption" color="text.secondary">
+                        Phòng: {classInfo.room}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
                       <Chip
-                        label={`${classInfo.studentCount}/${classInfo.maxStudents}`}
-                        color={getCapacityColor(classInfo.studentCount, classInfo.maxStudents)}
+                        label={getStatusLabel(classInfo.status)}
+                        color={getStatusColor(classInfo.status)}
                         size="small"
                       />
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {classInfo.schedule}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Phòng: {classInfo.room}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={getStatusLabel(classInfo.status)}
-                      color={getStatusColor(classInfo.status)}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleViewClass(classInfo)}
-                      color="primary"
-                    >
-                      <VisibilityIcon />
-                    </IconButton>
-                    <IconButton size="small" color="primary">
-                      <EditIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleViewClass(classInfo)}
+                        color="primary"
+                      >
+                        <VisibilityIcon />
+                      </IconButton>
+                      <IconButton size="small" color="primary">
+                        <EditIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -379,7 +404,7 @@ const Classes = () => {
             setPage(0);
           }}
           labelRowsPerPage="Số dòng mỗi trang:"
-          labelDisplayedRows={({ from, to, count }) => 
+          labelDisplayedRows={({ from, to, count }) =>
             `${from}-${to} của ${count !== -1 ? count : `hơn ${to}`}`
           }
         />
@@ -392,9 +417,7 @@ const Classes = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>
-          Chi tiết lớp học: {selectedClass?.className}
-        </DialogTitle>
+        <DialogTitle>Chi tiết lớp học: {selectedClass?.className}</DialogTitle>
         <DialogContent>
           {selectedClass && (
             <Grid container spacing={3} sx={{ mt: 1 }}>
@@ -433,7 +456,7 @@ const Classes = () => {
                   </CardContent>
                 </Card>
               </Grid>
-              
+
               <Grid item xs={12} md={6}>
                 <Card>
                   <CardContent>
@@ -479,12 +502,18 @@ const Classes = () => {
                     <Grid container spacing={2}>
                       <Grid item xs={6}>
                         <Typography variant="body2">
-                          <strong>Bắt đầu:</strong> {new Date(selectedClass.startDate).toLocaleDateString('vi-VN')}
+                          <strong>Bắt đầu:</strong>{' '}
+                          {new Date(selectedClass.startDate).toLocaleDateString(
+                            'vi-VN'
+                          )}
                         </Typography>
                       </Grid>
                       <Grid item xs={6}>
                         <Typography variant="body2">
-                          <strong>Kết thúc:</strong> {new Date(selectedClass.endDate).toLocaleDateString('vi-VN')}
+                          <strong>Kết thúc:</strong>{' '}
+                          {new Date(selectedClass.endDate).toLocaleDateString(
+                            'vi-VN'
+                          )}
                         </Typography>
                       </Grid>
                     </Grid>
@@ -501,9 +530,7 @@ const Classes = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setViewDialogOpen(false)}>
-            Đóng
-          </Button>
+          <Button onClick={() => setViewDialogOpen(false)}>Đóng</Button>
           <Button variant="outlined" startIcon={<ScheduleIcon />}>
             Xem lịch học
           </Button>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo } from 'react';
 import {
   Card,
   Button,
@@ -15,7 +15,7 @@ import {
   Col,
   Statistic,
   Empty,
-} from "antd";
+} from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
@@ -26,65 +26,65 @@ import {
   CalendarOutlined,
   LeftOutlined,
   RightOutlined,
-} from "@ant-design/icons";
-import dayjs from "dayjs";
+} from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const periods = [
-  { key: "morning", label: "Sáng" },
-  { key: "afternoon", label: "Chiều" },
-  { key: "evening", label: "Tối" },
+  { key: 'morning', label: 'Sáng' },
+  { key: 'afternoon', label: 'Chiều' },
+  { key: 'evening', label: 'Tối' },
 ];
 
 const getTypeColor = (type) => {
   switch (type) {
-    case "class":
-      return "blue";
-    case "exam":
-      return "red";
-    case "assignment":
-      return "orange";
-    case "meeting":
-      return "green";
-    case "other":
-      return "purple";
+    case 'class':
+      return 'blue';
+    case 'exam':
+      return 'red';
+    case 'assignment':
+      return 'orange';
+    case 'meeting':
+      return 'green';
+    case 'other':
+      return 'purple';
     default:
-      return "default";
+      return 'default';
   }
 };
 
 const getTypeText = (type) => {
   switch (type) {
-    case "class":
-      return "Lớp học";
-    case "exam":
-      return "Thi cử";
-    case "assignment":
-      return "Bài tập";
-    case "meeting":
-      return "Họp";
-    case "other":
-      return "Khác";
+    case 'class':
+      return 'Lớp học';
+    case 'exam':
+      return 'Thi cử';
+    case 'assignment':
+      return 'Bài tập';
+    case 'meeting':
+      return 'Họp';
+    case 'other':
+      return 'Khác';
     default:
       return type;
   }
 };
 const getEventColor = (item) => {
   switch (item.type) {
-    case "class":
-      return "var(--schedule-class-bg, #f0f0f0)";
-    case "assignment":
-      return "var(--schedule-assignment-bg, #b7eb8f)";
-    case "meeting":
-      return "var(--schedule-meeting-bg, #bae7ff)";
-    case "exam":
-      return "var(--schedule-exam-bg, #fff7a8)";
-    case "other":
-      return "var(--schedule-other-bg, #ffa39e)";
+    case 'class':
+      return 'var(--schedule-class-bg, #f0f0f0)';
+    case 'assignment':
+      return 'var(--schedule-assignment-bg, #b7eb8f)';
+    case 'meeting':
+      return 'var(--schedule-meeting-bg, #bae7ff)';
+    case 'exam':
+      return 'var(--schedule-exam-bg, #fff7a8)';
+    case 'other':
+      return 'var(--schedule-other-bg, #ffa39e)';
     default:
-      return "var(--schedule-class-bg, #f0f0f0)";
+      return 'var(--schedule-class-bg, #f0f0f0)';
   }
 };
 
@@ -95,53 +95,53 @@ const StudentSchedule = () => {
 
   const [scheduleItems, setScheduleItems] = useState([
     {
-      id: "1",
-      title: "Lớp Cấu trúc dữ liệu",
-      type: "class",
-      date: "2025-10-14",
-      time: "07:30 - 09:30",
-      location: "Phòng A101",
-      description: "Chương 5: Cây tìm kiếm nhị phân",
-      status: "upcoming",
-      subject: "IT2040",
+      id: '1',
+      title: 'Lớp Cấu trúc dữ liệu',
+      type: 'class',
+      date: '2025-10-14',
+      time: '07:30 - 09:30',
+      location: 'Phòng A101',
+      description: 'Chương 5: Cây tìm kiếm nhị phân',
+      status: 'upcoming',
+      subject: 'IT2040',
     },
     {
-      id: "2",
-      title: "Thi giữa kỳ Cơ sở dữ liệu",
-      type: "exam",
-      date: "2025-10-15",
-      time: "14:00 - 16:00",
-      location: "Phòng B205",
-      description: "Thi giữa kỳ chương 1-5",
-      status: "upcoming",
-      subject: "IT3090",
+      id: '2',
+      title: 'Thi giữa kỳ Cơ sở dữ liệu',
+      type: 'exam',
+      date: '2025-10-15',
+      time: '14:00 - 16:00',
+      location: 'Phòng B205',
+      description: 'Thi giữa kỳ chương 1-5',
+      status: 'upcoming',
+      subject: 'IT3090',
     },
     {
-      id: "3",
-      title: "Nộp bài tập lớn",
-      type: "assignment",
-      date: "2025-10-16",
-      time: "23:59",
-      location: "Online",
-      description: "Project về cây AVL",
-      status: "upcoming",
-      subject: "IT2040",
+      id: '3',
+      title: 'Nộp bài tập lớn',
+      type: 'assignment',
+      date: '2025-10-16',
+      time: '23:59',
+      location: 'Online',
+      description: 'Project về cây AVL',
+      status: 'upcoming',
+      subject: 'IT2040',
     },
     {
-      id: "4",
-      title: "Họp nhóm đồ án",
-      type: "meeting",
-      date: "2025-10-12",
-      time: "19:00 - 21:00",
-      location: "Thư viện Tạ Quang Bửu",
-      description: "Thảo luận thiết kế hệ thống",
-      status: "completed",
-      subject: "IT4995",
+      id: '4',
+      title: 'Họp nhóm đồ án',
+      type: 'meeting',
+      date: '2025-10-12',
+      time: '19:00 - 21:00',
+      location: 'Thư viện Tạ Quang Bửu',
+      description: 'Thảo luận thiết kế hệ thống',
+      status: 'completed',
+      subject: 'IT4995',
     },
   ]);
 
   const [baseDate, setBaseDate] = useState(dayjs());
-  const [filterType, setFilterType] = useState("all");
+  const [filterType, setFilterType] = useState('all');
 
   const handleAdd = () => {
     setEditingItem(null);
@@ -160,7 +160,7 @@ const StudentSchedule = () => {
 
   const handleDelete = (id) => {
     setScheduleItems(scheduleItems.filter((item) => item.id !== id));
-    message.success("Xóa lịch thành công!");
+    message.success('Xóa lịch thành công!');
   };
 
   const handleOk = async () => {
@@ -169,8 +169,8 @@ const StudentSchedule = () => {
       const newItem = {
         id: editingItem ? editingItem.id : Date.now().toString(),
         ...values,
-        date: values.date.format("YYYY-MM-DD"),
-        status: editingItem ? editingItem.status : "upcoming",
+        date: values.date.format('YYYY-MM-DD'),
+        status: editingItem ? editingItem.status : 'upcoming',
       };
 
       if (editingItem) {
@@ -179,53 +179,53 @@ const StudentSchedule = () => {
             item.id === editingItem.id ? newItem : item
           )
         );
-        message.success("Cập nhật lịch thành công!");
+        message.success('Cập nhật lịch thành công!');
       } else {
         setScheduleItems([...scheduleItems, newItem]);
-        message.success("Thêm lịch thành công!");
+        message.success('Thêm lịch thành công!');
       }
 
       setIsModalVisible(false);
       form.resetFields();
     } catch (error) {
-      console.error("Validation failed:", error);
+      console.error('Validation failed:', error);
     }
   };
 
   const upcomingItems = scheduleItems.filter(
-    (item) => item.status === "upcoming"
+    (item) => item.status === 'upcoming'
   );
   const todayItems = scheduleItems.filter(
     (item) =>
-      dayjs(item.date).isSame(dayjs(), "day") && item.status !== "completed"
+      dayjs(item.date).isSame(dayjs(), 'day') && item.status !== 'completed'
   );
   const completedItems = scheduleItems.filter(
-    (item) => item.status === "completed"
+    (item) => item.status === 'completed'
   );
 
   const weekDays = useMemo(() => {
-    const start = baseDate.startOf("week");
+    const start = baseDate.startOf('week');
     const days = [];
     for (let i = 1; i <= 7; i++) {
-      days.push(start.add(i, "day"));
+      days.push(start.add(i, 'day'));
     }
     return days;
   }, [baseDate]);
 
   const getPeriodFromTime = (time) => {
-    if (!time) return "morning";
-    const first = time.split("-")[0].trim();
-    const hh = parseInt(first.split(":")[0], 10);
-    if (isNaN(hh)) return "morning";
-    if (hh < 12) return "morning";
-    if (hh < 18) return "afternoon";
-    return "evening";
+    if (!time) return 'morning';
+    const first = time.split('-')[0].trim();
+    const hh = parseInt(first.split(':')[0], 10);
+    if (isNaN(hh)) return 'morning';
+    if (hh < 12) return 'morning';
+    if (hh < 18) return 'afternoon';
+    return 'evening';
   };
 
   const eventsByCell = useMemo(() => {
     const map = {};
     scheduleItems.forEach((ev) => {
-      if (filterType !== "all" && ev.type !== filterType) return;
+      if (filterType !== 'all' && ev.type !== filterType) return;
       const period = getPeriodFromTime(ev.time);
       const key = `${ev.date}#${period}`;
       if (!map[key]) map[key] = [];
@@ -234,23 +234,25 @@ const StudentSchedule = () => {
     return map;
   }, [scheduleItems, filterType]);
 
-  const goPrevWeek = () => setBaseDate(baseDate.subtract(1, "week"));
-  const goNextWeek = () => setBaseDate(baseDate.add(1, "week"));
+  const goPrevWeek = () => setBaseDate(baseDate.subtract(1, 'week'));
+  const goNextWeek = () => setBaseDate(baseDate.add(1, 'week'));
 
   return (
-      <div style={{
-        padding: "24px",
-        maxWidth: "100%",
-        boxSizing: "border-box",
-        width: "100%",
-        minHeight: "100vh",
-        overflowX: "auto",
-      }}>
+    <div
+      style={{
+        padding: '24px',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        width: '100%',
+        minHeight: '100vh',
+        overflowX: 'auto',
+      }}
+    >
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           marginBottom: 24,
         }}
       >
@@ -267,7 +269,7 @@ const StudentSchedule = () => {
               title="Hôm nay"
               value={todayItems.length}
               prefix={<CalendarOutlined />}
-              valueStyle={{ color: "#1890ff" }}
+              valueStyle={{ color: '#1890ff' }}
             />
           </Card>
         </Col>
@@ -277,7 +279,7 @@ const StudentSchedule = () => {
               title="Sắp tới"
               value={upcomingItems.length}
               prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: "#faad14" }}
+              valueStyle={{ color: '#faad14' }}
             />
           </Card>
         </Col>
@@ -287,7 +289,7 @@ const StudentSchedule = () => {
               title="Đã hoàn thành"
               value={completedItems.length}
               prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: "#52c41a" }}
+              valueStyle={{ color: '#52c41a' }}
             />
           </Card>
         </Col>
@@ -304,7 +306,7 @@ const StudentSchedule = () => {
               }
               suffix="%"
               prefix={<ExclamationCircleOutlined />}
-              valueStyle={{ color: "#722ed1" }}
+              valueStyle={{ color: '#722ed1' }}
             />
           </Card>
         </Col>
@@ -332,7 +334,7 @@ const StudentSchedule = () => {
                     marginBottom: 16,
                   }}
                 >
-                  <Text strong style={{ display: "block" }}>
+                  <Text strong style={{ display: 'block' }}>
                     {item.title}
                   </Text>
                   <Text type="secondary" style={{ fontSize: 12 }}>
@@ -340,21 +342,21 @@ const StudentSchedule = () => {
                   </Text>
                   <Text
                     type="secondary"
-                    style={{ fontSize: 12, display: "block" }}
+                    style={{ fontSize: 12, display: 'block' }}
                   >
                     Phòng: {item.location}
                   </Text>
                   <Text
                     type="secondary"
-                    style={{ fontSize: 12, display: "block" }}
+                    style={{ fontSize: 12, display: 'block' }}
                   >
                     Thời gian: {item.time}
                   </Text>
                   <Text
                     type="secondary"
-                    style={{ fontSize: 12, display: "block" }}
+                    style={{ fontSize: 12, display: 'block' }}
                   >
-                    Ngày: {dayjs(item.date).format("DD/MM/YYYY")}
+                    Ngày: {dayjs(item.date).format('DD/MM/YYYY')}
                   </Text>
                 </div>
               </Col>
@@ -368,63 +370,65 @@ const StudentSchedule = () => {
         title={
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
             <span>Lịch theo tuần</span>
             <Space>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <Button icon={<LeftOutlined />} onClick={goPrevWeek} />
                 <DatePicker
                   value={baseDate}
                   onChange={(d) => {
-                    if (d) setBaseDate(dayjs(d).startOf("week"));
+                    if (d) setBaseDate(dayjs(d).startOf('week'));
                   }}
-                  format={date => date ? dayjs(date).format("DD/MM/YYYY") : ""}
+                  format={(date) =>
+                    date ? dayjs(date).format('DD/MM/YYYY') : ''
+                  }
                 />
                 <Button icon={<RightOutlined />} onClick={goNextWeek} />
               </div>
               <Button
-                type={filterType === "all" ? "primary" : "default"}
+                type={filterType === 'all' ? 'primary' : 'default'}
                 size="small"
-                onClick={() => setFilterType("all")}
+                onClick={() => setFilterType('all')}
               >
                 Tất cả
               </Button>
               <Button
-                type={filterType === "class" ? "primary" : "default"}
+                type={filterType === 'class' ? 'primary' : 'default'}
                 size="small"
-                onClick={() => setFilterType("class")}
+                onClick={() => setFilterType('class')}
               >
                 Lịch học
               </Button>
               <Button
-                type={filterType === "exam" ? "primary" : "default"}
+                type={filterType === 'exam' ? 'primary' : 'default'}
                 size="small"
-                onClick={() => setFilterType("exam")}
+                onClick={() => setFilterType('exam')}
               >
                 Lịch thi
               </Button>
               <Button
-                type={filterType === "assignment" ? "primary" : "default"}
+                type={filterType === 'assignment' ? 'primary' : 'default'}
                 size="small"
-                onClick={() => setFilterType("assignment")}
+                onClick={() => setFilterType('assignment')}
               >
                 Bài tập
               </Button>
               <Button
-                type={filterType === "meeting" ? "primary" : "default"}
+                type={filterType === 'meeting' ? 'primary' : 'default'}
                 size="small"
-                onClick={() => setFilterType("meeting")}
+                onClick={() => setFilterType('meeting')}
               >
                 Họp
               </Button>
               <Button
-                type={filterType === "other" ? "primary" : "default"}
+                type={filterType === 'other' ? 'primary' : 'default'}
                 size="small"
-                onClick={() => setFilterType("other")}
+                onClick={() => setFilterType('other')}
               >
                 Khác
               </Button>
@@ -433,21 +437,21 @@ const StudentSchedule = () => {
         }
         style={{ marginBottom: 16 }}
       >
-        <div style={{ overflowX: "auto" }}>
+        <div style={{ overflowX: 'auto' }}>
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "160px repeat(7, minmax(160px, 1fr))",
-              borderTop: "1px solid #f0f0f0",
-              borderLeft: "1px solid #f0f0f0",
+              display: 'grid',
+              gridTemplateColumns: '160px repeat(7, minmax(160px, 1fr))',
+              borderTop: '1px solid #f0f0f0',
+              borderLeft: '1px solid #f0f0f0',
             }}
           >
             {/* header */}
             <div
               style={{
-                borderRight: "1px solid #f0f0f0",
-                borderBottom: "1px solid #f0f0f0",
-                background: "#fafafa",
+                borderRight: '1px solid #f0f0f0',
+                borderBottom: '1px solid #f0f0f0',
+                background: '#fafafa',
                 padding: 12,
               }}
             >
@@ -455,19 +459,19 @@ const StudentSchedule = () => {
             </div>
             {weekDays.map((d) => (
               <div
-                key={d.format("YYYY-MM-DD")}
+                key={d.format('YYYY-MM-DD')}
                 style={{
-                  borderRight: "1px solid #f0f0f0",
-                  borderBottom: "1px solid #f0f0f0",
+                  borderRight: '1px solid #f0f0f0',
+                  borderBottom: '1px solid #f0f0f0',
                   padding: 12,
-                  textAlign: "center",
+                  textAlign: 'center',
                 }}
               >
                 <Text strong>
-                  {d.day() === 0 ? "Chủ nhật" : `Thứ ${d.day() + 1}`}
+                  {d.day() === 0 ? 'Chủ nhật' : `Thứ ${d.day() + 1}`}
                 </Text>
                 <div>
-                  <Text type="secondary">{d.format("DD/MM/YYYY")}</Text>
+                  <Text type="secondary">{d.format('DD/MM/YYYY')}</Text>
                 </div>
               </div>
             ))}
@@ -477,17 +481,17 @@ const StudentSchedule = () => {
               <React.Fragment key={p.key}>
                 <div
                   style={{
-                    borderRight: "1px solid #f0f0f0",
-                    borderBottom: "1px solid #f0f0f0",
+                    borderRight: '1px solid #f0f0f0',
+                    borderBottom: '1px solid #f0f0f0',
                     padding: 12,
-                    background: "#fff8dc",
+                    background: '#fff8dc',
                   }}
                 >
                   <Text strong>{p.label}</Text>
                 </div>
 
                 {weekDays.map((d) => {
-                  const key = `${d.format("YYYY-MM-DD")}#${p.key}`;
+                  const key = `${d.format('YYYY-MM-DD')}#${p.key}`;
                   const cellEvents = eventsByCell[key] || [];
 
                   return (
@@ -495,8 +499,8 @@ const StudentSchedule = () => {
                       key={key}
                       style={{
                         minHeight: 110,
-                        borderRight: "1px solid #f0f0f0",
-                        borderBottom: "1px solid #f0f0f0",
+                        borderRight: '1px solid #f0f0f0',
+                        borderBottom: '1px solid #f0f0f0',
                         padding: 8,
                       }}
                     >
@@ -505,8 +509,8 @@ const StudentSchedule = () => {
                       ) : (
                         <div
                           style={{
-                            display: "flex",
-                            flexDirection: "column",
+                            display: 'flex',
+                            flexDirection: 'column',
                             gap: 8,
                           }}
                         >
@@ -520,7 +524,7 @@ const StudentSchedule = () => {
                                 marginBottom: 4,
                               }}
                             >
-                              <Text strong style={{ display: "block" }}>
+                              <Text strong style={{ display: 'block' }}>
                                 {ev.title}
                               </Text>
                               <Text type="secondary" style={{ fontSize: 12 }}>
@@ -528,21 +532,21 @@ const StudentSchedule = () => {
                               </Text>
                               <Text
                                 type="secondary"
-                                style={{ fontSize: 12, display: "block" }}
+                                style={{ fontSize: 12, display: 'block' }}
                               >
                                 Phòng: {ev.location}
                               </Text>
                               <Text
                                 type="secondary"
-                                style={{ fontSize: 12, display: "block" }}
+                                style={{ fontSize: 12, display: 'block' }}
                               >
                                 Thời gian: {ev.time}
                               </Text>
                               <Text
                                 type="secondary"
-                                style={{ fontSize: 12, display: "block" }}
+                                style={{ fontSize: 12, display: 'block' }}
                               >
-                                Ngày: {dayjs(ev.date).format("DD/MM/YYYY")}
+                                Ngày: {dayjs(ev.date).format('DD/MM/YYYY')}
                               </Text>
                             </div>
                           ))}
@@ -561,53 +565,53 @@ const StudentSchedule = () => {
           <Space>
             <span
               style={{
-                display: "inline-block",
+                display: 'inline-block',
                 width: 18,
                 height: 12,
-                background: "var(--schedule-class-bg, #f0f0f0)",
-                border: "1px solid #ddd",
+                background: 'var(--schedule-class-bg, #f0f0f0)',
+                border: '1px solid #ddd',
               }}
-            />{" "}
+            />{' '}
             <Text>Lịch học lý thuyết</Text>
             <span
               style={{
-                display: "inline-block",
+                display: 'inline-block',
                 width: 18,
                 height: 12,
-                background: "var(--schedule-assignment-bg, #b7eb8f)",
-                border: "1px solid #ddd",
+                background: 'var(--schedule-assignment-bg, #b7eb8f)',
+                border: '1px solid #ddd',
               }}
-            />{" "}
+            />{' '}
             <Text>Lịch học thực hành</Text>
             <span
               style={{
-                display: "inline-block",
+                display: 'inline-block',
                 width: 18,
                 height: 12,
-                background: "var(--schedule-meeting-bg, #bae7ff)",
-                border: "1px solid #ddd",
+                background: 'var(--schedule-meeting-bg, #bae7ff)',
+                border: '1px solid #ddd',
               }}
-            />{" "}
+            />{' '}
             <Text>Lịch học trực tuyến</Text>
             <span
               style={{
-                display: "inline-block",
+                display: 'inline-block',
                 width: 18,
                 height: 12,
-                background: "var(--schedule-exam-bg, #fff7a8)",
-                border: "1px solid #ddd",
+                background: 'var(--schedule-exam-bg, #fff7a8)',
+                border: '1px solid #ddd',
               }}
-            />{" "}
+            />{' '}
             <Text>Lịch thi</Text>
             <span
               style={{
-                display: "inline-block",
+                display: 'inline-block',
                 width: 18,
                 height: 12,
-                background: "var(--schedule-other-bg, #ffa39e)",
-                border: "1px solid #ddd",
+                background: 'var(--schedule-other-bg, #ffa39e)',
+                border: '1px solid #ddd',
               }}
-            />{" "}
+            />{' '}
             <Text>Lịch tạm ngưng</Text>
           </Space>
         </div>
@@ -617,28 +621,28 @@ const StudentSchedule = () => {
 
       {/* Modal */}
       <Modal
-        title={editingItem ? "Chỉnh sửa lịch" : "Thêm lịch mới"}
+        title={editingItem ? 'Chỉnh sửa lịch' : 'Thêm lịch mới'}
         open={isModalVisible}
         onOk={handleOk}
         onCancel={() => setIsModalVisible(false)}
         width={600}
-        okText={editingItem ? "Cập nhật" : "Thêm"}
+        okText={editingItem ? 'Cập nhật' : 'Thêm'}
         cancelText="Hủy"
       >
         <Form form={form} layout="vertical">
           <Form.Item
             name="title"
             label="Tiêu đề"
-            rules={[{ required: true, message: "Vui lòng nhập tiêu đề!" }]}
+            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
           >
             <Input placeholder="Nhập tiêu đề sự kiện" />
           </Form.Item>
 
-          <div style={{ display: "flex", gap: 16 }}>
+          <div style={{ display: 'flex', gap: 16 }}>
             <Form.Item
               name="type"
               label="Loại sự kiện"
-              rules={[{ required: true, message: "Vui lòng chọn loại!" }]}
+              rules={[{ required: true, message: 'Vui lòng chọn loại!' }]}
               style={{ flex: 1 }}
             >
               <Select placeholder="Chọn loại sự kiện">
@@ -653,27 +657,27 @@ const StudentSchedule = () => {
             <Form.Item
               name="subject"
               label="Môn học"
-              rules={[{ required: true, message: "Vui lòng nhập mã môn!" }]}
+              rules={[{ required: true, message: 'Vui lòng nhập mã môn!' }]}
               style={{ flex: 1 }}
             >
               <Input placeholder="Mã môn học (VD: IT2040)" />
             </Form.Item>
           </div>
 
-          <div style={{ display: "flex", gap: 16 }}>
+          <div style={{ display: 'flex', gap: 16 }}>
             <Form.Item
               name="date"
               label="Ngày"
-              rules={[{ required: true, message: "Vui lòng chọn ngày!" }]}
+              rules={[{ required: true, message: 'Vui lòng chọn ngày!' }]}
               style={{ flex: 1 }}
             >
-              <DatePicker style={{ width: "100%" }} placeholder="Chọn ngày" />
+              <DatePicker style={{ width: '100%' }} placeholder="Chọn ngày" />
             </Form.Item>
 
             <Form.Item
               name="time"
               label="Thời gian"
-              rules={[{ required: true, message: "Vui lòng nhập thời gian!" }]}
+              rules={[{ required: true, message: 'Vui lòng nhập thời gian!' }]}
               style={{ flex: 1 }}
             >
               <Input placeholder="VD: 07:30 - 09:30" />
@@ -683,7 +687,7 @@ const StudentSchedule = () => {
           <Form.Item
             name="location"
             label="Địa điểm"
-            rules={[{ required: true, message: "Vui lòng nhập địa điểm!" }]}
+            rules={[{ required: true, message: 'Vui lòng nhập địa điểm!' }]}
           >
             <Input placeholder="Nhập địa điểm" />
           </Form.Item>

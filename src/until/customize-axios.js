@@ -1,14 +1,14 @@
-import axios from "axios";
+import axios from 'axios';
 
 const baseURL =
-  import.meta.env?.VITE_APP_BE_API_URL || "https://localhost:7061";
+  import.meta.env?.VITE_APP_BE_API_URL || 'https://localhost:7061';
 
 const instance = axios.create({
   baseURL: baseURL,
   // withCredentials: true,
 });
 
-const NO_RETRY_HEADER = "x-no-retry";
+const NO_RETRY_HEADER = 'x-no-retry';
 // const handleRefeshToken = async () => {
 //   let res = await instance.get("/api/v1/auth/refresh");
 //   if (res && res.data) {
@@ -20,11 +20,11 @@ const NO_RETRY_HEADER = "x-no-retry";
 // Add a request interceptor
 instance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem('access_token');
     if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
+      config.headers['Authorization'] = `Bearer ${token}`;
     } else {
-      delete config.headers["Authorization"];
+      delete config.headers['Authorization'];
     }
     return config;
   },

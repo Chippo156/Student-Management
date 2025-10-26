@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Card,
   Button,
@@ -15,7 +15,7 @@ import {
   Alert,
   Tag,
   List,
-} from "antd";
+} from 'antd';
 import {
   BankOutlined,
   CreditCardOutlined,
@@ -24,7 +24,7 @@ import {
   DeleteOutlined,
   CheckCircleOutlined,
   SafetyCertificateOutlined,
-} from "@ant-design/icons";
+} from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -36,28 +36,28 @@ const BankInfo = () => {
 
   const [bankAccounts, setBankAccounts] = useState([
     {
-      id: "1",
-      bankName: "Ngân hàng TMCP Công Thương Việt Nam",
-      bankCode: "VietinBank",
-      accountNumber: "1234567890123",
-      accountHolder: "NGUYEN VAN A",
-      branchName: "Chi nhánh Hà Nội",
-      accountType: "savings",
+      id: '1',
+      bankName: 'Ngân hàng TMCP Công Thương Việt Nam',
+      bankCode: 'VietinBank',
+      accountNumber: '1234567890123',
+      accountHolder: 'NGUYEN VAN A',
+      branchName: 'Chi nhánh Hà Nội',
+      accountType: 'savings',
       isDefault: true,
-      status: "active",
-      createdDate: "2024-01-15",
+      status: 'active',
+      createdDate: '2024-01-15',
     },
     {
-      id: "2",
-      bankName: "Ngân hàng TMCP Đầu tư và Phát triển Việt Nam",
-      bankCode: "BIDV",
-      accountNumber: "9876543210987",
-      accountHolder: "NGUYEN VAN A",
-      branchName: "Chi nhánh Cầu Giấy",
-      accountType: "checking",
+      id: '2',
+      bankName: 'Ngân hàng TMCP Đầu tư và Phát triển Việt Nam',
+      bankCode: 'BIDV',
+      accountNumber: '9876543210987',
+      accountHolder: 'NGUYEN VAN A',
+      branchName: 'Chi nhánh Cầu Giấy',
+      accountType: 'checking',
       isDefault: false,
-      status: "active",
-      createdDate: "2024-02-20",
+      status: 'active',
+      createdDate: '2024-02-20',
     },
   ]);
 
@@ -76,11 +76,11 @@ const BankInfo = () => {
   const handleDelete = (id) => {
     const accountToDelete = bankAccounts.find((acc) => acc.id === id);
     if (accountToDelete?.isDefault) {
-      message.error("Không thể xóa tài khoản mặc định!");
+      message.error('Không thể xóa tài khoản mặc định!');
       return;
     }
     setBankAccounts(bankAccounts.filter((account) => account.id !== id));
-    message.success("Xóa tài khoản ngân hàng thành công!");
+    message.success('Xóa tài khoản ngân hàng thành công!');
   };
 
   const handleSetDefault = (id) => {
@@ -90,7 +90,7 @@ const BankInfo = () => {
         isDefault: account.id === id,
       }))
     );
-    message.success("Đã đặt làm tài khoản mặc định!");
+    message.success('Đã đặt làm tài khoản mặc định!');
   };
 
   const handleOk = async () => {
@@ -103,10 +103,10 @@ const BankInfo = () => {
         isDefault: editingAccount
           ? editingAccount.isDefault
           : bankAccounts.length === 0,
-        status: "active",
+        status: 'active',
         createdDate: editingAccount
           ? editingAccount.createdDate
-          : new Date().toISOString().split("T")[0],
+          : new Date().toISOString().split('T')[0],
       };
 
       if (editingAccount) {
@@ -115,25 +115,25 @@ const BankInfo = () => {
             account.id === editingAccount.id ? newAccount : account
           )
         );
-        message.success("Cập nhật thông tin ngân hàng thành công!");
+        message.success('Cập nhật thông tin ngân hàng thành công!');
       } else {
         setBankAccounts([...bankAccounts, newAccount]);
-        message.success("Thêm tài khoản ngân hàng thành công!");
+        message.success('Thêm tài khoản ngân hàng thành công!');
       }
 
       setIsModalVisible(false);
       form.resetFields();
     } catch (error) {
-      console.error("Validation failed:", error);
+      console.error('Validation failed:', error);
     }
   };
 
   const getAccountTypeText = (type) => {
     switch (type) {
-      case "savings":
-        return "Tiết kiệm";
-      case "checking":
-        return "Thanh toán";
+      case 'savings':
+        return 'Tiết kiệm';
+      case 'checking':
+        return 'Thanh toán';
       default:
         return type;
     }
@@ -142,12 +142,12 @@ const BankInfo = () => {
   const defaultAccount = bankAccounts.find((account) => account.isDefault);
 
   return (
-    <div style={{ padding: "24px" }}>
+    <div style={{ padding: '24px' }}>
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           marginBottom: 24,
         }}
       >
@@ -268,7 +268,7 @@ const BankInfo = () => {
               >
                 <List.Item.Meta
                   avatar={
-                    <BankOutlined style={{ fontSize: 24, color: "#1890ff" }} />
+                    <BankOutlined style={{ fontSize: 24, color: '#1890ff' }} />
                   }
                   title={
                     <Space>
@@ -280,7 +280,7 @@ const BankInfo = () => {
                     </Space>
                   }
                   description={
-                    <Space direction="vertical" style={{ width: "100%" }}>
+                    <Space direction="vertical" style={{ width: '100%' }}>
                       <Text>
                         <strong>Ngân hàng:</strong> {account.bankName}
                       </Text>
@@ -304,12 +304,12 @@ const BankInfo = () => {
                           <strong>Trạng thái:</strong>
                         </Text>
                         <Tag
-                          color={account.status === "active" ? "green" : "red"}
+                          color={account.status === 'active' ? 'green' : 'red'}
                           icon={<CheckCircleOutlined />}
                         >
-                          {account.status === "active"
-                            ? "Hoạt động"
-                            : "Không hoạt động"}
+                          {account.status === 'active'
+                            ? 'Hoạt động'
+                            : 'Không hoạt động'}
                         </Tag>
                         <Text type="secondary">
                           Tạo ngày: {account.createdDate}
@@ -322,9 +322,9 @@ const BankInfo = () => {
             )}
           />
         ) : (
-          <div style={{ textAlign: "center", padding: "48px 0" }}>
+          <div style={{ textAlign: 'center', padding: '48px 0' }}>
             <BankOutlined
-              style={{ fontSize: 48, color: "#d9d9d9", marginBottom: 16 }}
+              style={{ fontSize: 48, color: '#d9d9d9', marginBottom: 16 }}
             />
             <Text type="secondary">Chưa cập nhật tài khoản ngân hàng nào</Text>
             <br />
@@ -343,14 +343,14 @@ const BankInfo = () => {
       <Modal
         title={
           editingAccount
-            ? "Chỉnh sửa tài khoản ngân hàng"
-            : "Thêm tài khoản ngân hàng"
+            ? 'Chỉnh sửa tài khoản ngân hàng'
+            : 'Thêm tài khoản ngân hàng'
         }
         open={isModalVisible}
         onOk={handleOk}
         onCancel={() => setIsModalVisible(false)}
         width={600}
-        okText={editingAccount ? "Cập nhật" : "Thêm"}
+        okText={editingAccount ? 'Cập nhật' : 'Thêm'}
         cancelText="Hủy"
       >
         <Alert
@@ -362,11 +362,11 @@ const BankInfo = () => {
         />
 
         <Form form={form} layout="vertical">
-          <div style={{ display: "flex", gap: 16 }}>
+          <div style={{ display: 'flex', gap: 16 }}>
             <Form.Item
               name="bankCode"
               label="Mã ngân hàng"
-              rules={[{ required: true, message: "Vui lòng chọn ngân hàng!" }]}
+              rules={[{ required: true, message: 'Vui lòng chọn ngân hàng!' }]}
               style={{ flex: 1 }}
             >
               <Select placeholder="Chọn ngân hàng">
@@ -387,7 +387,7 @@ const BankInfo = () => {
               name="accountType"
               label="Loại tài khoản"
               rules={[
-                { required: true, message: "Vui lòng chọn loại tài khoản!" },
+                { required: true, message: 'Vui lòng chọn loại tài khoản!' },
               ]}
               style={{ flex: 1 }}
             >
@@ -402,7 +402,7 @@ const BankInfo = () => {
             name="bankName"
             label="Tên đầy đủ ngân hàng"
             rules={[
-              { required: true, message: "Vui lòng nhập tên ngân hàng!" },
+              { required: true, message: 'Vui lòng nhập tên ngân hàng!' },
             ]}
           >
             <Input placeholder="VD: Ngân hàng TMCP Công Thương Việt Nam" />
@@ -412,10 +412,10 @@ const BankInfo = () => {
             name="accountNumber"
             label="Số tài khoản"
             rules={[
-              { required: true, message: "Vui lòng nhập số tài khoản!" },
+              { required: true, message: 'Vui lòng nhập số tài khoản!' },
               {
                 pattern: /^\d{10,16}$/,
-                message: "Số tài khoản phải có 10-16 chữ số!",
+                message: 'Số tài khoản phải có 10-16 chữ số!',
               },
             ]}
           >
@@ -426,7 +426,7 @@ const BankInfo = () => {
             name="accountHolder"
             label="Chủ tài khoản"
             rules={[
-              { required: true, message: "Vui lòng nhập tên chủ tài khoản!" },
+              { required: true, message: 'Vui lòng nhập tên chủ tài khoản!' },
             ]}
           >
             <Input placeholder="Nhập tên chủ tài khoản (VIẾT HOA)" />
@@ -436,7 +436,7 @@ const BankInfo = () => {
             name="branchName"
             label="Chi nhánh"
             rules={[
-              { required: true, message: "Vui lòng nhập tên chi nhánh!" },
+              { required: true, message: 'Vui lòng nhập tên chi nhánh!' },
             ]}
           >
             <Input placeholder="VD: Chi nhánh Hà Nội" />

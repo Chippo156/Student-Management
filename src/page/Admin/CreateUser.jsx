@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
@@ -16,61 +16,61 @@ import {
   FormHelperText,
   Chip,
   Avatar,
-} from "@mui/material";
+} from '@mui/material';
 import {
   PersonAdd as PersonAddIcon,
   Save as SaveIcon,
   Clear as ClearIcon,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
 const CreateUser = () => {
   const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    role: "",
-    department: "",
-    studentId: "",
-    employeeId: "",
-    password: "",
-    confirmPassword: "",
+    fullName: '',
+    email: '',
+    phone: '',
+    role: '',
+    department: '',
+    studentId: '',
+    employeeId: '',
+    password: '',
+    confirmPassword: '',
   });
 
   const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
 
   const roles = [
-    { value: "1", label: "Admin" },
-    { value: "2", label: "Giảng viên" },
-    { value: "3", label: "Sinh viên" },
-    { value: "4", label: "Super Admin" },
+    { value: '1', label: 'Admin' },
+    { value: '2', label: 'Giảng viên' },
+    { value: '3', label: 'Sinh viên' },
+    { value: '4', label: 'Super Admin' },
   ];
 
   const departments = [
-    "Công nghệ thông tin",
-    "Kinh tế",
-    "Ngoại ngữ",
-    "Khoa học tự nhiên",
-    "Kỹ thuật",
-    "Y khoa",
+    'Công nghệ thông tin',
+    'Kinh tế',
+    'Ngoại ngữ',
+    'Khoa học tự nhiên',
+    'Kỹ thuật',
+    'Y khoa',
   ];
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
+      setErrors((prev) => ({ ...prev, [field]: '' }));
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.fullName) newErrors.fullName = "Họ tên là bắt buộc";
-    if (!formData.email) newErrors.email = "Email là bắt buộc";
-    if (!formData.role) newErrors.role = "Vai trò là bắt buộc";
-    if (!formData.password) newErrors.password = "Mật khẩu là bắt buộc";
+    if (!formData.fullName) newErrors.fullName = 'Họ tên là bắt buộc';
+    if (!formData.email) newErrors.email = 'Email là bắt buộc';
+    if (!formData.role) newErrors.role = 'Vai trò là bắt buộc';
+    if (!formData.password) newErrors.password = 'Mật khẩu là bắt buộc';
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
+      newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
     }
 
     setErrors(newErrors);
@@ -87,23 +87,23 @@ const CreateUser = () => {
 
   const handleReset = () => {
     setFormData({
-      fullName: "",
-      email: "",
-      phone: "",
-      role: "",
-      department: "",
-      studentId: "",
-      employeeId: "",
-      password: "",
-      confirmPassword: "",
+      fullName: '',
+      email: '',
+      phone: '',
+      role: '',
+      department: '',
+      studentId: '',
+      employeeId: '',
+      password: '',
+      confirmPassword: '',
     });
     setErrors({});
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: "100%", overflow: "hidden" }}>
+    <Box sx={{ p: 3, maxWidth: '100%', overflow: 'hidden' }}>
       <Box display="flex" alignItems="center" gap={2} mb={3}>
-        <Avatar sx={{ bgcolor: "primary.main" }}>
+        <Avatar sx={{ bgcolor: 'primary.main' }}>
           <PersonAddIcon />
         </Avatar>
         <Typography variant="h4" component="h1">
@@ -117,7 +117,7 @@ const CreateUser = () => {
         </Alert>
       )}
 
-      <Paper sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
+      <Paper sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             {/* Thông tin cơ bản */}
@@ -134,7 +134,7 @@ const CreateUser = () => {
                         label="Họ và tên"
                         value={formData.fullName}
                         onChange={(e) =>
-                          handleInputChange("fullName", e.target.value)
+                          handleInputChange('fullName', e.target.value)
                         }
                         error={!!errors.fullName}
                         helperText={errors.fullName}
@@ -148,7 +148,7 @@ const CreateUser = () => {
                         type="email"
                         value={formData.email}
                         onChange={(e) =>
-                          handleInputChange("email", e.target.value)
+                          handleInputChange('email', e.target.value)
                         }
                         error={!!errors.email}
                         helperText={errors.email}
@@ -161,7 +161,7 @@ const CreateUser = () => {
                         label="Số điện thoại"
                         value={formData.phone}
                         onChange={(e) =>
-                          handleInputChange("phone", e.target.value)
+                          handleInputChange('phone', e.target.value)
                         }
                       />
                     </Grid>
@@ -171,7 +171,7 @@ const CreateUser = () => {
                         <Select
                           value={formData.role}
                           onChange={(e) =>
-                            handleInputChange("role", e.target.value)
+                            handleInputChange('role', e.target.value)
                           }
                           label="Vai trò"
                         >
@@ -182,9 +182,9 @@ const CreateUser = () => {
                                   label={role.label}
                                   size="small"
                                   color={
-                                    role.value === "1" || role.value === "4"
-                                      ? "primary"
-                                      : "default"
+                                    role.value === '1' || role.value === '4'
+                                      ? 'primary'
+                                      : 'default'
                                   }
                                 />
                               </Box>
@@ -215,7 +215,7 @@ const CreateUser = () => {
                         <Select
                           value={formData.department}
                           onChange={(e) =>
-                            handleInputChange("department", e.target.value)
+                            handleInputChange('department', e.target.value)
                           }
                           label="Khoa/Phòng ban"
                         >
@@ -227,29 +227,29 @@ const CreateUser = () => {
                         </Select>
                       </FormControl>
                     </Grid>
-                    {formData.role === "3" && (
+                    {formData.role === '3' && (
                       <Grid item xs={12} md={6}>
                         <TextField
                           fullWidth
                           label="Mã sinh viên"
                           value={formData.studentId}
                           onChange={(e) =>
-                            handleInputChange("studentId", e.target.value)
+                            handleInputChange('studentId', e.target.value)
                           }
                           placeholder="VD: SV2024001"
                         />
                       </Grid>
                     )}
-                    {(formData.role === "1" ||
-                      formData.role === "2" ||
-                      formData.role === "4") && (
+                    {(formData.role === '1' ||
+                      formData.role === '2' ||
+                      formData.role === '4') && (
                       <Grid item xs={12} md={6}>
                         <TextField
                           fullWidth
                           label="Mã nhân viên"
                           value={formData.employeeId}
                           onChange={(e) =>
-                            handleInputChange("employeeId", e.target.value)
+                            handleInputChange('employeeId', e.target.value)
                           }
                           placeholder="VD: NV2024001"
                         />
@@ -275,10 +275,10 @@ const CreateUser = () => {
                         type="password"
                         value={formData.password}
                         onChange={(e) =>
-                          handleInputChange("password", e.target.value)
+                          handleInputChange('password', e.target.value)
                         }
                         error={!!errors.password}
-                        helperText={errors.password || "Tối thiểu 6 ký tự"}
+                        helperText={errors.password || 'Tối thiểu 6 ký tự'}
                         required
                       />
                     </Grid>
@@ -289,7 +289,7 @@ const CreateUser = () => {
                         type="password"
                         value={formData.confirmPassword}
                         onChange={(e) =>
-                          handleInputChange("confirmPassword", e.target.value)
+                          handleInputChange('confirmPassword', e.target.value)
                         }
                         error={!!errors.confirmPassword}
                         helperText={errors.confirmPassword}

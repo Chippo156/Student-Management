@@ -119,50 +119,70 @@ const StudentGrades = () => {
   const getGradeColor = (grade) => {
     switch (grade) {
       case 'A':
-      case 'A+': return 'green';
+      case 'A+':
+        return 'green';
       case 'A-':
-      case 'B+': return 'blue';
+      case 'B+':
+        return 'blue';
       case 'B':
-      case 'B-': return 'cyan';
+      case 'B-':
+        return 'cyan';
       case 'C+':
-      case 'C': return 'orange';
+      case 'C':
+        return 'orange';
       case 'C-':
       case 'D+':
-      case 'D': return 'gold';
-      case 'F': return 'red';
-      default: return 'default';
+      case 'D':
+        return 'gold';
+      case 'F':
+        return 'red';
+      default:
+        return 'default';
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'passed': return 'green';
-      case 'failed': return 'red';
-      case 'retake': return 'orange';
-      default: return 'default';
+      case 'passed':
+        return 'green';
+      case 'failed':
+        return 'red';
+      case 'retake':
+        return 'orange';
+      default:
+        return 'default';
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'passed': return 'Đậu';
-      case 'failed': return 'Rớt';
-      case 'retake': return 'Học lại';
-      default: return status;
+      case 'passed':
+        return 'Đậu';
+      case 'failed':
+        return 'Rớt';
+      case 'retake':
+        return 'Học lại';
+      default:
+        return status;
     }
   };
 
-  const filteredGrades = selectedSemester === 'all' 
-    ? grades 
-    : grades.filter(grade => grade.semester === selectedSemester);
+  const filteredGrades =
+    selectedSemester === 'all'
+      ? grades
+      : grades.filter((grade) => grade.semester === selectedSemester);
 
-  const overallGPA = grades.reduce((sum, grade) => sum + (grade.gpa * grade.credits), 0) / 
-                    grades.reduce((sum, grade) => sum + grade.credits, 0);
-  
+  const overallGPA =
+    grades.reduce((sum, grade) => sum + grade.gpa * grade.credits, 0) /
+    grades.reduce((sum, grade) => sum + grade.credits, 0);
+
   const totalCredits = grades.reduce((sum, grade) => sum + grade.credits, 0);
-  const passedCredits = grades.filter(grade => grade.status === 'passed')
-                             .reduce((sum, grade) => sum + grade.credits, 0);
-  const failedCourses = grades.filter(grade => grade.status === 'failed').length;
+  const passedCredits = grades
+    .filter((grade) => grade.status === 'passed')
+    .reduce((sum, grade) => sum + grade.credits, 0);
+  const failedCourses = grades.filter(
+    (grade) => grade.status === 'failed'
+  ).length;
 
   const columns = [
     {
@@ -219,9 +239,7 @@ const StudentGrades = () => {
       key: 'letterGrade',
       width: 80,
       align: 'center',
-      render: (grade) => (
-        <Tag color={getGradeColor(grade)}>{grade}</Tag>
-      ),
+      render: (grade) => <Tag color={getGradeColor(grade)}>{grade}</Tag>,
     },
     {
       title: 'Điểm 4',
@@ -245,7 +263,14 @@ const StudentGrades = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 24,
+        }}
+      >
         <Title level={2}>
           <BookOutlined style={{ marginRight: 8 }} />
           Kết quả học tập
@@ -261,11 +286,24 @@ const StudentGrades = () => {
               value={overallGPA}
               precision={2}
               prefix={<TrophyOutlined />}
-              valueStyle={{ color: overallGPA >= 3.0 ? '#52c41a' : overallGPA >= 2.0 ? '#faad14' : '#ff4d4f' }}
+              valueStyle={{
+                color:
+                  overallGPA >= 3.0
+                    ? '#52c41a'
+                    : overallGPA >= 2.0
+                      ? '#faad14'
+                      : '#ff4d4f',
+              }}
             />
-            <Progress 
-              percent={Math.min((overallGPA / 4) * 100, 100)} 
-              strokeColor={overallGPA >= 3.0 ? '#52c41a' : overallGPA >= 2.0 ? '#faad14' : '#ff4d4f'}
+            <Progress
+              percent={Math.min((overallGPA / 4) * 100, 100)}
+              strokeColor={
+                overallGPA >= 3.0
+                  ? '#52c41a'
+                  : overallGPA >= 2.0
+                    ? '#faad14'
+                    : '#ff4d4f'
+              }
               showInfo={false}
               size="small"
             />
@@ -308,19 +346,36 @@ const StudentGrades = () => {
       {/* Semester Summary */}
       <Card title="Tổng kết theo học kỳ" style={{ marginBottom: 24 }}>
         <Row gutter={16}>
-          {semesterSummaries.map(summary => (
+          {semesterSummaries.map((summary) => (
             <Col span={12} key={summary.semester}>
               <Card size="small" style={{ marginBottom: 16 }}>
                 <Space direction="vertical" style={{ width: '100%' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div
+                    style={{ display: 'flex', justifyContent: 'space-between' }}
+                  >
                     <Text strong>Học kỳ {summary.semester}</Text>
-                    <Tag color={summary.gpa >= 3.0 ? 'green' : summary.gpa >= 2.0 ? 'orange' : 'red'}>
+                    <Tag
+                      color={
+                        summary.gpa >= 3.0
+                          ? 'green'
+                          : summary.gpa >= 2.0
+                            ? 'orange'
+                            : 'red'
+                      }
+                    >
                       GPA: {summary.gpa.toFixed(2)}
                     </Tag>
                   </div>
                   <Space>
-                    <Text>Tín chỉ: <Text strong>{summary.totalCredits}</Text></Text>
-                    <Text>Môn học: <Text strong>{summary.passedCourses}/{summary.totalCourses}</Text></Text>
+                    <Text>
+                      Tín chỉ: <Text strong>{summary.totalCredits}</Text>
+                    </Text>
+                    <Text>
+                      Môn học:{' '}
+                      <Text strong>
+                        {summary.passedCourses}/{summary.totalCourses}
+                      </Text>
+                    </Text>
                   </Space>
                 </Space>
               </Card>
@@ -333,8 +388,8 @@ const StudentGrades = () => {
       <Card style={{ marginBottom: 24 }}>
         <Space>
           <Text>Học kỳ:</Text>
-          <Select 
-            value={selectedSemester} 
+          <Select
+            value={selectedSemester}
             onChange={setSelectedSemester}
             style={{ width: 200 }}
           >
@@ -343,7 +398,7 @@ const StudentGrades = () => {
             <Option value="2023-2024-2">HK2 2023-2024</Option>
           </Select>
           <Text>Thời gian:</Text>
-          <RangePicker 
+          <RangePicker
             value={dateRange}
             onChange={(dates) => setDateRange(dates)}
             placeholder={['Từ ngày', 'Đến ngày']}
@@ -377,9 +432,14 @@ const StudentGrades = () => {
               `${range[0]}-${range[1]} của ${total} môn học`,
           }}
           summary={(data) => {
-            const totalCreditsInView = data.reduce((sum, grade) => sum + grade.credits, 0);
-            const avgGPA = data.reduce((sum, grade) => sum + (grade.gpa * grade.credits), 0) / totalCreditsInView;
-            
+            const totalCreditsInView = data.reduce(
+              (sum, grade) => sum + grade.credits,
+              0
+            );
+            const avgGPA =
+              data.reduce((sum, grade) => sum + grade.gpa * grade.credits, 0) /
+              totalCreditsInView;
+
             return (
               <Table.Summary.Row>
                 <Table.Summary.Cell index={0}>
@@ -396,7 +456,9 @@ const StudentGrades = () => {
                 <Table.Summary.Cell index={5}></Table.Summary.Cell>
                 <Table.Summary.Cell index={6}></Table.Summary.Cell>
                 <Table.Summary.Cell index={7}>
-                  <Text strong>{isNaN(avgGPA) ? '0.00' : avgGPA.toFixed(2)}</Text>
+                  <Text strong>
+                    {isNaN(avgGPA) ? '0.00' : avgGPA.toFixed(2)}
+                  </Text>
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={8}></Table.Summary.Cell>
               </Table.Summary.Row>

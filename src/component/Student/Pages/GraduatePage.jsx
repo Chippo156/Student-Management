@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Card,
   Button,
@@ -17,7 +17,7 @@ import {
   Timeline,
   Progress,
   Alert,
-} from "antd";
+} from 'antd';
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -26,130 +26,110 @@ import {
   TrophyOutlined,
   BookOutlined,
   PlusOutlined,
-} from "@ant-design/icons";
-import dayjs from "dayjs";
+} from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-interface GraduationRequirement {
-  id: string;
-  category: string;
-  requirement: string;
-  completed: number;
-  total: number;
-  status: "completed" | "in-progress" | "not-started";
-  description: string;
-}
-
-interface GraduationMilestone {
-  id: string;
-  title: string;
-  date: string;
-  status: "completed" | "upcoming" | "overdue";
-  description: string;
-  documents: string[];
-}
-
-const GraduatePage: React.FC = () => {
+const GraduatePage = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingMilestone, setEditingMilestone] =
-    useState<GraduationMilestone | null>(null);
+  const [editingMilestone, setEditingMilestone] = useState(null);
   const [form] = Form.useForm();
 
-  const [requirements] = useState<GraduationRequirement[]>([
+  const [requirements] = useState([
     {
-      id: "1",
-      category: "Tín chỉ bắt buộc",
-      requirement: "Tín chỉ các môn bắt buộc",
+      id: '1',
+      category: 'Tín chỉ bắt buộc',
+      requirement: 'Tín chỉ các môn bắt buộc',
       completed: 95,
       total: 100,
-      status: "in-progress",
-      description: "Còn thiếu 5 tín chỉ môn bắt buộc",
+      status: 'in-progress',
+      description: 'Còn thiếu 5 tín chỉ môn bắt buộc',
     },
     {
-      id: "2",
-      category: "Tín chỉ tự chọn",
-      requirement: "Tín chỉ các môn tự chọn",
+      id: '2',
+      category: 'Tín chỉ tự chọn',
+      requirement: 'Tín chỉ các môn tự chọn',
       completed: 25,
       total: 30,
-      status: "in-progress",
-      description: "Còn thiếu 5 tín chỉ môn tự chọn",
+      status: 'in-progress',
+      description: 'Còn thiếu 5 tín chỉ môn tự chọn',
     },
     {
-      id: "3",
-      category: "Ngoại ngữ",
-      requirement: "Chứng chỉ Tiếng Anh B1",
+      id: '3',
+      category: 'Ngoại ngữ',
+      requirement: 'Chứng chỉ Tiếng Anh B1',
       completed: 1,
       total: 1,
-      status: "completed",
-      description: "Đã có chứng chỉ TOEIC 650",
+      status: 'completed',
+      description: 'Đã có chứng chỉ TOEIC 650',
     },
     {
-      id: "4",
-      category: "Giáo dục thể chất",
-      requirement: "Hoàn thành môn GDTC",
+      id: '4',
+      category: 'Giáo dục thể chất',
+      requirement: 'Hoàn thành môn GDTC',
       completed: 4,
       total: 4,
-      status: "completed",
-      description: "Đã hoàn thành đủ 4 môn GDTC",
+      status: 'completed',
+      description: 'Đã hoàn thành đủ 4 môn GDTC',
     },
     {
-      id: "5",
-      category: "Khóa luận",
-      requirement: "Khóa luận tốt nghiệp",
+      id: '5',
+      category: 'Khóa luận',
+      requirement: 'Khóa luận tốt nghiệp',
       completed: 0,
       total: 1,
-      status: "not-started",
-      description: "Chưa đăng ký khóa luận",
+      status: 'not-started',
+      description: 'Chưa đăng ký khóa luận',
     },
     {
-      id: "6",
-      category: "Thực tập",
-      requirement: "Thực tập tốt nghiệp",
+      id: '6',
+      category: 'Thực tập',
+      requirement: 'Thực tập tốt nghiệp',
       completed: 0,
       total: 1,
-      status: "not-started",
-      description: "Chưa thực hiện thực tập",
+      status: 'not-started',
+      description: 'Chưa thực hiện thực tập',
     },
   ]);
 
-  const [milestones, setMilestones] = useState<GraduationMilestone[]>([
+  const [milestones, setMilestones] = useState([
     {
-      id: "1",
-      title: "Nộp hồ sơ xét tốt nghiệp",
-      date: "2025-03-15",
-      status: "upcoming",
-      description: "Nộp hồ sơ xét tốt nghiệp tại phòng đào tạo",
+      id: '1',
+      title: 'Nộp hồ sơ xét tốt nghiệp',
+      date: '2025-03-15',
+      status: 'upcoming',
+      description: 'Nộp hồ sơ xét tốt nghiệp tại phòng đào tạo',
       documents: [
-        "Đơn xin xét tốt nghiệp",
-        "Bản sao bằng tốt nghiệp THPT",
-        "Chứng chỉ ngoại ngữ",
+        'Đơn xin xét tốt nghiệp',
+        'Bản sao bằng tốt nghiệp THPT',
+        'Chứng chỉ ngoại ngữ',
       ],
     },
     {
-      id: "2",
-      title: "Đăng ký khóa luận tốt nghiệp",
-      date: "2025-02-01",
-      status: "upcoming",
-      description: "Đăng ký đề tài và giảng viên hướng dẫn",
-      documents: ["Đơn đăng ký khóa luận", "Đề cương khóa luận"],
+      id: '2',
+      title: 'Đăng ký khóa luận tốt nghiệp',
+      date: '2025-02-01',
+      status: 'upcoming',
+      description: 'Đăng ký đề tài và giảng viên hướng dẫn',
+      documents: ['Đơn đăng ký khóa luận', 'Đề cương khóa luận'],
     },
     {
-      id: "3",
-      title: "Hoàn thành học phần cuối kỳ",
-      date: "2025-01-20",
-      status: "upcoming",
-      description: "Hoàn thành các môn học còn lại",
+      id: '3',
+      title: 'Hoàn thành học phần cuối kỳ',
+      date: '2025-01-20',
+      status: 'upcoming',
+      description: 'Hoàn thành các môn học còn lại',
       documents: [],
     },
     {
-      id: "4",
-      title: "Đăng ký học kỳ 2 năm 4",
-      date: "2024-12-15",
-      status: "completed",
-      description: "Đã đăng ký thành công 18 tín chỉ",
-      documents: ["Phiếu đăng ký học phần"],
+      id: '4',
+      title: 'Đăng ký học kỳ 2 năm 4',
+      date: '2024-12-15',
+      status: 'completed',
+      description: 'Đã đăng ký thành công 18 tín chỉ',
+      documents: ['Phiếu đăng ký học phần'],
     },
   ]);
 
@@ -159,7 +139,7 @@ const GraduatePage: React.FC = () => {
     setIsModalVisible(true);
   };
 
-  const handleEditMilestone = (milestone: GraduationMilestone) => {
+  const handleEditMilestone = (milestone) => {
     setEditingMilestone(milestone);
     form.setFieldsValue({
       ...milestone,
@@ -171,12 +151,12 @@ const GraduatePage: React.FC = () => {
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      const newMilestone: GraduationMilestone = {
+      const newMilestone = {
         id: editingMilestone ? editingMilestone.id : Date.now().toString(),
         ...values,
-        date: values.date.format("YYYY-MM-DD"),
+        date: values.date.format('YYYY-MM-DD'),
         documents: values.documents
-          ? values.documents.split(",").map((doc: string) => doc.trim())
+          ? values.documents.split(',').map((doc) => doc.trim())
           : [],
       };
 
@@ -186,48 +166,48 @@ const GraduatePage: React.FC = () => {
             milestone.id === editingMilestone.id ? newMilestone : milestone
           )
         );
-        message.success("Cập nhật mục tiêu thành công!");
+        message.success('Cập nhật mục tiêu thành công!');
       } else {
         setMilestones([...milestones, newMilestone]);
-        message.success("Thêm mục tiêu thành công!");
+        message.success('Thêm mục tiêu thành công!');
       }
 
       setIsModalVisible(false);
       form.resetFields();
     } catch (error) {
-      console.error("Validation failed:", error);
+      console.error('Validation failed:', error);
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
-      case "completed":
-        return "green";
-      case "in-progress":
-        return "blue";
-      case "not-started":
-        return "orange";
-      case "upcoming":
-        return "blue";
-      case "overdue":
-        return "red";
+      case 'completed':
+        return 'green';
+      case 'in-progress':
+        return 'blue';
+      case 'not-started':
+        return 'orange';
+      case 'upcoming':
+        return 'blue';
+      case 'overdue':
+        return 'red';
       default:
-        return "default";
+        return 'default';
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status) => {
     switch (status) {
-      case "completed":
-        return "Hoàn thành";
-      case "in-progress":
-        return "Đang thực hiện";
-      case "not-started":
-        return "Chưa bắt đầu";
-      case "upcoming":
-        return "Sắp tới";
-      case "overdue":
-        return "Quá hạn";
+      case 'completed':
+        return 'Hoàn thành';
+      case 'in-progress':
+        return 'Đang thực hiện';
+      case 'not-started':
+        return 'Chưa bắt đầu';
+      case 'upcoming':
+        return 'Sắp tới';
+      case 'overdue':
+        return 'Quá hạn';
       default:
         return status;
     }
@@ -241,14 +221,14 @@ const GraduatePage: React.FC = () => {
   const overallProgress = Math.round((totalCompleted / totalRequired) * 100);
 
   const completedRequirements = requirements.filter(
-    (req) => req.status === "completed"
+    (req) => req.status === 'completed'
   ).length;
   const upcomingMilestones = milestones.filter(
-    (milestone) => milestone.status === "upcoming"
+    (milestone) => milestone.status === 'upcoming'
   ).length;
 
   return (
-    <div style={{ padding: "24px" }}>
+    <div style={{ padding: '24px' }}>
       <Title level={2}>
         <TrophyOutlined style={{ marginRight: 8 }} />
         Tiến độ tốt nghiệp
@@ -258,14 +238,14 @@ const GraduatePage: React.FC = () => {
       <Card style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col span={12}>
-            <div style={{ textAlign: "center" }}>
+            <div style={{ textAlign: 'center' }}>
               <Progress
                 type="circle"
                 percent={overallProgress}
                 size={120}
                 strokeColor={{
-                  "0%": "#108ee9",
-                  "100%": "#87d068",
+                  '0%': '#108ee9',
+                  '100%': '#87d068',
                 }}
               />
               <Title level={4} style={{ marginTop: 16 }}>
@@ -281,7 +261,7 @@ const GraduatePage: React.FC = () => {
                   value={completedRequirements}
                   suffix={`/ ${requirements.length}`}
                   prefix={<CheckCircleOutlined />}
-                  valueStyle={{ color: "#52c41a" }}
+                  valueStyle={{ color: '#52c41a' }}
                 />
               </Col>
               <Col span={12}>
@@ -289,17 +269,17 @@ const GraduatePage: React.FC = () => {
                   title="Mục tiêu sắp tới"
                   value={upcomingMilestones}
                   prefix={<ClockCircleOutlined />}
-                  valueStyle={{ color: "#faad14" }}
+                  valueStyle={{ color: '#faad14' }}
                 />
               </Col>
             </Row>
             <Alert
               message={
                 overallProgress >= 80
-                  ? "Bạn đang trên đường hoàn thành tốt nghiệp!"
-                  : "Cần nỗ lực thêm để đạt yêu cầu tốt nghiệp"
+                  ? 'Bạn đang trên đường hoàn thành tốt nghiệp!'
+                  : 'Cần nỗ lực thêm để đạt yêu cầu tốt nghiệp'
               }
-              type={overallProgress >= 80 ? "success" : "warning"}
+              type={overallProgress >= 80 ? 'success' : 'warning'}
               showIcon
               style={{ marginTop: 16 }}
             />
@@ -323,9 +303,9 @@ const GraduatePage: React.FC = () => {
               <Card size="small">
                 <div
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                     marginBottom: 8,
                   }}
                 >
@@ -378,33 +358,33 @@ const GraduatePage: React.FC = () => {
                   key={milestone.id}
                   color={getStatusColor(milestone.status)}
                   dot={
-                    milestone.status === "completed" ? (
-                      <CheckCircleOutlined style={{ fontSize: "16px" }} />
+                    milestone.status === 'completed' ? (
+                      <CheckCircleOutlined style={{ fontSize: '16px' }} />
                     ) : (
-                      <ClockCircleOutlined style={{ fontSize: "16px" }} />
+                      <ClockCircleOutlined style={{ fontSize: '16px' }} />
                     )
                   }
                 >
                   <Card size="small" style={{ marginBottom: 16 }}>
                     <div
                       style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
                       }}
                     >
                       <div>
                         <Text strong>{milestone.title}</Text>
                         <br />
                         <Text type="secondary">
-                          {dayjs(milestone.date).format("DD/MM/YYYY")}
-                          {milestone.status === "upcoming" && (
+                          {dayjs(milestone.date).format('DD/MM/YYYY')}
+                          {milestone.status === 'upcoming' && (
                             <span>
-                              {" "}
+                              {' '}
                               (còn {dayjs(milestone.date).diff(
                                 dayjs(),
-                                "day"
-                              )}{" "}
+                                'day'
+                              )}{' '}
                               ngày)
                             </span>
                           )}
@@ -423,7 +403,7 @@ const GraduatePage: React.FC = () => {
                         </Button>
                       </div>
                     </div>
-                    <Text style={{ marginTop: 8, display: "block" }}>
+                    <Text style={{ marginTop: 8, display: 'block' }}>
                       {milestone.description}
                     </Text>
                     {milestone.documents.length > 0 && (
@@ -431,7 +411,7 @@ const GraduatePage: React.FC = () => {
                         <Text type="secondary" style={{ fontSize: 12 }}>
                           <FileTextOutlined /> Tài liệu cần chuẩn bị:
                         </Text>
-                        <ul style={{ margin: "4px 0 0 16px", fontSize: 12 }}>
+                        <ul style={{ margin: '4px 0 0 16px', fontSize: 12 }}>
                           {milestone.documents.map((doc, index) => (
                             <li key={index}>{doc}</li>
                           ))}
@@ -449,32 +429,32 @@ const GraduatePage: React.FC = () => {
 
       {/* Modal */}
       <Modal
-        title={editingMilestone ? "Chỉnh sửa mục tiêu" : "Thêm mục tiêu mới"}
+        title={editingMilestone ? 'Chỉnh sửa mục tiêu' : 'Thêm mục tiêu mới'}
         open={isModalVisible}
         onOk={handleOk}
         onCancel={() => setIsModalVisible(false)}
         width={600}
-        okText={editingMilestone ? "Cập nhật" : "Thêm"}
+        okText={editingMilestone ? 'Cập nhật' : 'Thêm'}
         cancelText="Hủy"
       >
         <Form form={form} layout="vertical">
           <Form.Item
             name="title"
             label="Tiêu đề"
-            rules={[{ required: true, message: "Vui lòng nhập tiêu đề!" }]}
+            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
           >
             <Input placeholder="Nhập tiêu đề mục tiêu" />
           </Form.Item>
 
-          <div style={{ display: "flex", gap: 16 }}>
+          <div style={{ display: 'flex', gap: 16 }}>
             <Form.Item
               name="date"
               label="Ngày hạn"
-              rules={[{ required: true, message: "Vui lòng chọn ngày!" }]}
+              rules={[{ required: true, message: 'Vui lòng chọn ngày!' }]}
               style={{ flex: 1 }}
             >
               <DatePicker
-                style={{ width: "100%" }}
+                style={{ width: '100%' }}
                 placeholder="Chọn ngày hạn"
               />
             </Form.Item>
@@ -482,7 +462,7 @@ const GraduatePage: React.FC = () => {
             <Form.Item
               name="status"
               label="Trạng thái"
-              rules={[{ required: true, message: "Vui lòng chọn trạng thái!" }]}
+              rules={[{ required: true, message: 'Vui lòng chọn trạng thái!' }]}
               style={{ flex: 1 }}
             >
               <Select placeholder="Chọn trạng thái">
@@ -496,7 +476,7 @@ const GraduatePage: React.FC = () => {
           <Form.Item
             name="description"
             label="Mô tả"
-            rules={[{ required: true, message: "Vui lòng nhập mô tả!" }]}
+            rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
           >
             <Input.TextArea rows={3} placeholder="Nhập mô tả chi tiết" />
           </Form.Item>

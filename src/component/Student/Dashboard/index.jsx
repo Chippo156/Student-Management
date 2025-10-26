@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { Card, Row, Col, Tag, Button, Select } from "antd";
+import React, { useEffect, useState, useMemo } from 'react';
+import { Card, Row, Col, Tag, Button, Select } from 'antd';
 import {
   CalendarOutlined,
   BarChartOutlined,
@@ -12,7 +12,7 @@ import {
   ReadOutlined,
   RightOutlined,
   UserOutlined,
-} from "@ant-design/icons";
+} from '@ant-design/icons';
 import {
   BarChart,
   Bar,
@@ -25,13 +25,13 @@ import {
   PieChart,
   Pie,
   Cell,
-} from "recharts";
-import { useTheme, alpha } from "@mui/material/styles";
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import reportService from "../../../service/reportService";
-import scheduleService from "../../../service/scheduleService";
-import { semesterService } from "../../../service/semesterService";
+} from 'recharts';
+import { useTheme, alpha } from '@mui/material/styles';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import reportService from '../../../service/reportService';
+import scheduleService from '../../../service/scheduleService';
+import { semesterService } from '../../../service/semesterService';
 
 const Dashboard = () => {
   const muiTheme = useTheme();
@@ -94,46 +94,46 @@ const Dashboard = () => {
   const menuItems = [
     {
       icon: <CalendarOutlined />,
-      text: "Lịch theo tuần",
-      path: "/student/schedule",
+      text: 'Lịch theo tuần',
+      path: '/student/schedule',
     },
     {
       icon: <BarChartOutlined />,
-      text: "Kết quả học tập",
-      path: "/student/grades",
+      text: 'Kết quả học tập',
+      path: '/student/grades',
     },
     {
       icon: <FileTextOutlined />,
-      text: "Đăng ký học phần",
-      path: "/student/register-courses",
+      text: 'Đăng ký học phần',
+      path: '/student/register-courses',
     },
-    { icon: <ReadOutlined />, text: "Hồ sơ điện tử", path: "/student/info" },
+    { icon: <ReadOutlined />, text: 'Hồ sơ điện tử', path: '/student/info' },
     {
       icon: <DollarOutlined />,
-      text: "Tra cứu công nợ",
-      path: "/student/debt",
+      text: 'Tra cứu công nợ',
+      path: '/student/debt',
     },
     {
       icon: <CreditCardOutlined />,
-      text: "Thanh toán trực tuyến",
-      path: "/student/payment",
+      text: 'Thanh toán trực tuyến',
+      path: '/student/payment',
     },
     {
       icon: <FileTextOutlined />,
-      text: "Phiếu thu tổng hợp",
-      path: "/student/receipt",
+      text: 'Phiếu thu tổng hợp',
+      path: '/student/receipt',
     },
     {
       icon: <ClockCircleOutlined />,
-      text: "Lịch theo tiến độ",
-      path: "/student/progress-schedule",
+      text: 'Lịch theo tiến độ',
+      path: '/student/progress-schedule',
     },
     {
       icon: <BellOutlined />,
-      text: "Nhắc nhở",
-      path: "/student/notifications",
+      text: 'Nhắc nhở',
+      path: '/student/notifications',
     },
-    { icon: <MessageOutlined />, text: "Khảo sát", path: "/student/survey" },
+    { icon: <MessageOutlined />, text: 'Khảo sát', path: '/student/survey' },
   ];
 
   const [hoveredRing, setHoveredRing] = useState(null);
@@ -145,9 +145,9 @@ const Dashboard = () => {
 
   const innerProgress = useMemo(
     () => [
-      { name: "Hoàn thành", value: percentCompleted, color: colors.chart1 },
+      { name: 'Hoàn thành', value: percentCompleted, color: colors.chart1 },
       {
-        name: "Còn lại",
+        name: 'Còn lại',
         value: 100 - percentCompleted,
         color: alpha(colors.sub, 0.2),
       },
@@ -158,12 +158,12 @@ const Dashboard = () => {
   const outerCredits = useMemo(
     () => [
       {
-        name: "Tín chỉ hoàn thành",
+        name: 'Tín chỉ hoàn thành',
         value: completedCredits,
         color: colors.chart2,
       },
       {
-        name: "Còn lại",
+        name: 'Còn lại',
         value:
           totalCredits > completedCredits ? totalCredits - completedCredits : 0,
         color: alpha(colors.sub, 0.2),
@@ -177,7 +177,7 @@ const Dashboard = () => {
       setLoading(true);
       try {
         const [reportRes, scheduleRes, creditsSummaryRes] = await Promise.all([
-          reportService.getSemesterCredits("1"),
+          reportService.getSemesterCredits('1'),
           scheduleService.countScheduleOfWeek(),
           reportService.getAllCreditsByStudent(),
         ]);
@@ -234,7 +234,7 @@ const Dashboard = () => {
   }, [selectedSemesterId]);
 
   return (
-    <div style={{ minHeight: "100vh", padding: 24, background: colors.bgPage }}>
+    <div style={{ minHeight: '100vh', padding: 24, background: colors.bgPage }}>
       {/* Header */}
       <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
         <Col>
@@ -243,7 +243,7 @@ const Dashboard = () => {
               Dashboard
             </h1>
             <div style={{ ...subTextStyle, marginTop: 4 }}>
-              Chào mừng trở lại, {acctFullName || "Sinh viên"}
+              Chào mừng trở lại, {acctFullName || 'Sinh viên'}
             </div>
           </div>
         </Col>
@@ -253,21 +253,21 @@ const Dashboard = () => {
       <Row gutter={[16, 16]} align="stretch">
         {/* Profile */}
         <Col xs={24} lg={16}>
-          <Card style={{ ...cardStyle, height: "100%" }}>
+          <Card style={{ ...cardStyle, height: '100%' }}>
             <Row gutter={[16, 16]} align="middle">
-              <Col xs={24} md={6} style={{ textAlign: "center" }}>
-                <div style={{ position: "relative", display: "inline-block" }}>
+              <Col xs={24} md={6} style={{ textAlign: 'center' }}>
+                <div style={{ position: 'relative', display: 'inline-block' }}>
                   <div
                     style={{
                       width: 96,
                       height: 96,
-                      borderRadius: "50%",
+                      borderRadius: '50%',
                       background: colors.primary,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       boxShadow: `0 10px 25px ${alpha(colors.primary, 0.25)}`,
-                      overflow: "hidden",
+                      overflow: 'hidden',
                     }}
                   >
                     {acctAvatar ? (
@@ -275,9 +275,9 @@ const Dashboard = () => {
                         src={acctAvatar}
                         alt="avatar"
                         style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
                         }}
                       />
                     ) : (
@@ -288,7 +288,7 @@ const Dashboard = () => {
                   </div>
                   <span
                     style={{
-                      position: "absolute",
+                      position: 'absolute',
                       bottom: -2,
                       right: -2,
                       width: 18,
@@ -307,18 +307,18 @@ const Dashboard = () => {
               <Col xs={24} md={18}>
                 <Row gutter={[12, 12]}>
                   <Col xs={24} md={12}>
-                    <div style={{ display: "grid", rowGap: 8 }}>
+                    <div style={{ display: 'grid', rowGap: 8 }}>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           MSSV:
                         </span>
-                        <strong>{account?.mssv || "Chưa cập nhật"}</strong>
+                        <strong>{account?.mssv || 'Chưa cập nhật'}</strong>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Họ tên:
                         </span>
-                        <strong>{acctFullName || "Chưa cập nhật"}</strong>
+                        <strong>{acctFullName || 'Chưa cập nhật'}</strong>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
@@ -326,23 +326,23 @@ const Dashboard = () => {
                         </span>
                         <span style={{ color: colors.secondary }}>
                           {acctGender === 0
-                            ? "Nam"
+                            ? 'Nam'
                             : acctGender === 1
-                            ? "Nữ"
-                            : "Chưa cập nhật"}
+                              ? 'Nữ'
+                              : 'Chưa cập nhật'}
                         </span>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Nơi sinh:
                         </span>
-                        <span>{acctPlaceOfBirth || "Chưa cập nhật"}</span>
+                        <span>{acctPlaceOfBirth || 'Chưa cập nhật'}</span>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           SĐT:
                         </span>
-                        <span>{acctPhone || "Chưa cập nhật"}</span>
+                        <span>{acctPhone || 'Chưa cập nhật'}</span>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
@@ -351,18 +351,18 @@ const Dashboard = () => {
                         <span>
                           {account?.address ||
                             account?.user?.address ||
-                            "Chưa cập nhật"}
+                            'Chưa cập nhật'}
                         </span>
                       </div>
                     </div>
                   </Col>
                   <Col xs={24} md={12}>
-                    <div style={{ display: "grid", rowGap: 8 }}>
+                    <div style={{ display: 'grid', rowGap: 8 }}>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
                           Email:
                         </span>
-                        <span>{acctEmail || "Chưa cập nhật"}</span>
+                        <span>{acctEmail || 'Chưa cập nhật'}</span>
                       </div>
                       <div>
                         <span style={{ ...subTextStyle, marginRight: 6 }}>
@@ -371,7 +371,7 @@ const Dashboard = () => {
                         <strong style={{ color: colors.primary }}>
                           {account?.className ||
                             account?.className ||
-                            "Chưa cập nhật"}
+                            'Chưa cập nhật'}
                         </strong>
                       </div>
                       <div>
@@ -379,7 +379,7 @@ const Dashboard = () => {
                           Ngành:
                         </span>
                         <strong style={{ color: colors.primary }}>
-                          {account?.programName || "Chưa cập nhật"}
+                          {account?.programName || 'Chưa cập nhật'}
                         </strong>
                       </div>
                       <div>
@@ -387,7 +387,7 @@ const Dashboard = () => {
                           Bộ môn:
                         </span>
                         <span>
-                          {account?.departmentName || "Chưa cập nhật"}
+                          {account?.departmentName || 'Chưa cập nhật'}
                         </span>
                       </div>
                       <div>
@@ -395,9 +395,9 @@ const Dashboard = () => {
                           Bậc đào tạo:
                         </span>
                         <span style={{ color: colors.success }}>
-                          {account?.trainningLevel === "Bachelor"
-                            ? "Đại học"
-                            : account?.trainningLevel || "Chưa cập nhật"}
+                          {account?.trainningLevel === 'Bachelor'
+                            ? 'Đại học'
+                            : account?.trainningLevel || 'Chưa cập nhật'}
                         </span>
                       </div>
                       <div>
@@ -409,7 +409,7 @@ const Dashboard = () => {
                             ? `${account.yearOfAddmision}-${
                                 account.yearOfAddmision + 4
                               }`
-                            : "Chưa cập nhật"}
+                            : 'Chưa cập nhật'}
                         </span>
                       </div>
                     </div>
@@ -424,10 +424,10 @@ const Dashboard = () => {
         <Col xs={24} lg={8}>
           <div
             style={{
-              display: "flex",
-              flexDirection: "column",
+              display: 'flex',
+              flexDirection: 'column',
               gap: 16,
-              height: "100%",
+              height: '100%',
             }}
           >
             {/* Nhắc nhở */}
@@ -435,7 +435,7 @@ const Dashboard = () => {
               style={cardStyle}
               styles={{
                 body: {
-                  padding: "12px",
+                  padding: '12px',
                 },
               }}
             >
@@ -456,9 +456,9 @@ const Dashboard = () => {
                       width: 40,
                       height: 40,
                       borderRadius: 10,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       background: colors.bgSoftInfo,
                     }}
                   >
@@ -475,10 +475,10 @@ const Dashboard = () => {
             <Row gutter={[16, 16]}>
               <Col span={12}>
                 <Card
-                  style={{ ...cardStyle, textAlign: "center" }}
+                  style={{ ...cardStyle, textAlign: 'center' }}
                   styles={{
                     body: {
-                      padding: "12px",
+                      padding: '12px',
                     },
                   }}
                 >
@@ -487,10 +487,10 @@ const Dashboard = () => {
                       width: 32,
                       height: 32,
                       borderRadius: 8,
-                      margin: "0 auto 6px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      margin: '0 auto 6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       background: colors.bgSoftSuccess,
                     }}
                   >
@@ -500,16 +500,16 @@ const Dashboard = () => {
                     Lịch học
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 700 }}>
-                    {loading ? "..." : scheduleCount.countScheduleOfWeek}
+                    {loading ? '...' : scheduleCount.countScheduleOfWeek}
                   </div>
                 </Card>
               </Col>
               <Col span={12}>
                 <Card
-                  style={{ ...cardStyle, textAlign: "center" }}
+                  style={{ ...cardStyle, textAlign: 'center' }}
                   styles={{
                     body: {
-                      padding: "12px",
+                      padding: '12px',
                     },
                   }}
                 >
@@ -518,10 +518,10 @@ const Dashboard = () => {
                       width: 32,
                       height: 32,
                       borderRadius: 8,
-                      margin: "0 auto 6px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      margin: '0 auto 6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       background: colors.bgSoftWarning,
                     }}
                   >
@@ -531,7 +531,7 @@ const Dashboard = () => {
                     Lịch thi
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 700 }}>
-                    {loading ? "..." : scheduleCount.countTestOfWeek}
+                    {loading ? '...' : scheduleCount.countTestOfWeek}
                   </div>
                 </Card>
               </Col>
@@ -543,11 +543,11 @@ const Dashboard = () => {
       {/* Row 2: Menu quick actions - Grid 5 items/row, Card fill cell and equal height */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(5, 1fr)",
+          display: 'grid',
+          gridTemplateColumns: 'repeat(5, 1fr)',
           gap: 16,
           marginTop: 8,
-          alignItems: "stretch",
+          alignItems: 'stretch',
         }}
       >
         {menuItems.map((item, idx) => (
@@ -556,20 +556,20 @@ const Dashboard = () => {
             hoverable
             style={{
               ...cardStyle,
-              textAlign: "center",
-              width: "100%",
-              height: "100%",
+              textAlign: 'center',
+              width: '100%',
+              height: '100%',
               border: `1px solid ${alpha(colors.primary, 0.2)}`,
-              cursor: "pointer",
+              cursor: 'pointer',
             }}
             styles={{
               body: {
-                padding: "16px",
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
+                padding: '16px',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
               },
             }}
             onClick={() => navigate(item.path)}
@@ -579,9 +579,9 @@ const Dashboard = () => {
                 width: 48,
                 height: 48,
                 borderRadius: 12,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 background: alpha(colors.primary, 0.12),
                 color: colors.primary,
                 fontSize: 18,
@@ -601,7 +601,7 @@ const Dashboard = () => {
         {/* Cột 1: Biểu đồ kết quả học tập */}
         <Col xs={24} lg={12}>
           <Card
-            style={{ ...cardStyle, height: "100%" }}
+            style={{ ...cardStyle, height: '100%' }}
             title={<span style={sectionTitleStyle}>Kết quả học tập</span>}
             extra={
               <Select
@@ -622,7 +622,7 @@ const Dashboard = () => {
               },
             }}
           >
-            <div style={{ width: "100%", height: 320 }}>
+            <div style={{ width: '100%', height: 320 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={academicData}
@@ -666,16 +666,16 @@ const Dashboard = () => {
 
         {/* Cột 2: Tiến độ học tập */}
         <Col xs={24} lg={6}>
-          <Card style={{ ...cardStyle, textAlign: "center", height: "100%" }}>
+          <Card style={{ ...cardStyle, textAlign: 'center', height: '100%' }}>
             <div style={{ fontWeight: 600, marginBottom: 12 }}>
               Tiến độ học tập
             </div>
             <div
               style={{
-                position: "relative",
+                position: 'relative',
                 width: 220,
                 height: 220,
-                margin: "0 auto",
+                margin: '0 auto',
               }}
             >
               <ResponsiveContainer width="100%" height="100%">
@@ -689,7 +689,7 @@ const Dashboard = () => {
                     startAngle={90}
                     endAngle={450}
                     dataKey="value"
-                    onMouseEnter={() => setHoveredRing("outer")}
+                    onMouseEnter={() => setHoveredRing('outer')}
                     onMouseLeave={() => setHoveredRing(null)}
                   >
                     {outerCredits.map((entry, i) => (
@@ -709,7 +709,7 @@ const Dashboard = () => {
                     startAngle={90}
                     endAngle={450}
                     dataKey="value"
-                    onMouseEnter={() => setHoveredRing("inner")}
+                    onMouseEnter={() => setHoveredRing('inner')}
                     onMouseLeave={() => setHoveredRing(null)}
                   >
                     {innerProgress.map((entry, i) => (
@@ -724,16 +724,16 @@ const Dashboard = () => {
               </ResponsiveContainer>
               <div
                 style={{
-                  position: "absolute",
+                  position: 'absolute',
                   inset: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexDirection: "column",
-                  pointerEvents: "none",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  pointerEvents: 'none',
                 }}
               >
-                {hoveredRing === "outer" ? (
+                {hoveredRing === 'outer' ? (
                   <>
                     <div
                       style={{
@@ -742,7 +742,7 @@ const Dashboard = () => {
                         color: colors.fg,
                       }}
                     >
-                      {completedCredits}/{totalCredits || "--"}
+                      {completedCredits}/{totalCredits || '--'}
                     </div>
                     <div style={{ fontSize: 12, color: colors.sub }}>
                       Tín chỉ
@@ -769,11 +769,11 @@ const Dashboard = () => {
             <div style={{ marginTop: 8, color: colors.sub }}>
               <span style={{ color: colors.fg, fontWeight: 600 }}>
                 {creditsSummary?.totalCreditCompleted ?? 143}
-              </span>{" "}
-              /{" "}
+              </span>{' '}
+              /{' '}
               {creditsSummary?.totalCreditRequired ??
                 account?.totalCreditsRequired ??
-                "--"}{" "}
+                '--'}{' '}
               tín chỉ
             </div>
           </Card>
@@ -782,7 +782,7 @@ const Dashboard = () => {
         {/* Cột 3: Lớp học phần */}
         <Col xs={24} lg={6}>
           <Card
-            style={{ ...cardStyle, height: "100%" }}
+            style={{ ...cardStyle, height: '100%' }}
             title={<span style={sectionTitleStyle}>Lớp học phần</span>}
             extra={
               <Select
@@ -807,9 +807,9 @@ const Dashboard = () => {
                 <div
                   key={course.courseId}
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                     border: `1px solid ${colors.border}`,
                     borderRadius: 8,
                     marginBottom: 8,
@@ -824,7 +824,7 @@ const Dashboard = () => {
               ))
             ) : (
               <div
-                style={{ color: colors.sub, textAlign: "center", padding: 12 }}
+                style={{ color: colors.sub, textAlign: 'center', padding: 12 }}
               >
                 Không có lớp học phần
               </div>

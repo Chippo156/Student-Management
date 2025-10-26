@@ -1,14 +1,14 @@
-import axios from "../until/customize-axios";
+import axios from '../until/customize-axios';
 
 export const courseService = {
   // Get all courses
   getAllCourses: async (params) => {
     try {
-      const response = await axios.get("/api/v1/Course", { params });
+      const response = await axios.get('/api/v1/Course', { params });
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get all courses failed"
+        error.response?.data?.message || 'Get all courses failed'
       );
     }
   },
@@ -20,7 +20,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get course by id failed"
+        error.response?.data?.message || 'Get course by id failed'
       );
     }
   },
@@ -28,10 +28,10 @@ export const courseService = {
   // Create new course (Admin only)
   createCourse: async (courseData) => {
     try {
-      const response = await axios.post("/api/v1/Course", courseData);
+      const response = await axios.post('/api/v1/Course', courseData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Create course failed");
+      throw new Error(error.response?.data?.message || 'Create course failed');
     }
   },
 
@@ -44,7 +44,7 @@ export const courseService = {
       );
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Update course failed");
+      throw new Error(error.response?.data?.message || 'Update course failed');
     }
   },
 
@@ -54,7 +54,7 @@ export const courseService = {
       const response = await axios.delete(`/api/v1/Course/${courseId}`);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Delete course failed");
+      throw new Error(error.response?.data?.message || 'Delete course failed');
     }
   },
 
@@ -68,7 +68,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get courses by department failed"
+        error.response?.data?.message || 'Get courses by department failed'
       );
     }
   },
@@ -76,11 +76,11 @@ export const courseService = {
   // Get available courses for registration
   getAvailableCourses: async (params) => {
     try {
-      const response = await axios.get("/api/v1/Course/available", { params });
+      const response = await axios.get('/api/v1/Course/available', { params });
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get available courses failed"
+        error.response?.data?.message || 'Get available courses failed'
       );
     }
   },
@@ -95,7 +95,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Register for course failed"
+        error.response?.data?.message || 'Register for course failed'
       );
     }
   },
@@ -109,7 +109,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Unregister from course failed"
+        error.response?.data?.message || 'Unregister from course failed'
       );
     }
   },
@@ -117,11 +117,11 @@ export const courseService = {
   // Get registered courses for student
   getRegisteredCourses: async (params) => {
     try {
-      const response = await axios.get("/api/v1/Course/registered", { params });
+      const response = await axios.get('/api/v1/Course/registered', { params });
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get registered courses failed"
+        error.response?.data?.message || 'Get registered courses failed'
       );
     }
   },
@@ -133,7 +133,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get course schedule failed"
+        error.response?.data?.message || 'Get course schedule failed'
       );
     }
   },
@@ -145,7 +145,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get course materials failed"
+        error.response?.data?.message || 'Get course materials failed'
       );
     }
   },
@@ -154,10 +154,10 @@ export const courseService = {
   uploadCourseMaterial: async (courseId, file, title, description) => {
     try {
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append("title", title);
+      formData.append('file', file);
+      formData.append('title', title);
       if (description) {
-        formData.append("description", description);
+        formData.append('description', description);
       }
 
       const response = await axios.post(
@@ -165,14 +165,14 @@ export const courseService = {
         formData,
         {
           headers: {
-            "Content-Type": "multipart/form-data",
+            'Content-Type': 'multipart/form-data',
           },
         }
       );
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Upload course material failed"
+        error.response?.data?.message || 'Upload course material failed'
       );
     }
   },
@@ -186,7 +186,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Delete course material failed"
+        error.response?.data?.message || 'Delete course material failed'
       );
     }
   },
@@ -198,7 +198,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get students in course failed"
+        error.response?.data?.message || 'Get students in course failed'
       );
     }
   },
@@ -212,7 +212,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get course prerequisites failed"
+        error.response?.data?.message || 'Get course prerequisites failed'
       );
     }
   },
@@ -226,7 +226,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Check course prerequisites failed"
+        error.response?.data?.message || 'Check course prerequisites failed'
       );
     }
   },
@@ -238,7 +238,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get course statistics failed"
+        error.response?.data?.message || 'Get course statistics failed'
       );
     }
   },
@@ -247,10 +247,10 @@ export const courseService = {
   searchCourses: async (query, filters) => {
     try {
       const params = { query, ...filters };
-      const response = await axios.get("/api/v1/Course/search", { params });
+      const response = await axios.get('/api/v1/Course/search', { params });
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Search courses failed");
+      throw new Error(error.response?.data?.message || 'Search courses failed');
     }
   },
 
@@ -261,7 +261,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get course by code failed"
+        error.response?.data?.message || 'Get course by code failed'
       );
     }
   },
@@ -276,7 +276,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get course enrollments failed"
+        error.response?.data?.message || 'Get course enrollments failed'
       );
     }
   },
@@ -291,7 +291,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Bulk enroll students failed"
+        error.response?.data?.message || 'Bulk enroll students failed'
       );
     }
   },
@@ -306,7 +306,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Bulk unenroll students failed"
+        error.response?.data?.message || 'Bulk unenroll students failed'
       );
     }
   },
@@ -336,7 +336,7 @@ export const courseService = {
       );
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Create lecture failed");
+      throw new Error(error.response?.data?.message || 'Create lecture failed');
     }
   },
 
@@ -348,7 +348,7 @@ export const courseService = {
       );
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Update lecture failed");
+      throw new Error(error.response?.data?.message || 'Update lecture failed');
     }
   },
 
@@ -359,7 +359,7 @@ export const courseService = {
       );
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Delete lecture failed");
+      throw new Error(error.response?.data?.message || 'Delete lecture failed');
     }
   },
 
@@ -371,7 +371,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get course grades failed"
+        error.response?.data?.message || 'Get course grades failed'
       );
     }
   },
@@ -385,7 +385,7 @@ export const courseService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Update student grade failed"
+        error.response?.data?.message || 'Update student grade failed'
       );
     }
   },

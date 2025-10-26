@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Table,
   Button,
@@ -15,7 +15,7 @@ import {
   Statistic,
   Tag,
   Avatar,
-} from "antd";
+} from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
@@ -23,78 +23,78 @@ import {
   UserOutlined,
   TeamOutlined,
   SearchOutlined,
-} from "@ant-design/icons";
+} from '@ant-design/icons';
 
 const { Option } = Select;
 
 const UsersInfor = () => {
   const [users, setUsers] = useState([
     {
-      key: "1",
-      id: "1",
-      username: "admin",
-      fullName: "Quản trị viên",
-      email: "admin@student.edu.vn",
-      phone: "0123456789",
-      role: "admin",
-      status: "active",
-      createdAt: "2024-01-15",
-      lastLogin: "2025-09-27 09:30",
+      key: '1',
+      id: '1',
+      username: 'admin',
+      fullName: 'Quản trị viên',
+      email: 'admin@student.edu.vn',
+      phone: '0123456789',
+      role: 'admin',
+      status: 'active',
+      createdAt: '2024-01-15',
+      lastLogin: '2025-09-27 09:30',
     },
     {
-      key: "2",
-      id: "2",
-      username: "teacher1",
-      fullName: "TS. Nguyễn Văn A",
-      email: "teacher1@student.edu.vn",
-      phone: "0987654321",
-      role: "teacher",
-      status: "active",
-      createdAt: "2024-02-20",
-      lastLogin: "2025-09-26 15:45",
+      key: '2',
+      id: '2',
+      username: 'teacher1',
+      fullName: 'TS. Nguyễn Văn A',
+      email: 'teacher1@student.edu.vn',
+      phone: '0987654321',
+      role: 'teacher',
+      status: 'active',
+      createdAt: '2024-02-20',
+      lastLogin: '2025-09-26 15:45',
     },
     {
-      key: "3",
-      id: "3",
-      username: "student1",
-      fullName: "Nguyễn Văn An",
-      email: "an.nguyen@student.edu.vn",
-      phone: "0369852147",
-      role: "student",
-      status: "active",
-      createdAt: "2023-09-01",
-      lastLogin: "2025-09-27 08:15",
+      key: '3',
+      id: '3',
+      username: 'student1',
+      fullName: 'Nguyễn Văn An',
+      email: 'an.nguyen@student.edu.vn',
+      phone: '0369852147',
+      role: 'student',
+      status: 'active',
+      createdAt: '2023-09-01',
+      lastLogin: '2025-09-27 08:15',
     },
     {
-      key: "4",
-      id: "4",
-      username: "student2",
-      fullName: "Trần Thị Bình",
-      email: "binh.tran@student.edu.vn",
-      phone: "0147258369",
-      role: "student",
-      status: "inactive",
-      createdAt: "2022-09-01",
-      lastLogin: "2025-09-20 14:20",
+      key: '4',
+      id: '4',
+      username: 'student2',
+      fullName: 'Trần Thị Bình',
+      email: 'binh.tran@student.edu.vn',
+      phone: '0147258369',
+      role: 'student',
+      status: 'inactive',
+      createdAt: '2022-09-01',
+      lastLogin: '2025-09-20 14:20',
     },
     {
-      key: "5",
-      id: "5",
-      username: "staff1",
-      fullName: "Lê Minh Cường",
-      email: "staff1@student.edu.vn",
-      phone: "0258147963",
-      role: "staff",
-      status: "active",
-      createdAt: "2024-03-10",
-      lastLogin: "2025-09-26 16:30",
+      key: '5',
+      id: '5',
+      username: 'staff1',
+      fullName: 'Lê Minh Cường',
+      email: 'staff1@student.edu.vn',
+      phone: '0258147963',
+      role: 'staff',
+      status: 'active',
+      createdAt: '2024-03-10',
+      lastLogin: '2025-09-26 16:30',
     },
   ]);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [form] = Form.useForm();
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
 
   const handleAdd = () => {
     setEditingUser(null);
@@ -110,7 +110,7 @@ const UsersInfor = () => {
 
   const handleDelete = (id) => {
     setUsers(users.filter((user) => user.id !== id));
-    message.success("Xóa người dùng thành công!");
+    message.success('Xóa người dùng thành công!');
   };
 
   const handleOk = async () => {
@@ -122,23 +122,25 @@ const UsersInfor = () => {
         id: editingUser ? editingUser.id : Date.now().toString(),
         createdAt: editingUser
           ? editingUser.createdAt
-          : new Date().toISOString().split("T")[0],
+          : new Date().toISOString().split('T')[0],
         lastLogin: editingUser ? editingUser.lastLogin : undefined,
       };
 
       if (editingUser) {
-        setUsers(users.map((user) => (user.id === editingUser.id ? newUser : user)));
-        message.success("Cập nhật người dùng thành công!");
+        setUsers(
+          users.map((user) => (user.id === editingUser.id ? newUser : user))
+        );
+        message.success('Cập nhật người dùng thành công!');
       } else {
         setUsers([...users, newUser]);
-        message.success("Thêm người dùng thành công!");
+        message.success('Thêm người dùng thành công!');
       }
 
       setIsModalVisible(false);
       form.resetFields();
       setEditingUser(null);
     } catch (error) {
-      console.error("Validation failed:", error);
+      console.error('Validation failed:', error);
     }
   };
 
@@ -150,37 +152,37 @@ const UsersInfor = () => {
 
   const getRoleColor = (role) => {
     switch (role) {
-      case "admin":
-        return "red";
-      case "teacher":
-        return "blue";
-      case "student":
-        return "green";
-      case "staff":
-        return "orange";
+      case 'admin':
+        return 'red';
+      case 'teacher':
+        return 'blue';
+      case 'student':
+        return 'green';
+      case 'staff':
+        return 'orange';
       default:
-        return "default";
+        return 'default';
     }
   };
 
   const getRoleText = (role) => {
     switch (role) {
-      case "admin":
-        return "Quản trị viên";
-      case "teacher":
-        return "Giảng viên";
-      case "student":
-        return "Sinh viên";
-      case "staff":
-        return "Nhân viên";
+      case 'admin':
+        return 'Quản trị viên';
+      case 'teacher':
+        return 'Giảng viên';
+      case 'student':
+        return 'Sinh viên';
+      case 'staff':
+        return 'Nhân viên';
       default:
         return role;
     }
   };
 
-  const getStatusColor = (status) => (status === "active" ? "green" : "red");
+  const getStatusColor = (status) => (status === 'active' ? 'green' : 'red');
   const getStatusText = (status) =>
-    status === "active" ? "Hoạt động" : "Tạm khóa";
+    status === 'active' ? 'Hoạt động' : 'Tạm khóa';
 
   const filteredUsers = users.filter(
     (user) =>
@@ -192,74 +194,76 @@ const UsersInfor = () => {
 
   // Statistics
   const totalUsers = users.length;
-  const activeUsers = users.filter((u) => u.status === "active").length;
-  const adminUsers = users.filter((u) => u.role === "admin").length;
-  const studentUsers = users.filter((u) => u.role === "student").length;
+  const activeUsers = users.filter((u) => u.status === 'active').length;
+  const adminUsers = users.filter((u) => u.role === 'admin').length;
+  const studentUsers = users.filter((u) => u.role === 'student').length;
 
   const columns = [
     {
-      title: "Avatar",
-      key: "avatar",
+      title: 'Avatar',
+      key: 'avatar',
       width: 80,
       render: () => <Avatar size={40} icon={<UserOutlined />} />,
     },
     {
-      title: "Tên đăng nhập",
-      dataIndex: "username",
-      key: "username",
+      title: 'Tên đăng nhập',
+      dataIndex: 'username',
+      key: 'username',
       width: 150,
     },
     {
-      title: "Họ và tên",
-      dataIndex: "fullName",
-      key: "fullName",
+      title: 'Họ và tên',
+      dataIndex: 'fullName',
+      key: 'fullName',
       width: 200,
     },
     {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
       width: 250,
     },
     {
-      title: "Số điện thoại",
-      dataIndex: "phone",
-      key: "phone",
+      title: 'Số điện thoại',
+      dataIndex: 'phone',
+      key: 'phone',
       width: 150,
     },
     {
-      title: "Vai trò",
-      dataIndex: "role",
-      key: "role",
+      title: 'Vai trò',
+      dataIndex: 'role',
+      key: 'role',
       width: 120,
-      render: (role) => <Tag color={getRoleColor(role)}>{getRoleText(role)}</Tag>,
+      render: (role) => (
+        <Tag color={getRoleColor(role)}>{getRoleText(role)}</Tag>
+      ),
     },
     {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
       width: 120,
       render: (status) => (
         <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>
       ),
     },
     {
-      title: "Ngày tạo",
-      dataIndex: "createdAt",
-      key: "createdAt",
+      title: 'Ngày tạo',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
       width: 120,
-      render: (date) => new Date(date).toLocaleDateString("vi-VN"),
+      render: (date) => new Date(date).toLocaleDateString('vi-VN'),
     },
     {
-      title: "Đăng nhập cuối",
-      dataIndex: "lastLogin",
-      key: "lastLogin",
+      title: 'Đăng nhập cuối',
+      dataIndex: 'lastLogin',
+      key: 'lastLogin',
       width: 150,
-      render: (lastLogin) => lastLogin || "Chưa đăng nhập",
+      render: (lastLogin) => lastLogin || 'Chưa đăng nhập',
     },
     {
-      title: "Thao tác",
-      key: "action",
+      title: 'Thao tác',
+      key: 'action',
       width: 120,
       render: (_, record) => (
         <Space>
@@ -276,7 +280,12 @@ const UsersInfor = () => {
             okText="Xóa"
             cancelText="Hủy"
           >
-            <Button type="primary" danger size="small" icon={<DeleteOutlined />} />
+            <Button
+              type="primary"
+              danger
+              size="small"
+              icon={<DeleteOutlined />}
+            />
           </Popconfirm>
         </Space>
       ),
@@ -289,7 +298,11 @@ const UsersInfor = () => {
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={6}>
           <Card>
-            <Statistic title="Tổng người dùng" value={totalUsers} prefix={<TeamOutlined />} />
+            <Statistic
+              title="Tổng người dùng"
+              value={totalUsers}
+              prefix={<TeamOutlined />}
+            />
           </Card>
         </Col>
         <Col span={6}>
@@ -297,7 +310,7 @@ const UsersInfor = () => {
             <Statistic
               title="Đang hoạt động"
               value={activeUsers}
-              valueStyle={{ color: "#3f8600" }}
+              valueStyle={{ color: '#3f8600' }}
             />
           </Card>
         </Col>
@@ -306,7 +319,7 @@ const UsersInfor = () => {
             <Statistic
               title="Quản trị viên"
               value={adminUsers}
-              valueStyle={{ color: "#cf1322" }}
+              valueStyle={{ color: '#cf1322' }}
             />
           </Card>
         </Col>
@@ -315,7 +328,7 @@ const UsersInfor = () => {
             <Statistic
               title="Sinh viên"
               value={studentUsers}
-              valueStyle={{ color: "#1890ff" }}
+              valueStyle={{ color: '#1890ff' }}
             />
           </Card>
         </Col>
@@ -324,8 +337,8 @@ const UsersInfor = () => {
       <div
         style={{
           marginBottom: 16,
-          display: "flex",
-          justifyContent: "space-between",
+          display: 'flex',
+          justifyContent: 'space-between',
         }}
       >
         <Input
@@ -355,26 +368,28 @@ const UsersInfor = () => {
       />
 
       <Modal
-        title={editingUser ? "Chỉnh sửa người dùng" : "Thêm người dùng mới"}
+        title={editingUser ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}
         open={isModalVisible}
         onOk={handleOk}
         onCancel={handleCancel}
         width={600}
-        okText={editingUser ? "Cập nhật" : "Thêm"}
+        okText={editingUser ? 'Cập nhật' : 'Thêm'}
         cancelText="Hủy"
       >
         <Form
           form={form}
           layout="vertical"
           initialValues={{
-            status: "active",
-            role: "student",
+            status: 'active',
+            role: 'student',
           }}
         >
           <Form.Item
             name="username"
             label="Tên đăng nhập"
-            rules={[{ required: true, message: "Vui lòng nhập tên đăng nhập!" }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập tên đăng nhập!' },
+            ]}
           >
             <Input placeholder="Nhập tên đăng nhập" />
           </Form.Item>
@@ -382,7 +397,7 @@ const UsersInfor = () => {
           <Form.Item
             name="fullName"
             label="Họ và tên"
-            rules={[{ required: true, message: "Vui lòng nhập họ và tên!" }]}
+            rules={[{ required: true, message: 'Vui lòng nhập họ và tên!' }]}
           >
             <Input placeholder="Nhập họ và tên" />
           </Form.Item>
@@ -391,8 +406,8 @@ const UsersInfor = () => {
             name="email"
             label="Email"
             rules={[
-              { required: true, message: "Vui lòng nhập email!" },
-              { type: "email", message: "Email không hợp lệ!" },
+              { required: true, message: 'Vui lòng nhập email!' },
+              { type: 'email', message: 'Email không hợp lệ!' },
             ]}
           >
             <Input placeholder="Nhập email" />
@@ -401,16 +416,18 @@ const UsersInfor = () => {
           <Form.Item
             name="phone"
             label="Số điện thoại"
-            rules={[{ required: true, message: "Vui lòng nhập số điện thoại!" }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập số điện thoại!' },
+            ]}
           >
             <Input placeholder="Nhập số điện thoại" />
           </Form.Item>
 
-          <div style={{ display: "flex", gap: "16px" }}>
+          <div style={{ display: 'flex', gap: '16px' }}>
             <Form.Item
               name="role"
               label="Vai trò"
-              rules={[{ required: true, message: "Vui lòng chọn vai trò!" }]}
+              rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}
               style={{ flex: 1 }}
             >
               <Select placeholder="Chọn vai trò">
@@ -424,7 +441,7 @@ const UsersInfor = () => {
             <Form.Item
               name="status"
               label="Trạng thái"
-              rules={[{ required: true, message: "Vui lòng chọn trạng thái!" }]}
+              rules={[{ required: true, message: 'Vui lòng chọn trạng thái!' }]}
               style={{ flex: 1 }}
             >
               <Select placeholder="Chọn trạng thái">

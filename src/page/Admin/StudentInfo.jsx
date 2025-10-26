@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
@@ -32,7 +32,7 @@ import {
   ListItemText,
   ListItemIcon,
   Divider,
-} from "@mui/material";
+} from '@mui/material';
 import {
   AccountBox as AccountBoxIcon,
   Search as SearchIcon,
@@ -46,13 +46,13 @@ import {
   LocationOn as LocationOnIcon,
   CalendarToday as CalendarTodayIcon,
   Assignment as AssignmentIcon,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
 const StudentInfo = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [yearFilter, setYearFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -61,107 +61,107 @@ const StudentInfo = () => {
   // Sample data
   const studentInfos = [
     {
-      id: "1",
-      studentId: "SV2024001",
-      fullName: "Nguyễn Văn An",
-      email: "an.nguyen@student.university.edu.vn",
-      phone: "0901234567",
-      address: "Số 123, Đường ABC, Quận 1, TP.HCM",
-      birthDate: "2003-05-15",
-      gender: "Nam",
-      idCard: "123456789012",
-      department: "Công nghệ thông tin",
-      major: "Kỹ thuật phần mềm",
+      id: '1',
+      studentId: 'SV2024001',
+      fullName: 'Nguyễn Văn An',
+      email: 'an.nguyen@student.university.edu.vn',
+      phone: '0901234567',
+      address: 'Số 123, Đường ABC, Quận 1, TP.HCM',
+      birthDate: '2003-05-15',
+      gender: 'Nam',
+      idCard: '123456789012',
+      department: 'Công nghệ thông tin',
+      major: 'Kỹ thuật phần mềm',
       year: 3,
-      class: "SE2022.1",
-      advisor: "TS. Trần Văn Minh",
-      status: "active",
-      admissionDate: "2022-09-01",
+      class: 'SE2022.1',
+      advisor: 'TS. Trần Văn Minh',
+      status: 'active',
+      admissionDate: '2022-09-01',
       emergencyContact: {
-        name: "Nguyễn Thị Lan",
-        relationship: "Mẹ",
-        phone: "0987654321",
+        name: 'Nguyễn Thị Lan',
+        relationship: 'Mẹ',
+        phone: '0987654321',
       },
       academicInfo: {
         gpa: 3.2,
         totalCredits: 95,
         completedCourses: 25,
-        currentSemester: "HK1 2024-2025",
+        currentSemester: 'HK1 2024-2025',
       },
     },
     {
-      id: "2",
-      studentId: "SV2024002",
-      fullName: "Trần Thị Bình",
-      email: "binh.tran@student.university.edu.vn",
-      phone: "0912345678",
-      address: "Số 456, Đường XYZ, Quận 2, TP.HCM",
-      birthDate: "2004-03-20",
-      gender: "Nữ",
-      idCard: "234567890123",
-      department: "Kinh tế",
-      major: "Quản trị kinh doanh",
+      id: '2',
+      studentId: 'SV2024002',
+      fullName: 'Trần Thị Bình',
+      email: 'binh.tran@student.university.edu.vn',
+      phone: '0912345678',
+      address: 'Số 456, Đường XYZ, Quận 2, TP.HCM',
+      birthDate: '2004-03-20',
+      gender: 'Nữ',
+      idCard: '234567890123',
+      department: 'Kinh tế',
+      major: 'Quản trị kinh doanh',
       year: 2,
-      class: "BA2023.1",
-      advisor: "PGS. Lê Thị Hoa",
-      status: "active",
-      admissionDate: "2023-09-01",
+      class: 'BA2023.1',
+      advisor: 'PGS. Lê Thị Hoa',
+      status: 'active',
+      admissionDate: '2023-09-01',
       emergencyContact: {
-        name: "Trần Văn Cường",
-        relationship: "Bố",
-        phone: "0976543210",
+        name: 'Trần Văn Cường',
+        relationship: 'Bố',
+        phone: '0976543210',
       },
       academicInfo: {
         gpa: 3.7,
         totalCredits: 65,
         completedCourses: 18,
-        currentSemester: "HK1 2024-2025",
+        currentSemester: 'HK1 2024-2025',
       },
     },
     {
-      id: "3",
-      studentId: "SV2024003",
-      fullName: "Lê Văn Cường",
-      email: "cuong.le@student.university.edu.vn",
-      phone: "0923456789",
-      address: "Số 789, Đường DEF, Quận 3, TP.HCM",
-      birthDate: "2002-12-10",
-      gender: "Nam",
-      idCard: "345678901234",
-      department: "Ngoại ngữ",
-      major: "Tiếng Anh",
+      id: '3',
+      studentId: 'SV2024003',
+      fullName: 'Lê Văn Cường',
+      email: 'cuong.le@student.university.edu.vn',
+      phone: '0923456789',
+      address: 'Số 789, Đường DEF, Quận 3, TP.HCM',
+      birthDate: '2002-12-10',
+      gender: 'Nam',
+      idCard: '345678901234',
+      department: 'Ngoại ngữ',
+      major: 'Tiếng Anh',
       year: 4,
-      class: "EN2021.1",
-      advisor: "ThS. Phạm Văn Đức",
-      status: "active",
-      admissionDate: "2021-09-01",
+      class: 'EN2021.1',
+      advisor: 'ThS. Phạm Văn Đức',
+      status: 'active',
+      admissionDate: '2021-09-01',
       emergencyContact: {
-        name: "Lê Thị Mai",
-        relationship: "Mẹ",
-        phone: "0965432109",
+        name: 'Lê Thị Mai',
+        relationship: 'Mẹ',
+        phone: '0965432109',
       },
       academicInfo: {
         gpa: 3.9,
         totalCredits: 120,
         completedCourses: 35,
-        currentSemester: "HK1 2024-2025",
+        currentSemester: 'HK1 2024-2025',
       },
     },
   ];
 
   const departments = [
-    "Công nghệ thông tin",
-    "Kinh tế",
-    "Ngoại ngữ",
-    "Khoa học tự nhiên",
-    "Kỹ thuật",
-    "Y khoa",
+    'Công nghệ thông tin',
+    'Kinh tế',
+    'Ngoại ngữ',
+    'Khoa học tự nhiên',
+    'Kỹ thuật',
+    'Y khoa',
   ];
   const years = [1, 2, 3, 4, 5];
   const statuses = [
-    { value: "active", label: "Đang học" },
-    { value: "inactive", label: "Tạm nghỉ" },
-    { value: "graduated", label: "Đã tốt nghiệp" },
+    { value: 'active', label: 'Đang học' },
+    { value: 'inactive', label: 'Tạm nghỉ' },
+    { value: 'graduated', label: 'Đã tốt nghiệp' },
   ];
 
   const filteredInfos = studentInfos.filter((info) => {
@@ -184,14 +184,14 @@ const StudentInfo = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "active":
-        return "success";
-      case "inactive":
-        return "warning";
-      case "graduated":
-        return "primary";
+      case 'active':
+        return 'success';
+      case 'inactive':
+        return 'warning';
+      case 'graduated':
+        return 'primary';
       default:
-        return "default";
+        return 'default';
     }
   };
 
@@ -201,15 +201,15 @@ const StudentInfo = () => {
   };
 
   const getGPAColor = (gpa) => {
-    if (gpa >= 3.5) return "success";
-    if (gpa >= 2.5) return "warning";
-    return "error";
+    if (gpa >= 3.5) return 'success';
+    if (gpa >= 2.5) return 'warning';
+    return 'error';
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: "100%", overflow: "hidden" }}>
+    <Box sx={{ p: 3, maxWidth: '100%', overflow: 'hidden' }}>
       <Box display="flex" alignItems="center" gap={2} mb={3}>
-        <Avatar sx={{ bgcolor: "primary.main" }}>
+        <Avatar sx={{ bgcolor: 'primary.main' }}>
           <AccountBoxIcon />
         </Avatar>
         <Typography variant="h4" component="h1">
@@ -292,10 +292,10 @@ const StudentInfo = () => {
               variant="outlined"
               startIcon={<FilterListIcon />}
               onClick={() => {
-                setSearchTerm("");
-                setDepartmentFilter("");
-                setStatusFilter("");
-                setYearFilter("");
+                setSearchTerm('');
+                setDepartmentFilter('');
+                setStatusFilter('');
+                setYearFilter('');
               }}
             >
               Xóa bộ lọc
@@ -305,8 +305,8 @@ const StudentInfo = () => {
       </Paper>
 
       {/* Student Info Table */}
-      <Paper sx={{ width: "100%", overflow: "hidden" }}>
-        <TableContainer sx={{ maxHeight: "calc(100vh - 400px)" }}>
+      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+        <TableContainer sx={{ maxHeight: 'calc(100vh - 400px)' }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -326,7 +326,7 @@ const StudentInfo = () => {
                   <TableRow key={info.id} hover>
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={2}>
-                        <Avatar sx={{ bgcolor: "primary.main" }}>
+                        <Avatar sx={{ bgcolor: 'primary.main' }}>
                           <PersonIcon />
                         </Avatar>
                         <Box>
@@ -445,8 +445,8 @@ const StudentInfo = () => {
                             selectedStudent.birthDate
                               ? new Date(
                                   selectedStudent.birthDate
-                                ).toLocaleDateString("vi-VN")
-                              : "Chưa cập nhật"
+                                ).toLocaleDateString('vi-VN')
+                              : 'Chưa cập nhật'
                           }
                         />
                       </ListItem>
@@ -457,7 +457,7 @@ const StudentInfo = () => {
                         </ListItemIcon>
                         <ListItemText
                           primary="CMND/CCCD"
-                          secondary={selectedStudent.idCard || "Chưa cập nhật"}
+                          secondary={selectedStudent.idCard || 'Chưa cập nhật'}
                         />
                       </ListItem>
                       <Divider />
@@ -467,7 +467,7 @@ const StudentInfo = () => {
                         </ListItemIcon>
                         <ListItemText
                           primary="Địa chỉ"
-                          secondary={selectedStudent.address || "Chưa cập nhật"}
+                          secondary={selectedStudent.address || 'Chưa cập nhật'}
                         />
                       </ListItem>
                     </List>
@@ -499,7 +499,7 @@ const StudentInfo = () => {
                         </ListItemIcon>
                         <ListItemText
                           primary="Số điện thoại"
-                          secondary={selectedStudent.phone || "Chưa cập nhật"}
+                          secondary={selectedStudent.phone || 'Chưa cập nhật'}
                         />
                       </ListItem>
                       <Divider />
@@ -509,7 +509,7 @@ const StudentInfo = () => {
                           secondary={
                             selectedStudent.emergencyContact
                               ? `${selectedStudent.emergencyContact.name} (${selectedStudent.emergencyContact.relationship}) - ${selectedStudent.emergencyContact.phone}`
-                              : "Chưa cập nhật"
+                              : 'Chưa cập nhật'
                           }
                         />
                       </ListItem>
@@ -578,11 +578,9 @@ const StudentInfo = () => {
                                 label={selectedStudent.academicInfo.gpa.toFixed(
                                   2
                                 )}
-                                color={
-                                  getGPAColor(
-                                    selectedStudent.academicInfo.gpa
-                                  )
-                                }
+                                color={getGPAColor(
+                                  selectedStudent.academicInfo.gpa
+                                )}
                                 size="small"
                               />
                             }

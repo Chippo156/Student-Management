@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Card,
   List,
@@ -17,7 +17,7 @@ import {
   Descriptions,
   Alert,
   Divider,
-} from "antd";
+} from 'antd';
 import {
   CheckCircleOutlined,
   MedicineBoxOutlined,
@@ -25,92 +25,66 @@ import {
   CalendarOutlined,
   PhoneOutlined,
   EnvironmentOutlined,
-} from "@ant-design/icons";
+} from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
-interface InsuranceInfo {
-  id: string;
-  cardNumber: string;
-  holderName: string;
-  dateOfBirth: string;
-  gender: "male" | "female";
-  address: string;
-  phone: string;
-  issueDate: string;
-  expiryDate: string;
-  issuedBy: string;
-  status: "active" | "expired" | "suspended";
-  hospitalRegistered: string;
-  medicalHistory: MedicalRecord[];
-}
-
-interface MedicalRecord {
-  id: string;
-  date: string;
-  hospital: string;
-  diagnosis: string;
-  treatment: string;
-  cost: number;
-  covered: number;
-  notes: string;
-}
-
-const BHYTPage: React.FC = () => {
+const BHYTPage = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(
-    null
-  );
+  const [editingRecord, setEditingRecord] = useState(null);
   const [form] = Form.useForm();
 
-  const [insuranceInfo] = useState<InsuranceInfo>({
-    id: "1",
-    cardNumber: "HS4030012345678",
-    holderName: "Nguyễn Văn A",
-    dateOfBirth: "2002-05-15",
-    gender: "male",
-    address: "123 Đường ABC, Phường XYZ, Quận 1, TP.HCM",
-    phone: "0123456789",
-    issueDate: "2024-01-01",
-    expiryDate: "2025-12-31",
-    issuedBy: "BHXH TP.HCM",
-    status: "active",
-    hospitalRegistered: "Bệnh viện Đại học Y Dược TP.HCM",
-    medicalHistory: [
-      {
-        id: "1",
-        date: "2024-09-15",
-        hospital: "Bệnh viện Đại học Y Dược TP.HCM",
-        diagnosis: "Cảm cúm thông thường",
-        treatment: "Thuốc hạ sốt, kháng sinh",
-        cost: 250000,
-        covered: 200000,
-        notes: "Nghỉ ngơi 3 ngày",
-      },
-      {
-        id: "2",
-        date: "2024-08-20",
-        hospital: "Phòng khám Đa khoa Medlatec",
-        diagnosis: "Khám sức khỏe định kỳ",
-        treatment: "Xét nghiệm máu, đo huyết áp",
-        cost: 180000,
-        covered: 144000,
-        notes: "Sức khỏe tốt",
-      },
-      {
-        id: "3",
-        date: "2024-07-10",
-        hospital: "Bệnh viện Chợ Rẫy",
-        diagnosis: "Viêm họng cấp",
-        treatment: "Thuốc kháng viêm, xịt họng",
-        cost: 320000,
-        covered: 256000,
-        notes: "Tái khám sau 1 tuần",
-      },
-    ],
-  });
+  const [insuranceInfo] =
+    useState <
+    InsuranceInfo >
+    {
+      id: '1',
+      cardNumber: 'HS4030012345678',
+      holderName: 'Nguyễn Văn A',
+      dateOfBirth: '2002-05-15',
+      gender: 'male',
+      address: '123 Đường ABC, Phường XYZ, Quận 1, TP.HCM',
+      phone: '0123456789',
+      issueDate: '2024-01-01',
+      expiryDate: '2025-12-31',
+      issuedBy: 'BHXH TP.HCM',
+      status: 'active',
+      hospitalRegistered: 'Bệnh viện Đại học Y Dược TP.HCM',
+      medicalHistory: [
+        {
+          id: '1',
+          date: '2024-09-15',
+          hospital: 'Bệnh viện Đại học Y Dược TP.HCM',
+          diagnosis: 'Cảm cúm thông thường',
+          treatment: 'Thuốc hạ sốt, kháng sinh',
+          cost: 250000,
+          covered: 200000,
+          notes: 'Nghỉ ngơi 3 ngày',
+        },
+        {
+          id: '2',
+          date: '2024-08-20',
+          hospital: 'Phòng khám Đa khoa Medlatec',
+          diagnosis: 'Khám sức khỏe định kỳ',
+          treatment: 'Xét nghiệm máu, đo huyết áp',
+          cost: 180000,
+          covered: 144000,
+          notes: 'Sức khỏe tốt',
+        },
+        {
+          id: '3',
+          date: '2024-07-10',
+          hospital: 'Bệnh viện Chợ Rẫy',
+          diagnosis: 'Viêm họng cấp',
+          treatment: 'Thuốc kháng viêm, xịt họng',
+          cost: 320000,
+          covered: 256000,
+          notes: 'Tái khám sau 1 tuần',
+        },
+      ],
+    };
 
-  const [medicalHistory, setMedicalHistory] = useState<MedicalRecord[]>(
+  const [medicalHistory, setMedicalHistory] = useState(
     insuranceInfo.medicalHistory
   );
 
@@ -120,21 +94,21 @@ const BHYTPage: React.FC = () => {
     setIsModalVisible(true);
   };
 
-  const handleEdit = (record: MedicalRecord) => {
+  const handleEdit = (record) => {
     setEditingRecord(record);
     form.setFieldsValue(record);
     setIsModalVisible(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id) => {
     setMedicalHistory(medicalHistory.filter((record) => record.id !== id));
-    message.success("Xóa hồ sơ khám bệnh thành công!");
+    message.success('Xóa hồ sơ khám bệnh thành công!');
   };
 
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      const newRecord: MedicalRecord = {
+      const newRecord = {
         id: editingRecord ? editingRecord.id : Date.now().toString(),
         ...values,
       };
@@ -145,40 +119,40 @@ const BHYTPage: React.FC = () => {
             record.id === editingRecord.id ? newRecord : record
           )
         );
-        message.success("Cập nhật hồ sơ khám bệnh thành công!");
+        message.success('Cập nhật hồ sơ khám bệnh thành công!');
       } else {
         setMedicalHistory([...medicalHistory, newRecord]);
-        message.success("Thêm hồ sơ khám bệnh thành công!");
+        message.success('Thêm hồ sơ khám bệnh thành công!');
       }
 
       setIsModalVisible(false);
       form.resetFields();
     } catch (error) {
-      console.error("Validation failed:", error);
+      console.error('Validation failed:', error);
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
-      case "active":
-        return "green";
-      case "expired":
-        return "red";
-      case "suspended":
-        return "orange";
+      case 'active':
+        return 'green';
+      case 'expired':
+        return 'red';
+      case 'suspended':
+        return 'orange';
       default:
-        return "default";
+        return 'default';
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status) => {
     switch (status) {
-      case "active":
-        return "Còn hiệu lực";
-      case "expired":
-        return "Hết hạn";
-      case "suspended":
-        return "Tạm dừng";
+      case 'active':
+        return 'Còn hiệu lực';
+      case 'expired':
+        return 'Hết hạn';
+      case 'suspended':
+        return 'Tạm dừng';
       default:
         return status;
     }
@@ -195,7 +169,7 @@ const BHYTPage: React.FC = () => {
   const coverageRate = totalCost > 0 ? (totalCovered / totalCost) * 100 : 0;
 
   return (
-    <div style={{ padding: "24px" }}>
+    <div style={{ padding: '24px' }}>
       <Title level={2}>
         <MedicineBoxOutlined style={{ marginRight: 8 }} />
         Thông tin BHYT
@@ -232,7 +206,7 @@ const BHYTPage: React.FC = () => {
                 {insuranceInfo.dateOfBirth}
               </Descriptions.Item>
               <Descriptions.Item label="Giới tính">
-                {insuranceInfo.gender === "male" ? "Nam" : "Nữ"}
+                {insuranceInfo.gender === 'male' ? 'Nam' : 'Nữ'}
               </Descriptions.Item>
             </Descriptions>
           </Col>
@@ -256,7 +230,7 @@ const BHYTPage: React.FC = () => {
 
         <Divider />
 
-        <Space direction="vertical" style={{ width: "100%" }}>
+        <Space direction="vertical" style={{ width: '100%' }}>
           <Space>
             <PhoneOutlined />
             <Text>Số điện thoại: {insuranceInfo.phone}</Text>
@@ -267,7 +241,7 @@ const BHYTPage: React.FC = () => {
           </Space>
         </Space>
 
-        {insuranceInfo.status === "expired" && (
+        {insuranceInfo.status === 'expired' && (
           <Alert
             message="Thẻ BHYT đã hết hạn"
             description="Vui lòng liên hệ cơ quan BHXH để gia hạn thẻ."
@@ -286,9 +260,9 @@ const BHYTPage: React.FC = () => {
               title="Tổng chi phí"
               value={totalCost}
               suffix="₫"
-              valueStyle={{ color: "#f5222d" }}
+              valueStyle={{ color: '#f5222d' }}
               formatter={(value) =>
-                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
               }
             />
           </Card>
@@ -299,9 +273,9 @@ const BHYTPage: React.FC = () => {
               title="BHYT chi trả"
               value={totalCovered}
               suffix="₫"
-              valueStyle={{ color: "#52c41a" }}
+              valueStyle={{ color: '#52c41a' }}
               formatter={(value) =>
-                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
               }
             />
           </Card>
@@ -313,7 +287,7 @@ const BHYTPage: React.FC = () => {
               value={coverageRate}
               suffix="%"
               precision={1}
-              valueStyle={{ color: "#1890ff" }}
+              valueStyle={{ color: '#1890ff' }}
             />
           </Card>
         </Col>
@@ -322,7 +296,7 @@ const BHYTPage: React.FC = () => {
             <Statistic
               title="Số lần khám"
               value={medicalHistory.length}
-              valueStyle={{ color: "#722ed1" }}
+              valueStyle={{ color: '#722ed1' }}
             />
           </Card>
         </Col>
@@ -371,7 +345,7 @@ const BHYTPage: React.FC = () => {
                     </Space>
                   }
                   description={
-                    <Space direction="vertical" style={{ width: "100%" }}>
+                    <Space direction="vertical" style={{ width: '100%' }}>
                       <Text>
                         <strong>Bệnh viện:</strong> {record.hospital}
                       </Text>
@@ -380,15 +354,15 @@ const BHYTPage: React.FC = () => {
                       </Text>
                       <Space>
                         <Text>
-                          <strong>Chi phí:</strong>{" "}
+                          <strong>Chi phí:</strong>{' '}
                           {record.cost.toLocaleString()}₫
                         </Text>
                         <Text type="success">
-                          <strong>BHYT chi trả:</strong>{" "}
+                          <strong>BHYT chi trả:</strong>{' '}
                           {record.covered.toLocaleString()}₫
                         </Text>
                         <Text type="secondary">
-                          <strong>Tự trả:</strong>{" "}
+                          <strong>Tự trả:</strong>{' '}
                           {(record.cost - record.covered).toLocaleString()}₫
                         </Text>
                       </Space>
@@ -411,20 +385,20 @@ const BHYTPage: React.FC = () => {
       {/* Modal */}
       <Modal
         title={
-          editingRecord ? "Chỉnh sửa hồ sơ khám bệnh" : "Thêm hồ sơ khám bệnh"
+          editingRecord ? 'Chỉnh sửa hồ sơ khám bệnh' : 'Thêm hồ sơ khám bệnh'
         }
         open={isModalVisible}
         onOk={handleOk}
         onCancel={() => setIsModalVisible(false)}
         width={600}
-        okText={editingRecord ? "Cập nhật" : "Thêm"}
+        okText={editingRecord ? 'Cập nhật' : 'Thêm'}
         cancelText="Hủy"
       >
         <Form form={form} layout="vertical">
           <Form.Item
             name="date"
             label="Ngày khám"
-            rules={[{ required: true, message: "Vui lòng nhập ngày khám!" }]}
+            rules={[{ required: true, message: 'Vui lòng nhập ngày khám!' }]}
           >
             <Input type="date" />
           </Form.Item>
@@ -433,7 +407,7 @@ const BHYTPage: React.FC = () => {
             name="hospital"
             label="Bệnh viện/Phòng khám"
             rules={[
-              { required: true, message: "Vui lòng nhập tên bệnh viện!" },
+              { required: true, message: 'Vui lòng nhập tên bệnh viện!' },
             ]}
           >
             <Input placeholder="Nhập tên bệnh viện hoặc phòng khám" />
@@ -442,7 +416,7 @@ const BHYTPage: React.FC = () => {
           <Form.Item
             name="diagnosis"
             label="Chẩn đoán"
-            rules={[{ required: true, message: "Vui lòng nhập chẩn đoán!" }]}
+            rules={[{ required: true, message: 'Vui lòng nhập chẩn đoán!' }]}
           >
             <Input placeholder="Nhập chẩn đoán bệnh" />
           </Form.Item>
@@ -453,18 +427,18 @@ const BHYTPage: React.FC = () => {
             rules={[
               {
                 required: true,
-                message: "Vui lòng nhập phương pháp điều trị!",
+                message: 'Vui lòng nhập phương pháp điều trị!',
               },
             ]}
           >
             <Input.TextArea rows={3} placeholder="Nhập phương pháp điều trị" />
           </Form.Item>
 
-          <div style={{ display: "flex", gap: 16 }}>
+          <div style={{ display: 'flex', gap: 16 }}>
             <Form.Item
               name="cost"
               label="Tổng chi phí (₫)"
-              rules={[{ required: true, message: "Vui lòng nhập chi phí!" }]}
+              rules={[{ required: true, message: 'Vui lòng nhập chi phí!' }]}
               style={{ flex: 1 }}
             >
               <Input type="number" placeholder="0" />
@@ -476,7 +450,7 @@ const BHYTPage: React.FC = () => {
               rules={[
                 {
                   required: true,
-                  message: "Vui lòng nhập số tiền BHYT chi trả!",
+                  message: 'Vui lòng nhập số tiền BHYT chi trả!',
                 },
               ]}
               style={{ flex: 1 }}

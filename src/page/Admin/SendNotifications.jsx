@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
@@ -24,7 +24,7 @@ import {
   ListItemText,
   ListItemIcon,
   Divider,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Announcement as AnnouncementIcon,
   Send as SendIcon,
@@ -35,65 +35,65 @@ import {
   Email as EmailIcon,
   Sms as SmsIcon,
   Notifications as NotificationsIcon,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
 const SendNotifications = () => {
   const [notificationData, setNotificationData] = useState({
-    title: "",
-    content: "",
-    type: "general",
-    recipients: "all",
-    department: "",
-    year: "",
-    priority: "normal",
-    sendMethod: "system",
+    title: '',
+    content: '',
+    type: 'general',
+    recipients: 'all',
+    department: '',
+    year: '',
+    priority: 'normal',
+    sendMethod: 'system',
   });
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const notificationTypes = [
-    { value: "general", label: "Thông báo chung" },
-    { value: "academic", label: "Học tập" },
-    { value: "payment", label: "Học phí" },
-    { value: "event", label: "Sự kiện" },
-    { value: "urgent", label: "Khẩn cấp" },
+    { value: 'general', label: 'Thông báo chung' },
+    { value: 'academic', label: 'Học tập' },
+    { value: 'payment', label: 'Học phí' },
+    { value: 'event', label: 'Sự kiện' },
+    { value: 'urgent', label: 'Khẩn cấp' },
   ];
 
   const recipientTypes = [
-    { value: "all", label: "Tất cả người dùng" },
-    { value: "students", label: "Tất cả sinh viên" },
-    { value: "teachers", label: "Tất cả giảng viên" },
-    { value: "department", label: "Theo khoa" },
-    { value: "year", label: "Theo năm học" },
-    { value: "custom", label: "Tùy chọn" },
+    { value: 'all', label: 'Tất cả người dùng' },
+    { value: 'students', label: 'Tất cả sinh viên' },
+    { value: 'teachers', label: 'Tất cả giảng viên' },
+    { value: 'department', label: 'Theo khoa' },
+    { value: 'year', label: 'Theo năm học' },
+    { value: 'custom', label: 'Tùy chọn' },
   ];
 
   const departments = [
-    "Công nghệ thông tin",
-    "Kinh tế",
-    "Ngoại ngữ",
-    "Khoa học tự nhiên",
-    "Kỹ thuật",
-    "Y khoa",
+    'Công nghệ thông tin',
+    'Kinh tế',
+    'Ngoại ngữ',
+    'Khoa học tự nhiên',
+    'Kỹ thuật',
+    'Y khoa',
   ];
   const years = [1, 2, 3, 4, 5];
   const priorities = [
-    { value: "low", label: "Thấp", color: "default" },
-    { value: "normal", label: "Bình thường", color: "primary" },
-    { value: "high", label: "Cao", color: "warning" },
-    { value: "urgent", label: "Khẩn cấp", color: "error" },
+    { value: 'low', label: 'Thấp', color: 'default' },
+    { value: 'normal', label: 'Bình thường', color: 'primary' },
+    { value: 'high', label: 'Cao', color: 'warning' },
+    { value: 'urgent', label: 'Khẩn cấp', color: 'error' },
   ];
 
   const sendMethods = [
     {
-      value: "system",
-      label: "Thông báo hệ thống",
+      value: 'system',
+      label: 'Thông báo hệ thống',
       icon: <NotificationsIcon />,
     },
-    { value: "email", label: "Email", icon: <EmailIcon /> },
-    { value: "sms", label: "SMS", icon: <SmsIcon /> },
-    { value: "all", label: "Tất cả phương thức", icon: <SendIcon /> },
+    { value: 'email', label: 'Email', icon: <EmailIcon /> },
+    { value: 'sms', label: 'SMS', icon: <SmsIcon /> },
+    { value: 'all', label: 'Tất cả phương thức', icon: <SendIcon /> },
   ];
 
   const handleInputChange = (field, value) => {
@@ -111,14 +111,14 @@ const SendNotifications = () => {
 
     // Reset form
     setNotificationData({
-      title: "",
-      content: "",
-      type: "general",
-      recipients: "all",
-      department: "",
-      year: "",
-      priority: "normal",
-      sendMethod: "system",
+      title: '',
+      content: '',
+      type: 'general',
+      recipients: 'all',
+      department: '',
+      year: '',
+      priority: 'normal',
+      sendMethod: 'system',
     });
 
     setPreviewOpen(false);
@@ -126,15 +126,15 @@ const SendNotifications = () => {
 
   const getRecipientCount = () => {
     switch (notificationData.recipients) {
-      case "all":
+      case 'all':
         return 1500;
-      case "students":
+      case 'students':
         return 1200;
-      case "teachers":
+      case 'teachers':
         return 80;
-      case "department":
+      case 'department':
         return 300;
-      case "year":
+      case 'year':
         return 250;
       default:
         return 0;
@@ -143,28 +143,28 @@ const SendNotifications = () => {
 
   const getTypeColor = (type) => {
     switch (type) {
-      case "urgent":
-        return "error";
-      case "academic":
-        return "primary";
-      case "payment":
-        return "warning";
-      case "event":
-        return "info";
+      case 'urgent':
+        return 'error';
+      case 'academic':
+        return 'primary';
+      case 'payment':
+        return 'warning';
+      case 'event':
+        return 'info';
       default:
-        return "default";
+        return 'default';
     }
   };
 
   const getPriorityColor = (priority) => {
     const priorityObj = priorities.find((p) => p.value === priority);
-    return priorityObj ? priorityObj.color : "default";
+    return priorityObj ? priorityObj.color : 'default';
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: "100%", overflow: "hidden" }}>
+    <Box sx={{ p: 3, maxWidth: '100%', overflow: 'hidden' }}>
       <Box display="flex" alignItems="center" gap={2} mb={3}>
-        <Avatar sx={{ bgcolor: "primary.main" }}>
+        <Avatar sx={{ bgcolor: 'primary.main' }}>
           <AnnouncementIcon />
         </Avatar>
         <Typography variant="h4" component="h1">
@@ -192,7 +192,7 @@ const SendNotifications = () => {
                   fullWidth
                   label="Tiêu đề thông báo"
                   value={notificationData.title}
-                  onChange={(e) => handleInputChange("title", e.target.value)}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
                   required
                 />
               </Grid>
@@ -202,7 +202,7 @@ const SendNotifications = () => {
                   <InputLabel>Loại thông báo</InputLabel>
                   <Select
                     value={notificationData.type}
-                    onChange={(e) => handleInputChange("type", e.target.value)}
+                    onChange={(e) => handleInputChange('type', e.target.value)}
                     label="Loại thông báo"
                   >
                     {notificationTypes.map((type) => (
@@ -220,7 +220,7 @@ const SendNotifications = () => {
                   <Select
                     value={notificationData.priority}
                     onChange={(e) =>
-                      handleInputChange("priority", e.target.value)
+                      handleInputChange('priority', e.target.value)
                     }
                     label="Mức độ ưu tiên"
                   >
@@ -244,7 +244,7 @@ const SendNotifications = () => {
                   rows={6}
                   label="Nội dung thông báo"
                   value={notificationData.content}
-                  onChange={(e) => handleInputChange("content", e.target.value)}
+                  onChange={(e) => handleInputChange('content', e.target.value)}
                   placeholder="Nhập nội dung thông báo..."
                   required
                 />
@@ -268,7 +268,7 @@ const SendNotifications = () => {
                   <Select
                     value={notificationData.recipients}
                     onChange={(e) =>
-                      handleInputChange("recipients", e.target.value)
+                      handleInputChange('recipients', e.target.value)
                     }
                     label="Chọn đối tượng"
                   >
@@ -280,13 +280,13 @@ const SendNotifications = () => {
                   </Select>
                 </FormControl>
 
-                {notificationData.recipients === "department" && (
+                {notificationData.recipients === 'department' && (
                   <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel>Chọn khoa</InputLabel>
                     <Select
                       value={notificationData.department}
                       onChange={(e) =>
-                        handleInputChange("department", e.target.value)
+                        handleInputChange('department', e.target.value)
                       }
                       label="Chọn khoa"
                     >
@@ -299,13 +299,13 @@ const SendNotifications = () => {
                   </FormControl>
                 )}
 
-                {notificationData.recipients === "year" && (
+                {notificationData.recipients === 'year' && (
                   <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel>Chọn năm học</InputLabel>
                     <Select
                       value={notificationData.year}
                       onChange={(e) =>
-                        handleInputChange("year", e.target.value)
+                        handleInputChange('year', e.target.value)
                       }
                       label="Chọn năm học"
                     >
@@ -339,7 +339,7 @@ const SendNotifications = () => {
                   <Select
                     value={notificationData.sendMethod}
                     onChange={(e) =>
-                      handleInputChange("sendMethod", e.target.value)
+                      handleInputChange('sendMethod', e.target.value)
                     }
                     label="Chọn phương thức"
                   >
@@ -438,13 +438,13 @@ const SendNotifications = () => {
               <Divider sx={{ my: 2 }} />
 
               <Typography variant="caption" color="text.secondary">
-                Gửi đến:{" "}
+                Gửi đến:{' '}
                 {
                   recipientTypes.find(
                     (r) => r.value === notificationData.recipients
                   )?.label
                 }
-                ({getRecipientCount()} người) qua{" "}
+                ({getRecipientCount()} người) qua{' '}
                 {
                   sendMethods.find(
                     (m) => m.value === notificationData.sendMethod

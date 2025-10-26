@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Card,
   List,
@@ -17,7 +17,7 @@ import {
   Row,
   Col,
   Statistic,
-} from "antd";
+} from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
@@ -26,8 +26,8 @@ import {
   ClockCircleOutlined,
   ExclamationCircleOutlined,
   CheckCircleOutlined,
-} from "@ant-design/icons";
-import dayjs from "dayjs";
+} from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -40,32 +40,32 @@ const StudentNotes = () => {
 
   const [notes, setNotes] = useState([
     {
-      id: "1",
-      title: "Nộp bài tập lớn môn Cấu trúc dữ liệu",
-      content: "Hoàn thành project về cây AVL và nộp qua email giảng viên",
-      priority: "high",
-      dueDate: "2025-10-15",
-      status: "pending",
-      createdAt: "2025-09-20",
+      id: '1',
+      title: 'Nộp bài tập lớn môn Cấu trúc dữ liệu',
+      content: 'Hoàn thành project về cây AVL và nộp qua email giảng viên',
+      priority: 'high',
+      dueDate: '2025-10-15',
+      status: 'pending',
+      createdAt: '2025-09-20',
     },
     {
-      id: "2",
-      title: "Đăng ký học phần kỳ 2",
+      id: '2',
+      title: 'Đăng ký học phần kỳ 2',
       content:
-        "Chuẩn bị danh sách môn học cần đăng ký cho kỳ 2 năm học 2024-2025",
-      priority: "medium",
-      dueDate: "2025-11-30",
-      status: "pending",
-      createdAt: "2025-09-18",
+        'Chuẩn bị danh sách môn học cần đăng ký cho kỳ 2 năm học 2024-2025',
+      priority: 'medium',
+      dueDate: '2025-11-30',
+      status: 'pending',
+      createdAt: '2025-09-18',
     },
     {
-      id: "3",
-      title: "Thi giữa kỳ môn Cơ sở dữ liệu",
-      content: "Ôn tập chương 1-5, chuẩn bị tài liệu ôn thi",
-      priority: "high",
-      dueDate: "2025-10-25",
-      status: "completed",
-      createdAt: "2025-09-15",
+      id: '3',
+      title: 'Thi giữa kỳ môn Cơ sở dữ liệu',
+      content: 'Ôn tập chương 1-5, chuẩn bị tài liệu ôn thi',
+      priority: 'high',
+      dueDate: '2025-10-25',
+      status: 'completed',
+      createdAt: '2025-09-15',
     },
   ]);
 
@@ -86,7 +86,7 @@ const StudentNotes = () => {
 
   const handleDelete = (id) => {
     setNotes(notes.filter((note) => note.id !== id));
-    message.success("Xóa ghi chú thành công!");
+    message.success('Xóa ghi chú thành công!');
   };
 
   const handleToggleStatus = (id) => {
@@ -95,12 +95,12 @@ const StudentNotes = () => {
         note.id === id
           ? {
               ...note,
-              status: note.status === "pending" ? "completed" : "pending",
+              status: note.status === 'pending' ? 'completed' : 'pending',
             }
           : note
       )
     );
-    message.success("Cập nhật trạng thái thành công!");
+    message.success('Cập nhật trạng thái thành công!');
   };
 
   const handleOk = async () => {
@@ -109,66 +109,66 @@ const StudentNotes = () => {
       const newNote = {
         id: editingNote ? editingNote.id : Date.now().toString(),
         ...values,
-        dueDate: values.dueDate.format("YYYY-MM-DD"),
-        status: editingNote ? editingNote.status : "pending",
+        dueDate: values.dueDate.format('YYYY-MM-DD'),
+        status: editingNote ? editingNote.status : 'pending',
         createdAt: editingNote
           ? editingNote.createdAt
-          : dayjs().format("YYYY-MM-DD"),
+          : dayjs().format('YYYY-MM-DD'),
       };
 
       if (editingNote) {
         setNotes(
           notes.map((note) => (note.id === editingNote.id ? newNote : note))
         );
-        message.success("Cập nhật ghi chú thành công!");
+        message.success('Cập nhật ghi chú thành công!');
       } else {
         setNotes([...notes, newNote]);
-        message.success("Thêm ghi chú thành công!");
+        message.success('Thêm ghi chú thành công!');
       }
 
       setIsModalVisible(false);
       form.resetFields();
     } catch (error) {
-      console.error("Validation failed:", error);
+      console.error('Validation failed:', error);
     }
   };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case "high":
-        return "red";
-      case "medium":
-        return "orange";
-      case "low":
-        return "blue";
+      case 'high':
+        return 'red';
+      case 'medium':
+        return 'orange';
+      case 'low':
+        return 'blue';
       default:
-        return "default";
+        return 'default';
     }
   };
 
   const getPriorityText = (priority) => {
     switch (priority) {
-      case "high":
-        return "Cao";
-      case "medium":
-        return "Trung bình";
-      case "low":
-        return "Thấp";
+      case 'high':
+        return 'Cao';
+      case 'medium':
+        return 'Trung bình';
+      case 'low':
+        return 'Thấp';
       default:
         return priority;
     }
   };
 
-  const pendingNotes = notes.filter((note) => note.status === "pending");
-  const completedNotes = notes.filter((note) => note.status === "completed");
+  const pendingNotes = notes.filter((note) => note.status === 'pending');
+  const completedNotes = notes.filter((note) => note.status === 'completed');
 
   return (
-    <div style={{ padding: "24px" }}>
+    <div style={{ padding: '24px' }}>
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           marginBottom: 24,
         }}
       >
@@ -186,7 +186,7 @@ const StudentNotes = () => {
               title="Đang chờ"
               value={pendingNotes.length}
               prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: "#faad14" }}
+              valueStyle={{ color: '#faad14' }}
             />
           </Card>
         </Col>
@@ -196,7 +196,7 @@ const StudentNotes = () => {
               title="Đã hoàn thành"
               value={completedNotes.length}
               prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: "#52c41a" }}
+              valueStyle={{ color: '#52c41a' }}
             />
           </Card>
         </Col>
@@ -207,11 +207,11 @@ const StudentNotes = () => {
               value={
                 notes.filter(
                   (note) =>
-                    note.priority === "high" && note.status === "pending"
+                    note.priority === 'high' && note.status === 'pending'
                 ).length
               }
               prefix={<ExclamationCircleOutlined />}
-              valueStyle={{ color: "#f5222d" }}
+              valueStyle={{ color: '#f5222d' }}
             />
           </Card>
         </Col>
@@ -262,7 +262,7 @@ const StudentNotes = () => {
                 <List.Item.Meta
                   title={
                     <div
-                      style={{ display: "flex", alignItems: "center", gap: 8 }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8 }}
                     >
                       <span>{note.title}</span>
                       <Tag color={getPriorityColor(note.priority)}>
@@ -276,10 +276,10 @@ const StudentNotes = () => {
                       <Space>
                         <ClockCircleOutlined />
                         <Text type="secondary">
-                          Hạn: {dayjs(note.dueDate).format("DD/MM/YYYY")}
+                          Hạn: {dayjs(note.dueDate).format('DD/MM/YYYY')}
                         </Text>
                         <Text type="secondary">
-                          (còn {dayjs(note.dueDate).diff(dayjs(), "day")} ngày)
+                          (còn {dayjs(note.dueDate).diff(dayjs(), 'day')} ngày)
                         </Text>
                       </Space>
                     </Space>
@@ -331,9 +331,9 @@ const StudentNotes = () => {
                 <List.Item.Meta
                   title={
                     <div
-                      style={{ display: "flex", alignItems: "center", gap: 8 }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8 }}
                     >
-                      <span style={{ textDecoration: "line-through" }}>
+                      <span style={{ textDecoration: 'line-through' }}>
                         {note.title}
                       </span>
                       <Tag color="green">Hoàn thành</Tag>
@@ -341,11 +341,11 @@ const StudentNotes = () => {
                   }
                   description={
                     <Space direction="vertical" size="small">
-                      <Text style={{ textDecoration: "line-through" }}>
+                      <Text style={{ textDecoration: 'line-through' }}>
                         {note.content}
                       </Text>
                       <Text type="secondary">
-                        Hoàn thành: {dayjs(note.dueDate).format("DD/MM/YYYY")}
+                        Hoàn thành: {dayjs(note.dueDate).format('DD/MM/YYYY')}
                       </Text>
                     </Space>
                   }
@@ -360,19 +360,19 @@ const StudentNotes = () => {
 
       {/* Modal */}
       <Modal
-        title={editingNote ? "Chỉnh sửa ghi chú" : "Thêm ghi chú mới"}
+        title={editingNote ? 'Chỉnh sửa ghi chú' : 'Thêm ghi chú mới'}
         open={isModalVisible}
         onOk={handleOk}
         onCancel={() => setIsModalVisible(false)}
         width={600}
-        okText={editingNote ? "Cập nhật" : "Thêm"}
+        okText={editingNote ? 'Cập nhật' : 'Thêm'}
         cancelText="Hủy"
       >
         <Form form={form} layout="vertical">
           <Form.Item
             name="title"
             label="Tiêu đề"
-            rules={[{ required: true, message: "Vui lòng nhập tiêu đề!" }]}
+            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
           >
             <Input placeholder="Nhập tiêu đề ghi chú" />
           </Form.Item>
@@ -380,17 +380,17 @@ const StudentNotes = () => {
           <Form.Item
             name="content"
             label="Nội dung"
-            rules={[{ required: true, message: "Vui lòng nhập nội dung!" }]}
+            rules={[{ required: true, message: 'Vui lòng nhập nội dung!' }]}
           >
             <TextArea rows={4} placeholder="Nhập nội dung chi tiết" />
           </Form.Item>
 
-          <div style={{ display: "flex", gap: 16 }}>
+          <div style={{ display: 'flex', gap: 16 }}>
             <Form.Item
               name="priority"
               label="Mức độ ưu tiên"
               rules={[
-                { required: true, message: "Vui lòng chọn mức độ ưu tiên!" },
+                { required: true, message: 'Vui lòng chọn mức độ ưu tiên!' },
               ]}
               style={{ flex: 1 }}
             >
@@ -405,15 +405,15 @@ const StudentNotes = () => {
               name="dueDate"
               label="Hạn hoàn thành"
               rules={[
-                { required: true, message: "Vui lòng chọn hạn hoàn thành!" },
+                { required: true, message: 'Vui lòng chọn hạn hoàn thành!' },
               ]}
               style={{ flex: 1 }}
             >
               <DatePicker
-                style={{ width: "100%" }}
+                style={{ width: '100%' }}
                 placeholder="Chọn ngày hạn"
                 disabledDate={(current) =>
-                  current && current < dayjs().startOf("day")
+                  current && current < dayjs().startOf('day')
                 }
               />
             </Form.Item>

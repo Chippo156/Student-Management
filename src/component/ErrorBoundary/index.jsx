@@ -20,17 +20,25 @@ class ErrorBoundary extends Component {
         return this.props.fallback;
       }
       return (
-        <div style={{
-          padding: '20px',
-          textAlign: 'center',
-          backgroundColor: '#f8f9fa',
-          border: '1px solid #dee2e6',
-          borderRadius: '4px',
-          margin: '20px'
-        }}>
+        <div
+          style={{
+            padding: '20px',
+            textAlign: 'center',
+            backgroundColor: '#f8f9fa',
+            border: '1px solid #dee2e6',
+            borderRadius: '4px',
+            margin: '20px',
+          }}
+        >
           <h2>Something went wrong</h2>
           <p>We're sorry, but something unexpected happened.</p>
-          <details style={{ whiteSpace: 'pre-wrap', textAlign: 'left', marginTop: '10px' }}>
+          <details
+            style={{
+              whiteSpace: 'pre-wrap',
+              textAlign: 'left',
+              marginTop: '10px',
+            }}
+          >
             <summary>Error Details</summary>
             {this.state.error && this.state.error.toString()}
           </details>
@@ -43,7 +51,7 @@ class ErrorBoundary extends Component {
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}
           >
             Reload Page

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -6,19 +6,19 @@ import {
   BookOutlined,
   TrophyOutlined,
   SettingOutlined,
-} from "@ant-design/icons";
-import { Button, Layout, Menu, theme } from "antd";
-import StudentManagement from "./studentManagement";
-import CourseManagement from "./courseManagement";
-import GradeManagement from "./gradeManagement";
-import UsersInfor from "./usersInfor";
-import SystemSettings from "./systemSettings";
+} from '@ant-design/icons';
+import { Button, Layout, Menu, theme } from 'antd';
+import StudentManagement from './studentManagement';
+import CourseManagement from './courseManagement';
+import GradeManagement from './gradeManagement';
+import UsersInfor from './usersInfor';
+import SystemSettings from './systemSettings';
 
 const { Header, Sider, Content } = Layout;
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const [selectedKey, setSelectedKey] = useState("1");
+  const [selectedKey, setSelectedKey] = useState('1');
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -29,15 +29,15 @@ const Admin = () => {
 
   const renderContent = () => {
     switch (selectedKey) {
-      case "1":
+      case '1':
         return <StudentManagement />;
-      case "2":
+      case '2':
         return <CourseManagement />;
-      case "3":
+      case '3':
         return <GradeManagement />;
-      case "4":
+      case '4':
         return <UsersInfor />;
-      case "5":
+      case '5':
         return <SystemSettings />;
       default:
         return <StudentManagement />;
@@ -51,34 +51,34 @@ const Admin = () => {
         <Menu
           theme="dark"
           mode="inline"
-          defaultSelectedKeys={["1"]}
+          defaultSelectedKeys={['1']}
           selectedKeys={[selectedKey]}
           onClick={handleMenuClick}
           items={[
             {
-              key: "1",
+              key: '1',
               icon: <UserOutlined />,
-              label: "Quản lý sinh viên",
+              label: 'Quản lý sinh viên',
             },
             {
-              key: "2",
+              key: '2',
               icon: <BookOutlined />,
-              label: "Quản lý khóa học",
+              label: 'Quản lý khóa học',
             },
             {
-              key: "3",
+              key: '3',
               icon: <TrophyOutlined />,
-              label: "Quản lý điểm",
+              label: 'Quản lý điểm',
             },
             {
-              key: "4",
+              key: '4',
               icon: <UserOutlined />,
-              label: "Thông tin người dùng",
+              label: 'Thông tin người dùng',
             },
             {
-              key: "5",
+              key: '5',
               icon: <SettingOutlined />,
-              label: "Cài đặt hệ thống",
+              label: 'Cài đặt hệ thống',
             },
           ]}
         />
@@ -95,7 +95,7 @@ const Admin = () => {
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
             style={{
-              fontSize: "16px",
+              fontSize: '16px',
               width: 64,
               height: 64,
             }}
@@ -103,7 +103,7 @@ const Admin = () => {
         </Header>
         <Content
           style={{
-            margin: "24px 16px",
+            margin: '24px 16px',
             padding: 24,
             minHeight: 280,
             background: colorBgContainer,

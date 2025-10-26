@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
@@ -33,7 +33,7 @@ import {
   ListItem,
   ListItemText,
   Divider,
-} from "@mui/material";
+} from '@mui/material';
 import {
   FolderShared as FolderSharedIcon,
   Search as SearchIcon,
@@ -44,7 +44,7 @@ import {
   School as SchoolIcon,
   Grade as GradeIcon,
   ContactMail as ContactMailIcon,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
 // TabPanel component
 function TabPanel({ children, value, index, ...other }) {
@@ -62,10 +62,10 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 const StudentProfiles = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [yearFilter, setYearFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -75,84 +75,84 @@ const StudentProfiles = () => {
   // Sample data
   const studentProfiles = [
     {
-      id: "1",
-      studentId: "SV2024001",
-      fullName: "Nguyễn Văn An",
-      email: "an.nguyen@student.university.edu.vn",
-      phone: "0901234567",
-      address: "Hà Nội",
-      department: "Công nghệ thông tin",
-      major: "Kỹ thuật phần mềm",
+      id: '1',
+      studentId: 'SV2024001',
+      fullName: 'Nguyễn Văn An',
+      email: 'an.nguyen@student.university.edu.vn',
+      phone: '0901234567',
+      address: 'Hà Nội',
+      department: 'Công nghệ thông tin',
+      major: 'Kỹ thuật phần mềm',
       year: 3,
       gpa: 3.2,
-      status: "active",
-      admissionDate: "2022-09-01",
-      courses: ["Lập trình Java", "Cơ sở dữ liệu", "Mạng máy tính"],
+      status: 'active',
+      admissionDate: '2022-09-01',
+      courses: ['Lập trình Java', 'Cơ sở dữ liệu', 'Mạng máy tính'],
       totalCredits: 95,
     },
     {
-      id: "2",
-      studentId: "SV2024002",
-      fullName: "Trần Thị Bình",
-      email: "binh.tran@student.university.edu.vn",
-      phone: "0912345678",
-      address: "TP.HCM",
-      department: "Kinh tế",
-      major: "Quản trị kinh doanh",
+      id: '2',
+      studentId: 'SV2024002',
+      fullName: 'Trần Thị Bình',
+      email: 'binh.tran@student.university.edu.vn',
+      phone: '0912345678',
+      address: 'TP.HCM',
+      department: 'Kinh tế',
+      major: 'Quản trị kinh doanh',
       year: 2,
       gpa: 3.7,
-      status: "active",
-      admissionDate: "2023-09-01",
-      courses: ["Quản trị học", "Marketing", "Tài chính doanh nghiệp"],
+      status: 'active',
+      admissionDate: '2023-09-01',
+      courses: ['Quản trị học', 'Marketing', 'Tài chính doanh nghiệp'],
       totalCredits: 65,
     },
     {
-      id: "3",
-      studentId: "SV2024003",
-      fullName: "Lê Văn Cường",
-      email: "cuong.le@student.university.edu.vn",
-      phone: "0923456789",
-      address: "Đà Nẵng",
-      department: "Ngoại ngữ",
-      major: "Tiếng Anh",
+      id: '3',
+      studentId: 'SV2024003',
+      fullName: 'Lê Văn Cường',
+      email: 'cuong.le@student.university.edu.vn',
+      phone: '0923456789',
+      address: 'Đà Nẵng',
+      department: 'Ngoại ngữ',
+      major: 'Tiếng Anh',
       year: 4,
       gpa: 3.9,
-      status: "active",
-      admissionDate: "2021-09-01",
-      courses: ["Tiếng Anh chuyên ngành", "Dịch thuật", "Văn học Anh"],
+      status: 'active',
+      admissionDate: '2021-09-01',
+      courses: ['Tiếng Anh chuyên ngành', 'Dịch thuật', 'Văn học Anh'],
       totalCredits: 120,
     },
     {
-      id: "4",
-      studentId: "SV2021001",
-      fullName: "Phạm Thị Dung",
-      email: "dung.pham@student.university.edu.vn",
-      phone: "0934567890",
-      address: "Cần Thơ",
-      department: "Khoa học tự nhiên",
-      major: "Toán học",
+      id: '4',
+      studentId: 'SV2021001',
+      fullName: 'Phạm Thị Dung',
+      email: 'dung.pham@student.university.edu.vn',
+      phone: '0934567890',
+      address: 'Cần Thơ',
+      department: 'Khoa học tự nhiên',
+      major: 'Toán học',
       year: 4,
       gpa: 3.5,
-      status: "graduated",
-      admissionDate: "2020-09-01",
-      courses: ["Giải tích", "Đại số", "Thống kê"],
+      status: 'graduated',
+      admissionDate: '2020-09-01',
+      courses: ['Giải tích', 'Đại số', 'Thống kê'],
       totalCredits: 130,
     },
   ];
 
   const departments = [
-    "Công nghệ thông tin",
-    "Kinh tế",
-    "Ngoại ngữ",
-    "Khoa học tự nhiên",
-    "Kỹ thuật",
-    "Y khoa",
+    'Công nghệ thông tin',
+    'Kinh tế',
+    'Ngoại ngữ',
+    'Khoa học tự nhiên',
+    'Kỹ thuật',
+    'Y khoa',
   ];
   const years = [1, 2, 3, 4, 5];
   const statuses = [
-    { value: "active", label: "Đang học" },
-    { value: "inactive", label: "Tạm nghỉ" },
-    { value: "graduated", label: "Đã tốt nghiệp" },
+    { value: 'active', label: 'Đang học' },
+    { value: 'inactive', label: 'Tạm nghỉ' },
+    { value: 'graduated', label: 'Đã tốt nghiệp' },
   ];
 
   const filteredProfiles = studentProfiles.filter((profile) => {
@@ -176,14 +176,14 @@ const StudentProfiles = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "active":
-        return "success";
-      case "inactive":
-        return "warning";
-      case "graduated":
-        return "primary";
+      case 'active':
+        return 'success';
+      case 'inactive':
+        return 'warning';
+      case 'graduated':
+        return 'primary';
       default:
-        return "default";
+        return 'default';
     }
   };
 
@@ -193,15 +193,15 @@ const StudentProfiles = () => {
   };
 
   const getGPAColor = (gpa) => {
-    if (gpa >= 3.5) return "success";
-    if (gpa >= 2.5) return "warning";
-    return "error";
+    if (gpa >= 3.5) return 'success';
+    if (gpa >= 2.5) return 'warning';
+    return 'error';
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: "100%", overflow: "hidden" }}>
+    <Box sx={{ p: 3, maxWidth: '100%', overflow: 'hidden' }}>
       <Box display="flex" alignItems="center" gap={2} mb={3}>
-        <Avatar sx={{ bgcolor: "primary.main" }}>
+        <Avatar sx={{ bgcolor: 'primary.main' }}>
           <FolderSharedIcon />
         </Avatar>
         <Typography variant="h4">Hồ sơ sinh viên</Typography>
@@ -282,10 +282,10 @@ const StudentProfiles = () => {
               variant="outlined"
               startIcon={<FilterListIcon />}
               onClick={() => {
-                setSearchTerm("");
-                setDepartmentFilter("");
-                setStatusFilter("");
-                setYearFilter("");
+                setSearchTerm('');
+                setDepartmentFilter('');
+                setStatusFilter('');
+                setYearFilter('');
               }}
             >
               Xóa bộ lọc
@@ -295,8 +295,8 @@ const StudentProfiles = () => {
       </Paper>
 
       {/* Student Profiles Table */}
-      <Paper sx={{ width: "100%", overflow: "hidden" }}>
-        <TableContainer sx={{ maxHeight: "calc(100vh - 400px)" }}>
+      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+        <TableContainer sx={{ maxHeight: 'calc(100vh - 400px)' }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -316,7 +316,7 @@ const StudentProfiles = () => {
                   <TableRow key={profile.id} hover>
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={2}>
-                        <Avatar sx={{ bgcolor: "primary.main" }}>
+                        <Avatar sx={{ bgcolor: 'primary.main' }}>
                           <PersonIcon />
                         </Avatar>
                         <Box>
@@ -404,13 +404,11 @@ const StudentProfiles = () => {
         maxWidth="lg"
         fullWidth
       >
-        <DialogTitle>
-          Hồ sơ sinh viên: {selectedStudent?.fullName}
-        </DialogTitle>
+        <DialogTitle>Hồ sơ sinh viên: {selectedStudent?.fullName}</DialogTitle>
         <DialogContent>
           {selectedStudent && (
-            <Box sx={{ width: "100%" }}>
-              <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+            <Box sx={{ width: '100%' }}>
+              <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs
                   value={tabValue}
                   onChange={(_, newValue) => setTabValue(newValue)}
@@ -431,7 +429,7 @@ const StudentProfiles = () => {
                           Thông tin cá nhân
                         </Typography>
                         <Typography>
-                          <strong>Mã sinh viên:</strong>{" "}
+                          <strong>Mã sinh viên:</strong>{' '}
                           {selectedStudent.studentId}
                         </Typography>
                         <Typography>
@@ -441,7 +439,7 @@ const StudentProfiles = () => {
                           <strong>Email:</strong> {selectedStudent.email}
                         </Typography>
                         <Typography>
-                          <strong>Số điện thoại:</strong>{" "}
+                          <strong>Số điện thoại:</strong>{' '}
                           {selectedStudent.phone}
                         </Typography>
                         <Typography>
@@ -467,13 +465,13 @@ const StudentProfiles = () => {
                           <strong>Năm học:</strong> Năm {selectedStudent.year}
                         </Typography>
                         <Typography>
-                          <strong>Ngày nhập học:</strong>{" "}
+                          <strong>Ngày nhập học:</strong>{' '}
                           {new Date(
                             selectedStudent.admissionDate
-                          ).toLocaleDateString("vi-VN")}
+                          ).toLocaleDateString('vi-VN')}
                         </Typography>
                         <Typography>
-                          <strong>Trạng thái:</strong>{" "}
+                          <strong>Trạng thái:</strong>{' '}
                           {getStatusLabel(selectedStudent.status)}
                         </Typography>
                       </CardContent>
@@ -499,7 +497,9 @@ const StudentProfiles = () => {
                               } - Năm ${selectedStudent.year}`}
                             />
                           </ListItem>
-                          {i < selectedStudent.courses.length - 1 && <Divider />}
+                          {i < selectedStudent.courses.length - 1 && (
+                            <Divider />
+                          )}
                         </React.Fragment>
                       ))}
                     </List>
@@ -514,7 +514,7 @@ const StudentProfiles = () => {
                       Thống kê điểm
                     </Typography>
                     <Typography>
-                      <strong>GPA:</strong>{" "}
+                      <strong>GPA:</strong>{' '}
                       <Chip
                         label={selectedStudent.gpa.toFixed(1)}
                         color={getGPAColor(selectedStudent.gpa)}
@@ -522,16 +522,16 @@ const StudentProfiles = () => {
                       />
                     </Typography>
                     <Typography>
-                      <strong>Tổng tín chỉ:</strong>{" "}
+                      <strong>Tổng tín chỉ:</strong>{' '}
                       {selectedStudent.totalCredits}
                     </Typography>
                     <Typography>
-                      <strong>Xếp loại:</strong>{" "}
+                      <strong>Xếp loại:</strong>{' '}
                       {selectedStudent.gpa >= 3.5
-                        ? "Giỏi"
+                        ? 'Giỏi'
                         : selectedStudent.gpa >= 2.5
-                        ? "Khá"
-                        : "Trung bình"}
+                          ? 'Khá'
+                          : 'Trung bình'}
                     </Typography>
                   </CardContent>
                 </Card>

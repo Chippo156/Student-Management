@@ -106,31 +106,37 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [anchorEl, setAnchorEl] = (useState < null) | (HTMLElement > null);
+  const [selectedUser, setSelectedUser] = (useState < User) | (null > null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+  const [dialogMode, setDialogMode] =
+    (useState < 'create') | ('edit' > 'create');
 
-  const colors = useMemo(() => ({
-    primary: theme.palette.primary.main,
-    secondary: theme.palette.secondary.main,
-    success: theme.palette.success.main,
-    warning: theme.palette.warning.main,
-    error: theme.palette.error.main,
-    info: theme.palette.info.main,
-    background: theme.palette.background.default,
-    paper: theme.palette.background.paper,
-    text: theme.palette.text.primary,
-    textSecondary: theme.palette.text.secondary,
-  }), [theme]);
+  const colors = useMemo(
+    () => ({
+      primary: theme.palette.primary.main,
+      secondary: theme.palette.secondary.main,
+      success: theme.palette.success.main,
+      warning: theme.palette.warning.main,
+      error: theme.palette.error.main,
+      info: theme.palette.info.main,
+      background: theme.palette.background.default,
+      paper: theme.palette.background.paper,
+      text: theme.palette.text.primary,
+      textSecondary: theme.palette.text.secondary,
+    }),
+    [theme]
+  );
 
   const filteredUsers = useMemo(() => {
-    return users.filter(user => {
-      const matchesSearch = user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    return users.filter((user) => {
+      const matchesSearch =
+        user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesRole = filterRole === 'all' || user.role === filterRole;
-      const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
-      
+      const matchesStatus =
+        filterStatus === 'all' || user.status === filterStatus;
+
       return matchesSearch && matchesRole && matchesStatus;
     });
   }, [users, searchTerm, filterRole, filterStatus]);
@@ -218,7 +224,7 @@ const UserManagement = () => {
 
   const handleDelete = () => {
     if (selectedUser) {
-      setUsers(users.filter(user => user.id !== selectedUser.id));
+      setUsers(users.filter((user) => user.id !== selectedUser.id));
     }
     handleMenuClose();
   };
@@ -233,7 +239,10 @@ const UserManagement = () => {
     <Box sx={{ p: 3, backgroundColor: colors.background, minHeight: '100vh' }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text, mb: 1 }}>
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 700, color: colors.text, mb: 1 }}
+        >
           Quản lý người dùng
         </Typography>
         <Typography variant="body1" color="text.secondary">
@@ -384,7 +393,10 @@ const UserManagement = () => {
                       label={getStatusLabel(user.status)}
                       size="small"
                       sx={{
-                        backgroundColor: alpha(getStatusColor(user.status), 0.1),
+                        backgroundColor: alpha(
+                          getStatusColor(user.status),
+                          0.1
+                        ),
                         color: getStatusColor(user.status),
                         fontWeight: 600,
                       }}
@@ -436,7 +448,9 @@ const UserManagement = () => {
         fullWidth
       >
         <DialogTitle>
-          {dialogMode === 'create' ? 'Thêm người dùng mới' : 'Chỉnh sửa thông tin'}
+          {dialogMode === 'create'
+            ? 'Thêm người dùng mới'
+            : 'Chỉnh sửa thông tin'}
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -497,9 +511,7 @@ const UserManagement = () => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setOpenDialog(false)}>
-            Hủy
-          </Button>
+          <Button onClick={() => setOpenDialog(false)}>Hủy</Button>
           <Button variant="contained" onClick={() => setOpenDialog(false)}>
             {dialogMode === 'create' ? 'Thêm mới' : 'Cập nhật'}
           </Button>

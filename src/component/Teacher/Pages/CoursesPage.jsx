@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -14,10 +14,10 @@ import {
   TableHead,
   TableRow,
   Paper,
-} from "@mui/material";
-import { School, People, Schedule } from "@mui/icons-material";
-import { useSelector } from "react-redux";
-import { teacherService, courseService } from "../../../service";
+} from '@mui/material';
+import { School, People, Schedule } from '@mui/icons-material';
+import { useSelector } from 'react-redux';
+import { teacherService, courseService } from '../../../service';
 
 const CoursesPage = () => {
   const [courses, setCourses] = useState([]);
@@ -53,7 +53,7 @@ const CoursesPage = () => {
 
         setCourses(coursesWithStudentCount);
       } catch (error) {
-        console.error("Error fetching courses:", error);
+        console.error('Error fetching courses:', error);
       } finally {
         setLoading(false);
       }
@@ -66,13 +66,12 @@ const CoursesPage = () => {
 
   const getStatusChip = (status) => {
     const statusConfig = {
-      active: { label: "Đang diễn ra", color: "success" },
-      upcoming: { label: "Sắp bắt đầu", color: "warning" },
-      completed: { label: "Đã kết thúc", color: "default" },
+      active: { label: 'Đang diễn ra', color: 'success' },
+      upcoming: { label: 'Sắp bắt đầu', color: 'warning' },
+      completed: { label: 'Đã kết thúc', color: 'default' },
     };
 
-    const config =
-      statusConfig[status] || statusConfig.active;
+    const config = statusConfig[status] || statusConfig.active;
     return <Chip label={config.label} color={config.color} size="small" />;
   };
 
@@ -80,10 +79,10 @@ const CoursesPage = () => {
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "400px",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
         }}
       >
         <Typography>Đang tải...</Typography>
@@ -93,21 +92,21 @@ const CoursesPage = () => {
 
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: "bold" }}>
+      <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: 'bold' }}>
         Môn học của tôi
       </Typography>
 
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={4}>
-          <Card sx={{ backgroundColor: "#e3f2fd" }}>
-            <CardContent sx={{ display: "flex", alignItems: "center" }}>
-              <School sx={{ fontSize: 40, color: "#1976d2", mr: 2 }} />
+          <Card sx={{ backgroundColor: '#e3f2fd' }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
+              <School sx={{ fontSize: 40, color: '#1976d2', mr: 2 }} />
               <Box>
                 <Typography
                   variant="h5"
                   component="div"
-                  sx={{ fontWeight: "bold" }}
+                  sx={{ fontWeight: 'bold' }}
                 >
                   {courses.length}
                 </Typography>
@@ -120,14 +119,14 @@ const CoursesPage = () => {
         </Grid>
 
         <Grid item xs={12} sm={4}>
-          <Card sx={{ backgroundColor: "#e8f5e8" }}>
-            <CardContent sx={{ display: "flex", alignItems: "center" }}>
-              <People sx={{ fontSize: 40, color: "#388e3c", mr: 2 }} />
+          <Card sx={{ backgroundColor: '#e8f5e8' }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
+              <People sx={{ fontSize: 40, color: '#388e3c', mr: 2 }} />
               <Box>
                 <Typography
                   variant="h5"
                   component="div"
-                  sx={{ fontWeight: "bold" }}
+                  sx={{ fontWeight: 'bold' }}
                 >
                   {courses.reduce(
                     (total, course) => total + course.studentCount,
@@ -143,17 +142,17 @@ const CoursesPage = () => {
         </Grid>
 
         <Grid item xs={12} sm={4}>
-          <Card sx={{ backgroundColor: "#fff3e0" }}>
-            <CardContent sx={{ display: "flex", alignItems: "center" }}>
-              <Schedule sx={{ fontSize: 40, color: "#f57c00", mr: 2 }} />
+          <Card sx={{ backgroundColor: '#fff3e0' }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
+              <Schedule sx={{ fontSize: 40, color: '#f57c00', mr: 2 }} />
               <Box>
                 <Typography
                   variant="h5"
                   component="div"
-                  sx={{ fontWeight: "bold" }}
+                  sx={{ fontWeight: 'bold' }}
                 >
                   {
-                    courses.filter((course) => course.status === "active")
+                    courses.filter((course) => course.status === 'active')
                       .length
                   }
                 </Typography>
@@ -171,13 +170,13 @@ const CoursesPage = () => {
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                <TableCell sx={{ fontWeight: "bold" }}>Mã môn học</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Tên môn học</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Số tín chỉ</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Số sinh viên</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Trạng thái</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Thao tác</TableCell>
+              <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                <TableCell sx={{ fontWeight: 'bold' }}>Mã môn học</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Tên môn học</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Số tín chỉ</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Số sinh viên</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Trạng thái</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Thao tác</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -216,7 +215,7 @@ const CoursesPage = () => {
         </TableContainer>
 
         {courses.length === 0 && (
-          <Box sx={{ p: 4, textAlign: "center" }}>
+          <Box sx={{ p: 4, textAlign: 'center' }}>
             <Typography variant="body1" color="text.secondary">
               Bạn Chưa cập nhật môn học nào được phân công
             </Typography>

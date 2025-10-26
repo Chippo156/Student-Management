@@ -1,15 +1,15 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { authService } from "../service/authService";
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { authService } from '../service/authService';
 
 const initialState = {
   account: null,
-  isAuthenticated: !!localStorage.getItem("access_token"),
+  isAuthenticated: !!localStorage.getItem('access_token'),
   isLoading: false,
   error: null,
 };
 
 export const loginUser = createAsyncThunk(
-  "user/login",
+  'user/login',
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await authService.login(credentials);
@@ -18,12 +18,12 @@ export const loginUser = createAsyncThunk(
       }
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.message || "Login failed");
+      return rejectWithValue(error.message || 'Login failed');
     }
   }
 );
 
-export const logoutUser = createAsyncThunk("user/logout", async () => {
+export const logoutUser = createAsyncThunk('user/logout', async () => {
   try {
     await authService.logout();
   } catch (error) {
@@ -32,7 +32,7 @@ export const logoutUser = createAsyncThunk("user/logout", async () => {
 });
 
 export const userSlice = createSlice({
-  name: "user",
+  name: 'user',
   initialState,
   reducers: {
     doLoginAction: (state, action) => {
@@ -60,11 +60,11 @@ export const userSlice = createSlice({
         trainningLevel: user.trainningLevel ?? undefined,
         totalCreditsRequired: user.totalCreditsRequired ?? undefined,
       };
-      localStorage.setItem("access_token", token.accessToken);
-      localStorage.setItem("refresh_token", token.refreshToken);
+      localStorage.setItem('access_token', token.accessToken);
+      localStorage.setItem('refresh_token', token.refreshToken);
       const persistedUserId = user.studentId ?? user.user?.userId ?? undefined;
       if (persistedUserId)
-        localStorage.setItem("user_id", String(persistedUserId));
+        localStorage.setItem('user_id', String(persistedUserId));
     },
     doGetAccountAction: (state, action) => {
       if (state.account) {
@@ -74,16 +74,16 @@ export const userSlice = createSlice({
       }
     },
     doLogoutAction: (state) => {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      localStorage.removeItem("user_id");
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user_id');
       state.isAuthenticated = false;
       state.account = null;
       state.error = null;
     },
     doLoadUserFromToken: (state) => {
-      const token = localStorage.getItem("access_token");
-      const refreshToken = localStorage.getItem("refresh_token");
+      const token = localStorage.getItem('access_token');
+      const refreshToken = localStorage.getItem('refresh_token');
       if (token && refreshToken) {
         state.isAuthenticated = true;
         state.account = {
@@ -102,8 +102,8 @@ export const userSlice = createSlice({
       if (state.account) {
         state.account.accessToken = action.payload.accessToken;
         state.account.refreshToken = action.payload.refreshToken;
-        localStorage.setItem("access_token", action.payload.accessToken);
-        localStorage.setItem("refresh_token", action.payload.refreshToken);
+        localStorage.setItem('access_token', action.payload.accessToken);
+        localStorage.setItem('refresh_token', action.payload.refreshToken);
       }
     },
   },
@@ -140,23 +140,23 @@ export const userSlice = createSlice({
           trainningLevel: user.trainningLevel ?? undefined,
           totalCreditsRequired: user.totalCreditsRequired ?? undefined,
         };
-        localStorage.setItem("access_token", token.accessToken);
-        localStorage.setItem("refresh_token", token.refreshToken);
+        localStorage.setItem('access_token', token.accessToken);
+        localStorage.setItem('refresh_token', token.refreshToken);
         const persistedUserId =
           user.studentId ?? user.user?.userId ?? undefined;
         if (persistedUserId)
-          localStorage.setItem("user_id", String(persistedUserId));
+          localStorage.setItem('user_id', String(persistedUserId));
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || action.error.message || "Login failed";
+        state.error = action.payload || action.error.message || 'Login failed';
         state.isAuthenticated = false;
         state.account = null;
       })
       .addCase(logoutUser.fulfilled, (state) => {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("user_id");
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user_id');
         state.isAuthenticated = false;
         state.account = null;
         state.error = null;

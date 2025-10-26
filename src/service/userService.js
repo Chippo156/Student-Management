@@ -1,32 +1,44 @@
-import { message } from "antd";
-import axios from "../until/customize-axios";
+import { message } from 'antd';
+import axios from '../until/customize-axios';
 
 export const userService = {
   getUserInfo: async () => {
-    const response = await axios.get("/api/Student/byToken");
+    const response = await axios.get('/api/Student/byToken');
     if (!response.success) {
-      message.error(response.message || "Lấy thông tin người dùng thất bại");
-      throw new Error(response.message || "Get user info failed");
+      message.error(response.message || 'Lấy thông tin người dùng thất bại');
+      throw new Error(response.message || 'Get user info failed');
     }
     return response.data;
   },
-
-  updateProfile: async (data) => {
+  updateStudentInformation: async (data) => {
     try {
-      const response = await axios.put("/api/v1/User/profile", data);
+      const response = await axios.put(
+        '/api/Student/UpdateStudentInformation',
+        data
+      );
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Update profile failed");
+      throw new Error(
+        error.response?.data?.message || 'Update student information failed'
+      );
+    }
+  },
+  updateProfile: async (data) => {
+    try {
+      const response = await axios.put('/api/v1/User/profile', data);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Update profile failed');
     }
   },
 
   changePassword: async (data) => {
     try {
-      const response = await axios.post("/api/v1/User/change-password", data);
+      const response = await axios.post('/api/v1/User/change-password', data);
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Change password failed"
+        error.response?.data?.message || 'Change password failed'
       );
     }
   },
@@ -34,28 +46,28 @@ export const userService = {
   uploadAvatar: async (file) => {
     try {
       const formData = new FormData();
-      formData.append("avatar", file);
+      formData.append('avatar', file);
       const response = await axios.post(
-        "/api/v1/User/upload-avatar",
+        '/api/v1/User/upload-avatar',
         formData,
         {
           headers: {
-            "Content-Type": "multipart/form-data",
+            'Content-Type': 'multipart/form-data',
           },
         }
       );
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Upload avatar failed");
+      throw new Error(error.response?.data?.message || 'Upload avatar failed');
     }
   },
 
   getAllUsers: async (params) => {
     try {
-      const response = await axios.get("/api/v1/User/all", { params });
+      const response = await axios.get('/api/v1/User/all', { params });
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Get all users failed");
+      throw new Error(error.response?.data?.message || 'Get all users failed');
     }
   },
 
@@ -64,16 +76,16 @@ export const userService = {
       const response = await axios.get(`/api/v1/User/${userId}`);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Get user by ID failed");
+      throw new Error(error.response?.data?.message || 'Get user by ID failed');
     }
   },
 
   createUser: async (userData) => {
     try {
-      const response = await axios.post("/api/v1/User/create", userData);
+      const response = await axios.post('/api/v1/User/create', userData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Create user failed");
+      throw new Error(error.response?.data?.message || 'Create user failed');
     }
   },
 
@@ -82,7 +94,7 @@ export const userService = {
       const response = await axios.put(`/api/v1/User/${userId}`, userData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Update user failed");
+      throw new Error(error.response?.data?.message || 'Update user failed');
     }
   },
 
@@ -91,7 +103,7 @@ export const userService = {
       const response = await axios.delete(`/api/v1/User/${userId}`);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Delete user failed");
+      throw new Error(error.response?.data?.message || 'Delete user failed');
     }
   },
 
@@ -103,7 +115,7 @@ export const userService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Change user status failed"
+        error.response?.data?.message || 'Change user status failed'
       );
     }
   },

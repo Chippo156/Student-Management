@@ -1,8 +1,8 @@
-import React from "react";
-import { Outlet } from "react-router-dom";
-import HeaderPage from "../Header";
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import HeaderPage from '../Header';
 
-const LayoutUser= () => {
+const LayoutUser = () => {
   return (
     <div>
       <HeaderPage />

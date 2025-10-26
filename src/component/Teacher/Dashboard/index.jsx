@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Grid, Card, CardContent, Typography, Paper } from '@mui/material';
-import { 
-  School, 
-  Person, 
-  Assignment, 
+import {
+  School,
+  Person,
+  Assignment,
   Schedule,
-  TrendingUp 
+  TrendingUp,
 } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { teacherService, courseService } from '../../../service';
@@ -15,7 +15,7 @@ const TeacherDashboard = () => {
     totalCourses: 0,
     totalStudents: 0,
     upcomingClasses: 0,
-    pendingGrades: 0
+    pendingGrades: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -25,23 +25,27 @@ const TeacherDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         // Lấy thông tin courses của giảng viên
-        const coursesResponse = await teacherService.getTeacherCourses(user.userId);
+        const coursesResponse = await teacherService.getTeacherCourses(
+          user.userId
+        );
         const courses = coursesResponse.data || [];
 
         // Tính toán số liệu dashboard
         let totalStudents = 0;
         for (const course of courses) {
-          const studentsResponse = await courseService.getCourseStudents(course.id);
+          const studentsResponse = await courseService.getCourseStudents(
+            course.id
+          );
           totalStudents += studentsResponse.data?.length || 0;
         }
 
         setDashboardData({
           totalCourses: courses.length,
           totalStudents,
-          upcomingClasses: courses.filter((course) =>
-            new Date(course.nextClass) > new Date()
+          upcomingClasses: courses.filter(
+            (course) => new Date(course.nextClass) > new Date()
           ).length,
-          pendingGrades: 0 // Có thể tính sau
+          pendingGrades: 0, // Có thể tính sau
         });
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -60,31 +64,38 @@ const TeacherDashboard = () => {
       title: 'Tổng số môn học',
       value: dashboardData.totalCourses,
       icon: <School sx={{ fontSize: 40, color: '#1976d2' }} />,
-      color: '#e3f2fd'
+      color: '#e3f2fd',
     },
     {
       title: 'Tổng số sinh viên',
       value: dashboardData.totalStudents,
       icon: <Person sx={{ fontSize: 40, color: '#388e3c' }} />,
-      color: '#e8f5e8'
+      color: '#e8f5e8',
     },
     {
       title: 'Lớp sắp tới',
       value: dashboardData.upcomingClasses,
       icon: <Schedule sx={{ fontSize: 40, color: '#f57c00' }} />,
-      color: '#fff3e0'
+      color: '#fff3e0',
     },
     {
       title: 'Điểm chưa chấm',
       value: dashboardData.pendingGrades,
       icon: <Assignment sx={{ fontSize: 40, color: '#d32f2f' }} />,
-      color: '#ffebee'
-    }
+      color: '#ffebee',
+    },
   ];
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+        }}
+      >
         <Typography>Đang tải...</Typography>
       </Box>
     );
@@ -112,19 +123,25 @@ const TeacherDashboard = () => {
                 transition: 'transform 0.2s',
                 '&:hover': {
                   transform: 'translateY(-5px)',
-                  boxShadow: '0 8px 30px rgba(0,0,0,0.15)'
-                }
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+                },
               }}
             >
-              <CardContent sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                height: '100%',
-                p: 2
-              }}>
+              <CardContent
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  height: '100%',
+                  p: 2,
+                }}
+              >
                 <Box>
-                  <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  <Typography
+                    variant="h4"
+                    component="div"
+                    sx={{ fontWeight: 'bold', mb: 1 }}
+                  >
                     {card.value}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -142,7 +159,11 @@ const TeacherDashboard = () => {
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 3, height: 300 }}>
-            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ display: 'flex', alignItems: 'center' }}
+            >
               <TrendingUp sx={{ mr: 1 }} />
               Hoạt động gần đây
             </Typography>
@@ -154,7 +175,11 @@ const TeacherDashboard = () => {
 
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 3, height: 300 }}>
-            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ display: 'flex', alignItems: 'center' }}
+            >
               <Schedule sx={{ mr: 1 }} />
               Lịch dạy hôm nay
             </Typography>

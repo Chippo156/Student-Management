@@ -1,6 +1,14 @@
 // API Types and Request/Response interfaces
 
-import { User, Student, Course, Class, Program, Faculty, Department } from './database';
+import {
+  User,
+  Student,
+  Course,
+  Class,
+  Program,
+  Faculty,
+  Department,
+} from './database';
 
 // Generic API Response
 export interface ApiResponse<T = any> {

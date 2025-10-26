@@ -164,7 +164,6 @@
   }
 }
 
-
 .product_search-name {
   white-space: normal;
   overflow: hidden;
@@ -188,7 +187,7 @@
   .title_info {
     display: flex;
     flex-direction: column;
-    align-items: "center";
+    align-items: 'center';
     .title_name {
       font-size: 20rem;
       margin-bottom: 0px;

@@ -263,31 +263,31 @@ export interface AdviserAssignment {
 export enum AccountStatus {
   Inactive = 0,
   Active = 1,
-  Suspended = 2
+  Suspended = 2,
 }
 
 export enum Gender {
   Male = 0,
   Female = 1,
-  Other = 2
+  Other = 2,
 }
 
 export enum EnrollmentStatus {
   Enrolled = 0,
   Dropped = 1,
-  Completed = 2
+  Completed = 2,
 }
 
 export enum NotificationStatus {
   Unread = 0,
-  Read = 1
+  Read = 1,
 }
 
 export enum DocumentRequestStatus {
   Pending = 0,
   Processing = 1,
   Completed = 2,
-  Rejected = 3
+  Rejected = 3,
 }
 
 // Database table info for management
@@ -317,68 +317,76 @@ export interface ForeignKeyInfo {
 
 export const DATABASE_SCHEMA: TableInfo[] = [
   {
-    name: "Users",
-    displayName: "Người dùng",
-    primaryKey: "userId",
+    name: 'Users',
+    displayName: 'Người dùng',
+    primaryKey: 'userId',
     fields: [
-      { name: "userId", type: "int", required: true, isPrimaryKey: true },
-      { name: "username", type: "nvarchar", required: true },
-      { name: "fullName", type: "nvarchar", required: true },
-      { name: "passwordHash", type: "nvarchar", required: true },
-      { name: "email", type: "nvarchar", required: true },
-      { name: "phone", type: "nvarchar", required: true },
-      { name: "accountStatus", type: "int", required: true },
-      { name: "refreshToken", type: "nvarchar", required: true },
-      { name: "refreshTokenExpiryTime", type: "datetime2", required: true },
-      { name: "createdAt", type: "datetime2", required: true },
-      { name: "roleId", type: "int", required: true, isForeignKey: true },
-      { name: "address", type: "nvarchar", required: true },
-      { name: "avatarUrl", type: "nvarchar", required: true },
-      { name: "gender", type: "int", required: true }
+      { name: 'userId', type: 'int', required: true, isPrimaryKey: true },
+      { name: 'username', type: 'nvarchar', required: true },
+      { name: 'fullName', type: 'nvarchar', required: true },
+      { name: 'passwordHash', type: 'nvarchar', required: true },
+      { name: 'email', type: 'nvarchar', required: true },
+      { name: 'phone', type: 'nvarchar', required: true },
+      { name: 'accountStatus', type: 'int', required: true },
+      { name: 'refreshToken', type: 'nvarchar', required: true },
+      { name: 'refreshTokenExpiryTime', type: 'datetime2', required: true },
+      { name: 'createdAt', type: 'datetime2', required: true },
+      { name: 'roleId', type: 'int', required: true, isForeignKey: true },
+      { name: 'address', type: 'nvarchar', required: true },
+      { name: 'avatarUrl', type: 'nvarchar', required: true },
+      { name: 'gender', type: 'int', required: true },
     ],
     foreignKeys: [
-      { field: "roleId", referencedTable: "Roles", referencedField: "roleId" }
-    ]
+      { field: 'roleId', referencedTable: 'Roles', referencedField: 'roleId' },
+    ],
   },
   {
-    name: "Students",
-    displayName: "Sinh viên",
-    primaryKey: "id",
+    name: 'Students',
+    displayName: 'Sinh viên',
+    primaryKey: 'id',
     fields: [
-      { name: "id", type: "int", required: true, isPrimaryKey: true },
-      { name: "userId", type: "int", required: true, isForeignKey: true },
-      { name: "mssv", type: "nvarchar", required: true },
-      { name: "classId", type: "int", required: true, isForeignKey: true }
+      { name: 'id', type: 'int', required: true, isPrimaryKey: true },
+      { name: 'userId', type: 'int', required: true, isForeignKey: true },
+      { name: 'mssv', type: 'nvarchar', required: true },
+      { name: 'classId', type: 'int', required: true, isForeignKey: true },
     ],
     foreignKeys: [
-      { field: "userId", referencedTable: "Users", referencedField: "userId" },
-      { field: "classId", referencedTable: "Classes", referencedField: "classId" }
-    ]
+      { field: 'userId', referencedTable: 'Users', referencedField: 'userId' },
+      {
+        field: 'classId',
+        referencedTable: 'Classes',
+        referencedField: 'classId',
+      },
+    ],
   },
   {
-    name: "Courses",
-    displayName: "Môn học",
-    primaryKey: "courseId",
+    name: 'Courses',
+    displayName: 'Môn học',
+    primaryKey: 'courseId',
     fields: [
-      { name: "courseId", type: "int", required: true, isPrimaryKey: true },
-      { name: "courseCode", type: "nvarchar", required: true },
-      { name: "courseName", type: "nvarchar", required: true },
-      { name: "creditsTheory", type: "int", required: true },
-      { name: "creditsLab", type: "int", required: true }
-    ]
+      { name: 'courseId', type: 'int', required: true, isPrimaryKey: true },
+      { name: 'courseCode', type: 'nvarchar', required: true },
+      { name: 'courseName', type: 'nvarchar', required: true },
+      { name: 'creditsTheory', type: 'int', required: true },
+      { name: 'creditsLab', type: 'int', required: true },
+    ],
   },
   {
-    name: "Classes",
-    displayName: "Lớp học",
-    primaryKey: "classId",
+    name: 'Classes',
+    displayName: 'Lớp học',
+    primaryKey: 'classId',
     fields: [
-      { name: "classId", type: "int", required: true, isPrimaryKey: true },
-      { name: "className", type: "nvarchar", required: true },
-      { name: "programId", type: "int", required: true, isForeignKey: true }
+      { name: 'classId', type: 'int', required: true, isPrimaryKey: true },
+      { name: 'className', type: 'nvarchar', required: true },
+      { name: 'programId', type: 'int', required: true, isForeignKey: true },
     ],
     foreignKeys: [
-      { field: "programId", referencedTable: "Program", referencedField: "programId" }
-    ]
-  }
+      {
+        field: 'programId',
+        referencedTable: 'Program',
+        referencedField: 'programId',
+      },
+    ],
+  },
   // Add more tables as needed
 ];

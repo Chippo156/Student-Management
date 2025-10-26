@@ -54,7 +54,7 @@ const sampleCourses = [
     students: 45,
     status: 'active',
     semester: 'HK1 2023-2024',
-    description: 'Môn học cơ bản về lập trình'
+    description: 'Môn học cơ bản về lập trình',
   },
   {
     id: 2,
@@ -66,7 +66,7 @@ const sampleCourses = [
     students: 38,
     status: 'active',
     semester: 'HK1 2023-2024',
-    description: 'Học về cấu trúc dữ liệu và các giải thuật cơ bản'
+    description: 'Học về cấu trúc dữ liệu và các giải thuật cơ bản',
   },
   {
     id: 3,
@@ -78,7 +78,7 @@ const sampleCourses = [
     students: 52,
     status: 'active',
     semester: 'HK1 2023-2024',
-    description: 'Tiếng Anh chuyên ngành công nghệ thông tin'
+    description: 'Tiếng Anh chuyên ngành công nghệ thông tin',
   },
   {
     id: 4,
@@ -90,7 +90,7 @@ const sampleCourses = [
     students: 0,
     status: 'draft',
     semester: 'HK2 2023-2024',
-    description: 'Thiết kế và quản lý cơ sở dữ liệu'
+    description: 'Thiết kế và quản lý cơ sở dữ liệu',
   },
   {
     id: 5,
@@ -102,47 +102,54 @@ const sampleCourses = [
     students: 68,
     status: 'inactive',
     semester: 'HK1 2023-2024',
-    description: 'Môn toán cao cấp cơ bản'
+    description: 'Môn toán cao cấp cơ bản',
   },
 ];
 
 const CourseManagement = () => {
   const theme = useTheme();
-  const [courses, setCourses] = useState<Course[]>(sampleCourses);
+  const [courses, setCourses] = useState(sampleCourses);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+  const [dialogMode, setDialogMode] =
+    (useState < 'create') | ('edit' > 'create');
 
-  const colors = useMemo(() => ({
-    primary: theme.palette.primary.main,
-    secondary: theme.palette.secondary.main,
-    success: theme.palette.success.main,
-    warning: theme.palette.warning.main,
-    error: theme.palette.error.main,
-    info: theme.palette.info.main,
-    background: theme.palette.background.default,
-    paper: theme.palette.background.paper,
-    text: theme.palette.text.primary,
-    textSecondary: theme.palette.text.secondary,
-  }), [theme]);
+  const colors = useMemo(
+    () => ({
+      primary: theme.palette.primary.main,
+      secondary: theme.palette.secondary.main,
+      success: theme.palette.success.main,
+      warning: theme.palette.warning.main,
+      error: theme.palette.error.main,
+      info: theme.palette.info.main,
+      background: theme.palette.background.default,
+      paper: theme.palette.background.paper,
+      text: theme.palette.text.primary,
+      textSecondary: theme.palette.text.secondary,
+    }),
+    [theme]
+  );
 
   const filteredCourses = useMemo(() => {
-    return courses.filter(course => {
-      const matchesSearch = course.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           course.courseCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           course.teacher.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesDepartment = filterDepartment === 'all' || course.department === filterDepartment;
-      const matchesStatus = filterStatus === 'all' || course.status === filterStatus;
-      
+    return courses.filter((course) => {
+      const matchesSearch =
+        course.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.courseCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.teacher.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesDepartment =
+        filterDepartment === 'all' || course.department === filterDepartment;
+      const matchesStatus =
+        filterStatus === 'all' || course.status === filterStatus;
+
       return matchesSearch && matchesDepartment && matchesStatus;
     });
   }, [courses, searchTerm, filterDepartment, filterStatus]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case 'active':
         return colors.success;
@@ -155,7 +162,7 @@ const CourseManagement = () => {
     }
   };
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status) => {
     switch (status) {
       case 'active':
         return 'Đang hoạt động';
@@ -168,7 +175,7 @@ const CourseManagement = () => {
     }
   };
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, course: Course) => {
+  const handleMenuOpen = (event, course) => {
     setAnchorEl(event.currentTarget);
     setSelectedCourse(course);
   };
@@ -186,7 +193,7 @@ const CourseManagement = () => {
 
   const handleDelete = () => {
     if (selectedCourse) {
-      setCourses(courses.filter(course => course.id !== selectedCourse.id));
+      setCourses(courses.filter((course) => course.id !== selectedCourse.id));
     }
     handleMenuClose();
   };
@@ -203,7 +210,10 @@ const CourseManagement = () => {
     <Box sx={{ p: 3, backgroundColor: colors.background, minHeight: '100vh' }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text, mb: 1 }}>
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 700, color: colors.text, mb: 1 }}
+        >
           Quản lý môn học
         </Typography>
         <Typography variant="body1" color="text.secondary">
@@ -214,18 +224,38 @@ const CourseManagement = () => {
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ borderRadius: 2, background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.primary, 0.05)} 100%)` }}>
+          <Card
+            sx={{
+              borderRadius: 2,
+              background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.primary, 0.05)} 100%)`,
+            }}
+          >
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
                     Tổng môn học
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
                     {courses.length}
                   </Typography>
                 </Box>
-                <Avatar sx={{ backgroundColor: alpha(colors.primary, 0.1), color: colors.primary }}>
+                <Avatar
+                  sx={{
+                    backgroundColor: alpha(colors.primary, 0.1),
+                    color: colors.primary,
+                  }}
+                >
                   <SchoolIcon />
                 </Avatar>
               </Box>
@@ -233,18 +263,38 @@ const CourseManagement = () => {
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ borderRadius: 2, background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.success, 0.05)} 100%)` }}>
+          <Card
+            sx={{
+              borderRadius: 2,
+              background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.success, 0.05)} 100%)`,
+            }}
+          >
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
                     Đang hoạt động
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {courses.filter(c => c.status === 'active').length}
+                    {courses.filter((c) => c.status === 'active').length}
                   </Typography>
                 </Box>
-                <Avatar sx={{ backgroundColor: alpha(colors.success, 0.1), color: colors.success }}>
+                <Avatar
+                  sx={{
+                    backgroundColor: alpha(colors.success, 0.1),
+                    color: colors.success,
+                  }}
+                >
                   <AssignmentIcon />
                 </Avatar>
               </Box>
@@ -252,18 +302,38 @@ const CourseManagement = () => {
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ borderRadius: 2, background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.info, 0.05)} 100%)` }}>
+          <Card
+            sx={{
+              borderRadius: 2,
+              background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.info, 0.05)} 100%)`,
+            }}
+          >
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
                     Tổng sinh viên
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
                     {courses.reduce((sum, course) => sum + course.students, 0)}
                   </Typography>
                 </Box>
-                <Avatar sx={{ backgroundColor: alpha(colors.info, 0.1), color: colors.info }}>
+                <Avatar
+                  sx={{
+                    backgroundColor: alpha(colors.info, 0.1),
+                    color: colors.info,
+                  }}
+                >
                   <PersonIcon />
                 </Avatar>
               </Box>
@@ -271,18 +341,38 @@ const CourseManagement = () => {
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ borderRadius: 2, background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.warning, 0.05)} 100%)` }}>
+          <Card
+            sx={{
+              borderRadius: 2,
+              background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.warning, 0.05)} 100%)`,
+            }}
+          >
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
                     Khoa/Phòng ban
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
                     {departments.length}
                   </Typography>
                 </Box>
-                <Avatar sx={{ backgroundColor: alpha(colors.warning, 0.1), color: colors.warning }}>
+                <Avatar
+                  sx={{
+                    backgroundColor: alpha(colors.warning, 0.1),
+                    color: colors.warning,
+                  }}
+                >
                   <ScheduleIcon />
                 </Avatar>
               </Box>
@@ -321,8 +411,10 @@ const CourseManagement = () => {
                   sx={{ borderRadius: 2 }}
                 >
                   <MenuItem value="all">Tất cả</MenuItem>
-                  {departments.map(dept => (
-                    <MenuItem key={dept} value={dept}>{dept}</MenuItem>
+                  {departments.map((dept) => (
+                    <MenuItem key={dept} value={dept}>
+                      {dept}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -349,7 +441,12 @@ const CourseManagement = () => {
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={handleCreate}
-                sx={{ borderRadius: 2, height: 56, textTransform: 'none', fontWeight: 600 }}
+                sx={{
+                  borderRadius: 2,
+                  height: 56,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                }}
               >
                 Thêm môn học
               </Button>
@@ -378,10 +475,15 @@ const CourseManagement = () => {
               {filteredCourses.map((course) => (
                 <TableRow
                   key={course.id}
-                  sx={{ '&:hover': { backgroundColor: alpha(colors.primary, 0.02) } }}
+                  sx={{
+                    '&:hover': { backgroundColor: alpha(colors.primary, 0.02) },
+                  }}
                 >
                   <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: colors.primary }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600, color: colors.primary }}
+                    >
                       {course.courseCode}
                     </Typography>
                   </TableCell>
@@ -422,7 +524,10 @@ const CourseManagement = () => {
                       label={getStatusLabel(course.status)}
                       size="small"
                       sx={{
-                        backgroundColor: alpha(getStatusColor(course.status), 0.1),
+                        backgroundColor: alpha(
+                          getStatusColor(course.status),
+                          0.1
+                        ),
                         color: getStatusColor(course.status),
                         fontWeight: 600,
                       }}
@@ -446,7 +551,11 @@ const CourseManagement = () => {
       </Card>
 
       {/* Action Menu */}
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+      >
         <MenuItem onClick={handleEdit}>
           <EditIcon sx={{ mr: 1 }} fontSize="small" />
           Chỉnh sửa
@@ -458,7 +567,12 @@ const CourseManagement = () => {
       </Menu>
 
       {/* Create/Edit Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
           {dialogMode === 'create' ? 'Thêm môn học mới' : 'Chỉnh sửa môn học'}
         </DialogTitle>
@@ -485,8 +599,10 @@ const CourseManagement = () => {
                   defaultValue={selectedCourse?.department || ''}
                   label="Khoa"
                 >
-                  {departments.map(dept => (
-                    <MenuItem key={dept} value={dept}>{dept}</MenuItem>
+                  {departments.map((dept) => (
+                    <MenuItem key={dept} value={dept}>
+                      {dept}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>

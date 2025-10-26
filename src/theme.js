@@ -1,11 +1,11 @@
-import { createTheme } from "@mui/material/styles";
-import { red, green, orange } from "@mui/material/colors";
+import { createTheme } from '@mui/material/styles';
+import { red, green, orange } from '@mui/material/colors';
 
-const HEIGHT_BAR = "58px";
-const HEIGHT_HEADER = "60px";
+const HEIGHT_BAR = '58px';
+const HEIGHT_HEADER = '60px';
 const HEIGHT_CONTENT = `calc(100vh - ${HEIGHT_HEADER} - ${HEIGHT_BAR})`;
 
-const getTheme = (mode = "light") =>
+const getTheme = (mode = 'light') =>
   createTheme({
     m: {
       heightBar: HEIGHT_BAR,
@@ -13,20 +13,20 @@ const getTheme = (mode = "light") =>
       heightContent: HEIGHT_CONTENT,
     },
     palette:
-      mode === "light"
+      mode === 'light'
         ? {
             mode,
             primary: {
-              main: "#1976d2",
-              light: "#63a4ff",
-              dark: "#004ba0",
-              contrastText: "#fff",
+              main: '#1976d2',
+              light: '#63a4ff',
+              dark: '#004ba0',
+              contrastText: '#fff',
             },
             secondary: {
-              main: "#7c4dff",
-              light: "#b47cff",
-              dark: "#3f1dcb",
-              contrastText: "#fff",
+              main: '#7c4dff',
+              light: '#b47cff',
+              dark: '#3f1dcb',
+              contrastText: '#fff',
             },
             success: {
               main: green[600],
@@ -44,51 +44,51 @@ const getTheme = (mode = "light") =>
               dark: red[800],
             },
             background: {
-              default: "#f4f6fb",
-              paper: "#ffffff",
-              menu: "#f7f9fc",
-              header: "#e3eafc",
-              secondary: "#f0f3fa",
-              hover: "#e3f2fd",
+              default: '#f4f6fb',
+              paper: '#ffffff',
+              menu: '#f7f9fc',
+              header: '#e3eafc',
+              secondary: '#f0f3fa',
+              hover: '#e3f2fd',
             },
             text: {
-              primary: "#222b45",
-              secondary: "#4b5563",
-              disabled: "#b0b8c1",
-              menu: "#222b45",
-              hint: "#6b7280",
+              primary: '#222b45',
+              secondary: '#4b5563',
+              disabled: '#b0b8c1',
+              menu: '#222b45',
+              hint: '#6b7280',
             },
-            divider: "#e0e3e7",
+            divider: '#e0e3e7',
             border: {
-              main: "#e0e3e7",
-              focus: "#1976d2",
+              main: '#e0e3e7',
+              focus: '#1976d2',
             },
             icon: {
-              main: "#1976d2",
-              secondary: "#6b7280",
+              main: '#1976d2',
+              secondary: '#6b7280',
             },
             menu: {
-              active: "#e3f2fd",
-              selected: "#bbdefb",
+              active: '#e3f2fd',
+              selected: '#bbdefb',
             },
             common: {
-              black: "#000000",
-              white: "#ffffff",
+              black: '#000000',
+              white: '#ffffff',
             },
           }
         : {
             mode,
             primary: {
-              main: "#90caf9",
-              light: "#e3f2fd",
-              dark: "#42a5f5",
-              contrastText: "#222b45",
+              main: '#90caf9',
+              light: '#e3f2fd',
+              dark: '#42a5f5',
+              contrastText: '#222b45',
             },
             secondary: {
-              main: "#b39ddb",
-              light: "#ede7f6",
-              dark: "#7e57c2",
-              contrastText: "#fff",
+              main: '#b39ddb',
+              light: '#ede7f6',
+              dark: '#7e57c2',
+              contrastText: '#fff',
             },
             success: {
               main: green[400],
@@ -106,52 +106,52 @@ const getTheme = (mode = "light") =>
               dark: red[700],
             },
             background: {
-              default: "#181c24",
-              paper: "#23272f",
-              menu: "#23272f",
-              header: "#22304a",
-              secondary: "#20232a",
-              hover: "#26334d",
+              default: '#181c24',
+              paper: '#23272f',
+              menu: '#23272f',
+              header: '#22304a',
+              secondary: '#20232a',
+              hover: '#26334d',
             },
             text: {
-              primary: "#f4f6fb",
-              secondary: "#b0b8c1",
-              disabled: "#6b7280",
-              menu: "#f4f6fb",
-              hint: "#b0b8c1",
+              primary: '#f4f6fb',
+              secondary: '#b0b8c1',
+              disabled: '#6b7280',
+              menu: '#f4f6fb',
+              hint: '#b0b8c1',
             },
-            divider: "#23272f",
+            divider: '#23272f',
             border: {
-              main: "#23272f",
-              focus: "#90caf9",
+              main: '#23272f',
+              focus: '#90caf9',
             },
             icon: {
-              main: "#90caf9",
-              secondary: "#b0b8c1",
+              main: '#90caf9',
+              secondary: '#b0b8c1',
             },
             menu: {
-              active: "#26334d",
-              selected: "#22304a",
+              active: '#26334d',
+              selected: '#22304a',
             },
             common: {
-              black: "#000000",
-              white: "#ffffff",
+              black: '#000000',
+              white: '#ffffff',
             },
           },
     components: {
       MuiCssBaseline: {
         styleOverrides: {
           body: {
-            "*::-webkit-scrollbar": {
-              width: "8px",
-              height: "8px",
+            '*::-webkit-scrollbar': {
+              width: '8px',
+              height: '8px',
             },
-            "*::-webkit-scrollbar-thumb": {
-              backgroundColor: "#888",
-              borderRadius: "8px",
+            '*::-webkit-scrollbar-thumb': {
+              backgroundColor: '#888',
+              borderRadius: '8px',
             },
-            "*::-webkit-scrollbar-thumb:hover": {
-              backgroundColor: "#555",
+            '*::-webkit-scrollbar-thumb:hover': {
+              backgroundColor: '#555',
             },
           },
         },
@@ -159,26 +159,26 @@ const getTheme = (mode = "light") =>
       MuiOutlinedInput: {
         styleOverrides: {
           root: ({ theme }) => ({
-            fontSize: "1rem",
-            "& .MuiOutlinedInput-notchedOutline": {
+            fontSize: '1rem',
+            '& .MuiOutlinedInput-notchedOutline': {
               borderColor: theme.palette.divider,
             },
-            "&:hover .MuiOutlinedInput-notchedOutline": {
+            '&:hover .MuiOutlinedInput-notchedOutline': {
               borderColor: theme.palette.primary.main,
             },
-            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
               borderColor: theme.palette.primary.main,
             },
-            "& fieldset": { borderWidth: "1px !important" },
-            "&:hover fieldset": { borderWidth: "2px !important" },
-            "&.Mui-focused fieldset": { borderWidth: "1px !important" },
+            '& fieldset': { borderWidth: '1px !important' },
+            '&:hover fieldset': { borderWidth: '2px !important' },
+            '&.Mui-focused fieldset': { borderWidth: '1px !important' },
           }),
         },
       },
       MuiInputLabel: {
         styleOverrides: {
           root: ({ theme }) => ({
-            "&.Mui-focused": {
+            '&.Mui-focused': {
               color: theme.palette.primary.main,
             },
           }),
@@ -187,8 +187,8 @@ const getTheme = (mode = "light") =>
       MuiTypography: {
         styleOverrides: {
           root: {
-            "&.MuiTypography-body1": {
-              fontSize: "0.875rem",
+            '&.MuiTypography-body1': {
+              fontSize: '0.875rem',
             },
           },
         },
@@ -196,10 +196,10 @@ const getTheme = (mode = "light") =>
       MuiButton: {
         styleOverrides: {
           root: {
-            textTransform: "none",
-            borderWidth: "0.5px",
-            "&:hover": {
-              borderWidth: "1px",
+            textTransform: 'none',
+            borderWidth: '0.5px',
+            '&:hover': {
+              borderWidth: '1px',
             },
           },
         },

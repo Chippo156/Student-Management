@@ -22,12 +22,12 @@ html {
   scroll-behavior: smooth;
 }
 body {
-  font-family: "Roboto", sans-serif;
+  font-family: 'Roboto', sans-serif;
   background-color: #fff;
   height: 100vh;
 }
 .container {
-  font-family: "Roboto", sans-serif;
+  font-family: 'Roboto', sans-serif;
 }
 html,
 body,
@@ -51,15 +51,22 @@ body,
   padding: 0.375rem 0.75rem;
   font-size: 1rem;
   border-radius: 0.25rem;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
-    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    color 0.15s ease-in-out,
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 /* Smooth theme switch animation */
 .theme-transition,
 .theme-transition * {
-  transition: background-color 350ms ease, color 350ms ease,
-    border-color 350ms ease, box-shadow 350ms ease, fill 350ms ease,
+  transition:
+    background-color 350ms ease,
+    color 350ms ease,
+    border-color 350ms ease,
+    box-shadow 350ms ease,
+    fill 350ms ease,
     stroke 350ms ease;
 }
 
@@ -68,7 +75,10 @@ body,
 svg .recharts-layer path,
 svg .recharts-layer rect,
 svg .recharts-layer circle {
-  transition: fill 350ms ease, stroke 350ms ease, opacity 350ms ease;
+  transition:
+    fill 350ms ease,
+    stroke 350ms ease,
+    opacity 350ms ease;
 }
 
 /* Respect reduced motion */

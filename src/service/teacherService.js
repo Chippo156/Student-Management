@@ -1,14 +1,14 @@
-import axios from "../until/customize-axios";
+import axios from '../until/customize-axios';
 
 export const teacherService = {
   // Lấy thông tin giảng viên
   getTeacherInfo: async () => {
     try {
-      const response = await axios.get("/api/v1/Teacher/info");
+      const response = await axios.get('/api/v1/Teacher/info');
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get teacher info failed"
+        error.response?.data?.message || 'Get teacher info failed'
       );
     }
   },
@@ -16,11 +16,11 @@ export const teacherService = {
   // Cập nhật thông tin giảng viên
   updateTeacherInfo: async (data) => {
     try {
-      const response = await axios.put("/api/v1/Teacher/info", data);
+      const response = await axios.put('/api/v1/Teacher/info', data);
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Update teacher info failed"
+        error.response?.data?.message || 'Update teacher info failed'
       );
     }
   },
@@ -29,11 +29,11 @@ export const teacherService = {
   getTeacherCourses: async (semester, academicYear) => {
     try {
       const params = { semester, academicYear };
-      const response = await axios.get("/api/v1/Teacher/courses", { params });
+      const response = await axios.get('/api/v1/Teacher/courses', { params });
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get teacher courses failed"
+        error.response?.data?.message || 'Get teacher courses failed'
       );
     }
   },
@@ -42,11 +42,11 @@ export const teacherService = {
   getTeacherSchedule: async (semester, academicYear) => {
     try {
       const params = { semester, academicYear };
-      const response = await axios.get("/api/v1/Teacher/schedule", { params });
+      const response = await axios.get('/api/v1/Teacher/schedule', { params });
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get teacher schedule failed"
+        error.response?.data?.message || 'Get teacher schedule failed'
       );
     }
   },
@@ -60,7 +60,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get students in course failed"
+        error.response?.data?.message || 'Get students in course failed'
       );
     }
   },
@@ -74,7 +74,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get student grades failed"
+        error.response?.data?.message || 'Get student grades failed'
       );
     }
   },
@@ -89,7 +89,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Update student grades failed"
+        error.response?.data?.message || 'Update student grades failed'
       );
     }
   },
@@ -104,7 +104,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Update student grade failed"
+        error.response?.data?.message || 'Update student grade failed'
       );
     }
   },
@@ -118,7 +118,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get course materials failed"
+        error.response?.data?.message || 'Get course materials failed'
       );
     }
   },
@@ -127,21 +127,21 @@ export const teacherService = {
   uploadCourseMaterial: async (courseId, file, title, description) => {
     try {
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append("title", title);
-      if (description) formData.append("description", description);
+      formData.append('file', file);
+      formData.append('title', title);
+      if (description) formData.append('description', description);
 
       const response = await axios.post(
         `/api/v1/Teacher/courses/${courseId}/materials`,
         formData,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { 'Content-Type': 'multipart/form-data' },
         }
       );
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Upload course material failed"
+        error.response?.data?.message || 'Upload course material failed'
       );
     }
   },
@@ -155,7 +155,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Delete course material failed"
+        error.response?.data?.message || 'Delete course material failed'
       );
     }
   },
@@ -169,7 +169,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get attendance records failed"
+        error.response?.data?.message || 'Get attendance records failed'
       );
     }
   },
@@ -187,7 +187,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Take attendance failed"
+        error.response?.data?.message || 'Take attendance failed'
       );
     }
   },
@@ -201,7 +201,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get assignments failed"
+        error.response?.data?.message || 'Get assignments failed'
       );
     }
   },
@@ -216,7 +216,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Create assignment failed"
+        error.response?.data?.message || 'Create assignment failed'
       );
     }
   },
@@ -231,7 +231,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Update assignment failed"
+        error.response?.data?.message || 'Update assignment failed'
       );
     }
   },
@@ -245,7 +245,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Delete assignment failed"
+        error.response?.data?.message || 'Delete assignment failed'
       );
     }
   },
@@ -253,11 +253,11 @@ export const teacherService = {
   // Các chức năng của admin
   getAllTeachers: async (params) => {
     try {
-      const response = await axios.get("/api/v1/Admin/teachers", { params });
+      const response = await axios.get('/api/v1/Admin/teachers', { params });
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get all teachers failed"
+        error.response?.data?.message || 'Get all teachers failed'
       );
     }
   },
@@ -268,17 +268,17 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Get teacher by id failed"
+        error.response?.data?.message || 'Get teacher by id failed'
       );
     }
   },
 
   createTeacher: async (teacherData) => {
     try {
-      const response = await axios.post("/api/v1/Admin/teachers", teacherData);
+      const response = await axios.post('/api/v1/Admin/teachers', teacherData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Create teacher failed");
+      throw new Error(error.response?.data?.message || 'Create teacher failed');
     }
   },
 
@@ -289,7 +289,7 @@ export const teacherService = {
       );
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Delete teacher failed");
+      throw new Error(error.response?.data?.message || 'Delete teacher failed');
     }
   },
 
@@ -302,7 +302,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Assign course to teacher failed"
+        error.response?.data?.message || 'Assign course to teacher failed'
       );
     }
   },
@@ -315,7 +315,7 @@ export const teacherService = {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Remove course from teacher failed"
+        error.response?.data?.message || 'Remove course from teacher failed'
       );
     }
   },

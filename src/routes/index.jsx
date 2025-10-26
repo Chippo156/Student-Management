@@ -1,80 +1,80 @@
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useAppSelector } from "../redux/hooks";
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAppSelector } from '../redux/hooks';
 
 // Import components
-import ProtectedRoute from "../component/ProtectedRoute";
-import AuthLoader from "../component/AuthLoader";
+import ProtectedRoute from '../component/ProtectedRoute';
+import AuthLoader from '../component/AuthLoader';
 
 // Import pages
-import Home from "../page/Home";
-import Login from "../page/Login";
+import Home from '../page/Home';
+import Login from '../page/Login';
 
 // Admin pages
-import AdminDashboard from "../page/Admin/Dashboard";
-import UserManagement from "../page/Admin/UserManagement";
-import CreateUser from "../page/Admin/CreateUser";
-import UserProfiles from "../page/Admin/UserProfiles";
-import StudentProfiles from "../page/Admin/StudentProfiles";
-import AdminStudentInfo from "../page/Admin/StudentInfo";
-import Classes from "../page/Admin/Classes";
-import TuitionList from "../page/Admin/TuitionList";
-import SendNotifications from "../page/Admin/SendNotifications";
+import AdminDashboard from '../page/Admin/Dashboard';
+import UserManagement from '../page/Admin/UserManagement';
+import CreateUser from '../page/Admin/CreateUser';
+import UserProfiles from '../page/Admin/UserProfiles';
+import StudentProfiles from '../page/Admin/StudentProfiles';
+import AdminStudentInfo from '../page/Admin/StudentInfo';
+import Classes from '../page/Admin/Classes';
+import TuitionList from '../page/Admin/TuitionList';
+import SendNotifications from '../page/Admin/SendNotifications';
 
 // Student pages
-import StudentDashboard from "../component/Student/Dashboard";
-import StudentInfo from "../component/Student/Pages/StudentInfoPage";
-import BHYTPage from "../component/Student/Pages/BHYTPage";
-import GraduatePage from "../component/Student/Pages/GraduatePage";
-import StudentNotes from "../component/Student/Components/StudentNotes";
-import BankInfo from "../component/Student/Components/BankInfo";
-import StudentGrades from "../component/Student/Components/StudentGrades";
-import StudentSchedule from "../component/Student/Components/StudentSchedule";
-
+import StudentDashboard from '../component/Student/Dashboard';
+import StudentInfo from '../component/Student/Pages/StudentInfoPage';
+import BHYTPage from '../component/Student/Pages/BHYTPage';
+import GraduatePage from '../component/Student/Pages/GraduatePage';
+import StudentNotes from '../component/Student/Components/StudentNotes';
+import BankInfo from '../component/Student/Components/BankInfo';
+import StudentGrades from '../component/Student/Components/StudentGrades';
+import StudentSchedule from '../component/Student/Components/StudentSchedule';
+import StudentEditInfoPage from '../component/Student/Pages/StudentEditInfoPage';
 // Teacher pages
-import TeacherDashboard from "../component/Teacher/Dashboard";
-import TeacherCourses from "../component/Teacher/Pages/CoursesPage";
-import TeacherSchedule from "../component/Teacher/Pages/SchedulePage";
+import TeacherDashboard from '../component/Teacher/Dashboard';
+import TeacherCourses from '../component/Teacher/Pages/CoursesPage';
+import TeacherSchedule from '../component/Teacher/Pages/SchedulePage';
 
 // Layout components
-import LayoutUser from "../component/LayoutUser/LayoutUser";
-import LayoutAdmin from "../component/LayoutAdmin/LayoutAdmin";
-import LayoutStudent from "../component/LayoutStudent/LayoutStudent";
-import LayoutTeacher from "../component/LayoutTeacher/LayoutTeacher";
-import CourseManagement from "~/page/Admin/courseManagement";
-import SystemSettings from "~/page/Admin/systemSettings";
+import LayoutUser from '../component/LayoutUser/LayoutUser';
+import LayoutAdmin from '../component/LayoutAdmin/LayoutAdmin';
+import LayoutStudent from '../component/LayoutStudent/LayoutStudent';
+import LayoutTeacher from '../component/LayoutTeacher/LayoutTeacher';
+import CourseManagement from '~/page/Admin/courseManagement';
+import SystemSettings from '~/page/Admin/systemSettings';
 
 // Placeholder components for unfinished features
 const CurriculumPage = () => (
-  <div style={{ padding: "24px" }}>
+  <div style={{ padding: '24px' }}>
     <h2>Chương trình khung</h2>
     <p>Component chương trình khung đang được phát triển...</p>
   </div>
 );
 
 const RegisterCoursePage = () => (
-  <div style={{ padding: "24px" }}>
+  <div style={{ padding: '24px' }}>
     <h2>Đăng ký học phần</h2>
     <p>Component đăng ký học phần đang được phát triển...</p>
   </div>
 );
 
 const DebtPage = () => (
-  <div style={{ padding: "24px" }}>
+  <div style={{ padding: '24px' }}>
     <h2>Tra cứu công nợ</h2>
     <p>Component tra cứu công nợ đang được phát triển...</p>
   </div>
 );
 
 const PaymentPage = () => (
-  <div style={{ padding: "24px" }}>
+  <div style={{ padding: '24px' }}>
     <h2>Thanh toán trực tuyến</h2>
     <p>Component thanh toán đang được phát triển...</p>
   </div>
 );
 
 const TimelinePage = () => (
-  <div style={{ padding: "24px" }}>
+  <div style={{ padding: '24px' }}>
     <h2>Lịch theo tiến độ</h2>
     <p>Component lịch theo tiến độ đang được phát triển...</p>
   </div>
@@ -85,29 +85,31 @@ const AppRoutes = () => {
 
   const getDashboardByRole = () => {
     if (!account || !account.role) {
-      return "/login";
+      return '/login';
     }
     const userRoleId = account.role.roleId;
     switch (userRoleId) {
       case 1:
-        return "/admin";
+        return '/admin';
       case 2: // Teacher
-        return "/student";
+        return '/student';
       case 3: // Student
-        return "/teacher";
+        return '/teacher';
       default:
-        return "/login";
+        return '/login';
     }
   };
 
   // Component để handle trang mặc định với role check
   const HomePageHandler = () => {
-    if (isAuthenticated && account) {
-      // Nếu đã đăng nhập, redirect về dashboard tương ứng
+    const location = useLocation();
+    if (!isAuthenticated && location.pathname !== '/login') {
+      return <Navigate to="/login" replace />;
+    }
+    if (isAuthenticated) {
       return <Navigate to={getDashboardByRole()} replace />;
     }
-    // Nếu chưa đăng nhập, hiển thị trang Home
-    return <Home />;
+    return null;
   };
 
   return (
@@ -135,9 +137,9 @@ const AppRoutes = () => {
         <Route
           path="/admin"
           element={
-            // <ProtectedRoute allowedRole={1}>
-            <LayoutAdmin />
-            // </ProtectedRoute>
+            <ProtectedRoute allowedRole={1}>
+              <LayoutAdmin />
+            </ProtectedRoute>
           }
         >
           <Route index element={<AdminDashboard />} />
@@ -233,9 +235,9 @@ const AppRoutes = () => {
         <Route
           path="/teacher"
           element={
-            // <ProtectedRoute allowedRole={3}>
-            <LayoutTeacher />
-            // </ProtectedRoute>
+            <ProtectedRoute allowedRole={3}>
+              <LayoutTeacher />
+            </ProtectedRoute>
           }
         >
           <Route index element={<TeacherDashboard />} />
@@ -247,9 +249,9 @@ const AppRoutes = () => {
         <Route
           path="/student"
           element={
-            // <ProtectedRoute allowedRole={2}>
-            <LayoutStudent />
-            // </ProtectedRoute>
+            <ProtectedRoute allowedRole={2}>
+              <LayoutStudent />
+            </ProtectedRoute>
           }
         >
           {/* Dashboard mặc định */}
@@ -261,7 +263,7 @@ const AppRoutes = () => {
           <Route path="bank" element={<BankInfo />} />
           <Route path="bhyt" element={<BHYTPage />} />
           <Route path="graduate" element={<GraduatePage />} />
-
+          <Route path="edit-info" element={<StudentEditInfoPage />} />
           {/* Học tập */}
           <Route path="grades" element={<StudentGrades />} />
           <Route path="schedule" element={<StudentSchedule />} />

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import React, { useState } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -11,7 +11,7 @@ import {
   IconButton,
   Tooltip,
   useTheme,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Dashboard as DashboardIcon,
   School as SchoolIcon,
@@ -22,51 +22,51 @@ import {
   Settings as SettingsIcon,
   Menu as MenuIcon,
   MenuOpen as MenuOpenIcon,
-} from "@mui/icons-material";
-import HeaderPage from "../Header";
+} from '@mui/icons-material';
+import HeaderPage from '../Header';
 
 const menuData = [
   {
-    label: "Dashboard",
+    label: 'Dashboard',
     icon: <DashboardIcon />,
-    key: "dashboard",
-    path: "/teacher",
+    key: 'dashboard',
+    path: '/teacher',
   },
   {
-    label: "Quản lý môn học",
+    label: 'Quản lý môn học',
     icon: <SchoolIcon />,
-    key: "courses",
-    path: "/teacher/courses",
+    key: 'courses',
+    path: '/teacher/courses',
   },
   {
-    label: "Lịch giảng dạy",
+    label: 'Lịch giảng dạy',
     icon: <ScheduleIcon />,
-    key: "schedule",
-    path: "/teacher/schedule",
+    key: 'schedule',
+    path: '/teacher/schedule',
   },
   {
-    label: "Học sinh",
+    label: 'Học sinh',
     icon: <PeopleIcon />,
-    key: "students",
-    path: "/teacher/students",
+    key: 'students',
+    path: '/teacher/students',
   },
   {
-    label: "Điểm số",
+    label: 'Điểm số',
     icon: <GradeIcon />,
-    key: "grades",
-    path: "/teacher/grades",
+    key: 'grades',
+    path: '/teacher/grades',
   },
   {
-    label: "Cài đặt",
+    label: 'Cài đặt',
     icon: <SettingsIcon />,
-    key: "settings",
-    path: "/teacher/settings",
+    key: 'settings',
+    path: '/teacher/settings',
   },
 ];
 
 const LayoutTeacher = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const [selectedKey, setSelectedKey] = useState("dashboard");
+  const [selectedKey, setSelectedKey] = useState('dashboard');
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -83,14 +83,14 @@ const LayoutTeacher = () => {
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <HeaderPage />
       <Container maxWidth="xl" disableGutters sx={{ flexGrow: 1 }}>
         <Box
           sx={{
-            display: "flex",
-            minHeight: "calc(100vh - 64px)",
-            bgcolor: "background.default",
+            display: 'flex',
+            minHeight: 'calc(100vh - 64px)',
+            bgcolor: 'background.default',
           }}
         >
           <Paper
@@ -98,13 +98,13 @@ const LayoutTeacher = () => {
             sx={{
               width: collapsed ? 72 : 240,
               minWidth: collapsed ? 72 : 240,
-              minHeight: "100%",
-              bgcolor: "background.paper",
+              minHeight: '100%',
+              bgcolor: 'background.paper',
               borderRight: 1,
-              borderColor: "divider",
-              display: "flex",
-              flexDirection: "column",
-              transition: "width 0.2s cubic-bezier(.4,2,.6,1)",
+              borderColor: 'divider',
+              display: 'flex',
+              flexDirection: 'column',
+              transition: 'width 0.2s cubic-bezier(.4,2,.6,1)',
             }}
           >
             <List component="nav" sx={{ flex: 1 }}>
@@ -114,7 +114,7 @@ const LayoutTeacher = () => {
                   selected={selectedKey === item.key}
                   onClick={() => handleMenuClick(item)}
                   sx={{
-                    justifyContent: collapsed ? "center" : "flex-start",
+                    justifyContent: collapsed ? 'center' : 'flex-start',
                     px: collapsed ? 1 : 2,
                   }}
                 >
@@ -123,7 +123,7 @@ const LayoutTeacher = () => {
                       color: theme.palette.text.primary,
                       minWidth: 0,
                       mr: collapsed ? 0 : 2,
-                      justifyContent: "center",
+                      justifyContent: 'center',
                     }}
                   >
                     {item.icon}
@@ -132,9 +132,9 @@ const LayoutTeacher = () => {
                 </ListItemButton>
               ))}
             </List>
-            <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
               <Tooltip
-                title={collapsed ? "Mở rộng menu" : "Thu gọn menu"}
+                title={collapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
                 placement="right"
               >
                 <IconButton
