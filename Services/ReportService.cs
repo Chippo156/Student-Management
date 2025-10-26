@@ -29,6 +29,7 @@ namespace StudentManagement.Services
             var finalResults = await _context.FinalResults
                 .Include(fr => fr.Section)
                     .ThenInclude(s => s.CurriculumCourse)
+                       .ThenInclude(s => s.Course)
                 .Include(fr => fr.Section.Semester)
                 .Where(fr => fr.Student.Id == studentId)
                 .ToListAsync();
@@ -37,6 +38,7 @@ namespace StudentManagement.Services
             var enrollments = await _context.Enrollments
                 .Include(e => e.Section)
                     .ThenInclude(s => s.CurriculumCourse)
+                      .ThenInclude(s => s.Course)
                 .Include(e => e.Section.Semester)
                 .Where(e => e.Student.Id == studentId)
                 .ToListAsync();
@@ -159,6 +161,8 @@ namespace StudentManagement.Services
             var semesterResults = await _context.FinalResults
                 .Include(fr => fr.Section)
                     .ThenInclude(s => s.CurriculumCourse)
+                       .ThenInclude(s => s.Course)
+
                 .Include(fr => fr.Section.Semester)
                 .Where(fr => fr.Student.MSSV == mssv && fr.Section.Semester.SemesterId == semesterId)
                 .ToListAsync();
@@ -167,6 +171,7 @@ namespace StudentManagement.Services
             var semesterEnrollments = await _context.Enrollments
                 .Include(e => e.Section)
                     .ThenInclude(s => s.CurriculumCourse)
+                      .ThenInclude(s => s.Course)
                 .Include(e => e.Section.Semester)
                 .Where(e => e.Student.MSSV == mssv && e.Section.Semester.SemesterId == semesterId)
                 .ToListAsync();
