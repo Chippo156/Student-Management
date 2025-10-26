@@ -130,6 +130,7 @@ namespace StudentManagement.Services
             var finalResults = await _context.FinalResults
                 .Include(fr => fr.Section)
                     .ThenInclude(s => s.CurriculumCourse)
+                      .ThenInclude(s => s.Course)
                 .Where(fr => fr.Student.MSSV == mssv && fr.GradePoint >= 1.0)
                 .ToListAsync();
 
