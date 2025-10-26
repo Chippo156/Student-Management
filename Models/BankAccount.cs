@@ -1,4 +1,5 @@
 ﻿using StudentManagement.Enum;
+using System.Text.Json.Serialization;
 
 namespace StudentManagement.Models
 {
@@ -13,6 +14,8 @@ namespace StudentManagement.Models
         public AccountStatus AccountStatus { get; set; } = AccountStatus.Active;
         public DateOnly DateCreateAccount { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
         public bool IsDefault { get; set; } = false;
+
+        [JsonIgnore]
         public User User { get; set; } = null!;
 
     }
