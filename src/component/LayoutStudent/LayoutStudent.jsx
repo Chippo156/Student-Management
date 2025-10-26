@@ -33,9 +33,6 @@ import {
   MenuOpen as MenuOpenIcon,
 } from '@mui/icons-material';
 import HeaderPage from '../Header';
-import StudentInfoPage from '../Student/Pages/StudentInfoPage';
-import StudentEditInfoPage from '../Student/Pages/StudentEditInfoPage'; // Thêm import
-
 const menuData = [
   {
     label: 'Trang chủ',

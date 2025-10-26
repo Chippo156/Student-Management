@@ -31,16 +31,16 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import SearchIcon from '@mui/icons-material/Search';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import Dashboard from '~/component/Student/Dashboard';
-import StudentInfoPage from '~/component/Student/Pages/StudentInfoPage';
-import StudentNotes from '~/component/Student/Components/StudentNotes';
-import StudentSchedule from '~/component/Student/Components/StudentSchedule';
-import StudentGrades from '~/component/Student/Components/StudentGrades';
-import BankInfo from '~/component/Student/Components/BankInfo';
-import BHYTPage from '~/component/Student/Pages/BHYTPage';
-import GraduatePage from '~/component/Student/Pages/GraduatePage';
-// Thêm import cho trang chỉnh sửa thông tin sinh viên
-import StudentEditInfoPage from '~/component/Student/Pages/StudentEditInfoPage';
+// Student pages
+import StudentDashboard from '../Student/Dashboard';
+import StudentInfoPage from '../Student/General information/StudentInfoPage';
+import BHYTPage from '../Student/General information/BHYTPage';
+import GraduatePage from '../Student/Study/GraduatePage';
+import StudentNotes from '../Student/General information/StudentNotes';
+import BankInfo from '../Student/General information/BankInfo';
+import StudentGrades from '../Student/Study/StudentGrades';
+import StudentSchedule from '../Student/Study/StudentSchedule';
+import StudentEditInfoPage from '../Student/General information/StudentEditInfoPage';
 import { Routes, Route } from 'react-router-dom';
 
 const menuData = [

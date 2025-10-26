@@ -22,15 +22,15 @@ import TuitionList from '../page/Admin/TuitionList';
 import SendNotifications from '../page/Admin/SendNotifications';
 
 // Student pages
-import StudentDashboard from '../component/Student/Dashboard';
-import StudentInfo from '../component/Student/Pages/StudentInfoPage';
-import BHYTPage from '../component/Student/Pages/BHYTPage';
-import GraduatePage from '../component/Student/Pages/GraduatePage';
-import StudentNotes from '../component/Student/Components/StudentNotes';
-import BankInfo from '../component/Student/Components/BankInfo';
-import StudentGrades from '../component/Student/Components/StudentGrades';
-import StudentSchedule from '../component/Student/Components/StudentSchedule';
-import StudentEditInfoPage from '../component/Student/Pages/StudentEditInfoPage';
+import StudentDashboard from '../page/Student/Dashboard';
+import StudentInfoPage from '../page/Student/General information/StudentInfoPage';
+import BHYTPage from '../page/Student/General information/BHYTPage';
+import GraduatePage from '../page/Student/Study/GraduatePage';
+import StudentNotes from '../page/Student/General information/StudentNotes';
+import BankInfo from '../page/Student/General information/BankInfo';
+import StudentGrades from '../page/Student/Study/StudentGrades';
+import StudentSchedule from '../page/Student/Study/StudentSchedule';
+import StudentEditInfoPage from '../page/Student/General information/StudentEditInfoPage';
 // Teacher pages
 import TeacherDashboard from '../component/Teacher/Dashboard';
 import TeacherCourses from '../component/Teacher/Pages/CoursesPage';
@@ -257,7 +257,7 @@ const AppRoutes = () => {
           <Route index element={<StudentDashboard />} />
 
           {/* Thông tin chung */}
-          <Route path="info" element={<StudentInfo />} />
+          <Route path="info" element={<StudentInfoPage />} />
           <Route path="notes" element={<StudentNotes />} />
           <Route path="bank" element={<BankInfo />} />
           <Route path="bhyt" element={<BHYTPage />} />
