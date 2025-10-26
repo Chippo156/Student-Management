@@ -18,6 +18,7 @@ import { Box, Paper } from '@mui/material';
 import { userService } from '../../../service/userService';
 import { familyRelationshipService } from '../../../service/familyRelationshipService';
 import { externalBankService } from '../../../service/helperService';
+import { studentServices } from '../../../service/studentServices';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 
@@ -34,22 +35,54 @@ const StudentEditInfoPage = () => {
     mother: {},
     guardian: {},
   });
+
+  // Danh sách địa lý
   const [provinces, setProvinces] = useState([]);
-  const [districts, setDistricts] = useState([]);
-  const [wards, setWards] = useState([]);
-  const [selectedProvince, setSelectedProvince] = useState(null);
-  const [selectedDistrict, setSelectedDistrict] = useState(null);
+  // Quê quán
+  const [hometownDistricts, setHometownDistricts] = useState([]);
+  const [hometownWards, setHometownWards] = useState([]);
+  // Nơi sinh
+  const [birthDistricts, setBirthDistricts] = useState([]);
+  const [birthWards, setBirthWards] = useState([]);
+  // Nơi cấp giấy khai sinh
+  const [birthCertDistricts, setBirthCertDistricts] = useState([]);
+  const [birthCertWards, setBirthCertWards] = useState([]);
+  // Hộ khẩu thường trú
+  const [permanentDistricts, setPermanentDistricts] = useState([]);
+  const [permanentWards, setPermanentWards] = useState([]);
+
+  // Các giá trị chọn hiện tại
   const [selectedHometownProvince, setSelectedHometownProvince] =
     useState(null);
   const [selectedHometownDistrict, setSelectedHometownDistrict] =
     useState(null);
-  const [selectedHometownWard, setSelectedHometownWard] = useState(null);
-  const [hometownDistricts, setHometownDistricts] = useState([]);
-  const [hometownWards, setHometownWards] = useState([]);
+
+  const [selectedBirthProvince, setSelectedBirthProvince] = useState(null);
+  const [selectedBirthDistrict, setSelectedBirthDistrict] = useState(null);
+
+  const [selectedBirthCertProvince, setSelectedBirthCertProvince] =
+    useState(null);
+  const [selectedBirthCertDistrict, setSelectedBirthCertDistrict] =
+    useState(null);
+
+  const [selectedPermanentProvince, setSelectedPermanentProvince] =
+    useState(null);
+  const [selectedPermanentDistrict, setSelectedPermanentDistrict] =
+    useState(null);
+
   const navigate = useNavigate();
 
+  // Chuẩn hóa dữ liệu {id, name} => {code, name}
+  const normalizeList = (arr) =>
+    Array.isArray(arr)
+      ? arr.map((item) => ({
+          code: item.id,
+          name: item.name,
+        }))
+      : [];
+
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (showError = true) => {
       try {
         setLoading(true);
 
@@ -72,23 +105,93 @@ const StudentEditInfoPage = () => {
 
         setFamilyData({ father, mother, guardian });
 
+        // Lấy danh sách tỉnh/thành
+        const provinceData = await externalBankService.getProvinces();
+        // Sửa lại dòng này:
+        const provincesList = normalizeList(provinceData);
+        setProvinces(provincesList);
+
+        // Set giá trị form và các select địa chỉ nếu có dữ liệu
         formPersonal.setFieldsValue({
-          fullName: userRes?.user?.fullName,
-          email: userRes?.user?.email,
-          phone: userRes?.user?.phone,
+          ...userRes?.user,
           dateOfBirth: userRes?.user?.dateOfBirth
             ? dayjs(userRes?.user?.dateOfBirth)
             : null,
+          issuedDate: userRes?.user?.issuedDate
+            ? dayjs(userRes?.user?.issuedDate)
+            : null,
+          dateOfJoinUnion: userRes?.user?.dateOfJoinUnion
+            ? dayjs(userRes?.user?.dateOfJoinUnion)
+            : null,
+          dateOfJoinParty: userRes?.user?.dateOfJoinParty
+            ? dayjs(userRes?.user?.dateOfJoinParty)
+            : null,
+          // ...các trường ngày tháng khác nếu có
           gender:
             userRes?.user?.gender === 0
               ? 'Nam'
               : userRes?.user?.gender === 1
                 ? 'Nữ'
                 : 'Khác',
-          address: userRes?.user?.address,
-          religion: userRes?.user?.religion,
-          placeOfBirth: userRes?.user?.placeOfBirth,
         });
+
+        // Set các giá trị select địa chỉ nếu có
+        if (userRes?.user?.hometownProvince) {
+          setSelectedHometownProvince(userRes.user.hometownProvince);
+          const districts = await externalBankService.getDistrictsByProvince(
+            userRes.user.hometownProvince
+          );
+          setHometownDistricts(normalizeList(districts?.data || districts));
+        }
+        if (userRes?.user?.hometownDistrict) {
+          setSelectedHometownDistrict(userRes.user.hometownDistrict);
+          const wards = await externalBankService.getWardsByDistrict(
+            userRes.user.hometownDistrict
+          );
+          setHometownWards(normalizeList(wards?.data || wards));
+        }
+        if (userRes?.user?.birthProvince) {
+          setSelectedBirthProvince(userRes.user.birthProvince);
+          const districts = await externalBankService.getDistrictsByProvince(
+            userRes.user.birthProvince
+          );
+          setBirthDistricts(normalizeList(districts?.data || districts));
+        }
+        if (userRes?.user?.birthDistrict) {
+          setSelectedBirthDistrict(userRes.user.birthDistrict);
+          const wards = await externalBankService.getWardsByDistrict(
+            userRes.user.birthDistrict
+          );
+          setBirthWards(normalizeList(wards?.data || wards));
+        }
+        if (userRes?.user?.birthCertProvince) {
+          setSelectedBirthCertProvince(userRes.user.birthCertProvince);
+          const districts = await externalBankService.getDistrictsByProvince(
+            userRes.user.birthCertProvince
+          );
+          setBirthCertDistricts(normalizeList(districts?.data || districts));
+        }
+        if (userRes?.user?.birthCertDistrict) {
+          setSelectedBirthCertDistrict(userRes.user.birthCertDistrict);
+          const wards = await externalBankService.getWardsByDistrict(
+            userRes.user.birthCertDistrict
+          );
+          setBirthCertWards(normalizeList(wards?.data || wards));
+        }
+        if (userRes?.user?.permanentProvince) {
+          setSelectedPermanentProvince(userRes.user.permanentProvince);
+          const districts = await externalBankService.getDistrictsByProvince(
+            userRes.user.permanentProvince
+          );
+          setPermanentDistricts(normalizeList(districts?.data || districts));
+        }
+        if (userRes?.user?.permanentDistrict) {
+          setSelectedPermanentDistrict(userRes.user.permanentDistrict);
+          const wards = await externalBankService.getWardsByDistrict(
+            userRes.user.permanentDistrict
+          );
+          setPermanentWards(normalizeList(wards?.data || wards));
+        }
 
         formFamily.setFieldsValue({
           fatherName: father?.fullName,
@@ -104,11 +207,10 @@ const StudentEditInfoPage = () => {
           guardianName: guardian?.fullName,
           guardianPhone: guardian?.phone,
         });
-
-        const provinceData = await externalBankService.getProvinces();
-        setProvinces(provinceData);
       } catch (error) {
-        message.error('Không thể tải dữ liệu sinh viên!');
+        if (showError) {
+          message.error('Không thể tải dữ liệu sinh viên!');
+        }
       } finally {
         setLoading(false);
       }
@@ -117,65 +219,135 @@ const StudentEditInfoPage = () => {
     fetchData();
   }, [formPersonal, formFamily]);
 
+  // Quê quán
+  const handleHometownProvinceChange = async (provinceCode) => {
+    setSelectedHometownProvince(provinceCode);
+    setSelectedHometownDistrict(null);
+    formPersonal.setFieldsValue({ hometownDistrict: null, hometownWard: null });
+    setHometownWards([]);
+    const districts =
+      await externalBankService.getDistrictsByProvince(provinceCode);
+    setHometownDistricts(normalizeList(districts?.data || districts));
+  };
+  const handleHometownDistrictChange = async (districtCode) => {
+    setSelectedHometownDistrict(districtCode);
+    formPersonal.setFieldsValue({ hometownWard: null });
+    const wards = await externalBankService.getWardsByDistrict(districtCode);
+    setHometownWards(normalizeList(wards?.data || wards));
+  };
+
+  // Nơi sinh
+  const handleBirthProvinceChange = async (provinceCode) => {
+    setSelectedBirthProvince(provinceCode);
+    setSelectedBirthDistrict(null);
+    formPersonal.setFieldsValue({ birthDistrict: null, birthWard: null });
+    setBirthWards([]);
+    const districts =
+      await externalBankService.getDistrictsByProvince(provinceCode);
+    setBirthDistricts(normalizeList(districts?.data || districts));
+  };
+  const handleBirthDistrictChange = async (districtCode) => {
+    setSelectedBirthDistrict(districtCode);
+    formPersonal.setFieldsValue({ birthWard: null });
+    const wards = await externalBankService.getWardsByDistrict(districtCode);
+    setBirthWards(normalizeList(wards?.data || wards));
+  };
+
+  // Nơi cấp giấy khai sinh
+  const handleBirthCertProvinceChange = async (provinceCode) => {
+    setSelectedBirthCertProvince(provinceCode);
+    setSelectedBirthCertDistrict(null);
+    formPersonal.setFieldsValue({
+      birthCertDistrict: null,
+      birthCertWard: null,
+    });
+    setBirthCertWards([]);
+    const districts =
+      await externalBankService.getDistrictsByProvince(provinceCode);
+    setBirthCertDistricts(normalizeList(districts?.data || districts));
+  };
+  const handleBirthCertDistrictChange = async (districtCode) => {
+    setSelectedBirthCertDistrict(districtCode);
+    formPersonal.setFieldsValue({ birthCertWard: null });
+    const wards = await externalBankService.getWardsByDistrict(districtCode);
+    setBirthCertWards(normalizeList(wards?.data || wards));
+  };
+
+  // Hộ khẩu thường trú
+  const handlePermanentProvinceChange = async (provinceCode) => {
+    setSelectedPermanentProvince(provinceCode);
+    setSelectedPermanentDistrict(null);
+    formPersonal.setFieldsValue({
+      permanentDistrict: null,
+      permanentWard: null,
+    });
+    setPermanentWards([]);
+    const districts =
+      await externalBankService.getDistrictsByProvince(provinceCode);
+    setPermanentDistricts(normalizeList(districts?.data || districts));
+  };
+  const handlePermanentDistrictChange = async (districtCode) => {
+    setSelectedPermanentDistrict(districtCode);
+    formPersonal.setFieldsValue({ permanentWard: null });
+    const wards = await externalBankService.getWardsByDistrict(districtCode);
+    setPermanentWards(normalizeList(wards?.data || wards));
+  };
+
+  // Lưu thông tin cá nhân
   const handleSavePersonal = async () => {
     try {
       const values = await formPersonal.validateFields();
-      await userService.updateProfile({
-        ...values,
+      const data = {
+        fullName: values.fullName ?? null,
+        email: values.email ?? null,
+        phone: values.phone ?? null,
         gender: values.gender === 'Nam' ? 0 : values.gender === 'Nữ' ? 1 : 2,
         dateOfBirth: values.dateOfBirth
           ? values.dateOfBirth.format('YYYY-MM-DD')
           : null,
-      });
+        ethnicity: values.ethnicity ?? null,
+        nationality: values.nationality ?? null,
+        religion: values.religion ?? null,
+        avatarUrl: null,
+        citizenIdCard: values.idNumber ?? null,
+        issuedDate: values.idDate ? values.idDate.format('YYYY-MM-DD') : null,
+        issuedPlace: values.idPlace ?? null,
+        healthInsuranceNumber: values.healthInsurance ?? null,
+        registeredHospital: values.hospital ?? null,
+        hometownProvince: values.hometownProvince ?? null,
+        hometownDistrict: values.hometownDistrict ?? null,
+        hometownWard: values.hometownWard ?? null,
+        birthProvince: values.birthProvince ?? null,
+        birthDistrict: values.birthDistrict ?? null,
+        birthWard: values.birthWard ?? null,
+        birthCertProvince: values.birthCertProvince ?? null,
+        birthCertDistrict: values.birthCertDistrict ?? null,
+        birthCertWard: values.birthCertWard ?? null,
+        permanentProvince: values.permanentProvince ?? null,
+        permanentDistrict: values.permanentDistrict ?? null,
+        permanentWard: values.permanentWard ?? null,
+        temporaryAddress: values.temporaryAddress ?? null,
+        contactAddress: values.contactAddress ?? null,
+        address: values.address ?? null,
+        object: null,
+        policyArea: null,
+        dateOfJoinUnion: null,
+        dateOfJoinParty: null,
+      };
+      await studentServices.updateStudentInformation(data);
       message.success('Cập nhật thông tin cá nhân thành công!');
-    } catch (err) {
-      message.error('Cập nhật thông tin thất bại!');
-    }
+      fetchData(); // Không hiện toast lỗi khi fetch lại
+    } catch (err) {}
   };
 
+  // Lưu thông tin gia đình
   const handleSaveFamily = async () => {
     try {
       const values = await formFamily.validateFields();
-      // Giả lập lưu API (bạn có thể map sang familyRelationshipService)
-      console.log('Gia đình:', values);
+      // TODO: Gọi API lưu thông tin gia đình nếu cần
       message.success('Cập nhật thông tin gia đình thành công!');
-    } catch {
-      message.error('Cập nhật thất bại!');
-    }
-  };
-
-  // Khi chọn tỉnh/thành phố
-  const handleProvinceChange = async (provinceCode) => {
-    setSelectedProvince(provinceCode);
-    setSelectedDistrict(null);
-    setWards([]);
-    const districts =
-      await externalBankService.getDistrictsByProvince(provinceCode);
-    setDistricts(districts);
-  };
-
-  // Khi chọn quận/huyện
-  const handleDistrictChange = async (districtCode) => {
-    setSelectedDistrict(districtCode);
-    const wards = await externalBankService.getWardsByDistrict(districtCode);
-    setWards(wards);
-  };
-
-  // Khi chọn tỉnh/thành phố quê quán
-  const handleHometownProvinceChange = async (provinceCode) => {
-    setSelectedHometownProvince(provinceCode);
-    setSelectedHometownDistrict(null);
-    setHometownWards([]);
-    const districts =
-      await externalBankService.getDistrictsByProvince(provinceCode);
-    setHometownDistricts(districts);
-  };
-
-  // Khi chọn quận/huyện quê quán
-  const handleHometownDistrictChange = async (districtCode) => {
-    setSelectedHometownDistrict(districtCode);
-    const wards = await externalBankService.getWardsByDistrict(districtCode);
-    setHometownWards(wards);
+      fetchData(); // Không hiện toast lỗi khi fetch lại
+    } catch {}
   };
 
   if (loading) {
@@ -191,7 +363,6 @@ const StudentEditInfoPage = () => {
     <Box sx={{ mx: 'auto', mt: 4, maxWidth: 1100 }}>
       <Paper elevation={3} sx={{ p: { xs: 2, md: 4 } }}>
         <Tabs defaultActiveKey="1">
-          {/* TAB 1 - THÔNG TIN CÁ NHÂN */}
           <TabPane tab="Thông tin cá nhân" key="1">
             <Card
               title="Cập nhật thông tin cá nhân"
@@ -251,12 +422,12 @@ const StudentEditInfoPage = () => {
                     </Form.Item>
                   </Col>
                   <Col span={6}>
-                    <Form.Item label="Số CCCD/CMND" name="idNumber">
+                    <Form.Item label="Số CCCD/CMND" name="citizenIdCard">
                       <Input />
                     </Form.Item>
                   </Col>
                   <Col span={6}>
-                    <Form.Item label="Ngày cấp" name="idDate">
+                    <Form.Item label="Ngày cấp" name="issuedDate">
                       <DatePicker
                         style={{ width: '100%' }}
                         format="DD/MM/YYYY"
@@ -264,7 +435,7 @@ const StudentEditInfoPage = () => {
                     </Form.Item>
                   </Col>
                   <Col span={6}>
-                    <Form.Item label="Nơi cấp" name="idPlace">
+                    <Form.Item label="Nơi cấp" name="issuedPlace">
                       <Input />
                     </Form.Item>
                   </Col>
@@ -281,19 +452,20 @@ const StudentEditInfoPage = () => {
                     </Form.Item>
                   </Col>
                   <Col span={6}>
-                    <Form.Item label="Mã số BHYT" name="healthInsurance">
+                    <Form.Item label="Mã số BHYT" name="healthInsuranceNumber">
                       <Input />
                     </Form.Item>
                   </Col>
                   <Col span={6}>
                     <Form.Item
-                      label="Nơi đăng ký KCB (mới) - Bệnh viện"
-                      name="hospital"
+                      label="Nơi đăng ký BHYT"
+                      name="healthInsuranceRegistrationPlace"
                     >
                       <Input />
                     </Form.Item>
                   </Col>
                 </Row>
+                {/* Quê quán */}
                 <Row gutter={24}>
                   <Col span={8}>
                     <Form.Item
@@ -305,9 +477,10 @@ const StudentEditInfoPage = () => {
                         placeholder="Chọn tỉnh/thành"
                         value={selectedHometownProvince}
                         onChange={handleHometownProvinceChange}
+                        allowClear
                       >
                         {provinces.map((p) => (
-                          <Option key={p.id} value={p.id}>
+                          <Option key={p.code} value={p.code}>
                             {p.name}
                           </Option>
                         ))}
@@ -324,10 +497,13 @@ const StudentEditInfoPage = () => {
                         placeholder="Chọn quận/huyện"
                         value={selectedHometownDistrict}
                         onChange={handleHometownDistrictChange}
-                        disabled={!selectedHometownProvince}
+                        disabled={
+                          !formPersonal.getFieldValue('hometownProvince')
+                        }
+                        allowClear
                       >
                         {hometownDistricts.map((d) => (
-                          <Option key={d.id} value={d.id}>
+                          <Option key={d.code} value={d.code}>
                             {d.name}
                           </Option>
                         ))}
@@ -339,12 +515,13 @@ const StudentEditInfoPage = () => {
                       <Select
                         showSearch
                         placeholder="Chọn xã/phường"
-                        value={selectedHometownWard}
-                        onChange={setSelectedHometownWard}
-                        disabled={!selectedHometownDistrict}
+                        disabled={
+                          !formPersonal.getFieldValue('hometownDistrict')
+                        }
+                        allowClear
                       >
                         {hometownWards.map((w) => (
-                          <Option key={w.id} value={w.id}>
+                          <Option key={w.code} value={w.code}>
                             {w.name}
                           </Option>
                         ))}
@@ -352,13 +529,26 @@ const StudentEditInfoPage = () => {
                     </Form.Item>
                   </Col>
                 </Row>
+                {/* Nơi sinh */}
                 <Row gutter={24}>
                   <Col span={8}>
                     <Form.Item
                       label="Nơi sinh - Tỉnh/Thành phố"
                       name="birthProvince"
                     >
-                      <Input />
+                      <Select
+                        showSearch
+                        placeholder="Chọn tỉnh/thành"
+                        value={selectedBirthProvince}
+                        onChange={handleBirthProvinceChange}
+                        allowClear
+                      >
+                        {provinces.map((p) => (
+                          <Option key={p.code} value={p.code}>
+                            {p.name}
+                          </Option>
+                        ))}
+                      </Select>
                     </Form.Item>
                   </Col>
                   <Col span={8}>
@@ -366,22 +556,59 @@ const StudentEditInfoPage = () => {
                       label="Nơi sinh - Huyện/Quận"
                       name="birthDistrict"
                     >
-                      <Input />
+                      <Select
+                        showSearch
+                        placeholder="Chọn quận/huyện"
+                        value={selectedBirthDistrict}
+                        onChange={handleBirthDistrictChange}
+                        disabled={!formPersonal.getFieldValue('birthProvince')}
+                        allowClear
+                      >
+                        {birthDistricts.map((d) => (
+                          <Option key={d.code} value={d.code}>
+                            {d.name}
+                          </Option>
+                        ))}
+                      </Select>
                     </Form.Item>
                   </Col>
                   <Col span={8}>
                     <Form.Item label="Nơi sinh - Xã/Phường" name="birthWard">
-                      <Input />
+                      <Select
+                        showSearch
+                        placeholder="Chọn xã/phường"
+                        disabled={!formPersonal.getFieldValue('birthDistrict')}
+                        allowClear
+                      >
+                        {birthWards.map((w) => (
+                          <Option key={w.code} value={w.code}>
+                            {w.name}
+                          </Option>
+                        ))}
+                      </Select>
                     </Form.Item>
                   </Col>
                 </Row>
+                {/* Nơi cấp giấy khai sinh */}
                 <Row gutter={24}>
                   <Col span={8}>
                     <Form.Item
                       label="Nơi cấp giấy khai sinh - Tỉnh/Thành phố"
                       name="birthCertProvince"
                     >
-                      <Input />
+                      <Select
+                        showSearch
+                        placeholder="Chọn tỉnh/thành"
+                        value={selectedBirthCertProvince}
+                        onChange={handleBirthCertProvinceChange}
+                        allowClear
+                      >
+                        {provinces.map((p) => (
+                          <Option key={p.code} value={p.code}>
+                            {p.name}
+                          </Option>
+                        ))}
+                      </Select>
                     </Form.Item>
                   </Col>
                   <Col span={8}>
@@ -389,7 +616,22 @@ const StudentEditInfoPage = () => {
                       label="Nơi cấp giấy khai sinh - Huyện/Quận"
                       name="birthCertDistrict"
                     >
-                      <Input />
+                      <Select
+                        showSearch
+                        placeholder="Chọn quận/huyện"
+                        value={selectedBirthCertDistrict}
+                        onChange={handleBirthCertDistrictChange}
+                        disabled={
+                          !formPersonal.getFieldValue('birthCertProvince')
+                        }
+                        allowClear
+                      >
+                        {birthCertDistricts.map((d) => (
+                          <Option key={d.code} value={d.code}>
+                            {d.name}
+                          </Option>
+                        ))}
+                      </Select>
                     </Form.Item>
                   </Col>
                   <Col span={8}>
@@ -397,10 +639,24 @@ const StudentEditInfoPage = () => {
                       label="Nơi cấp giấy khai sinh - Xã/Phường"
                       name="birthCertWard"
                     >
-                      <Input />
+                      <Select
+                        showSearch
+                        placeholder="Chọn xã/phường"
+                        disabled={
+                          !formPersonal.getFieldValue('birthCertDistrict')
+                        }
+                        allowClear
+                      >
+                        {birthCertWards.map((w) => (
+                          <Option key={w.code} value={w.code}>
+                            {w.name}
+                          </Option>
+                        ))}
+                      </Select>
                     </Form.Item>
                   </Col>
                 </Row>
+                {/* Nơi đăng ký hộ khẩu thường trú */}
                 <Row gutter={24}>
                   <Col span={8}>
                     <Form.Item
@@ -410,17 +666,12 @@ const StudentEditInfoPage = () => {
                       <Select
                         showSearch
                         placeholder="Chọn tỉnh/thành"
-                        optionFilterProp="children"
-                        value={selectedProvince}
-                        onChange={handleProvinceChange}
-                        filterOption={(input, option) =>
-                          (option?.children ?? '')
-                            .toLowerCase()
-                            .includes(input.toLowerCase())
-                        }
+                        value={selectedPermanentProvince}
+                        onChange={handlePermanentProvinceChange}
+                        allowClear
                       >
                         {provinces.map((p) => (
-                          <Option key={p.id} value={p.id}>
+                          <Option key={p.code} value={p.code}>
                             {p.name}
                           </Option>
                         ))}
@@ -435,17 +686,14 @@ const StudentEditInfoPage = () => {
                       <Select
                         showSearch
                         placeholder="Chọn quận/huyện"
-                        optionFilterProp="children"
-                        value={selectedDistrict}
-                        onChange={handleDistrictChange}
-                        disabled={!selectedProvince}
-                        filterOption={(input, option) =>
-                          (option?.children ?? '')
-                            .toLowerCase()
-                            .includes(input.toLowerCase())
+                        value={selectedPermanentDistrict}
+                        onChange={handlePermanentDistrictChange}
+                        disabled={
+                          !formPersonal.getFieldValue('permanentProvince')
                         }
+                        allowClear
                       >
-                        {districts.map((d) => (
+                        {permanentDistricts.map((d) => (
                           <Option key={d.code} value={d.code}>
                             {d.name}
                           </Option>
@@ -461,15 +709,12 @@ const StudentEditInfoPage = () => {
                       <Select
                         showSearch
                         placeholder="Chọn xã/phường"
-                        optionFilterProp="children"
-                        disabled={!selectedDistrict}
-                        filterOption={(input, option) =>
-                          (option?.children ?? '')
-                            .toLowerCase()
-                            .includes(input.toLowerCase())
+                        disabled={
+                          !formPersonal.getFieldValue('permanentDistrict')
                         }
+                        allowClear
                       >
-                        {wards.map((w) => (
+                        {permanentWards.map((w) => (
                           <Option key={w.code} value={w.code}>
                             {w.name}
                           </Option>
@@ -478,6 +723,7 @@ const StudentEditInfoPage = () => {
                     </Form.Item>
                   </Col>
                 </Row>
+                {/* Các trường còn lại */}
                 <Row gutter={24}>
                   <Col span={24}>
                     <Form.Item
@@ -490,7 +736,7 @@ const StudentEditInfoPage = () => {
                 </Row>
                 <Row gutter={24}>
                   <Col span={24}>
-                    <Form.Item label="Địa chỉ liên hệ" name="contactAddress">
+                    <Form.Item label="Địa chỉ liên hệ" name="address">
                       <Input />
                     </Form.Item>
                   </Col>
@@ -508,8 +754,6 @@ const StudentEditInfoPage = () => {
               </Form>
             </Card>
           </TabPane>
-
-          {/* TAB 2 - QUAN HỆ GIA ĐÌNH */}
           <TabPane tab="Quan hệ gia đình" key="2">
             <Form
               form={formFamily}
