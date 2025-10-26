@@ -41,4 +41,17 @@ export const bankAccountService = {
       );
     }
   },
+  updateBankAccount: async (id, data) => {
+    try {
+      const response = await axios.put(
+        `/api/BankAccount/user/UpdateBankAccount/${id}`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || 'Update bank account failed'
+      );
+    }
+  },
 };
