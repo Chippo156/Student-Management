@@ -17,6 +17,7 @@ import {
   List,
   Spin,
   DatePicker,
+  Popconfirm,
 } from 'antd';
 import {
   BankOutlined,
@@ -351,14 +352,18 @@ const BankInfo = () => {
                         </Button>
                       ),
                       !account.isDefault && (
-                        <Button
-                          type="link"
-                          danger
-                          icon={<DeleteOutlined />}
-                          onClick={() => handleDelete(account.id)}
+                        <Popconfirm
+                          title="Bạn có chắc chắn muốn xóa tài khoản này?"
+                          description="Thao tác này không thể hoàn tác."
+                          okText="Xóa"
+                          okType="danger"
+                          cancelText="Hủy"
+                          onConfirm={() => handleDelete(account.id)}
                         >
-                          Xóa
-                        </Button>
+                          <Button type="link" danger icon={<DeleteOutlined />}>
+                            Xóa
+                          </Button>
+                        </Popconfirm>
                       ),
                     ].filter(Boolean)}
                   >
