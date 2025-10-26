@@ -1,510 +1,393 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Card,
-  Row,
-  Col,
-  Avatar,
-  Typography,
   Descriptions,
-  Button,
-  Tag,
   Divider,
   Spin,
+  Typography,
+  Avatar,
+  Tag,
+  Row,
+  Col,
 } from 'antd';
+import dayjs from 'dayjs';
+import { useSelector } from 'react-redux';
 import {
   UserOutlined,
-  EditOutlined,
-  MailOutlined,
-  PhoneOutlined,
+  BookOutlined,
   HomeOutlined,
   IdcardOutlined,
+  BankOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
-import dayjs from 'dayjs';
-import { userService } from '../../../service/userService';
-import { useNavigate } from 'react-router-dom';
 import { familyRelationshipService } from '../../../service/familyRelationshipService';
 
-const { Title, Text } = Typography;
-
-// Helper: hiển thị tối đa 2 dòng, nếu dài thì ... và có tooltip
-const InfoText = ({ children }) => (
-  <span
-    style={{
-      display: '-webkit-box',
-      maxWidth: 220,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'normal',
-      wordBreak: 'break-word',
-      WebkitLineClamp: 2,
-      WebkitBoxOrient: 'vertical',
-      verticalAlign: 'bottom',
-      color: !children ? '#fa541c' : undefined, // nổi bật khi chưa cập nhật
-      fontWeight: !children ? 600 : undefined,
-      fontStyle: !children ? 'italic' : undefined,
-    }}
-    title={children}
-  >
-    {children || 'Chưa cập nhật'}
-  </span>
-);
-
-const renderFamilyInfo = (family) => (
-  <Descriptions
-    bordered
-    column={{ xs: 1, sm: 2 }}
-    size="middle"
-    style={{ marginBottom: 24 }}
-  >
-    <Descriptions.Item label="Họ và tên">
-      <InfoText>{family?.fullName}</InfoText>
-    </Descriptions.Item>
-    <Descriptions.Item label="Mối quan hệ">
-      <InfoText>{family?.relationshipTypeName}</InfoText>
-    </Descriptions.Item>
-    <Descriptions.Item label="Năm sinh">
-      <InfoText>
-        {family?.dateOfBirth
-          ? dayjs(family.dateOfBirth).format('DD/MM/YYYY')
-          : ''}
-      </InfoText>
-    </Descriptions.Item>
-    <Descriptions.Item label="Số điện thoại">
-      <InfoText>{family?.phone}</InfoText>
-    </Descriptions.Item>
-    <Descriptions.Item label="Email">
-      <InfoText>{family?.email}</InfoText>
-    </Descriptions.Item>
-    <Descriptions.Item label="CCCD">
-      <InfoText>{family?.citizenIdCard}</InfoText>
-    </Descriptions.Item>
-    <Descriptions.Item label="Ngày cấp CCCD">
-      <InfoText>
-        {family?.issuedDate
-          ? dayjs(family.issuedDate).format('DD/MM/YYYY')
-          : ''}
-      </InfoText>
-    </Descriptions.Item>
-    <Descriptions.Item label="Nơi cấp CCCD">
-      <InfoText>{family?.issuedPlace}</InfoText>
-    </Descriptions.Item>
-    <Descriptions.Item label="Nghề nghiệp">
-      <InfoText>{family?.occupation}</InfoText>
-    </Descriptions.Item>
-    <Descriptions.Item label="Nơi làm việc">
-      <InfoText>{family?.workplace}</InfoText>
-    </Descriptions.Item>
-    <Descriptions.Item label="Địa chỉ">
-      <InfoText>{family?.address}</InfoText>
-    </Descriptions.Item>
-    <Descriptions.Item label="Là người giám hộ">
-      <InfoText>
-        {family?.isGuardian === true
-          ? 'Có'
-          : family?.isGuardian === false
-            ? 'Không'
-            : ''}
-      </InfoText>
-    </Descriptions.Item>
-  </Descriptions>
-);
-
-const getFamilyByType = (familyList, typeName) =>
-  familyList.find((item) => item.relationshipTypeName === typeName);
+const { Title } = Typography;
 
 const StudentInfoPage = () => {
-  const [studentInfo, setStudentInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const account = useSelector((state) => state.user.account);
+  const [data, setData] = useState(null);
   const [familyRelationships, setFamilyRelationships] = useState([]);
-  const [bankAccount, setBankAccount] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Hàm lấy thông tin người thân
+  const getFamilyByType = (familyList, type) => {
+    return familyList.find((f) => f.relationshipTypeName === type);
+  };
 
   useEffect(() => {
-    const fetchInfo = async () => {
-      setLoading(true);
+    const fetchData = async () => {
       try {
-        const data = await userService.getUserInfo();
-        setStudentInfo(data.user); // chỉ lấy data.user
-        // Lấy danh sách người thân
-        const familyUser =
-          await familyRelationshipService.getFamilyRelationshipsByStudent();
-        setFamilyRelationships(
-          Array.isArray(familyUser) ? familyUser : familyUser?.data || []
-        );
-        // Không cần gọi getUserBankAccounts nữa, lấy trực tiếp từ user
-        setBankAccount(data.user.bankAccount || null);
-      } catch (err) {
-        message.error('Không thể lấy thông tin sinh viên!');
-        setStudentInfo(null);
-      }
-      setLoading(false);
-    };
-    fetchInfo();
-  }, []);
+        if (account) {
+          setData(account);
 
-  // Lấy thông tin cha, mẹ từ danh sách người thân
-  const father = getFamilyByType(familyRelationships, 'Cha');
-  const mother = getFamilyByType(familyRelationships, 'Mẹ');
+          const familyUser =
+            await familyRelationshipService.getFamilyRelationshipsByStudent();
+          setFamilyRelationships(
+            Array.isArray(familyUser) ? familyUser : familyUser?.data || []
+          );
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin người thân:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [account]);
 
   if (loading) {
     return (
-      <div style={{ padding: 48, textAlign: 'center' }}>
+      <div style={{ textAlign: 'center', padding: '60px' }}>
         <Spin size="large" />
         <div style={{ marginTop: 16 }}>Đang tải thông tin sinh viên...</div>
       </div>
     );
   }
 
-  if (!studentInfo) {
-    return (
-      <div style={{ padding: 48, textAlign: 'center', color: '#faad14' }}>
-        Không có dữ liệu sinh viên!
-      </div>
-    );
-  }
+  const user = data?.user;
+  const bank = user?.bankAccount;
+  const father = getFamilyByType(familyRelationships, 'Cha');
+  const mother = getFamilyByType(familyRelationships, 'Mẹ');
+
+  const InfoText = ({ children }) => (
+    <span>
+      {children || <span style={{ color: '#999' }}>Chưa cập nhật</span>}
+    </span>
+  );
+
+  const SectionTitle = ({ icon, title, color }) => (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: 16,
+        fontWeight: 600,
+        color,
+      }}
+    >
+      {icon}
+      <span style={{ marginLeft: 8 }}>{title}</span>
+    </div>
+  );
 
   return (
     <div
       style={{
-        padding: '24px',
         maxWidth: 1100,
         margin: '0 auto',
-        width: '100%',
+        padding: 24,
+        background: '#fafafa',
+        borderRadius: 8,
       }}
     >
-      <Title level={2}>Thông tin sinh viên</Title>
-      <Row gutter={[24, 24]} wrap>
-        <Col xs={24} md={24} style={{ minWidth: 0 }}>
-          <Card
-            title={
-              <span>
-                <UserOutlined style={{ color: '#1890ff', marginRight: 8 }} />
-                Thông tin cá nhân
-              </span>
-            }
-            style={{ marginBottom: 24, background: '#f6faff', borderRadius: 8 }}
-            bodyStyle={{ padding: 24 }}
-          >
-            <Descriptions
-              bordered
-              column={{ xs: 1, sm: 2 }}
-              labelStyle={{
-                width: 180,
-                background: '#f0f5ff',
-                fontWeight: 500,
-              }}
-              contentStyle={{ background: '#fff' }}
-              size="middle"
-            >
-              <Descriptions.Item label="Mã sinh viên">
-                <InfoText>{studentInfo.username}</InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Họ và tên">
-                <InfoText>{studentInfo.fullName}</InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Ngày sinh">
-                <InfoText>
-                  {studentInfo.dateOfBirth
-                    ? dayjs(studentInfo.dateOfBirth).format('DD/MM/YYYY')
-                    : ''}
-                </InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Giới tính">
-                <InfoText>
-                  {studentInfo.gender === 0
-                    ? 'Nam'
-                    : studentInfo.gender === 1
-                      ? 'Nữ'
-                      : 'Khác'}
-                </InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Dân tộc">
-                <InfoText>{studentInfo.ethnicity}</InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Quốc tịch">
-                <InfoText>{studentInfo.nationality}</InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Tôn giáo">
-                <InfoText>{studentInfo.religion}</InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Email">
-                <Text copyable>
-                  <InfoText>{studentInfo.email}</InfoText>
-                </Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Số điện thoại">
-                <Text copyable>
-                  <InfoText>{studentInfo.phone}</InfoText>
-                </Text>
-              </Descriptions.Item>
-            </Descriptions>
+      {/* Header */}
+      <Card
+        style={{
+          marginBottom: 24,
+          textAlign: 'center',
+          background: '#e6f4ff',
+          borderRadius: 12,
+          border: '1px solid #d0e7ff',
+        }}
+      >
+        <Avatar
+          size={100}
+          src={user?.avatarUrl}
+          icon={<UserOutlined />}
+          style={{ background: '#fff', marginBottom: 12 }}
+        />
+        <Title level={3} style={{ margin: 0, color: '#0050b3' }}>
+          {user?.fullName}
+        </Title>
+        <div style={{ color: '#555' }}>
+          MSSV: {data?.mssv} • {data?.className}
+        </div>
+        <div style={{ color: '#555' }}>
+          {data?.programName} • {data?.departmentName}
+        </div>
+      </Card>
 
-            <Divider
-              orientation="left"
-              style={{ color: '#1890ff', fontWeight: 600, marginTop: 32 }}
-            >
-              <HomeOutlined style={{ marginRight: 8 }} />
-              Địa chỉ & Nơi sinh
-            </Divider>
-            <Descriptions
-              bordered
-              column={{ xs: 1, sm: 2 }}
-              labelStyle={{
-                width: 180,
-                background: '#f0f5ff',
-                fontWeight: 500,
-              }}
-              contentStyle={{ background: '#fff' }}
-              size="middle"
-            >
-              <Descriptions.Item label="Nơi sinh">
-                <InfoText>
-                  {[
-                    studentInfo.birthWard,
-                    studentInfo.birthDistrict,
-                    studentInfo.birthProvince,
-                  ]
-                    .filter(Boolean)
-                    .join(', ') || studentInfo.placeOfBirth}
-                </InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Quê quán">
-                <InfoText>
-                  {[
-                    studentInfo.hometownWard,
-                    studentInfo.hometownDistrict,
-                    studentInfo.hometownProvince,
-                  ]
-                    .filter(Boolean)
-                    .join(', ')}
-                </InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Nơi cấp giấy khai sinh">
-                <InfoText>
-                  {[
-                    studentInfo.birthCertWard,
-                    studentInfo.birthCertDistrict,
-                    studentInfo.birthCertProvince,
-                  ]
-                    .filter(Boolean)
-                    .join(', ')}
-                </InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Nơi đăng ký hộ khẩu thường trú">
-                <InfoText>
-                  {[
-                    studentInfo.permanentWard,
-                    studentInfo.permanentDistrict,
-                    studentInfo.permanentProvince,
-                  ]
-                    .filter(Boolean)
-                    .join(', ')}
-                </InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ liên hệ" span={2}>
-                <InfoText>{studentInfo.address}</InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ tạm trú" span={2}>
-                <InfoText>{studentInfo.temporaryAddress}</InfoText>
-              </Descriptions.Item>
-            </Descriptions>
+      {/* Thông tin cá nhân */}
+      <Card
+        title={
+          <SectionTitle
+            icon={<UserOutlined />}
+            title="Thông tin cá nhân"
+            color="#0050b3"
+          />
+        }
+        style={{ marginBottom: 24 }}
+      >
+        <Descriptions column={2} bordered size="middle">
+          <Descriptions.Item label="Họ và tên">
+            <InfoText>{user?.fullName}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Ngày sinh">
+            <InfoText>
+              {user?.dateOfBirth
+                ? dayjs(user.dateOfBirth).format('DD/MM/YYYY')
+                : ''}
+            </InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Giới tính">
+            <InfoText>
+              {user?.gender === 0 ? 'Nam' : user?.gender === 1 ? 'Nữ' : 'Khác'}
+            </InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Dân tộc">
+            <InfoText>{user?.ethnicity}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Quốc tịch">
+            <InfoText>{user?.nationality}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Nơi sinh" span={2}>
+            <InfoText>{user?.placeOfBirth}</InfoText>
+          </Descriptions.Item>
+        </Descriptions>
+      </Card>
 
-            <Divider
-              orientation="left"
-              style={{ color: '#1890ff', fontWeight: 600, marginTop: 32 }}
-            >
-              <IdcardOutlined style={{ marginRight: 8 }} />
-              Giấy tờ & Bảo hiểm
-            </Divider>
-            <Descriptions
-              bordered
-              column={{ xs: 1, sm: 2 }}
-              labelStyle={{
-                width: 180,
-                background: '#f0f5ff',
-                fontWeight: 500,
-              }}
-              contentStyle={{ background: '#fff' }}
-              size="middle"
-            >
-              <Descriptions.Item label="Số CCCD">
-                <InfoText>{studentInfo.citizenIdCard}</InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Ngày cấp CCCD">
-                <InfoText>
-                  {studentInfo.issuedDate
-                    ? dayjs(studentInfo.issuedDate).format('DD/MM/YYYY')
-                    : ''}
-                </InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Nơi cấp CCCD">
-                <InfoText>{studentInfo.issuedPlace}</InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Mã số BHYT">
-                <InfoText>{studentInfo.healthInsuranceNumber}</InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Nơi đăng ký KCB ban đầu">
-                <InfoText>
-                  {studentInfo.healthInsuranceRegistrationPlace}
-                </InfoText>
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
+      {/* Học tập */}
+      <Card
+        title={
+          <SectionTitle
+            icon={<BookOutlined />}
+            title="Thông tin học tập"
+            color="#096dd9"
+          />
+        }
+        style={{ marginBottom: 24 }}
+      >
+        <Descriptions column={2} bordered size="middle">
+          <Descriptions.Item label="MSSV">
+            <InfoText>{data?.mssv}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Lớp">
+            <InfoText>{data?.className}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Chương trình">
+            <InfoText>{data?.programName}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Khoa">
+            <InfoText>{data?.departmentName}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Trình độ">
+            <InfoText>{data?.trainningLevel}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Năm nhập học">
+            <InfoText>{data?.yearOfAdmission}</InfoText>
+          </Descriptions.Item>
+        </Descriptions>
+      </Card>
 
-          <Card
-            title="Thông tin tài khoản ngân hàng"
-            style={{ marginBottom: 24 }}
-          >
-            <Descriptions bordered column={{ xs: 1, sm: 2 }}>
-              <Descriptions.Item label="Số tài khoản">
-                <InfoText>{bankAccount?.accountNumber}</InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Ngân hàng">
-                <InfoText>{bankAccount?.bankName}</InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Chi nhánh">
-                <InfoText>{bankAccount?.branch}</InfoText>
-              </Descriptions.Item>
-              <Descriptions.Item label="Trạng thái tài khoản">
-                <Tag color={bankAccount?.accountStatus === 1 ? 'green' : 'red'}>
+      {/* Liên hệ */}
+      <Card
+        title={
+          <SectionTitle
+            icon={<HomeOutlined />}
+            title="Liên hệ & Địa chỉ"
+            color="#389e0d"
+          />
+        }
+        style={{ marginBottom: 24 }}
+      >
+        <Descriptions column={1} bordered size="middle">
+          <Descriptions.Item label="Email">
+            <InfoText>{user?.email}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Số điện thoại">
+            <InfoText>{user?.phone}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Địa chỉ thường trú">
+            <InfoText>{user?.address}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Địa chỉ tạm trú">
+            <InfoText>{user?.temporaryAddress}</InfoText>
+          </Descriptions.Item>
+        </Descriptions>
+      </Card>
+
+      {/* Giấy tờ */}
+      <Card
+        title={
+          <SectionTitle
+            icon={<IdcardOutlined />}
+            title="Giấy tờ cá nhân"
+            color="#d48806"
+          />
+        }
+        style={{ marginBottom: 24 }}
+      >
+        <Descriptions column={2} bordered size="middle">
+          <Descriptions.Item label="CCCD">
+            <InfoText>{user?.citizenIdCard}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Ngày cấp">
+            <InfoText>
+              {user?.issuedDate
+                ? dayjs(user.issuedDate).format('DD/MM/YYYY')
+                : ''}
+            </InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Nơi cấp" span={2}>
+            <InfoText>{user?.issuedPlace}</InfoText>
+          </Descriptions.Item>
+        </Descriptions>
+      </Card>
+
+      {/* Ngân hàng */}
+      <Card
+        title={
+          <SectionTitle
+            icon={<BankOutlined />}
+            title="Tài khoản ngân hàng"
+            color="#722ed1"
+          />
+        }
+        style={{ marginBottom: 24 }}
+      >
+        <Descriptions column={2} bordered size="middle">
+          <Descriptions.Item label="Số tài khoản">
+            <InfoText>{bank?.accountNumber}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Ngân hàng">
+            <InfoText>{bank?.bankName}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Chi nhánh">
+            <InfoText>{bank?.branch}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Chủ tài khoản">
+            <InfoText>{bank?.accountHolderName}</InfoText>
+          </Descriptions.Item>
+          <Descriptions.Item label="Trạng thái">
+            <Tag color={bank?.accountStatus === 1 ? 'green' : 'red'}>
+              {bank?.accountStatus === 1 ? 'Đang hoạt động' : 'Đã khóa'}
+            </Tag>
+          </Descriptions.Item>
+        </Descriptions>
+      </Card>
+
+      {/* Người thân */}
+      <Card
+        title={
+          <SectionTitle
+            icon={<TeamOutlined />}
+            title="Thông tin người thân"
+            color="#fa541c"
+          />
+        }
+      >
+        <Row gutter={[24, 24]}>
+          {/* Cha */}
+          <Col xs={24} md={24}>
+            <Card
+              type="inner"
+              title="Cha"
+              headStyle={{ background: '#e6f7ff' }}
+            >
+              <Descriptions bordered column={1} size="small">
+                <Descriptions.Item label="Họ tên cha">
+                  <InfoText>{father?.fullName}</InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="SĐT cha">
+                  <InfoText>{father?.phone}</InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="Năm sinh cha">
                   <InfoText>
-                    {bankAccount?.accountStatus === 1
-                      ? 'Đang hoạt động'
-                      : bankAccount?.accountStatus === 0
-                        ? 'Đã khóa'
+                    {father?.dateOfBirth
+                      ? dayjs(father.dateOfBirth).format('DD/MM/YYYY')
+                      : ''}
+                  </InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="Email cha">
+                  <InfoText>{father?.email}</InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="Nghề nghiệp cha">
+                  <InfoText>{father?.occupation}</InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="Nơi làm việc cha">
+                  <InfoText>{father?.workplace}</InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="Địa chỉ cha">
+                  <InfoText>{father?.address}</InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="Là người giám hộ">
+                  <InfoText>
+                    {father?.isGuardian === true
+                      ? 'Có'
+                      : father?.isGuardian === false
+                        ? 'Không'
                         : ''}
                   </InfoText>
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Chủ tài khoản">
-                <InfoText>{bankAccount?.accountHolderName}</InfoText>
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
+          </Col>
 
-          {/* Thông tin người thân */}
-          <Card title="Thông tin người thân" style={{ marginBottom: 24 }}>
-            <Row gutter={[24, 24]}>
-              <Col xs={24} md={24}>
-                <Card
-                  type="inner"
-                  title="Cha"
-                  style={{ marginBottom: 16 }}
-                  headStyle={{ background: '#e6f7ff' }}
-                >
-                  <Descriptions bordered column={{ xs: 1 }}>
-                    <Descriptions.Item label="Họ tên cha">
-                      <InfoText>{father?.fullName}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="SĐT cha">
-                      <InfoText>{father?.phone}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Năm sinh cha">
-                      <InfoText>
-                        {father?.dateOfBirth
-                          ? dayjs(father.dateOfBirth).format('DD/MM/YYYY')
-                          : ''}
-                      </InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Email cha">
-                      <InfoText>{father?.email}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="CCCD cha">
-                      <InfoText>{father?.citizenIdCard}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Ngày cấp CCCD cha">
-                      <InfoText>
-                        {father?.issuedDate
-                          ? dayjs(father.issuedDate).format('DD/MM/YYYY')
-                          : ''}
-                      </InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Nơi cấp CCCD cha">
-                      <InfoText>{father?.issuedPlace}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Nghề nghiệp cha">
-                      <InfoText>{father?.occupation}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Nơi làm việc cha">
-                      <InfoText>{father?.workplace}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Địa chỉ cha">
-                      <InfoText>{father?.address}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Là người giám hộ">
-                      <InfoText>
-                        {father?.isGuardian === true
-                          ? 'Có'
-                          : father?.isGuardian === false
-                            ? 'Không'
-                            : ''}
-                      </InfoText>
-                    </Descriptions.Item>
-                  </Descriptions>
-                </Card>
-              </Col>
-              <Col xs={24} md={24}>
-                <Card
-                  type="inner"
-                  title="Mẹ"
-                  style={{ marginBottom: 16 }}
-                  headStyle={{ background: '#fffbe6' }}
-                >
-                  <Descriptions bordered column={{ xs: 1 }}>
-                    <Descriptions.Item label="Họ tên mẹ">
-                      <InfoText>{mother?.fullName}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="SĐT mẹ">
-                      <InfoText>{mother?.phone}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Năm sinh mẹ">
-                      <InfoText>
-                        {mother?.dateOfBirth
-                          ? dayjs(mother.dateOfBirth).format('DD/MM/YYYY')
-                          : ''}
-                      </InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Email mẹ">
-                      <InfoText>{mother?.email}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="CCCD mẹ">
-                      <InfoText>{mother?.citizenIdCard}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Ngày cấp CCCD mẹ">
-                      <InfoText>
-                        {mother?.issuedDate
-                          ? dayjs(mother.issuedDate).format('DD/MM/YYYY')
-                          : ''}
-                      </InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Nơi cấp CCCD mẹ">
-                      <InfoText>{mother?.issuedPlace}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Nghề nghiệp mẹ">
-                      <InfoText>{mother?.occupation}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Nơi làm việc mẹ">
-                      <InfoText>{mother?.workplace}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Địa chỉ mẹ">
-                      <InfoText>{mother?.address}</InfoText>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Là người giám hộ">
-                      <InfoText>
-                        {mother?.isGuardian === true
-                          ? 'Có'
-                          : mother?.isGuardian === false
-                            ? 'Không'
-                            : ''}
-                      </InfoText>
-                    </Descriptions.Item>
-                  </Descriptions>
-                </Card>
-              </Col>
-            </Row>
-          </Card>
-        </Col>
-      </Row>
+          {/* Mẹ */}
+          <Col xs={24} md={24}>
+            <Card type="inner" title="Mẹ" headStyle={{ background: '#fffbe6' }}>
+              <Descriptions bordered column={1} size="small">
+                <Descriptions.Item label="Họ tên mẹ">
+                  <InfoText>{mother?.fullName}</InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="SĐT mẹ">
+                  <InfoText>{mother?.phone}</InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="Năm sinh mẹ">
+                  <InfoText>
+                    {mother?.dateOfBirth
+                      ? dayjs(mother.dateOfBirth).format('DD/MM/YYYY')
+                      : ''}
+                  </InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="Email mẹ">
+                  <InfoText>{mother?.email}</InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="Nghề nghiệp mẹ">
+                  <InfoText>{mother?.occupation}</InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="Nơi làm việc mẹ">
+                  <InfoText>{mother?.workplace}</InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="Địa chỉ mẹ">
+                  <InfoText>{mother?.address}</InfoText>
+                </Descriptions.Item>
+                <Descriptions.Item label="Là người giám hộ">
+                  <InfoText>
+                    {mother?.isGuardian === true
+                      ? 'Có'
+                      : mother?.isGuardian === false
+                        ? 'Không'
+                        : ''}
+                  </InfoText>
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
+          </Col>
+        </Row>
+      </Card>
     </div>
   );
 };

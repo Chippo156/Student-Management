@@ -19,10 +19,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
   Divider,
 } from '@mui/material';
 import {
@@ -30,8 +26,6 @@ import {
   Send as SendIcon,
   Preview as PreviewIcon,
   People as PeopleIcon,
-  School as SchoolIcon,
-  Person as PersonIcon,
   Email as EmailIcon,
   Sms as SmsIcon,
   Notifications as NotificationsIcon,
@@ -105,11 +99,9 @@ const SendNotifications = () => {
   };
 
   const handleSend = () => {
-    // Simulate sending notification
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
 
-    // Reset form
     setNotificationData({
       title: '',
       content: '',

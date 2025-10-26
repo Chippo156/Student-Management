@@ -32,7 +32,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const account = useSelector((state) => state.user.account);
-  console.log(account);
   const [semesterReport, setSemesterReport] = useState(null);
   const [creditsSummary, setCreditsSummary] = useState(null);
   const [scheduleCount, setScheduleCount] = useState({
@@ -64,7 +63,6 @@ const Dashboard = () => {
       chart2: p.secondary.main,
     };
   }, [muiTheme]);
-
   const sectionTitleStyle = {
     color: colors.fg,
     margin: 0,
@@ -249,6 +247,7 @@ const Dashboard = () => {
               flexDirection: 'column',
               gap: 16,
               height: '100%',
+              justifyContent: 'space-between',
             }}
           >
             <StudentRemindCard colors={colors} />

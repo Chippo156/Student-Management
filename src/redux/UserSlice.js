@@ -41,24 +41,9 @@ export const userSlice = createSlice({
       state.account = {
         accessToken: token.accessToken,
         refreshToken: token.refreshToken,
+        ...user,
         userId: user.studentId ?? user.user?.userId ?? undefined,
-        username: user.user?.username ?? undefined,
-        fullName: user.user?.fullName ?? undefined,
-        email: user.user?.email ?? undefined,
-        phone: user.user?.phone ?? undefined,
-        gender: user.user?.gender ?? undefined,
-        address: user.user?.address ?? undefined,
-        avatarUrl: user.user?.avatarUrl ?? undefined,
-        accountStatus: user.user?.accountStatus ?? undefined,
         role: user.user?.role ?? undefined,
-        studentId: user.studentId ?? undefined,
-        mssv: user.mssv ?? undefined,
-        className: user.className ?? undefined,
-        programName: user.programName ?? undefined,
-        departmentName: user.departmentName ?? undefined,
-        yearOfAddmision: user.yearOfAddmision ?? undefined,
-        trainningLevel: user.trainningLevel ?? undefined,
-        totalCreditsRequired: user.totalCreditsRequired ?? undefined,
       };
       localStorage.setItem('access_token', token.accessToken);
       localStorage.setItem('refresh_token', token.refreshToken);
@@ -121,24 +106,9 @@ export const userSlice = createSlice({
         state.account = {
           accessToken: token.accessToken,
           refreshToken: token.refreshToken,
+          ...user,
           userId: user.studentId ?? user.user?.userId ?? undefined,
-          username: user.user?.username ?? undefined,
-          fullName: user.user?.fullName ?? undefined,
-          email: user.user?.email ?? undefined,
-          phone: user.user?.phone ?? undefined,
-          gender: user.user?.gender ?? undefined,
-          address: user.user?.address ?? undefined,
-          avatarUrl: user.user?.avatarUrl ?? undefined,
-          accountStatus: user.user?.accountStatus ?? undefined,
           role: user.user?.role ?? undefined,
-          studentId: user.studentId ?? undefined,
-          mssv: user.mssv ?? undefined,
-          className: user.className ?? undefined,
-          programName: user.programName ?? undefined,
-          departmentName: user.departmentName ?? undefined,
-          yearOfAddmision: user.yearOfAddmision ?? undefined,
-          trainningLevel: user.trainningLevel ?? undefined,
-          totalCreditsRequired: user.totalCreditsRequired ?? undefined,
         };
         localStorage.setItem('access_token', token.accessToken);
         localStorage.setItem('refresh_token', token.refreshToken);

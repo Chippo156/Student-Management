@@ -309,11 +309,13 @@ const StudentEditInfoPage = () => {
         nationality: values.nationality ?? null,
         religion: values.religion ?? null,
         avatarUrl: null,
-        citizenIdCard: values.idNumber ?? null,
-        issuedDate: values.idDate ? values.idDate.format('YYYY-MM-DD') : null,
-        issuedPlace: values.idPlace ?? null,
-        healthInsuranceNumber: values.healthInsurance ?? null,
-        registeredHospital: values.hospital ?? null,
+        citizenIdCard: values.citizenIdCard ?? null,
+        issuedDate: values.issuedDate
+          ? values.issuedDate.format('YYYY-MM-DD')
+          : null,
+        issuedPlace: values.issuedPlace ?? null,
+        healthInsuranceNumber: values.healthInsuranceNumber ?? null,
+        registeredHospital: values.healthInsuranceRegistrationPlace ?? null,
         hometownProvince: values.hometownProvince ?? null,
         hometownDistrict: values.hometownDistrict ?? null,
         hometownWard: values.hometownWard ?? null,
