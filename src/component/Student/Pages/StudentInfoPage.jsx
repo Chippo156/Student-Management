@@ -17,6 +17,7 @@ import {
   MailOutlined,
   PhoneOutlined,
   HomeOutlined,
+  IdcardOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { userService } from '../../../service/userService';
@@ -174,8 +175,27 @@ const StudentInfoPage = () => {
       <Title level={2}>Thông tin sinh viên</Title>
       <Row gutter={[24, 24]} wrap>
         <Col xs={24} md={24} style={{ minWidth: 0 }}>
-          <Card title="Thông tin cá nhân" style={{ marginBottom: 24 }}>
-            <Descriptions bordered column={{ xs: 1, sm: 2 }}>
+          <Card
+            title={
+              <span>
+                <UserOutlined style={{ color: '#1890ff', marginRight: 8 }} />
+                Thông tin cá nhân
+              </span>
+            }
+            style={{ marginBottom: 24, background: '#f6faff', borderRadius: 8 }}
+            bodyStyle={{ padding: 24 }}
+          >
+            <Descriptions
+              bordered
+              column={{ xs: 1, sm: 2 }}
+              labelStyle={{
+                width: 180,
+                background: '#f0f5ff',
+                fontWeight: 500,
+              }}
+              contentStyle={{ background: '#fff' }}
+              size="middle"
+            >
               <Descriptions.Item label="Mã sinh viên">
                 <InfoText>{studentInfo.username}</InfoText>
               </Descriptions.Item>
@@ -198,12 +218,115 @@ const StudentInfoPage = () => {
                       : 'Khác'}
                 </InfoText>
               </Descriptions.Item>
-              <Descriptions.Item label="Nơi sinh">
-                <InfoText>{studentInfo.placeOfBirth}</InfoText>
+              <Descriptions.Item label="Dân tộc">
+                <InfoText>{studentInfo.ethnicity}</InfoText>
+              </Descriptions.Item>
+              <Descriptions.Item label="Quốc tịch">
+                <InfoText>{studentInfo.nationality}</InfoText>
               </Descriptions.Item>
               <Descriptions.Item label="Tôn giáo">
                 <InfoText>{studentInfo.religion}</InfoText>
               </Descriptions.Item>
+              <Descriptions.Item label="Email">
+                <Text copyable>
+                  <InfoText>{studentInfo.email}</InfoText>
+                </Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="Số điện thoại">
+                <Text copyable>
+                  <InfoText>{studentInfo.phone}</InfoText>
+                </Text>
+              </Descriptions.Item>
+            </Descriptions>
+
+            <Divider
+              orientation="left"
+              style={{ color: '#1890ff', fontWeight: 600, marginTop: 32 }}
+            >
+              <HomeOutlined style={{ marginRight: 8 }} />
+              Địa chỉ & Nơi sinh
+            </Divider>
+            <Descriptions
+              bordered
+              column={{ xs: 1, sm: 2 }}
+              labelStyle={{
+                width: 180,
+                background: '#f0f5ff',
+                fontWeight: 500,
+              }}
+              contentStyle={{ background: '#fff' }}
+              size="middle"
+            >
+              <Descriptions.Item label="Nơi sinh">
+                <InfoText>
+                  {[
+                    studentInfo.birthWard,
+                    studentInfo.birthDistrict,
+                    studentInfo.birthProvince,
+                  ]
+                    .filter(Boolean)
+                    .join(', ') || studentInfo.placeOfBirth}
+                </InfoText>
+              </Descriptions.Item>
+              <Descriptions.Item label="Quê quán">
+                <InfoText>
+                  {[
+                    studentInfo.hometownWard,
+                    studentInfo.hometownDistrict,
+                    studentInfo.hometownProvince,
+                  ]
+                    .filter(Boolean)
+                    .join(', ')}
+                </InfoText>
+              </Descriptions.Item>
+              <Descriptions.Item label="Nơi cấp giấy khai sinh">
+                <InfoText>
+                  {[
+                    studentInfo.birthCertWard,
+                    studentInfo.birthCertDistrict,
+                    studentInfo.birthCertProvince,
+                  ]
+                    .filter(Boolean)
+                    .join(', ')}
+                </InfoText>
+              </Descriptions.Item>
+              <Descriptions.Item label="Nơi đăng ký hộ khẩu thường trú">
+                <InfoText>
+                  {[
+                    studentInfo.permanentWard,
+                    studentInfo.permanentDistrict,
+                    studentInfo.permanentProvince,
+                  ]
+                    .filter(Boolean)
+                    .join(', ')}
+                </InfoText>
+              </Descriptions.Item>
+              <Descriptions.Item label="Địa chỉ liên hệ" span={2}>
+                <InfoText>{studentInfo.address}</InfoText>
+              </Descriptions.Item>
+              <Descriptions.Item label="Địa chỉ tạm trú" span={2}>
+                <InfoText>{studentInfo.temporaryAddress}</InfoText>
+              </Descriptions.Item>
+            </Descriptions>
+
+            <Divider
+              orientation="left"
+              style={{ color: '#1890ff', fontWeight: 600, marginTop: 32 }}
+            >
+              <IdcardOutlined style={{ marginRight: 8 }} />
+              Giấy tờ & Bảo hiểm
+            </Divider>
+            <Descriptions
+              bordered
+              column={{ xs: 1, sm: 2 }}
+              labelStyle={{
+                width: 180,
+                background: '#f0f5ff',
+                fontWeight: 500,
+              }}
+              contentStyle={{ background: '#fff' }}
+              size="middle"
+            >
               <Descriptions.Item label="Số CCCD">
                 <InfoText>{studentInfo.citizenIdCard}</InfoText>
               </Descriptions.Item>
@@ -217,18 +340,13 @@ const StudentInfoPage = () => {
               <Descriptions.Item label="Nơi cấp CCCD">
                 <InfoText>{studentInfo.issuedPlace}</InfoText>
               </Descriptions.Item>
-              <Descriptions.Item label="Email">
-                <Text copyable>
-                  <InfoText>{studentInfo.email}</InfoText>
-                </Text>
+              <Descriptions.Item label="Mã số BHYT">
+                <InfoText>{studentInfo.healthInsuranceNumber}</InfoText>
               </Descriptions.Item>
-              <Descriptions.Item label="Số điện thoại">
-                <Text copyable>
-                  <InfoText>{studentInfo.phone}</InfoText>
-                </Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ" span={2}>
-                <InfoText>{studentInfo.address}</InfoText>
+              <Descriptions.Item label="Nơi đăng ký KCB ban đầu">
+                <InfoText>
+                  {studentInfo.healthInsuranceRegistrationPlace}
+                </InfoText>
               </Descriptions.Item>
             </Descriptions>
           </Card>
