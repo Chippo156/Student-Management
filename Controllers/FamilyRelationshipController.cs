@@ -59,9 +59,11 @@ namespace StudentManagement.Controllers
         }
 
         [HttpDelete("DeleteFamilyRelationship/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteFamilyRelationship(int id)
         {
             var isDeleted = await familyRelationshipService.DeleteFamilyRelationshipAsync(id);
+            
             if (!isDeleted)
             {
                 return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Family relationship with ID {id} not found.", null));
