@@ -1,3 +1,6 @@
+using Azure.Core;
+using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Enum;
@@ -24,13 +27,21 @@ namespace StudentManagement.Services
                 DateOfBirth = request.DateOfBirth,
                 Phone = request.Phone,
                 Email = request.Email,
-                Address = request.Address,
+                PermanentAddress = request.PermanentAddress,
                 Occupation = request.Occupation,
                 Workplace = request.Workplace,
                 CitizenIdCard = request.CitizenIdCard,
                 IssuedDate = request.IssuedDate,
                 IssuedPlace = request.IssuedPlace,
-                IsGuardian = request.IsGuardian
+                IsGuardian = request.IsGuardian,
+                Province = request.Province,
+                District = request.District,
+                Ward = request.Ward, 
+                DetailAddress = request.DetailAddress,
+                IsDeceased = request.IsDeceased,
+                IsHouseholder = request.IsHouseholder,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
             context.FamilyRelationships.Add(familyRelationship);
@@ -78,13 +89,19 @@ namespace StudentManagement.Services
             familyRelationship.DateOfBirth = request.DateOfBirth;
             familyRelationship.Phone = request.Phone;
             familyRelationship.Email = request.Email;
-            familyRelationship.Address = request.Address;
+            familyRelationship.PermanentAddress = request.PermanentAddress;
             familyRelationship.Occupation = request.Occupation;
             familyRelationship.Workplace = request.Workplace;
             familyRelationship.CitizenIdCard = request.CitizenIdCard;
             familyRelationship.IssuedDate = request.IssuedDate;
             familyRelationship.IssuedPlace = request.IssuedPlace;
             familyRelationship.IsGuardian = request.IsGuardian;
+            familyRelationship.Province = request.Province;
+            familyRelationship.District = request.District;
+            familyRelationship.Ward = request.Ward;
+            familyRelationship.DetailAddress = request.DetailAddress;
+            familyRelationship.IsDeceased = request.IsDeceased;
+            familyRelationship.IsHouseholder = request.IsHouseholder;
             familyRelationship.UpdatedAt = DateTime.UtcNow;
 
             context.FamilyRelationships.Update(familyRelationship);
@@ -105,14 +122,21 @@ namespace StudentManagement.Services
                 Age = fr.DateOfBirth.HasValue ? DateTime.Now.Year - fr.DateOfBirth.Value.Year : null,
                 Phone = fr.Phone,
                 Email = fr.Email,
-                Address = fr.Address,
+                PermanentAddress = fr.PermanentAddress,
                 Occupation = fr.Occupation,
                 Workplace = fr.Workplace,
                 CitizenIdCard = fr.CitizenIdCard,
                 IssuedDate = fr.IssuedDate,
                 IssuedPlace = fr.IssuedPlace,
                 IsGuardian = fr.IsGuardian,
-                CreatedAt = fr.CreatedAt
+                CreatedAt = fr.CreatedAt,
+                Province = fr.Province,
+                District = fr.District,
+                Ward = fr.Ward,
+                DetailAddress = fr.DetailAddress,
+                IsDeceased = fr.IsDeceased,
+                IsHouseholder = fr.IsHouseholder,
+                UpdatedAt = DateTime.UtcNow
             };
         }
     }

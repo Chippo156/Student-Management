@@ -153,6 +153,27 @@ namespace StudentManagement.Services
                         PolicyArea = s.User.PolicyArea,
                         DateOfJoinUnion = s.User.DateOfJoinUnion,
                         DateOfJoinParty = s.User.DateOfJoinParty,
+                        HealthInsuranceNumber = s.User.HealthInsuranceNumber,
+                        HealthInsuranceRegistrationPlace = s.User.HealthInsuranceRegistrationPlace,
+
+                        Nationality = s.User.Nationality,
+                        Ethnicity = s.User.Ethnicity,
+                        TemporaryAddress = s.User.TemporaryAddress,
+                        BirthCertWard = s.User.BirthCertWard,
+                        BirthCertDistrict = s.User.BirthCertDistrict,
+                        BirthCertProvince = s.User.BirthCertProvince,
+                        HometownWard = s.User.HometownWard,
+                        HometownDistrict = s.User.HometownDistrict,
+                        HometownProvince =  s.User.HometownProvince,
+
+                        BirthDistrict = s.User.BirthDistrict,
+                        BirthProvince = s.User.BirthProvince,
+                        BirthWard = s.User.BirthWard,
+
+                        PermanentDistrict = s.User.PermanentDistrict,
+                        PermanentProvince = s.User.PermanentProvince,
+                        PermanentWard = s.User.PermanentWard,
+                        IssuedPlace = s.User.IssuedPlace,
                         BankAccount = s.User.BankAccounts
                           .Where(b => b.IsDefault == true)
                          .Select(b => new BankAccountResponse
@@ -209,7 +230,29 @@ namespace StudentManagement.Services
                 student.User.Phone = request.Phone;
                 student.User.Gender = request.Gender;
                 student.User.Address = request.Address;
-                student.User.PlaceOfBirth = request.PlaceOfBirth;
+
+                student.User.BirthProvince = request.BirthProvince;
+                student.User.BirthWard = request.BirthWard;
+                student.User.BirthDistrict = request.BirthDistrict;
+
+                student.User.BirthCertProvince = request.BirthCertProvince;
+                student.User.BirthCertDistrict = request.BirthCertDistrict;
+                student.User.BirthCertWard = request.BirthCertWard;
+
+                student.User.HometownProvince = request.HometownProvince;
+                student.User.HometownDistrict = request.HometownDistrict;
+                student.User.HometownWard = request.HometownWard;
+
+                student.User.PermanentProvince = request.PermanentProvince;
+                student.User.PermanentDistrict = request.PermanentDistrict;
+                student.User.PermanentWard = request.PermanentWard;
+
+                student.User.TemporaryAddress = request.TemporaryAddress;
+                student.User.Ethnicity = request.Ethnicity;
+                student.User.Nationality = request.Nationality;
+                student.User.HealthInsuranceNumber = request.HealthInsuranceNumber;
+                student.User.HealthInsuranceRegistrationPlace = request.RegisteredHospital;
+
                 student.User.Religion = request.Religion;
                 student.User.DateOfBirth = request.DateOfBirth;
                 student.User.CitizenIdCard = request.CitizenIdCard;
@@ -256,6 +299,29 @@ namespace StudentManagement.Services
                         PolicyArea = student.User.PolicyArea,
                         DateOfJoinUnion = student.User.DateOfJoinUnion,
                         DateOfJoinParty = student.User.DateOfJoinParty,
+
+                        HealthInsuranceNumber= student.User.HealthInsuranceNumber,
+                        HealthInsuranceRegistrationPlace= student.User.HealthInsuranceRegistrationPlace,
+                        
+                        Nationality= student.User.Nationality,
+                        Ethnicity= student.User.Ethnicity,
+                        TemporaryAddress= student.User.TemporaryAddress,
+                        BirthCertWard= student.User.BirthCertWard,
+                        BirthCertDistrict= student.User.BirthCertDistrict,
+                        BirthCertProvince= student.User.BirthCertProvince,
+                        HometownWard= student.User.HometownWard,
+                        HometownDistrict= student.User.HometownDistrict,
+                        HometownProvince= student.User.HometownProvince,
+
+                        BirthDistrict= student.User.BirthDistrict,
+                        BirthProvince= student.User.BirthProvince,
+                        BirthWard= student.User.BirthWard,
+
+                        PermanentDistrict= student.User.PermanentDistrict,
+                        PermanentProvince= student.User.PermanentProvince,
+                        PermanentWard= student.User.PermanentWard,
+                        IssuedPlace = student.User.IssuedPlace,
+
                         BankAccount = student.User.BankAccounts
                           .Where(b => b.IsDefault == true)
                          .Select(b => new BankAccountResponse
