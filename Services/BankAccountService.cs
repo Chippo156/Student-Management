@@ -25,9 +25,12 @@ namespace StudentManagement.Services
                 User = user,
                 AccountNumber = request.AccountNumber,
                 BankName = request.BankName,
+                BankCode = request.BankCode,
                 Branch = request.Branch,
                 AccountHolderName = request.AccountHolderName,
-                IsDefault = request.IsDefault
+                IsDefault = request.IsDefault,
+                AccountStatus = Enum.AccountStatus.Active,
+                DateCreateAccount = request.DateCreateAccount ?? DateOnly.FromDateTime(DateTime.UtcNow)
             };
 
             context.BankAccounts.Add(bankAccount);
@@ -110,6 +113,7 @@ namespace StudentManagement.Services
             bankAccount.AccountHolderName = request.AccountHolderName;
             bankAccount.IsDefault = request.IsDefault;
             bankAccount.BankCode = request.BankCode;
+            bankAccount.DateCreateAccount = request.DateCreateAccount ?? bankAccount.DateCreateAccount;
 
             context.BankAccounts.Update(bankAccount);
             await context.SaveChangesAsync();
