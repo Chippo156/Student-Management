@@ -54,4 +54,14 @@ export const bankAccountService = {
       );
     }
   },
+  deleteBankAccount: async (id) => {
+    try {
+      const response = await axios.delete(`/api/BankAccount/${id}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || 'Delete bank account failed'
+      );
+    }
+  },
 };

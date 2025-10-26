@@ -53,6 +53,9 @@ const BankInfo = () => {
   // State cho ngân hàng đã chọn
   const [selectedBank, setSelectedBank] = useState(null);
 
+  // State cho hiệu ứng loading của nút OK trong modal
+  const [actionLoading, setActionLoading] = useState(false);
+
   // Fetch danh sách ngân hàng từ helperService
   useEffect(() => {
     const fetchBanks = async () => {
@@ -127,6 +130,7 @@ const BankInfo = () => {
   };
 
   const handleOk = async () => {
+    setActionLoading(true);
     try {
       const values = await form.validateFields();
       let bankName = values.bankName;
@@ -161,7 +165,7 @@ const BankInfo = () => {
         }
       } else {
         res = await bankAccountService.createBankAccount(payload);
-        if (res && res.data) {
+        if (res) {
           await fetchAccounts();
           message.success('Thêm tài khoản ngân hàng thành công!');
         }
@@ -172,6 +176,8 @@ const BankInfo = () => {
       setBranchList([]);
     } catch (error) {
       // Validation failed
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -203,8 +209,16 @@ const BankInfo = () => {
       message.error('Không thể xóa tài khoản mặc định!');
       return;
     }
-    setBankAccounts(bankAccounts.filter((account) => account.id !== id));
-    message.success('Xóa tài khoản ngân hàng thành công!');
+    try {
+      setLoading(true);
+      await bankAccountService.deleteBankAccount(id);
+      await fetchAccounts();
+      message.success('Xóa tài khoản ngân hàng thành công!');
+    } catch (error) {
+      message.error(error.message || 'Xóa tài khoản thất bại!');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSetDefault = async (id) => {
@@ -442,7 +456,13 @@ const BankInfo = () => {
         width={600}
         okText={editingAccount ? 'Cập nhật' : 'Thêm'}
         cancelText="Hủy"
+        confirmLoading={actionLoading} // <-- loading hiệu ứng cho nút OK
       >
+        {actionLoading && (
+          <div style={{ textAlign: 'center', marginBottom: 16 }}>
+            <Spin tip="Đang xử lý..." size="large" />
+          </div>
+        )}
         <Alert
           message="Lưu ý"
           description="Vui lòng kiểm tra kỹ thông tin tài khoản trước khi lưu. Thông tin sai có thể ảnh hưởng đến việc thanh toán học phí."

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../redux/hooks';
 
 // Import components
@@ -82,6 +82,7 @@ const TimelinePage = () => (
 
 const AppRoutes = () => {
   const { isAuthenticated, account } = useAppSelector((state) => state.user);
+  const location = useLocation();
 
   const getDashboardByRole = () => {
     if (!account || !account.role) {
@@ -91,9 +92,9 @@ const AppRoutes = () => {
     switch (userRoleId) {
       case 1:
         return '/admin';
-      case 2: // Teacher
+      case 2:
         return '/student';
-      case 3: // Student
+      case 3:
         return '/teacher';
       default:
         return '/login';
@@ -102,7 +103,6 @@ const AppRoutes = () => {
 
   // Component để handle trang mặc định với role check
   const HomePageHandler = () => {
-    const location = useLocation();
     if (!isAuthenticated && location.pathname !== '/login') {
       return <Navigate to="/login" replace />;
     }
@@ -133,7 +133,6 @@ const AppRoutes = () => {
           />
         </Route>
 
-        {/* Admin routes - Role ID 1 or 4 */}
         <Route
           path="/admin"
           element={
