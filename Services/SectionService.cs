@@ -134,6 +134,7 @@ namespace StudentManagement.Services
                 .Include(s => s.Lecturer)
                     .ThenInclude(l => l.User)
                 .Include(s => s.Semester)
+                .Include(s => s.Class)
                 .Where(s => s.CurriculumCourse.Id == curriculumCourseId && 
                         s.Semester.SemesterId == semesterId)
                 .ToListAsync();
@@ -166,7 +167,12 @@ namespace StudentManagement.Services
                 // Registration status
                 IsRegistrationOpen = isRegistrationOpen,
                 RegistrationStartDate = registrationPeriod?.StartDate,
-                RegistrationEndDate = registrationPeriod?.EndDate
+                RegistrationEndDate = registrationPeriod?.EndDate,
+                Status = s.Status,
+
+                ClassName = s.Class.ClassName,
+                ClassCode = s.Class.ClassCode
+                
             })
             .OrderBy(s => s.SectionName)
             .ToList();

@@ -1,3 +1,5 @@
+using StudentManagement.Enum;
+
 namespace StudentManagement.Models.Dto.Response
 {
     public class SectionDetailWithRegistrationResponse
@@ -15,7 +17,11 @@ namespace StudentManagement.Models.Dto.Response
         public int CreditsTheory { get; set; }
         public int CreditsLab { get; set; }
         public int TotalCredits { get; set; }
-        
+
+        // Class information
+        public string ClassName { get; set; } = string.Empty;
+        public string ClassCode { get; set; } = string.Empty;
+
         // Lecturer information
         public string LecturerName { get; set; } = string.Empty;
         public string LecturerEmail { get; set; } = string.Empty;
@@ -30,7 +36,8 @@ namespace StudentManagement.Models.Dto.Response
         public bool IsRegistrationOpen { get; set; }
         public DateTime? RegistrationStartDate { get; set; }
         public DateTime? RegistrationEndDate { get; set; }
-        
+        public SectionStatus Status { get; set; }   
+
         // Enrollment status
         public bool IsAvailable => CurrentEnrollment < MaxCapacity && IsRegistrationOpen;
         public int RemainingSlots => MaxCapacity - CurrentEnrollment;

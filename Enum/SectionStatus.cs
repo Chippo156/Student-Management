@@ -2,8 +2,8 @@
 {
     public enum SectionStatus
     {
-        IsOpening,
-        IsPreparing,
-        IsClosed,
+        IsOpening = 0,
+        IsPreparing = 1,
+        IsClosed = 2,
     }
 }

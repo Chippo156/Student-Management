@@ -6,6 +6,7 @@ namespace StudentManagement.Models
     public class Section
     {
         public int SectionId { get; set; }
+        public string SectionCode { get; set; } = string.Empty;
         public CurriculumCourse CurriculumCourse { get; set; } = null!;
         public Semester Semester { get; set; } = null!;
         public Lecturer Lecturer { get; set; } = null!;
