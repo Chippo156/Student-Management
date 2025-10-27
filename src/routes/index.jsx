@@ -31,6 +31,8 @@ import BankInfo from '../page/Student/General information/BankInfo';
 import StudentGrades from '../page/Student/Study/StudentGrades';
 import StudentSchedule from '../page/Student/Study/StudentSchedule';
 import StudentEditInfoPage from '../page/Student/General information/StudentEditInfoPage';
+import RegisterCourses from '../page/Student/Registration/RegisterCourses';
+
 // Teacher pages
 import TeacherDashboard from '../component/Teacher/Dashboard';
 import TeacherCourses from '../component/Teacher/Pages/CoursesPage';
@@ -270,7 +272,7 @@ const AppRoutes = () => {
 
           {/* Đăng ký học phần */}
           <Route path="curriculum" element={<CurriculumPage />} />
-          <Route path="register-courses" element={<RegisterCoursePage />} />
+          <Route path="register-courses" element={<RegisterCourses />} />
 
           {/* Học phí */}
           <Route path="debt" element={<DebtPage />} />

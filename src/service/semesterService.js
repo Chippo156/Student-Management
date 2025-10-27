@@ -12,6 +12,7 @@ export const semesterService = {
 
   getSemesterByStudentAndAcceptRegister: async () => {
     try {
+      console.log(customizeAxios)
       const response = await customizeAxios.get(
         '/api/Semester/student/enrollment/GetSemesterByStudentAndAcceptRegister'
       );
