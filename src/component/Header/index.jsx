@@ -59,7 +59,7 @@ const HeaderPage = () => {
   };
 
   const getDashboardByRole = () => {
-    if (!account || !account.role) {
+    if (!account || !account.role || !account.role.roleId) {
       return '/login';
     }
     const userRoleId = account.role.roleId;
