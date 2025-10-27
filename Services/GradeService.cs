@@ -202,6 +202,7 @@ namespace StudentManagement.Services
             int cumulativeCreditsRegistered = 0;
             int cumulativeCreditsEarned = 0;
             int cumulativeCreditsDebt = 0;
+            double cumulativeGpaValue = await GetCurrentCumulativeGpaAsync(student.Id);
 
             foreach (var semesterGroup in gradesBySemester)
             {
@@ -259,8 +260,8 @@ namespace StudentManagement.Services
                     Term = semester.Term,
                     SemesterGPA4 = semesterGpa?.Gpa ?? 0.0,
                     SemesterGPA10 = semesterGpa is not null ? Math.Round(semesterGpa.Gpa * 2.5, 2) : 0.0,
-                    CumulativeGPA4 = cumulativeGpa?.Gpa ?? 0.0,
-                    CumulativeGPA10 = cumulativeGpa is not null ? Math.Round(cumulativeGpa.Gpa * 2.5, 2) : 0.0,
+                    CumulativeGPA4 = cumulativeGpaValue,
+                    CumulativeGPA10 = cumulativeGpaValue != 0 ? Math.Round(cumulativeGpa.Gpa * 2.5, 2) : 0.0,
                     TotalCreditsRegistered = cumulativeCreditsRegistered,
                     TotalCreditsEarned = cumulativeCreditsEarned,
                     TotalCreditsDebt = cumulativeCreditsDebt,
@@ -361,6 +362,25 @@ namespace StudentManagement.Services
                 >= 1.0 => "Yếu",
                 _ => "Kém"
             };
+        }
+        public async Task<double> GetCurrentCumulativeGpaAsync(int studentId)
+        {
+            // Get all final results for this student
+            var allGpaSnapshot = await context.GpaSnapshots
+
+                .Where(fr => fr.Student.Id == studentId)
+                .ToListAsync();
+
+            // Calculate overall cumulative GPA
+            double totalGpa = 0;
+
+            foreach (var result in allGpaSnapshot)
+            {
+                var GPA = result.Gpa;
+                totalGpa += GPA;
+            }
+            return allGpaSnapshot.Count > 0 ? totalGpa / allGpaSnapshot.Count : 0.0;
+
         }
 
         public async Task<Grade> CreateGradeAsync(GradeRequest request)
