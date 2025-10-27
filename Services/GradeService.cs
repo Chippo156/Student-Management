@@ -9,25 +9,6 @@ namespace StudentManagement.Services
 {
     public class GradeService(AppDbContext context) : IGradeService
     {
-        public async Task<Grade> CreateGradeAsync(GradeRequest request)
-        {
-            var student = await context.Students.FindAsync(request.StudentId)
-                ?? throw new Exception("Student not found");
-
-            var assessment = await context.Assessment.FindAsync(request.AssessmentId)
-                ?? throw new Exception("Assessment not found");
-
-            Grade grade = new Grade
-            {
-                Student = student,
-                Assessment = assessment,
-                Score = request.Score
-            };
-
-            context.Grades.Add(grade);
-            await context.SaveChangesAsync();
-            return grade;
-        }
 
         public async Task<bool> DeleteGradeAsync(int gradeId)
         {
@@ -87,41 +68,6 @@ namespace StudentManagement.Services
                 .Include(g => g.Assessment)
                 .Where(g => g.Student.Id == studentId && g.Assessment.Section.SectionId == sectionId)
                 .ToListAsync();
-        }
-
-        public async Task<Grade?> UpdateGradeAsync(int gradeId, GradeRequest request)
-        {
-            var grade = await context.Grades.FindAsync(gradeId);
-            if (grade is null)
-            {
-                return null;
-            }
-
-            if (request.StudentId != grade.Student.Id)
-            {
-                var student = await context.Students.FindAsync(request.StudentId);
-                if (student is null)
-                {
-                    throw new Exception("Student not found");
-                }
-                grade.Student = student;
-            }
-
-            if (request.AssessmentId != grade.Assessment.AssessmentId)
-            {
-                var assessment = await context.Assessment.FindAsync(request.AssessmentId);
-                if (assessment is null)
-                {
-                    throw new Exception("Assessment not found");
-                }
-                grade.Assessment = assessment;
-            }
-
-            grade.Score = request.Score;
-
-            context.Grades.Update(grade);
-            await context.SaveChangesAsync();
-            return grade;
         }
 
         public async Task<IEnumerable<Grade>> GetGradesBySemeterAndStudentAsync(int semeter, int studentId)
@@ -226,6 +172,14 @@ namespace StudentManagement.Services
                 .Where(fr => fr.Student.MSSV == mssv)
                 .ToListAsync();
 
+            // Get all enrollments for this student
+            var enrollments = await context.Enrollments
+                .Include(e => e.Section)
+                    .ThenInclude(s => s.CurriculumCourse.Course)
+                .Include(e => e.Section.Semester)
+                .Where(e => e.Student.MSSV == mssv)
+                .ToListAsync();
+
             // Get GPA snapshots
             var gpaSnapshots = await context.GpaSnapshots
                 .Include(g => g.Semester)
@@ -244,6 +198,11 @@ namespace StudentManagement.Services
                 .OrderByDescending(g => g.Key.Year)
                 .ThenByDescending(g => g.Key.Term);
 
+            // Calculate cumulative statistics
+            int cumulativeCreditsRegistered = 0;
+            int cumulativeCreditsEarned = 0;
+            int cumulativeCreditsDebt = 0;
+
             foreach (var semesterGroup in gradesBySemester)
             {
                 var semester = semesterGroup.Key;
@@ -253,13 +212,60 @@ namespace StudentManagement.Services
                 var semesterGpa = gpaSnapshots
                     .FirstOrDefault(g => g.Semester.SemesterId == semester.SemesterId);
 
+                // Get enrollments for this semester
+                var semesterEnrollments = enrollments
+                    .Where(e => e.Section.Semester.SemesterId == semester.SemesterId)
+                    .ToList();
+
+                // Get final results for this semester
+                var semesterFinalResults = finalResults
+                    .Where(fr => fr.Section.Semester.SemesterId == semester.SemesterId)
+                    .ToList();
+
+                // Calculate semester credit statistics
+                int semesterCreditsRegistered = semesterEnrollments
+                    .Sum(e => e.Section.CurriculumCourse.Course.CreditsTheory + e.Section.CurriculumCourse.Course.CreditsLab);
+
+                int semesterCreditsEarned = semesterFinalResults
+                    .Where(fr => fr.GradePoint >= 1.0)
+                    .Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab);
+
+                int semesterCreditsDebt = semesterFinalResults
+                    .Where(fr => fr.GradePoint < 1.0)
+                    .Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab);
+
+                // Update cumulative totals
+                cumulativeCreditsRegistered += semesterCreditsRegistered;
+                cumulativeCreditsEarned += semesterCreditsEarned;
+                cumulativeCreditsDebt += semesterCreditsDebt;
+
+                // Get cumulative GPA from latest semester up to current
+                var cumulativeGpa = gpaSnapshots
+                    .Where(g => g.Semester.Year < semester.Year ||
+                               (g.Semester.Year == semester.Year && string.Compare(g.Semester.Term, semester.Term) <= 0))
+                    .OrderByDescending(g => g.Semester.Year)
+                    .ThenByDescending(g => g.Semester.Term)
+                    .FirstOrDefault();
+
+                // Calculate academic rankings
+                string semesterRank = GetAcademicRank(semesterGpa?.Gpa ?? 0.0);
+                string cumulativeRank = GetAcademicRank(cumulativeGpa?.Gpa ?? 0.0);
+
                 var semesterDetail = new SemesterGradesDetail
                 {
                     SemesterId = semester.SemesterId,
                     SemesterName = $"{semester.Year} - {semester.Term}",
                     Year = semester.Year,
                     Term = semester.Term,
-                    SemesterGPA = semesterGpa?.Gpa ?? 0.0
+                    SemesterGPA4 = semesterGpa?.Gpa ?? 0.0,
+                    SemesterGPA10 = semesterGpa is not null ? Math.Round(semesterGpa.Gpa * 2.5, 2) : 0.0,
+                    CumulativeGPA4 = cumulativeGpa?.Gpa ?? 0.0,
+                    CumulativeGPA10 = cumulativeGpa is not null ? Math.Round(cumulativeGpa.Gpa * 2.5, 2) : 0.0,
+                    TotalCreditsRegistered = cumulativeCreditsRegistered,
+                    TotalCreditsEarned = cumulativeCreditsEarned,
+                    TotalCreditsDebt = cumulativeCreditsDebt,
+                    SemesterRank = semesterRank,
+                    CumulativeRank = cumulativeRank
                 };
 
                 // Group all grades by section (course)
@@ -342,6 +348,260 @@ namespace StudentManagement.Services
             }
 
             return response;
+        }
+
+        private string GetAcademicRank(double gpa)
+        {
+            return gpa switch
+            {
+                >= 3.6 => "Xuất sắc",
+                >= 3.2 => "Giỏi",
+                >= 2.5 => "Khá",
+                >= 2.0 => "Trung bình",
+                >= 1.0 => "Yếu",
+                _ => "Kém"
+            };
+        }
+
+        public async Task<Grade> CreateGradeAsync(GradeRequest request)
+        {
+            var student = await context.Students.FindAsync(request.StudentId)
+                ?? throw new Exception("Student not found");
+
+            var assessment = await context.Assessment
+                .Include(a => a.AssessmentType)
+                .Include(a => a.Section)
+                  .ThenInclude(a=> a.Semester)
+                .FirstOrDefaultAsync(a => a.AssessmentId == request.AssessmentId)
+                ?? throw new Exception("Assessment not found");
+
+            Grade grade = new Grade
+            {
+                Student = student,
+                Assessment = assessment,
+                Score = request.Score
+            };
+
+            context.Grades.Add(grade);
+            await context.SaveChangesAsync();
+
+            // Check if this is a final exam grade (assuming AssessmentTypeId = 3 for final exams)
+            if (assessment.AssessmentType.AssessmentTypeId == 5)
+            {
+                await UpdateFinalResultAsync(student.Id, assessment.Section.SectionId);
+                await UpdateGpaSnapshotAsync(student.Id, assessment.Section.Semester.SemesterId);
+            }
+
+            return grade;
+        }
+
+        public async Task<Grade?> UpdateGradeAsync(int gradeId, GradeRequest request)
+        {
+            var grade = await context.Grades
+                .Include(g => g.Assessment)
+                    .ThenInclude(a => a.AssessmentType)
+                .Include(g => g.Assessment.Section)
+                .Include(g => g.Student)
+                .FirstOrDefaultAsync(g => g.GradeId == gradeId);
+
+            if (grade is null)
+            {
+                return null;
+            }
+
+            bool isStudentChanged = false;
+            bool isAssessmentChanged = false;
+
+            if (request.StudentId != grade.Student.Id)
+            {
+                var student = await context.Students.FindAsync(request.StudentId);
+                if (student is null)
+                {
+                    throw new Exception("Student not found");
+                }
+                grade.Student = student;
+                isStudentChanged = true;
+            }
+
+            if (request.AssessmentId != grade.Assessment.AssessmentId)
+            {
+                var assessment = await context.Assessment
+                    .Include(a => a.AssessmentType)
+                    .Include(a => a.Section)
+                    .FirstOrDefaultAsync(a => a.AssessmentId == request.AssessmentId);
+                if (assessment is null)
+                {
+                    throw new Exception("Assessment not found");
+                }
+                grade.Assessment = assessment;
+                isAssessmentChanged = true;
+            }
+
+            grade.Score = request.Score;
+
+            context.Grades.Update(grade);
+            await context.SaveChangesAsync();
+
+            // Update final results and GPA if this is a final exam
+            if (grade.Assessment.AssessmentType.AssessmentTypeId == 5)
+            {
+                await UpdateFinalResultAsync(grade.Student.Id, grade.Assessment.Section.SectionId);
+                await UpdateGpaSnapshotAsync(grade.Student.Id, grade.Assessment.Section.Semester.SemesterId);
+
+                // If student or assessment changed, also update the old records
+                if (isStudentChanged || isAssessmentChanged)
+                {
+                    // You may need to track old values to update previous records
+                }
+            }
+
+            return grade;
+        }
+
+        private async Task UpdateFinalResultAsync(int studentId, int sectionId)
+        {
+            // Get all grades for this student in this section
+            var grades = await context.Grades
+                .Include(g => g.Assessment)
+                    .ThenInclude(a => a.AssessmentType)
+                .Where(g => g.Student.Id == studentId && g.Assessment.Section.SectionId == sectionId)
+                .ToListAsync();
+
+            if (!grades.Any())
+                return;
+
+            // Calculate final score based on weighted average
+            double finalScore = 0;
+            double totalWeight = 0;
+
+            foreach (var gradeGroup in grades.GroupBy(g => g.Assessment.AssessmentType.AssessmentTypeId))
+            {
+                var assessmentTypeGrades = gradeGroup.ToList();
+                var firstGrade = assessmentTypeGrades.First();
+
+                if (gradeGroup.Key == 1) // Regular grades - take average
+                {
+                    var averageScore = assessmentTypeGrades.Average(g => g.Score);
+                    finalScore += averageScore * firstGrade.Assessment.Weight / 100;
+                    totalWeight += firstGrade.Assessment.Weight;
+                }
+                else // Other assessment types - take the grade directly
+                {
+                    foreach (var grade in assessmentTypeGrades)
+                    {
+                        finalScore += grade.Score * grade.Assessment.Weight / 100;
+                        totalWeight += grade.Assessment.Weight;
+                    }
+                }
+            }
+
+            // Normalize if total weight is not 100%
+            if (totalWeight > 0 && totalWeight != 100)
+            {
+                finalScore = (finalScore / totalWeight) * 100;
+            }
+
+            // Determine grade letter and grade point
+            var (gradeLetter, gradePoint) = CalculateGradeLetterAndPoint(finalScore);
+
+            // Update or create final result
+            var existingResult = await context.FinalResults
+                .FirstOrDefaultAsync(fr => fr.Student.Id == studentId && fr.Section.SectionId == sectionId);
+
+            if (existingResult != null)
+            {
+                existingResult.FinalScore = finalScore;
+                existingResult.GradeLetter = gradeLetter;
+                existingResult.GradePoint = gradePoint;
+                context.FinalResults.Update(existingResult);
+            }
+            else
+            {
+                var student = await context.Students.FindAsync(studentId);
+                var section = await context.Sections.FindAsync(sectionId);
+
+                var finalResult = new FinalResult
+                {
+                    Student = student,
+                    Section = section,
+                    FinalScore = finalScore,
+                    GradeLetter = gradeLetter,
+                    GradePoint = gradePoint
+                };
+
+                context.FinalResults.Add(finalResult);
+            }
+
+            await context.SaveChangesAsync();
+        }
+
+        private async Task UpdateGpaSnapshotAsync(int studentId, int semesterId)
+        {
+            // Get all final results for this student in this semester
+            var semesterResults = await context.FinalResults
+                .Include(fr => fr.Section)
+                    .ThenInclude(s => s.CurriculumCourse.Course)
+                .Where(fr => fr.Student.Id == studentId && fr.Section.Semester.SemesterId == semesterId)
+                .ToListAsync();
+
+            if (!semesterResults.Any())
+                return;
+
+            // Calculate semester GPA
+            double totalPoints = 0;
+            int totalCredits = 0;
+
+            foreach (var result in semesterResults)
+            {
+                var credits = result.Section.CurriculumCourse.Course.CreditsTheory +
+                             result.Section.CurriculumCourse.Course.CreditsLab;
+
+                totalPoints += result.GradePoint * credits;
+                totalCredits += credits;
+            }
+
+            double semesterGpa = totalCredits > 0 ? totalPoints / totalCredits : 0;
+
+            // Update or create GPA snapshot
+            var existingSnapshot = await context.GpaSnapshots
+                .FirstOrDefaultAsync(g => g.Student.Id == studentId && g.Semester.SemesterId == semesterId);
+
+            if (existingSnapshot != null)
+            {
+                existingSnapshot.Gpa = semesterGpa;
+                context.GpaSnapshots.Update(existingSnapshot);
+            }
+            else
+            {
+                var student = await context.Students.FindAsync(studentId);
+                var semester = await context.Semesters.FindAsync(semesterId);
+
+                var gpaSnapshot = new GpaSnapshot
+                {
+                    Student = student,
+                    Semester = semester,
+                    Gpa = semesterGpa
+                };
+
+                context.GpaSnapshots.Add(gpaSnapshot);
+            }
+
+            await context.SaveChangesAsync();
+        }
+
+        private (string gradeLetter, double gradePoint) CalculateGradeLetterAndPoint(double finalScore)
+        {
+            return finalScore switch
+            {
+                >= 8.5 => ("A", 4.0),
+                >= 8.0 => ("B+", 3.5),
+                >= 7.0 => ("B", 3.0),
+                >= 6.5 => ("C+", 2.5),
+                >= 5.5 => ("C", 2.0),
+                >= 5.0 => ("D+", 1.5),
+                >= 4.0 => ("D", 1.0),
+                _ => ("F", 0.0)
+            };
         }
     }
 }

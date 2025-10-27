@@ -72,7 +72,7 @@ namespace StudentManagement.Services
         {
            var enrollments = context.Enrollments
                 .Include(e => e.Section)
-                    .ThenInclude(s => s.CurriculumCourse)
+                    .ThenInclude(s => s.CurriculumCourse.Course)
                 .Where(e => e.Section.Semester.SemesterId == semesterId && e.Student.MSSV == mssv)
                 .Select(e => new EnrollmentSemester
                 {
