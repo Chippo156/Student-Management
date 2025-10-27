@@ -10,7 +10,6 @@ const StudentRemindCard = ({ colors }) => (
       border: `1px solid ${colors.border}`,
       borderRadius: 12,
     }}
-    bodyStyle={{ padding: '12px' }}
   >
     <Row align="middle" justify="space-between">
       <Col>

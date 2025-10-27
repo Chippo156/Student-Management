@@ -1,36 +1,30 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   Button,
-  Modal,
-  Form,
-  Input,
-  Select,
   DatePicker,
-  message,
-  Tag,
-  Space,
   Typography,
   Row,
   Col,
   Statistic,
-  Empty,
+  Space,
+  Radio
 } from 'antd';
 import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  ExclamationCircleOutlined,
   CalendarOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
   LeftOutlined,
   RightOutlined,
+  PrinterOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import isBetween from 'dayjs/plugin/isBetween';
+dayjs.extend(isBetween);
+import scheduleService from '../../../service/scheduleService';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
 const periods = [
   { key: 'morning', label: 'Sáng' },
@@ -38,170 +32,92 @@ const periods = [
   { key: 'evening', label: 'Tối' },
 ];
 
-const getTypeColor = (type) => {
-  switch (type) {
-    case 'class':
-      return 'blue';
-    case 'exam':
-      return 'red';
-    case 'assignment':
-      return 'orange';
-    case 'meeting':
-      return 'green';
-    case 'other':
-      return 'purple';
-    default:
-      return 'default';
+const scheduleTypeMap = {
+  1: 'class',
+  2: 'assignment',
+  3: 'exam',
+};
+
+const typeToIdMap = {
+  all: 0,
+  class: 1,
+  assignment: 2,
+  exam: 3,
+};
+
+const getEventColor = (item) => {
+  switch (item.type) {
+    case 'class': return '#e6f4ff';
+    case 'assignment': return '#d9f7be';
+    case 'exam': return '#fffbe6';
+    default: return '#f0f0f0';
   }
 };
 
-const getTypeText = (type) => {
+const getTypeLabel = (type) => {
   switch (type) {
-    case 'class':
-      return 'Lớp học';
-    case 'exam':
-      return 'Thi cử';
-    case 'assignment':
-      return 'Bài tập';
-    case 'meeting':
-      return 'Họp';
-    case 'other':
-      return 'Khác';
-    default:
-      return type;
+    case 'class': return 'Lý thuyết';
+    case 'assignment': return 'Thực hành';
+    case 'exam': return 'Thi';
+    default: return '';
   }
 };
-const getEventColor = (item) => {
-  switch (item.type) {
-    case 'class':
-      return 'var(--schedule-class-bg, #f0f0f0)';
-    case 'assignment':
-      return 'var(--schedule-assignment-bg, #b7eb8f)';
-    case 'meeting':
-      return 'var(--schedule-meeting-bg, #bae7ff)';
-    case 'exam':
-      return 'var(--schedule-exam-bg, #fff7a8)';
-    case 'other':
-      return 'var(--schedule-other-bg, #ffa39e)';
-    default:
-      return 'var(--schedule-class-bg, #f0f0f0)';
+
+const getTypeColor = (type) => {
+  switch (type) {
+    case 'class': return '#1677ff';
+    case 'assignment': return '#52c41a';
+    case 'exam': return '#faad14';
+    default: return '#d9d9d9';
   }
+};
+
+const getPeriodFromTime = (time) => {
+  if (!time) return 'morning';
+  const first = time.split('-')[0].trim();
+  const hh = parseInt(first.split(':')[0], 10);
+  if (isNaN(hh)) return 'morning';
+  if (hh < 12) return 'morning';
+  if (hh < 18) return 'afternoon';
+  return 'evening';
 };
 
 const StudentSchedule = () => {
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [form] = Form.useForm();
-
-  const [scheduleItems, setScheduleItems] = useState([
-    {
-      id: '1',
-      title: 'Lớp Cấu trúc dữ liệu',
-      type: 'class',
-      date: '2025-10-14',
-      time: '07:30 - 09:30',
-      location: 'Phòng A101',
-      description: 'Chương 5: Cây tìm kiếm nhị phân',
-      status: 'upcoming',
-      subject: 'IT2040',
-    },
-    {
-      id: '2',
-      title: 'Thi giữa kỳ Cơ sở dữ liệu',
-      type: 'exam',
-      date: '2025-10-15',
-      time: '14:00 - 16:00',
-      location: 'Phòng B205',
-      description: 'Thi giữa kỳ chương 1-5',
-      status: 'upcoming',
-      subject: 'IT3090',
-    },
-    {
-      id: '3',
-      title: 'Nộp bài tập lớn',
-      type: 'assignment',
-      date: '2025-10-16',
-      time: '23:59',
-      location: 'Online',
-      description: 'Project về cây AVL',
-      status: 'upcoming',
-      subject: 'IT2040',
-    },
-    {
-      id: '4',
-      title: 'Họp nhóm đồ án',
-      type: 'meeting',
-      date: '2025-10-12',
-      time: '19:00 - 21:00',
-      location: 'Thư viện Tạ Quang Bửu',
-      description: 'Thảo luận thiết kế hệ thống',
-      status: 'completed',
-      subject: 'IT4995',
-    },
-  ]);
-
+  const [scheduleItems, setScheduleItems] = useState([]);
   const [baseDate, setBaseDate] = useState(dayjs());
   const [filterType, setFilterType] = useState('all');
 
-  const handleAdd = () => {
-    setEditingItem(null);
-    form.resetFields();
-    setIsModalVisible(true);
-  };
-
-  const handleEdit = (item) => {
-    setEditingItem(item);
-    form.setFieldsValue({
-      ...item,
-      date: dayjs(item.date),
-    });
-    setIsModalVisible(true);
-  };
-
-  const handleDelete = (id) => {
-    setScheduleItems(scheduleItems.filter((item) => item.id !== id));
-    message.success('Xóa lịch thành công!');
-  };
-
-  const handleOk = async () => {
+  // Lấy lịch từ API
+  const fetchSchedule = async (date, scheduleTypeId = 0) => {
     try {
-      const values = await form.validateFields();
-      const newItem = {
-        id: editingItem ? editingItem.id : Date.now().toString(),
-        ...values,
-        date: values.date.format('YYYY-MM-DD'),
-        status: editingItem ? editingItem.status : 'upcoming',
-      };
-
-      if (editingItem) {
-        setScheduleItems(
-          scheduleItems.map((item) =>
-            item.id === editingItem.id ? newItem : item
-          )
-        );
-        message.success('Cập nhật lịch thành công!');
-      } else {
-        setScheduleItems([...scheduleItems, newItem]);
-        message.success('Thêm lịch thành công!');
-      }
-
-      setIsModalVisible(false);
-      form.resetFields();
+      const data = await scheduleService.getByDate(date, scheduleTypeId);
+      const mapped = data.map((item) => ({
+        id: item.scheduleId.toString(),
+        title: item.courseName,
+        type: scheduleTypeMap[item.scheduleTypeId] || 'other',
+        date:
+          item.date ||
+          dayjs().day(item.dayOfWeek).format('YYYY-MM-DD'),
+        time:
+          item.startTime && item.endTime
+            ? `${item.startTime.slice(0, 5)} - ${item.endTime.slice(0, 5)}`
+            : '',
+        location: item.room || 'Online',
+        description: item.lecturerName || '',
+        status: 'upcoming',
+        subject: item.courseCode || '',
+      }));
+      setScheduleItems(mapped);
     } catch (error) {
-      console.error('Validation failed:', error);
+      console.error(error);
     }
   };
 
-  const upcomingItems = scheduleItems.filter(
-    (item) => item.status === 'upcoming'
-  );
-  const todayItems = scheduleItems.filter(
-    (item) =>
-      dayjs(item.date).isSame(dayjs(), 'day') && item.status !== 'completed'
-  );
-  const completedItems = scheduleItems.filter(
-    (item) => item.status === 'completed'
-  );
+  useEffect(() => {
+    const dateStr = baseDate.format('YYYY-MM-DD');
+    const typeId = typeToIdMap[filterType] || 0;
+    fetchSchedule(dateStr, typeId);
+  }, [baseDate, filterType]);
 
   const weekDays = useMemo(() => {
     const start = baseDate.startOf('week');
@@ -212,57 +128,82 @@ const StudentSchedule = () => {
     return days;
   }, [baseDate]);
 
-  const getPeriodFromTime = (time) => {
-    if (!time) return 'morning';
-    const first = time.split('-')[0].trim();
-    const hh = parseInt(first.split(':')[0], 10);
-    if (isNaN(hh)) return 'morning';
-    if (hh < 12) return 'morning';
-    if (hh < 18) return 'afternoon';
-    return 'evening';
-  };
-
   const eventsByCell = useMemo(() => {
     const map = {};
     scheduleItems.forEach((ev) => {
-      if (filterType !== 'all' && ev.type !== filterType) return;
       const period = getPeriodFromTime(ev.time);
       const key = `${ev.date}#${period}`;
       if (!map[key]) map[key] = [];
       map[key].push(ev);
     });
     return map;
-  }, [scheduleItems, filterType]);
+  }, [scheduleItems]);
+
+  const startOfWeek = baseDate.startOf('week').add(1, 'day'); // Thứ 2
+  const endOfWeek = startOfWeek.add(6, 'day'); // Chủ nhật
+
+  const weekScheduleItems = scheduleItems.filter(item =>
+    dayjs(item.date).isBetween(startOfWeek, endOfWeek, 'day', '[]')
+  );
+
+  const today = dayjs();
+  const todayItems = weekScheduleItems.filter(
+    (item) => dayjs(item.date).isSame(today, 'day')
+  );
+  const completedItems = weekScheduleItems.filter(
+    (item) => item.status === 'completed'
+  );
+  const upcomingItems = weekScheduleItems.filter(
+    (item) => dayjs(item.date).isAfter(today, 'day') && item.status !== 'completed'
+  );
+
+  const percentCompleted = weekScheduleItems.length
+    ? Math.round((completedItems.length / weekScheduleItems.length) * 100)
+    : 0;
+
+  const percentProgress = weekScheduleItems.length
+    ? Math.round(((completedItems.length + todayItems.length) / weekScheduleItems.length) * 100)
+    : 0;
 
   const goPrevWeek = () => setBaseDate(baseDate.subtract(1, 'week'));
   const goNextWeek = () => setBaseDate(baseDate.add(1, 'week'));
+  const handleFilterChange = (type) => setFilterType(type);
+  const handleToday = () => setBaseDate(dayjs());
+  const handlePrint = () => window.print();
+
+  // Chỉ in bảng khi xuất PDF
+  useEffect(() => {
+    const handleBeforePrint = () => {
+      const filterBar = document.getElementById('student-schedule-filter-bar');
+      const statsBar = document.getElementById('student-schedule-stats-bar');
+      if (filterBar) filterBar.style.display = 'none';
+      if (statsBar) statsBar.style.display = 'none';
+    };
+    const handleAfterPrint = () => {
+      const filterBar = document.getElementById('student-schedule-filter-bar');
+      const statsBar = document.getElementById('student-schedule-stats-bar');
+      if (filterBar) filterBar.style.display = '';
+      if (statsBar) statsBar.style.display = '';
+    };
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, []);
 
   return (
-    <div
-      style={{
-        padding: '24px',
-        maxWidth: '100%',
-        boxSizing: 'border-box',
-        width: '100%',
-        minHeight: '100vh',
-        overflowX: 'auto',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 24,
-        }}
-      >
-        <div>
-          <Title level={2}>Lịch học, lịch thi theo tuần</Title>
-        </div>
+    <div style={{ padding: 24, width: '100%', minHeight: '100vh', background: '#fff' }}>
+      <div>
+        <Title level={2}>Lịch học, lịch thi theo tuần</Title>
       </div>
-
       {/* Statistics */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
+      <Row
+        id="student-schedule-stats-bar"
+        gutter={16}
+        style={{ marginBottom: 8 }}
+      >
         <Col span={6}>
           <Card>
             <Statistic
@@ -297,13 +238,7 @@ const StudentSchedule = () => {
           <Card>
             <Statistic
               title="Tiến độ tuần"
-              value={
-                scheduleItems.length
-                  ? Math.round(
-                      (completedItems.length / scheduleItems.length) * 100
-                    )
-                  : 0
-              }
+              value={percentProgress}
               suffix="%"
               prefix={<ExclamationCircleOutlined />}
               valueStyle={{ color: '#722ed1' }}
@@ -312,166 +247,128 @@ const StudentSchedule = () => {
         </Col>
       </Row>
 
-      {/* Today's schedule (kept) */}
-      {todayItems.length > 0 && (
-        <Card
-          title={
-            <span>
-              <CalendarOutlined style={{ marginRight: 8 }} />
-              Lịch hôm nay ({todayItems.length})
-            </span>
-          }
-          style={{ marginBottom: 24 }}
-        >
-          <Row gutter={16}>
-            {todayItems.map((item) => (
-              <Col span={8} key={item.id}>
-                <div
-                  style={{
-                    padding: 12,
-                    borderRadius: 6,
-                    background: getEventColor(item),
-                    marginBottom: 16,
-                  }}
-                >
-                  <Text strong style={{ display: 'block' }}>
-                    {item.title}
-                  </Text>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    Mã lớp: {item.subject}
-                  </Text>
-                  <Text
-                    type="secondary"
-                    style={{ fontSize: 12, display: 'block' }}
-                  >
-                    Phòng: {item.location}
-                  </Text>
-                  <Text
-                    type="secondary"
-                    style={{ fontSize: 12, display: 'block' }}
-                  >
-                    Thời gian: {item.time}
-                  </Text>
-                  <Text
-                    type="secondary"
-                    style={{ fontSize: 12, display: 'block' }}
-                  >
-                    Ngày: {dayjs(item.date).format('DD/MM/YYYY')}
-                  </Text>
-                </div>
-              </Col>
-            ))}
-          </Row>
-        </Card>
-      )}
-
-      {/* Weekly calendar */}
-      <Card
-        title={
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span>Lịch theo tuần</span>
-            <Space>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <Button icon={<LeftOutlined />} onClick={goPrevWeek} />
-                <DatePicker
-                  value={baseDate}
-                  onChange={(d) => {
-                    if (d) setBaseDate(dayjs(d).startOf('week'));
-                  }}
-                  format={(date) =>
-                    date ? dayjs(date).format('DD/MM/YYYY') : ''
-                  }
-                />
-                <Button icon={<RightOutlined />} onClick={goNextWeek} />
-              </div>
-              <Button
-                type={filterType === 'all' ? 'primary' : 'default'}
-                size="small"
-                onClick={() => setFilterType('all')}
-              >
-                Tất cả
-              </Button>
-              <Button
-                type={filterType === 'class' ? 'primary' : 'default'}
-                size="small"
-                onClick={() => setFilterType('class')}
-              >
-                Lịch học
-              </Button>
-              <Button
-                type={filterType === 'exam' ? 'primary' : 'default'}
-                size="small"
-                onClick={() => setFilterType('exam')}
-              >
-                Lịch thi
-              </Button>
-              <Button
-                type={filterType === 'assignment' ? 'primary' : 'default'}
-                size="small"
-                onClick={() => setFilterType('assignment')}
-              >
-                Bài tập
-              </Button>
-              <Button
-                type={filterType === 'meeting' ? 'primary' : 'default'}
-                size="small"
-                onClick={() => setFilterType('meeting')}
-              >
-                Họp
-              </Button>
-              <Button
-                type={filterType === 'other' ? 'primary' : 'default'}
-                size="small"
-                onClick={() => setFilterType('other')}
-              >
-                Khác
-              </Button>
-            </Space>
-          </div>
-        }
-        style={{ marginBottom: 16 }}
+      {/* Filter Bar */}
+      <div
+        id="student-schedule-filter-bar"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          padding: '12px 20px',
+          background: '#f6faff',
+          borderRadius: 12,
+          boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+          marginBottom: 16,
+          flexWrap: 'wrap',
+          minHeight: 56,
+        }}
       >
-        <div style={{ overflowX: 'auto' }}>
+        {/* Filter Options (Radio Style) */}
+        <Radio.Group
+          value={filterType}
+          onChange={(e) => handleFilterChange(e.target.value)}
+          style={{
+            background: '#fff',
+            borderRadius: 20,
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+            padding: '2px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            height: 36,
+          }}
+          size="middle"
+        >
+          <Radio.Button value="all" style={{ borderRadius: '16px 0 0 16px', fontWeight: 500, minWidth: 80, textAlign: 'center' }}>Tất cả</Radio.Button>
+          <Radio.Button value="class" style={{ fontWeight: 500, minWidth: 90, textAlign: 'center' }}>Lý thuyết</Radio.Button>
+          <Radio.Button value="assignment" style={{ fontWeight: 500, minWidth: 100, textAlign: 'center' }}>Thực hành</Radio.Button>
+          <Radio.Button value="exam" style={{ borderRadius: '0 16px 16px 0', fontWeight: 500, minWidth: 70, textAlign: 'center' }}>Thi</Radio.Button>
+        </Radio.Group>
+
+        {/* Date Picker */}
+        <div style={{ display: 'flex', alignItems: 'center', marginLeft: 16, gap: 6 }}>
+          <span style={{
+            background: '#fff',
+            borderRadius: 8,
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+            padding: '4px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            height: 36,
+          }}>
+            <CalendarOutlined style={{ color: '#1677ff', marginRight: 6, fontSize: 16 }} />
+            <DatePicker
+              value={baseDate}
+              onChange={(d) => d && setBaseDate(dayjs(d))}
+              format="DD/MM/YYYY"
+              size="middle"
+              style={{
+                border: 'none',
+                boxShadow: 'none',
+                background: 'transparent',
+                minWidth: 110,
+                height: 28,
+              }}
+              allowClear={false}
+              suffixIcon={null}
+              inputReadOnly
+            />
+          </span>
+        </div>
+
+        {/* Action Buttons */}
+        <Space size={8} style={{ marginLeft: 'auto', flexWrap: 'wrap' }}>
+          <Button onClick={handleToday} size="middle" style={{ borderRadius: 8 }}>Hiện tại</Button>
+          <Button icon={<PrinterOutlined />} onClick={handlePrint} size="middle" style={{ borderRadius: 8 }}>In lịch</Button>
+          <Button icon={<LeftOutlined />} onClick={goPrevWeek} size="middle" style={{ borderRadius: 8 }}>Trở về</Button>
+          <Button icon={<RightOutlined />} onClick={goNextWeek} size="middle" style={{ borderRadius: 8 }}>Tiếp</Button>
+        </Space>
+      </div>
+
+
+      {/* Weekly calendar table only */}
+      <Card bodyStyle={{ padding: 0, background: '#fff' }}>
+        <div style={{
+          overflowX: 'auto',
+          background: '#fff',
+          border: '1px solid #e4e4e4',
+          borderRadius: 4,
+        }}>
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '160px repeat(7, minmax(160px, 1fr))',
-              borderTop: '1px solid #f0f0f0',
-              borderLeft: '1px solid #f0f0f0',
+              gridTemplateColumns: '80px repeat(7, minmax(140px, 1fr))',
+              borderTop: '1px solid #e4e4e4',
+              borderLeft: '1px solid #e4e4e4',
+              background: 'repeating-linear-gradient(0deg, #f8fafd 0px, #f8fafd 29px, #f0f0f0 30px), repeating-linear-gradient(90deg, #f8fafd 0px, #f8fafd 29px, #f0f0f0 30px)',
             }}
           >
             {/* header */}
-            <div
-              style={{
-                borderRight: '1px solid #f0f0f0',
-                borderBottom: '1px solid #f0f0f0',
-                background: '#fafafa',
-                padding: 12,
-              }}
-            >
-              <Text strong>Ca học</Text>
+            <div style={{
+              borderRight: '1px solid #e4e4e4',
+              borderBottom: '1px solid #e4e4e4',
+              background: '#ffffe0',
+              padding: 12,
+              fontWeight: 600,
+              textAlign: 'center'
+            }}>
+              Ca học
             </div>
             {weekDays.map((d) => (
               <div
                 key={d.format('YYYY-MM-DD')}
                 style={{
-                  borderRight: '1px solid #f0f0f0',
-                  borderBottom: '1px solid #f0f0f0',
+                  borderRight: '1px solid #e4e4e4',
+                  borderBottom: '1px solid #e4e4e4',
+                  background: '#ffffe0',
                   padding: 12,
                   textAlign: 'center',
+                  fontWeight: 600,
+                  color: '#1677ff',
                 }}
               >
-                <Text strong>
-                  {d.day() === 0 ? 'Chủ nhật' : `Thứ ${d.day() + 1}`}
-                </Text>
-                <div>
-                  <Text type="secondary">{d.format('DD/MM/YYYY')}</Text>
+                {d.day() === 0 ? 'Chủ nhật' : `Thứ ${d.day() + 1}`}
+                <div style={{ fontWeight: 400, fontSize: 12 }}>
+                  {d.format('DD/MM/YYYY')}
                 </div>
               </div>
             ))}
@@ -479,79 +376,72 @@ const StudentSchedule = () => {
             {/* rows for periods */}
             {periods.map((p) => (
               <React.Fragment key={p.key}>
-                <div
-                  style={{
-                    borderRight: '1px solid #f0f0f0',
-                    borderBottom: '1px solid #f0f0f0',
-                    padding: 12,
-                    background: '#fff8dc',
-                  }}
-                >
-                  <Text strong>{p.label}</Text>
+                <div style={{
+                  borderRight: '1px solid #e4e4e4',
+                  borderBottom: '1px solid #e4e4e4',
+                  background: '#ffffe0',
+                  padding: 12,
+                  fontWeight: 600,
+                  textAlign: 'center'
+                }}>
+                  {p.label}
                 </div>
-
                 {weekDays.map((d) => {
                   const key = `${d.format('YYYY-MM-DD')}#${p.key}`;
                   const cellEvents = eventsByCell[key] || [];
-
                   return (
                     <div
                       key={key}
                       style={{
-                        minHeight: 110,
-                        borderRight: '1px solid #f0f0f0',
-                        borderBottom: '1px solid #f0f0f0',
-                        padding: 8,
+                        minHeight: 80,
+                        borderRight: '1px solid #e4e4e4',
+                        borderBottom: '1px solid #e4e4e4',
+                        padding: 6,
+                        background: '#fff',
+                        position: 'relative'
                       }}
                     >
-                      {cellEvents.length === 0 ? (
-                        <div style={{ minHeight: 80 }} />
-                      ) : (
+                      {cellEvents.map((ev) => (
                         <div
+                          key={ev.id}
                           style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 8,
+                            background: getEventColor(ev),
+                            borderLeft: `5px solid ${getTypeColor(ev.type)}`,
+                            borderRadius: 6,
+                            marginBottom: 8,
+                            padding: 8,
+                            boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                            fontSize: 13,
                           }}
                         >
-                          {cellEvents.map((ev) => (
-                            <div
-                              key={ev.id}
-                              style={{
-                                padding: 8,
-                                borderRadius: 6,
-                                background: getEventColor(ev),
-                                marginBottom: 4,
-                              }}
-                            >
-                              <Text strong style={{ display: 'block' }}>
-                                {ev.title}
-                              </Text>
-                              <Text type="secondary" style={{ fontSize: 12 }}>
-                                Mã lớp: {ev.subject}
-                              </Text>
-                              <Text
-                                type="secondary"
-                                style={{ fontSize: 12, display: 'block' }}
-                              >
-                                Phòng: {ev.location}
-                              </Text>
-                              <Text
-                                type="secondary"
-                                style={{ fontSize: 12, display: 'block' }}
-                              >
-                                Thời gian: {ev.time}
-                              </Text>
-                              <Text
-                                type="secondary"
-                                style={{ fontSize: 12, display: 'block' }}
-                              >
-                                Ngày: {dayjs(ev.date).format('DD/MM/YYYY')}
-                              </Text>
-                            </div>
-                          ))}
+                          <div style={{ fontWeight: 600, color: '#222', marginBottom: 2 }}>
+                            {ev.title}
+                          </div>
+                          <div style={{ fontSize: 12, color: '#555' }}>
+                            <b>Mã lớp:</b> {ev.subject}
+                          </div>
+                          <div style={{ fontSize: 12, color: '#555' }}>
+                            <b>Phòng:</b> {ev.location}
+                          </div>
+                          <div style={{ fontSize: 12, color: '#888' }}>
+                            <b>Thời gian:</b> {ev.time}
+                          </div>
+                          <div style={{ fontSize: 12, color: '#888' }}>
+                            <b>GV:</b> {ev.description}
+                          </div>
+                          <div style={{
+                            marginTop: 4,
+                            fontSize: 11,
+                            color: '#fff',
+                            background: getTypeColor(ev.type),
+                            display: 'inline-block',
+                            borderRadius: 4,
+                            padding: '1px 8px'
+                          }}>
+                            {getTypeLabel(ev.type)}
+                          </div>
                         </div>
-                      )}
+                      ))}
                     </div>
                   );
                 })}
@@ -559,144 +449,36 @@ const StudentSchedule = () => {
             ))}
           </div>
         </div>
-
-        {/* legend */}
-        <div style={{ marginTop: 12 }}>
+        {/* Legend */}
+        <div style={{ marginTop: 12, paddingLeft: 8 }}>
           <Space>
-            <span
-              style={{
-                display: 'inline-block',
-                width: 18,
-                height: 12,
-                background: 'var(--schedule-class-bg, #f0f0f0)',
-                border: '1px solid #ddd',
-              }}
-            />{' '}
+            <span style={{
+              display: 'inline-block',
+              width: 18,
+              height: 12,
+              background: '#e6f4ff',
+              border: '1px solid #1677ff'
+            }} />
             <Text>Lịch học lý thuyết</Text>
-            <span
-              style={{
-                display: 'inline-block',
-                width: 18,
-                height: 12,
-                background: 'var(--schedule-assignment-bg, #b7eb8f)',
-                border: '1px solid #ddd',
-              }}
-            />{' '}
+            <span style={{
+              display: 'inline-block',
+              width: 18,
+              height: 12,
+              background: '#d9f7be',
+              border: '1px solid #52c41a'
+            }} />
             <Text>Lịch học thực hành</Text>
-            <span
-              style={{
-                display: 'inline-block',
-                width: 18,
-                height: 12,
-                background: 'var(--schedule-meeting-bg, #bae7ff)',
-                border: '1px solid #ddd',
-              }}
-            />{' '}
-            <Text>Lịch học trực tuyến</Text>
-            <span
-              style={{
-                display: 'inline-block',
-                width: 18,
-                height: 12,
-                background: 'var(--schedule-exam-bg, #fff7a8)',
-                border: '1px solid #ddd',
-              }}
-            />{' '}
+            <span style={{
+              display: 'inline-block',
+              width: 18,
+              height: 12,
+              background: '#fffbe6',
+              border: '1px solid #faad14'
+            }} />
             <Text>Lịch thi</Text>
-            <span
-              style={{
-                display: 'inline-block',
-                width: 18,
-                height: 12,
-                background: 'var(--schedule-other-bg, #ffa39e)',
-                border: '1px solid #ddd',
-              }}
-            />{' '}
-            <Text>Lịch tạm ngưng</Text>
           </Space>
         </div>
       </Card>
-
-      {/* Keep table view (optional) - removed to follow weekly requirement */}
-
-      {/* Modal */}
-      <Modal
-        title={editingItem ? 'Chỉnh sửa lịch' : 'Thêm lịch mới'}
-        open={isModalVisible}
-        onOk={handleOk}
-        onCancel={() => setIsModalVisible(false)}
-        width={600}
-        okText={editingItem ? 'Cập nhật' : 'Thêm'}
-        cancelText="Hủy"
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="title"
-            label="Tiêu đề"
-            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
-          >
-            <Input placeholder="Nhập tiêu đề sự kiện" />
-          </Form.Item>
-
-          <div style={{ display: 'flex', gap: 16 }}>
-            <Form.Item
-              name="type"
-              label="Loại sự kiện"
-              rules={[{ required: true, message: 'Vui lòng chọn loại!' }]}
-              style={{ flex: 1 }}
-            >
-              <Select placeholder="Chọn loại sự kiện">
-                <Option value="class">Lịch học</Option>
-                <Option value="exam">Lịch thi</Option>
-                <Option value="assignment">Bài tập</Option>
-                <Option value="meeting">Họp</Option>
-                <Option value="other">Khác</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="subject"
-              label="Môn học"
-              rules={[{ required: true, message: 'Vui lòng nhập mã môn!' }]}
-              style={{ flex: 1 }}
-            >
-              <Input placeholder="Mã môn học (VD: IT2040)" />
-            </Form.Item>
-          </div>
-
-          <div style={{ display: 'flex', gap: 16 }}>
-            <Form.Item
-              name="date"
-              label="Ngày"
-              rules={[{ required: true, message: 'Vui lòng chọn ngày!' }]}
-              style={{ flex: 1 }}
-            >
-              <DatePicker style={{ width: '100%' }} placeholder="Chọn ngày" />
-            </Form.Item>
-
-            <Form.Item
-              name="time"
-              label="Thời gian"
-              rules={[{ required: true, message: 'Vui lòng nhập thời gian!' }]}
-              style={{ flex: 1 }}
-            >
-              <Input placeholder="VD: 07:30 - 09:30" />
-            </Form.Item>
-          </div>
-
-          <Form.Item
-            name="location"
-            label="Địa điểm"
-            rules={[{ required: true, message: 'Vui lòng nhập địa điểm!' }]}
-          >
-            <Input placeholder="Nhập địa điểm" />
-          </Form.Item>
-
-          <Form.Item name="description" label="Mô tả">
-            <Input.TextArea rows={3} placeholder="Mô tả chi tiết (tùy chọn)" />
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   );
 };

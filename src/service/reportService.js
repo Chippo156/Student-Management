@@ -15,6 +15,13 @@ const reportService = {
     }
     return res;
   },
+    getAcademicSummaryBySemester: async (semesterId) => {
+    const res = await axios.get(`/api/Report/students/academic-summary/${semesterId}`);
+    if (!res.success) {
+      throw new Error(res.message || 'Không lấy được dữ liệu tổng kết học tập');
+    }
+    return res;
+  },
 };
 
 export default reportService;
