@@ -237,7 +237,7 @@ namespace StudentManagement.Services
             // Get final results
             IQueryable<FinalResult> finalResultsQuery = _context.FinalResults
                 .Include(fr => fr.Section)
-                    .ThenInclude(s => s.CurriculumCourse)
+                    .ThenInclude(s => s.CurriculumCourse.Course)
                 .Include(fr => fr.Section.Semester)
                 .Where(fr => fr.Student.MSSV == mssv);
             
