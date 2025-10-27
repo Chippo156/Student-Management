@@ -43,6 +43,10 @@ namespace StudentManagement.Services
                 Lecturer = lecturer,
                 Semester = existingSemester,
                 Class = classSection,
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
+                Capacity = request.Capacity,
+                Status = request.Status
             };
 
             context.Sections.Add(newSection);

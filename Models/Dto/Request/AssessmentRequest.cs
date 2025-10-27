@@ -13,5 +13,8 @@ namespace StudentManagement.Models.Dto.Request
         [Required(ErrorMessage = "Weight is required")]
         [Range(1, 100, ErrorMessage = "Weight must be between 1 and 100")]
         public int Weight { get; set; }
+        [Required(ErrorMessage = "AssessmentTypeId is required")]
+
+        public int AssessmentTypeId { get; set; }
     }
 }

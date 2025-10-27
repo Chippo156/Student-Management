@@ -202,6 +202,7 @@ namespace StudentManagement.Services
             int cumulativeCreditsRegistered = 0;
             int cumulativeCreditsEarned = 0;
             int cumulativeCreditsDebt = 0;
+
             double cumulativeGpaValue = await GetCurrentCumulativeGpaAsync(student.Id);
 
             foreach (var semesterGroup in gradesBySemester)
@@ -258,10 +259,10 @@ namespace StudentManagement.Services
                     SemesterName = $"{semester.Year} - {semester.Term}",
                     Year = semester.Year,
                     Term = semester.Term,
-                    SemesterGPA4 = semesterGpa?.Gpa ?? 0.0,
-                    SemesterGPA10 = semesterGpa is not null ? Math.Round(semesterGpa.Gpa * 2.5, 2) : 0.0,
-                    CumulativeGPA4 = cumulativeGpaValue,
-                    CumulativeGPA10 = cumulativeGpaValue != 0 ? Math.Round(cumulativeGpa.Gpa * 2.5, 2) : 0.0,
+                    SemesterGPA4 = Math.Round(semesterGpa?.Gpa ?? 0.0, 2),
+                    SemesterGPA10 = Math.Round((semesterGpa?.Gpa ?? 0.0) * 2.5, 2),
+                    CumulativeGPA4 = Math.Round(cumulativeGpaValue, 2),
+                    CumulativeGPA10 = Math.Round(cumulativeGpaValue * 2.5, 2),
                     TotalCreditsRegistered = cumulativeCreditsRegistered,
                     TotalCreditsEarned = cumulativeCreditsEarned,
                     TotalCreditsDebt = cumulativeCreditsDebt,
@@ -406,7 +407,7 @@ namespace StudentManagement.Services
             await context.SaveChangesAsync();
 
             // Check if this is a final exam grade (assuming AssessmentTypeId = 3 for final exams)
-            if (assessment.AssessmentType.AssessmentTypeId == 5)
+            if (assessment.AssessmentType.AssessmentTypeId == 4)
             {
                 await UpdateFinalResultAsync(student.Id, assessment.Section.SectionId);
                 await UpdateGpaSnapshotAsync(student.Id, assessment.Section.Semester.SemesterId);
@@ -421,6 +422,7 @@ namespace StudentManagement.Services
                 .Include(g => g.Assessment)
                     .ThenInclude(a => a.AssessmentType)
                 .Include(g => g.Assessment.Section)
+                  .ThenInclude(s => s.Semester)
                 .Include(g => g.Student)
                 .FirstOrDefaultAsync(g => g.GradeId == gradeId);
 
@@ -463,7 +465,7 @@ namespace StudentManagement.Services
             await context.SaveChangesAsync();
 
             // Update final results and GPA if this is a final exam
-            if (grade.Assessment.AssessmentType.AssessmentTypeId == 5)
+            if (grade.Assessment.AssessmentType.AssessmentTypeId == 4)
             {
                 await UpdateFinalResultAsync(grade.Student.Id, grade.Assessment.Section.SectionId);
                 await UpdateGpaSnapshotAsync(grade.Student.Id, grade.Assessment.Section.Semester.SemesterId);
@@ -611,17 +613,27 @@ namespace StudentManagement.Services
 
         private (string gradeLetter, double gradePoint) CalculateGradeLetterAndPoint(double finalScore)
         {
-            return finalScore switch
+            // Giới hạn điểm trong khoảng 0 - 10 để tránh lỗi
+            finalScore = Math.Clamp(finalScore, 0.0, 10.0);
+
+            // Quy đổi điểm chữ (gradeLetter)
+            string gradeLetter = finalScore switch
             {
-                >= 8.5 => ("A", 4.0),
-                >= 8.0 => ("B+", 3.5),
-                >= 7.0 => ("B", 3.0),
-                >= 6.5 => ("C+", 2.5),
-                >= 5.5 => ("C", 2.0),
-                >= 5.0 => ("D+", 1.5),
-                >= 4.0 => ("D", 1.0),
-                _ => ("F", 0.0)
+                >= 8.5 => "A",
+                >= 8.0 => "B+",
+                >= 7.0 => "B",
+                >= 6.5 => "C+",
+                >= 5.5 => "C",
+                >= 5.0 => "D+",
+                >= 4.0 => "D",
+                _ => "F"
             };
+
+            // Quy đổi điểm hệ 4 theo tỷ lệ
+            double gradePoint = Math.Round(finalScore / 10 * 4, 2);
+
+            return (gradeLetter, gradePoint);
         }
+
     }
 }

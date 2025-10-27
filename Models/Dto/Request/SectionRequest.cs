@@ -1,3 +1,4 @@
+using StudentManagement.Enum;
 using System.ComponentModel.DataAnnotations;
 
 namespace StudentManagement.Models.Dto.Request
@@ -15,5 +16,12 @@ namespace StudentManagement.Models.Dto.Request
 
         [Required(ErrorMessage = "Class ID is required")]
         public int ClassId { get; set; }
+
+        public DateOnly StartDate { get; set; }
+        public DateOnly EndDate { get; set; }
+        public int Capacity { get; set; }
+
+        public SectionStatus Status { get; set; } = SectionStatus.IsPreparing;
+
     }
 }

@@ -13,11 +13,16 @@ namespace StudentManagement.Services
             var section = await context.Sections.FindAsync(request.SectionId)
                 ?? throw new Exception("Section not found");
 
+            var assessmentType = await context.AssessmentTypes.FindAsync(request.AssessmentTypeId)
+                ?? throw new Exception("Assessment type not found");    
+
             Assessment assessment = new Assessment
             {
                 Section = section,
                 Title = request.Title,
-                Weight = request.Weight
+                Weight = request.Weight,
+                AssessmentType = assessmentType
+
             };
 
             context.Assessment.Add(assessment);

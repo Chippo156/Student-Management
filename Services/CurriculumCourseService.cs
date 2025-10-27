@@ -122,10 +122,10 @@ namespace StudentManagement.Services
                 .Where(cc => cc.Program.AcademicProgramId == programId);
 
             // Filter by semester if specified
-            if (semesterId.HasValue)
-            {
-                curriculumCoursesQuery = curriculumCoursesQuery.Where(cc => cc.SemeterSuggested == semesterId.Value);
-            }
+            //if (semesterId.HasValue)
+            //{
+            //    curriculumCoursesQuery = curriculumCoursesQuery.Where(cc => cc.SemeterSuggested == semesterId.Value);
+            //}
 
             var curriculumCourses = await curriculumCoursesQuery.ToListAsync();
 
@@ -182,7 +182,8 @@ namespace StudentManagement.Services
                 else
                 {
                     // Enrolled but no final result yet - treat as new for filtering purposes
-                    courseStatus = CourseFilterType.New;
+                    continue;
+
                 }
 
                 // Apply filter if specified

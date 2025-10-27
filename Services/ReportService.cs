@@ -189,7 +189,7 @@ namespace StudentManagement.Services
                 CreditsRegistered = semesterEnrollments.Sum(e => e.Section.CurriculumCourse.Course.CreditsTheory + e.Section.CurriculumCourse.Course.CreditsLab),
                 CreditsCompleted = semesterResults.Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab),
                 CreditsPassed = semesterResults.Where(fr => fr.GradePoint >= 1.0).Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab),
-                SemesterGPA = semesterGpa?.Gpa ?? 0.0
+                SemesterGPA = Math.Round(semesterGpa?.Gpa ?? 0.0, 2)
             };
 
             // Tính điểm trung bình lớp cho từng khóa học và thêm chi tiết về các khóa học
@@ -215,7 +215,8 @@ namespace StudentManagement.Services
                     CreditsTheory = result.Section.CurriculumCourse.Course.CreditsTheory,
                     CreditsLab = result.Section.CurriculumCourse.Course.CreditsLab,
                     GradeLetter = result.GradeLetter,
-                    GradePoint = result.FinalScore,
+                    GradePoint = Math.Round(result.FinalScore, 2),
+                    
                     ClassAverageScore = Math.Round(classAverageScore, 2) // Làm tròn đến 2 chữ số thập phân
                 });
             }
@@ -276,13 +277,13 @@ namespace StudentManagement.Services
             // If looking at all semesters, use cumulative GPA from latest snapshot
             if (semesterId == 0)
             {
-                var latestGpa = gpaSnapshots
-                    .OrderByDescending(g => g.Semester.Year)
-                    .ThenByDescending(g => g.Semester.Term)
-                    .FirstOrDefault();
-                    
-                response.GPA = latestGpa?.Gpa ?? 0.0;
-                
+                double totalGpa = 0;
+                foreach (var result in gpaSnapshots)
+                {
+                    var GPA = result.Gpa;
+                    totalGpa += GPA;
+                }
+                response.GPA = gpaSnapshots.Count > 0 ? Math.Round((totalGpa / gpaSnapshots.Count) * 2.5, 2) : 0.0;
                 // Add per-semester summaries
                 var semesters = finalResults
                     .Select(fr => fr.Section.Semester)
