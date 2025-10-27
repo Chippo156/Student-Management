@@ -138,7 +138,7 @@ namespace StudentManagement.Services
             // Get all enrollments for this student in the specified semester
             var enrollments = await context.Enrollments
                 .Include(e => e.Section)
-                    .ThenInclude(s => s.CurriculumCourse)
+                    .ThenInclude(s => s.CurriculumCourse.Course)
                 .Include(e => e.Section.Lecturer)
                     .ThenInclude(l => l.User)
                 .Include(e => e.Section.Semester)
@@ -213,7 +213,7 @@ namespace StudentManagement.Services
                 .Include(g => g.Assessment)
                     .ThenInclude(a => a.AssessmentType)
                 .Include(g => g.Assessment.Section)
-                    .ThenInclude(s => s.CurriculumCourse)
+                    .ThenInclude(s => s.CurriculumCourse.Course)
                 .Include(g => g.Assessment.Section.Semester)
                 .Where(g => g.Student.MSSV == mssv)
                 .ToListAsync();
@@ -221,7 +221,7 @@ namespace StudentManagement.Services
             // Get all final results for this student
             var finalResults = await context.FinalResults
                 .Include(fr => fr.Section)
-                    .ThenInclude(s => s.CurriculumCourse)
+                    .ThenInclude(s => s.CurriculumCourse.Course)
                 .Include(fr => fr.Section.Semester)
                 .Where(fr => fr.Student.MSSV == mssv)
                 .ToListAsync();
