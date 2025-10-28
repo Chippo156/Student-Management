@@ -32,12 +32,6 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(schedule, "Schedule retrieved successfully"));
         }
 
-        [HttpGet("section/{sectionId}")]
-        public async Task<IActionResult> GetSchedulesBySection(int sectionId)
-        {
-            var schedules = await scheduleService.GetSchedulesBySectionAsync(sectionId);
-            return Ok(ApiResponse.SuccessResponse(schedules, "Section schedules retrieved successfully"));
-        }
 
         [HttpGet("lecturer/{lecturerId}")]
         public async Task<IActionResult> GetSchedulesByLecturer(int lecturerId)

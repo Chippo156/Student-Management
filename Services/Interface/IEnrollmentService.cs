@@ -14,5 +14,7 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<Enrollment>> GetEnrollmentsByCourseIdAsync(int courseId);
         Task<IEnumerable<EnrollmentSemester>> GetEnrollmentBySemesterAsync(int semesterId, string mssv);
         Task<EnrollmentResultResponse> EnrollInCourseAsync(string mssv, CourseEnrollmentRequest request);
+        Task<IEnumerable<EnrolledSectionResponse>> GetEnrolledSectionsBySemesterAsync(string mssv, int semesterId);
+        Task<EnrollmentResultResponse> DropEnrollmentAsync(string mssv, int sectionId);
     }
 }

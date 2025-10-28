@@ -258,17 +258,7 @@ namespace StudentManagement.Services
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Schedule>> GetSchedulesBySectionAsync(int sectionId)
-        {
-            return await context.Schedules
-                .Include(s => s.ScheduleType)
-                
-                .Where(s => s.Section.SectionId == sectionId)
-                .OrderBy(s => s.DayOfWeek)
-                .ThenBy(s => s.StartTime)
-                .ThenBy(s => s.Date)
-                .ToListAsync();
-        }
+       
 
         public async Task<IEnumerable<Schedule>> GetSchedulesByStudentAsync(int studentId)
         {

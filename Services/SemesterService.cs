@@ -40,7 +40,7 @@ namespace StudentManagement.Services
 
             var semesters = await _context.Semesters
                 .Where(s => s.Year >= student.YearOfAdmission)
-                .OrderBy(s => s.Year)
+                .OrderByDescending(s => s.Year)
                 .ThenBy(s =>
                     s.Term == "Học kỳ 1" ? 1 :
                     s.Term == "Học kỳ 2" ? 2 : 3 // Added default value for ternary operator

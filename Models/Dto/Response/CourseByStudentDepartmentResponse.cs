@@ -26,7 +26,12 @@ namespace StudentManagement.Models.Dto.Response
         public string? PreviousGradeLetter { get; set; }
         public double? PreviousFinalScore { get; set; }
         public bool HasPreviousResult { get; set; }
-        
+
+        // Thêm các properties này vào CourseByStudentDepartmentResponse
+        public bool CanRegister { get; set; }
+        public int AvailableSectionsCount { get; set; }
+        public string RegistrationNote { get; set; } = string.Empty;
+
         // Prerequisites
         public List<PrerequisiteCourseInfo> Prerequisites { get; set; } = new();
     }
@@ -37,5 +42,6 @@ namespace StudentManagement.Models.Dto.Response
         public string CourseCode { get; set; } = string.Empty;
         public string CourseName { get; set; } = string.Empty;
         public int TotalCredits { get; set; }
+        public bool IsCompleted { get; set; }
     }
 }

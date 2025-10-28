@@ -11,7 +11,6 @@ namespace StudentManagement.Services.Interface
         Task<Schedule> CreateScheduleAsync(ScheduleRequest request);
         Task<Schedule?> UpdateScheduleAsync(int scheduleId, ScheduleRequest request);
         Task<bool> DeleteScheduleAsync(int scheduleId);
-        Task<IEnumerable<Schedule>> GetSchedulesBySectionAsync(int sectionId);
         Task<IEnumerable<Schedule>> GetSchedulesByLecturerAsync(int lecturerId);
         Task<IEnumerable<Schedule>> GetSchedulesByStudentAsync(int studentId);
         Task<IEnumerable<Schedule>> GetSchedulesByDateAndStudentAsync(DateOnly date, string mssv, int scheduleTypeId);

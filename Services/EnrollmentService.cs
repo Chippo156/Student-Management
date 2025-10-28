@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Enum;
 using StudentManagement.Models;
@@ -317,6 +317,315 @@ namespace StudentManagement.Services
         private static bool DoTimesOverlap(TimeOnly start1, TimeOnly end1, TimeOnly start2, TimeOnly end2)
         {
             return start1 < end2 && start2 < end1;
+        }
+
+        public async Task<IEnumerable<EnrolledSectionResponse>> GetEnrolledSectionsBySemesterAsync(string mssv, int semesterId)
+        {
+            var enrollments = await context.Enrollments
+                .Include(e => e.Student)
+                    .ThenInclude(s => s.Class)
+                .Include(e => e.Section)
+                    .ThenInclude(s => s.CurriculumCourse)
+                        .ThenInclude(cc => cc.Course)
+                .Include(e => e.Section.Lecturer)
+                    .ThenInclude(l => l.User)
+                .Include(e => e.Section.Semester)
+                .Include(e => e.Section.Schedules)
+                    .ThenInclude(sch => sch.ScheduleType)
+                .Where(e => e.Student.MSSV == mssv && e.Section.Semester.SemesterId == semesterId)
+                .ToListAsync();
+
+            var result = new List<EnrolledSectionResponse>();
+
+            foreach (var enrollment in enrollments)
+            {
+                var section = enrollment.Section;
+                var course = section.CurriculumCourse.Course;
+                var semester = section.Semester;
+                
+                // Get main schedules (not exams)
+                var mainSchedules = section.Schedules
+                    .Where(sch => sch.ScheduleType.ScheduleTypeId != 3) // Not exam schedules
+                    .OrderBy(sch => sch.DayOfWeek)
+                    .ThenBy(sch => sch.StartTime)
+                    .ToList();
+
+                // Create day and time info strings
+                var dayInfo = string.Join(", ", mainSchedules
+                    .Where(sch => sch.DayOfWeek.HasValue)
+                    .Select(sch => GetDayOfWeekInVietnamese(sch.DayOfWeek.Value)));
+                
+                var timeInfo = string.Join(", ", mainSchedules
+                    .Select(sch => $"{sch.StartTime:HH:mm}-{sch.EndTime:HH:mm}"));
+
+                var roomInfo = string.Join(", ", mainSchedules
+                    .Where(sch => !string.IsNullOrEmpty(sch.Room))
+                    .Select(sch => sch.Room)
+                    .Distinct());
+
+                // Calculate tuition fee
+                var tuitionFee = CalculateTuitionFee(course.CreditsTheory + course.CreditsLab);
+
+                // Get registration period for payment deadline
+                var registrationPeriod = await context.RegistrationPeriods
+                    .Include(rp => rp.Semester)
+                    .FirstOrDefaultAsync(rp => rp.Semester.SemesterId == semesterId);
+
+                var enrolledSection = new EnrolledSectionResponse
+                {
+                    SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
+                    CourseName = course.CourseName,
+                    ExpectedClass = GetExpectedClassInfo(section),
+                    Credits = course.CreditsTheory + course.CreditsLab,
+                    LabGroup = GetLabGroupInfo(section, mainSchedules),
+                    TuitionFee = tuitionFee,
+                    PaymentDeadline = registrationPeriod?.EndDate ?? DateTime.Now.AddDays(30),
+                    DayOfWeek = dayInfo,
+                    StartDate = section.StartDate,
+                    EndDate = section.EndDate,
+                    RegistrationStatus = GetEnrollmentStatusInVietnamese(enrollment.enrollmentStatus),
+                    RegistrationDate = enrollment.RegisteredAt,
+                    SectionStatus = GetSectionStatusInVietnamese(section),
+                    
+                    // Additional information
+                    LecturerName = section.Lecturer?.User?.FullName ?? "Not Assigned",
+                    Room = roomInfo,
+                    TimeSlot = timeInfo,
+                    CurrentEnrollment = section.EnrolledCount,
+                    MaxCapacity = section.Capacity,
+                    SemesterName = $"{semester.Year} - {semester.Term}"
+                };
+
+                result.Add(enrolledSection);
+            }
+
+            return result.OrderBy(r => r.CourseName).ToList();
+        }
+
+        public async Task<EnrollmentResultResponse> DropEnrollmentAsync(string mssv, int sectionId)
+        {
+            using var transaction = await context.Database.BeginTransactionAsync();
+            
+            try
+            {
+                // Tìm sinh viên
+                var student = await context.Students
+                    .Include(s => s.Class)
+                        .ThenInclude(c => c.Program)
+                            .ThenInclude(p => p.Department)
+                    .FirstOrDefaultAsync(s => s.MSSV == mssv);
+
+                if (student == null)
+                {
+                    return new EnrollmentResultResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Student not found",
+                        Errors = { "Student with provided MSSV does not exist" }
+                    };
+                }
+
+                // Tìm section
+                var section = await context.Sections
+                    .Include(s => s.CurriculumCourse)
+                        .ThenInclude(cc => cc.Course)
+                    .Include(s => s.Lecturer)
+                        .ThenInclude(l => l.User)
+                    .Include(s => s.Semester)
+                    .Include(s => s.Enrollments)
+                    .FirstOrDefaultAsync(s => s.SectionId == sectionId);
+
+                if (section == null)
+                {
+                    return new EnrollmentResultResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Section not found",
+                        Errors = { "The requested section does not exist" }
+                    };
+                }
+
+                // Tìm enrollment hiện tại
+                var existingEnrollment = await context.Enrollments
+                    .FirstOrDefaultAsync(e => e.Student.Id == student.Id && 
+                                            e.Section.SectionId == section.SectionId);
+
+                if (existingEnrollment == null)
+                {
+                    return new EnrollmentResultResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Enrollment not found",
+                        Errors = { "Student is not enrolled in this section" }
+                    };
+                }
+
+                // Kiểm tra có thể hủy đăng ký hay không
+                var validationResult = await ValidateDropEnrollmentAsync(student, section, existingEnrollment);
+                if (!validationResult.IsValid)
+                {
+                    return new EnrollmentResultResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Drop enrollment validation failed",
+                        Errors = validationResult.Errors
+                    };
+                }
+
+                // Kiểm tra xem đã có điểm chưa (nếu có điểm thì không thể hủy)
+                var hasGrades = await context.Grades
+                    .AnyAsync(g => g.Student.Id == student.Id && 
+                                  g.Assessment.Section.SectionId == section.SectionId);
+
+                if (hasGrades)
+                {
+                    return new EnrollmentResultResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Cannot drop enrollment",
+                        Errors = { "Cannot drop enrollment because grades have been recorded for this course" }
+                    };
+                }
+
+                // Lưu thông tin enrollment trước khi xóa để trả về response
+                var enrollmentDetails = new EnrollmentDetailInfo
+                {
+                    EnrollmentId = existingEnrollment.EnrollmentId,
+                    SectionId = section.SectionId,
+                    CourseCode = section.CurriculumCourse.Course.CourseCode,
+                    CourseName = section.CurriculumCourse.Course.CourseName,
+                    Credits = section.CurriculumCourse.Course.CreditsTheory + section.CurriculumCourse.Course.CreditsLab,
+                    LecturerName = section.Lecturer?.User?.FullName ?? "Not Assigned",
+                    SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
+                    RegisteredAt = existingEnrollment.RegisteredAt,
+                    EnrollmentStatus = "Dropped"
+                };
+
+                // Cập nhật trạng thái thay vì xóa (để giữ lại lịch sử)
+                existingEnrollment.enrollmentStatus = EnrollmentStatus.Dropped;
+                context.Enrollments.Update(existingEnrollment);
+
+                // Cập nhật số lượng đăng ký của section
+                section.EnrolledCount = section.Enrollments.Count(e => e.enrollmentStatus == EnrollmentStatus.Enrolled);
+                context.Sections.Update(section);
+
+                await context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return new EnrollmentResultResponse
+                {
+                    IsSuccess = true,
+                    Message = "Successfully dropped enrollment",
+                    EnrollmentId = existingEnrollment.EnrollmentId,
+                    EnrollmentDetails = enrollmentDetails
+                };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return new EnrollmentResultResponse
+                {
+                    IsSuccess = false,
+                    Message = "Drop enrollment failed due to system error",
+                    Errors = { ex.Message }
+                };
+            }
+        }
+
+        private async Task<(bool IsValid, List<string> Errors)> ValidateDropEnrollmentAsync(Student student, Section section, Enrollment enrollment)
+        {
+            var errors = new List<string>();
+
+            // Kiểm tra thời gian cho phép hủy đăng ký
+            var registrationPeriod = await context.RegistrationPeriods
+                .Include(rp => rp.Semester)
+                .Include(rp => rp.Department)
+                .FirstOrDefaultAsync(rp => 
+                    rp.Semester.SemesterId == section.Semester.SemesterId && 
+                    rp.Department.DepartmentId == student.Class.Program.Department.DepartmentId);
+
+            if (registrationPeriod == null || !registrationPeriod.IsActive)
+            {
+                errors.Add("Registration period is not active for your department");
+            }
+
+            // Kiểm tra đã quá thời hạn hủy đăng ký chưa (thường là trong vòng 2 tuần đầu học kỳ)
+            var dropDeadline = section.StartDate.AddDays(14); // 2 tuần sau khi bắt đầu học
+            if (DateOnly.FromDateTime(DateTime.Now) > dropDeadline)
+            {
+                errors.Add($"Drop deadline has passed. You can only drop before {dropDeadline:dd/MM/yyyy}");
+            }
+
+            // Kiểm tra xem enrollment có đang ở trạng thái có thể hủy không
+            if (enrollment.enrollmentStatus != EnrollmentStatus.Enrolled)
+            {
+                errors.Add($"Cannot drop enrollment with status: {enrollment.enrollmentStatus}");
+            }
+
+            return (errors.Count == 0, errors);
+        }
+
+        // Helper methods remain the same as previously provided
+        private string GetDayOfWeekInVietnamese(DayOfWeek dayOfWeek)
+        {
+            return dayOfWeek switch
+            {
+                DayOfWeek.Monday => "Thứ 2",
+                DayOfWeek.Tuesday => "Thứ 3", 
+                DayOfWeek.Wednesday => "Thứ 4",
+                DayOfWeek.Thursday => "Thứ 5",
+                DayOfWeek.Friday => "Thứ 6",
+                DayOfWeek.Saturday => "Thứ 7",
+                DayOfWeek.Sunday => "Chủ nhật",
+                _ => ""
+            };
+        }
+
+        private string GetEnrollmentStatusInVietnamese(EnrollmentStatus status)
+        {
+            return status switch
+            {
+                EnrollmentStatus.Enrolled => "Đã đăng ký",
+                EnrollmentStatus.Dropped => "Đã hủy",
+                EnrollmentStatus.Completed => "Đã hoàn thành",
+                _ => "Unknown"
+            };
+        }
+
+        private string GetSectionStatusInVietnamese(Section section)
+        {
+            if (section.EnrolledCount >= section.Capacity)
+                return "Full";
+            else if (section.EnrolledCount > 0)
+                return "Available";
+            else
+                return "New";
+        }
+
+        private string GetExpectedClassInfo(Section section)
+        {
+            return section.Class.ClassName ?? $"Lớp {section.Class.ClassName}";
+        }
+
+        private string GetLabGroupInfo(Section section, List<Schedule> schedules)
+        {
+            var labSchedules = schedules.Where(sch => 
+                sch.ScheduleType.Name.Contains("Lab") || 
+                sch.ScheduleType.Name.Contains("Practice") ||
+                sch.ScheduleType.Name.Contains("TH")).ToList();
+            
+            if (labSchedules.Any())
+            {
+                return $"Lab{section.SectionId % 10 + 1}";
+            }
+            
+            return "-";
+        }
+
+        private decimal CalculateTuitionFee(int totalCredits)
+        {
+            const decimal feePerCredit = 500000; // 500k per credit
+            return totalCredits * feePerCredit;
         }
     }
 }

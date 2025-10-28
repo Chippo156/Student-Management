@@ -11,7 +11,7 @@ namespace StudentManagement.Controllers
 {
     [Route("api/[controller]")] 
     [ApiController]
-    public class StudentController(IStudentService studentService) : ControllerBase
+    public class StudentController(IStudentService studentService) : BaseController
     {
         public static Student student = new Student();
         
@@ -71,7 +71,8 @@ namespace StudentManagement.Controllers
                 return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "User is not authenticated.", null));
             }
             var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
-
+            var (isValid, errorResult, userId) = GetAuthenticatedUserId();
+           
             if (UserNameStr == null)
             {
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid user ID in token.", null));
