@@ -39,6 +39,7 @@ namespace StudentManagement.Data
         public DbSet<RegistrationPeriod> RegistrationPeriods { get; set; } = null!;
         public DbSet<BankAccount> BankAccounts { get; set; } = null!;
         public DbSet<FamilyRelationship> FamilyRelationships { get; set; } = null!;
-
+        public DbSet<PracticeGroup> PracticeGroups { get; set; } = null!;
+        public DbSet<PracticeGroupEnrollment> PracticeGroupEnrollments { get; set; } = null!;
     }
 }

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
@@ -156,6 +156,56 @@ namespace StudentManagement.Controllers
             {
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
+        }
+
+        //[HttpGet("sections/{sectionId}/practice-groups")]
+        //public async Task<IActionResult> GetPracticeGroupsForSection(int sectionId)
+        //{
+        //    try
+        //    {
+        //        var practiceGroups = await .PracticeGroups
+        //            .Include(pg => pg.Schedules)
+        //                .ThenInclude(s => s.ScheduleType)
+        //            .Where(pg => pg.SectionId == sectionId && pg.IsActive)
+        //            .Select(pg => new
+        //            {
+        //                pg.PracticeGroupId,
+        //                pg.GroupName,
+        //                pg.Description,
+        //                pg.CurrentCount,
+        //                pg.MaxCapacity,
+        //                IsAvailable = pg.CurrentCount < pg.MaxCapacity,
+        //                Schedules = pg.Schedules.Select(s => new
+        //                {
+        //                    DayOfWeek = s.DayOfWeek.HasValue ? GetDayOfWeekInVietnamese(s.DayOfWeek.Value) : "",
+        //                    TimeSlot = $"{s.StartTime:HH:mm} - {s.EndTime:HH:mm}",
+        //                    s.Room,
+        //                    ScheduleType = s.ScheduleType.Name
+        //                }).ToList()
+        //            })
+        //            .ToListAsync();
+
+        //        return Ok(practiceGroups);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(ex.Message);
+        //    }
+        //}
+
+        private string GetDayOfWeekInVietnamese(DayOfWeek dayOfWeek)
+        {
+            return dayOfWeek switch
+            {
+                DayOfWeek.Monday => "Thứ 2",
+                DayOfWeek.Tuesday => "Thứ 3",
+                DayOfWeek.Wednesday => "Thứ 4", 
+                DayOfWeek.Thursday => "Thứ 5",
+                DayOfWeek.Friday => "Thứ 6",
+                DayOfWeek.Saturday => "Thứ 7",
+                DayOfWeek.Sunday => "Chủ nhật",
+                _ => ""
+            };
         }
     }
 }

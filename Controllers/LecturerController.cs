@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
@@ -12,9 +13,10 @@ namespace StudentManagement.Controllers
     public class LecturerController(ILecturerService lecturerService) : ControllerBase  
     {
         [HttpGet("GetAllLecturers")]
-        public async Task<ActionResult<IEnumerable<Lecturer>>> GetAllLecturers()
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<IEnumerable<Lecturer>>> GetAllLecturers([FromQuery] PaginationParams pagination)
         {
-            var lecturers = await lecturerService.GetAllLecturersAsync();
+            var lecturers = await lecturerService.GetAllLecturersAsync(pagination);
             return Ok(ApiResponse.SuccessResponse(lecturers, "Lecturers retrieved successfully"));
         }
         [HttpGet("{id}")]

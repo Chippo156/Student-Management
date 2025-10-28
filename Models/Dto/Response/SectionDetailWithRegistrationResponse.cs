@@ -42,23 +42,6 @@ namespace StudentManagement.Models.Dto.Response
         public bool IsAvailable => CurrentEnrollment < MaxCapacity && IsRegistrationOpen;
         public int RemainingSlots => MaxCapacity - CurrentEnrollment;
     }
-
-    public class SectionScheduleWithRegistrationResponse
-    {
-        public int SectionId { get; set; }
-        public string CourseCode { get; set; } = string.Empty;
-        public string CourseName { get; set; } = string.Empty;
-        public string LecturerName { get; set; } = string.Empty;
-        public int SemesterId { get; set; }
-        public string SemesterName { get; set; } = string.Empty;
-        
-        // Registration status
-        public bool IsRegistrationOpen { get; set; }
-        public DateTime? RegistrationStartDate { get; set; }
-        public DateTime? RegistrationEndDate { get; set; }
-        
-        public List<ScheduleDetailInfo> Schedules { get; set; } = new();
-    }
     public class ScheduleDetailInfo
     {
         public int ScheduleId { get; set; }
@@ -72,5 +55,59 @@ namespace StudentManagement.Models.Dto.Response
         public string? OnlineLink { get; set; }
         public bool IsRecurring => !Date.HasValue && DayOfWeek.HasValue;
         public bool IsOneTime => Date.HasValue;
+        public string? PracticeGroupName { get; set; }
+        public bool IsPracticeSchedule => !string.IsNullOrEmpty(PracticeGroupName);
+            }
+    public class SectionScheduleWithRegistrationResponse
+    {
+        public int SectionId { get; set; }
+        public string CourseCode { get; set; } = string.Empty;
+        public string CourseName { get; set; } = string.Empty;
+        public string LecturerName { get; set; } = string.Empty;
+        public int SemesterId { get; set; }
+        public string SemesterName { get; set; } = string.Empty;
+
+        // Registration status
+        public bool IsRegistrationOpen { get; set; }
+        public DateTime? RegistrationStartDate { get; set; }
+        public DateTime? RegistrationEndDate { get; set; }
+
+        // Course information
+        public int CreditsTheory { get; set; }
+        public int CreditsLab { get; set; }
+        public bool HasPracticeGroups { get; set; }
+
+        public List<ScheduleDetailInfo> Schedules { get; set; } = new List<ScheduleDetailInfo>();
+        public List<PracticeGroupInfo> PracticeGroups { get; set; } = new List<PracticeGroupInfo>();
+        public StudentPracticeGroupInfo? StudentCurrentPracticeGroup { get; set; }
+    }
+
+    public class PracticeGroupInfo
+    {
+        public int PracticeGroupId { get; set; }
+        public string GroupName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public int MaxCapacity { get; set; }
+        public int CurrentCount { get; set; }
+        public bool IsAvailable { get; set; }
+        public bool IsStudentEnrolled { get; set; }
+        public List<PracticeScheduleInfo> Schedules { get; set; } = new List<PracticeScheduleInfo>();
+    }
+
+    public class StudentPracticeGroupInfo
+    {
+        public int PracticeGroupId { get; set; }
+        public string GroupName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+
+    public class PracticeScheduleInfo
+    {
+        public int ScheduleId { get; set; }
+        public string DayOfWeek { get; set; } = string.Empty;
+        public DateOnly? Date { get; set; }
+        public string TimeSlot { get; set; } = string.Empty;
+        public string Room { get; set; } = string.Empty;
+        public string ScheduleType { get; set; } = string.Empty;
     }
 }

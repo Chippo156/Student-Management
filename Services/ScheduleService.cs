@@ -37,6 +37,15 @@ namespace StudentManagement.Services
             DateOnly weekStart = today.AddDays(-daysToSubtract); // Monday of current week
             DateOnly weekEnd = weekStart.AddDays(6);             // Sunday of current week
 
+            // Lấy thông tin sinh viên
+            var student = await context.Students
+                .FirstOrDefaultAsync(s => s.MSSV == mssv);
+
+            if (student == null)
+            {
+                return new CountSchedule { CountScheduleOfWeek = 0, CountTestOfWeek = 0 };
+            }
+
             // Get all sections that the student is enrolled in and are active in the current week
             var studentSections = await context.Enrollments
                 .Where(e => e.Student.MSSV == mssv)
@@ -51,10 +60,29 @@ namespace StudentManagement.Services
                 return new CountSchedule { CountScheduleOfWeek = 0, CountTestOfWeek = 0 };
             }
 
-            // Count regular class schedules (recurring schedules with DayOfWeek)
+            // Lấy các nhóm thực hành mà sinh viên đã đăng ký
+            var studentPracticeGroups = await context.PracticeGroupEnrollments
+                .Include(pge => pge.PracticeGroup)
+                .Where(pge => pge.StudentId == student.Id && 
+                             pge.IsActive &&
+                             studentSections.Contains(pge.PracticeGroup.SectionId))
+                .Select(pge => pge.PracticeGroupId)
+                .ToListAsync();
+
+            // Count regular class schedules (recurring schedules with DayOfWeek) - không bao gồm lịch thực hành
             int regularScheduleCount = await context.Schedules
                 .Include(s => s.ScheduleType)
                 .Where(s => studentSections.Contains(s.Section.SectionId) &&
+                           s.ScheduleType.ScheduleTypeId != 3 && // Not exam schedules
+                           s.DayOfWeek.HasValue && // Regular recurring schedules
+                           !s.PracticeGroupId.HasValue) // Không phải lịch thực hành
+                .CountAsync();
+
+            // Count practice schedules của sinh viên
+            int practiceScheduleCount = await context.Schedules
+                .Include(s => s.ScheduleType)
+                .Where(s => s.PracticeGroupId.HasValue &&
+                           studentPracticeGroups.Contains(s.PracticeGroupId.Value) &&
                            s.ScheduleType.ScheduleTypeId != 3 && // Not exam schedules
                            s.DayOfWeek.HasValue) // Regular recurring schedules
                 .CountAsync();
@@ -70,7 +98,7 @@ namespace StudentManagement.Services
 
             return new CountSchedule
             {
-                CountScheduleOfWeek = regularScheduleCount,
+                CountScheduleOfWeek = regularScheduleCount + practiceScheduleCount,
                 CountTestOfWeek = testScheduleCount
             };
         }
@@ -163,6 +191,15 @@ namespace StudentManagement.Services
             DateOnly weekStart = date.AddDays(-daysToSubtract); // Ngày đầu tuần (thứ 2)
             DateOnly weekEnd = weekStart.AddDays(6);            // Ngày cuối tuần (chủ nhật)
 
+            // Lấy thông tin sinh viên
+            var student = await context.Students
+                .FirstOrDefaultAsync(s => s.MSSV == mssv);
+
+            if (student == null)
+            {
+                return new List<Schedule>();
+            }
+
             // Lấy tất cả section ID mà sinh viên đã đăng ký và nằm trong khoảng thời gian hiệu lực
             var studentSections = await context.Enrollments
                 .Where(e => e.Student.MSSV == mssv)
@@ -175,13 +212,43 @@ namespace StudentManagement.Services
                 .Distinct()
                 .ToListAsync();
 
+            if (!studentSections.Any())
+            {
+                return new List<Schedule>();
+            }
+
+            // Lấy các nhóm thực hành mà sinh viên đã đăng ký
+            var studentPracticeGroups = await context.PracticeGroupEnrollments
+                .Include(pge => pge.PracticeGroup)
+                .Where(pge => pge.StudentId == student.Id && 
+                             pge.IsActive &&
+                             studentSections.Contains(pge.PracticeGroup.SectionId))
+                .Select(pge => pge.PracticeGroupId)
+                .ToListAsync();
+
             if (scheduleTypeId == 0)
             {
                 // Nếu không truyền scheduleTypeId, lấy tất cả các loại lịch
+                
+                // Lấy lịch học chính (không phải lịch thi và không phải lịch thực hành)
                 var regularSchedules = await context.Schedules
                     .Where(s =>
-                        // Chỉ lấy lịch học của các section mà sinh viên đã đăng ký và trong thời gian hiệu lực
                         studentSections.Contains(s.Section.SectionId) &&
+                        s.ScheduleType.ScheduleTypeId != 3 && // Không phải lịch thi
+                        !s.PracticeGroupId.HasValue // Không phải lịch thực hành
+                    )
+                    .Include(s => s.ScheduleType)
+                    .Include(s => s.Section)
+                        .ThenInclude(s => s.CurriculumCourse.Course)
+                    .Include(s => s.Section.Lecturer)
+                        .ThenInclude(l => l.User)
+                    .ToListAsync();
+
+                // Lấy lịch thực hành của các nhóm mà sinh viên đã đăng ký
+                var practiceSchedules = await context.Schedules
+                    .Where(s =>
+                        s.PracticeGroupId.HasValue &&
+                        studentPracticeGroups.Contains(s.PracticeGroupId.Value) &&
                         s.ScheduleType.ScheduleTypeId != 3 // Không phải lịch thi
                     )
                     .Include(s => s.ScheduleType)
@@ -189,6 +256,7 @@ namespace StudentManagement.Services
                         .ThenInclude(s => s.CurriculumCourse.Course)
                     .Include(s => s.Section.Lecturer)
                         .ThenInclude(l => l.User)
+                    .Include(s => s.PracticeGroup)
                     .ToListAsync();
 
                 // Lấy lịch thi trong tuần này
@@ -199,15 +267,15 @@ namespace StudentManagement.Services
                         s.Date.HasValue && // Có ngày cụ thể
                         s.Date >= weekStart && s.Date <= weekEnd // Nằm trong tuần này
                     )
-                    .Include(s=> s.ScheduleType)
+                    .Include(s => s.ScheduleType)
                     .Include(s => s.Section)
                         .ThenInclude(s => s.CurriculumCourse.Course)
                     .Include(s => s.Section.Lecturer)
                         .ThenInclude(l => l.User)
                     .ToListAsync();
 
-                // Kết hợp cả lịch học thường và lịch thi
-                return regularSchedules.Concat(examSchedules);
+                // Kết hợp tất cả lịch
+                return regularSchedules.Concat(practiceSchedules).Concat(examSchedules);
             }
             else if (scheduleTypeId == 3) // Lịch thi
             {
@@ -220,7 +288,6 @@ namespace StudentManagement.Services
                         s.Date >= weekStart && s.Date <= weekEnd
                     )
                     .Include(s => s.ScheduleType)
-
                     .Include(s => s.Section)
                         .ThenInclude(s => s.CurriculumCourse.Course)
                     .Include(s => s.Section.Lecturer)
@@ -229,24 +296,38 @@ namespace StudentManagement.Services
             }
             else
             {
-                // Các loại lịch khác
-                var result = await context.Schedules
+                // Các loại lịch khác - bao gồm cả lịch chính và lịch thực hành
+                var regularSchedules = await context.Schedules
                     .Where(s =>
                         studentSections.Contains(s.Section.SectionId) &&
-                        s.ScheduleType.ScheduleTypeId == scheduleTypeId
+                        s.ScheduleType.ScheduleTypeId == scheduleTypeId &&
+                        !s.PracticeGroupId.HasValue // Lịch chính
                     )
                     .Include(s => s.ScheduleType)
-
                     .Include(s => s.Section)
                         .ThenInclude(s => s.CurriculumCourse.Course)
                     .Include(s => s.Section.Lecturer)
                         .ThenInclude(l => l.User)
                     .ToListAsync();
 
-                return result;
+                // Lấy lịch thực hành của cùng loại schedule type
+                var practiceSchedules = await context.Schedules
+                    .Where(s =>
+                        s.PracticeGroupId.HasValue &&
+                        studentPracticeGroups.Contains(s.PracticeGroupId.Value) &&
+                        s.ScheduleType.ScheduleTypeId == scheduleTypeId
+                    )
+                    .Include(s => s.ScheduleType)
+                    .Include(s => s.Section)
+                        .ThenInclude(s => s.CurriculumCourse.Course)
+                    .Include(s => s.Section.Lecturer)
+                        .ThenInclude(l => l.User)
+                    .Include(s => s.PracticeGroup)
+                    .ToListAsync();
+
+                return regularSchedules.Concat(practiceSchedules);
             }
         }
-
 
         public async Task<IEnumerable<Schedule>> GetSchedulesByLecturerAsync(int lecturerId)
         {

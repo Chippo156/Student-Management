@@ -7,7 +7,8 @@ namespace StudentManagement.Services.Interface
     public interface IStudentService
     {
         Task<StudentDetailDto?> GetStudentByIdAsync(int studentId);
-        Task<IEnumerable<StudentDetailDto>> GetAllStudentsAsync();
+        Task<PagedResult<Student>> GetAllStudentsAsync(PaginationParams pagination);
+
         Task<Student> CreateStudentAsync(StudentRequest student);
         Task<bool> DeleteStudentAsync(int studentId);
         Task<IEnumerable<StudentDetailDto>> GetStudentsBySectionIdAsync(int sectionId);

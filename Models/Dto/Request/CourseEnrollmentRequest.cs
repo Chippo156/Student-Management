@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace StudentManagement.Models.Dto.Request
 {
@@ -6,5 +6,8 @@ namespace StudentManagement.Models.Dto.Request
     {
         [Required]
         public int SectionId { get; set; }
+        
+        // Optional: Chọn nhóm thực hành (nếu môn có thực hành)
+        public int? PracticeGroupId { get; set; }
     }
 }

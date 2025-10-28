@@ -1,5 +1,6 @@
 ﻿using StudentManagement.Enum;
 using StudentManagement.Models.Embed;
+using System.Text.Json.Serialization;
 
 namespace StudentManagement.Models
 {
@@ -9,10 +10,15 @@ namespace StudentManagement.Models
 
         // --- Thông tin tài khoản ---
         public string Username { get; set; } = string.Empty;
+        [JsonIgnore]
         public string PasswordHash { get; set; } = string.Empty;
         public Role Role { get; set; } = null!;
         public AccountStatus AccountStatus { get; set; } = AccountStatus.Active;
+        [JsonIgnore]
+
         public string? RefreshToken { get; set; } = string.Empty;
+        [JsonIgnore]
+
         public DateTime RefreshTokenExpiryTime { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

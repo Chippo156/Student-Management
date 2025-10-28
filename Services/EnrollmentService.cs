@@ -118,6 +118,7 @@ namespace StudentManagement.Services
                     .Include(s => s.Enrollments)
                     .FirstOrDefaultAsync(s => s.SectionId == request.SectionId);
 
+
                 if (section == null)
                 {
                     return new EnrollmentResultResponse
@@ -125,6 +126,16 @@ namespace StudentManagement.Services
                         IsSuccess = false,
                         Message = "Section not found",
                         Errors = { "The requested section does not exist" }
+                    };
+                }
+
+                if (section.Capacity <= section.EnrolledCount)
+                {
+                    return new EnrollmentResultResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Section is full",
+                        Errors = { "Lớp học phần đã đầy!" }
                     };
                 }
 
@@ -151,7 +162,7 @@ namespace StudentManagement.Services
                     {
                         IsSuccess = false,
                         Message = "Already enrolled",
-                        Errors = { "Student is already enrolled in this section" }
+                        Errors = { "Sinh viên đã đăng ký học phần này!" }
                     };
                 }
 
@@ -169,7 +180,7 @@ namespace StudentManagement.Services
                     {
                         IsSuccess = false,
                         Message = "Duplicate course enrollment",
-                        Errors = { "Student is already enrolled in another section of this course in the same semester" }
+                        Errors = { "Sinh viên đã đăng ký một lớp khác của môn học này trong cùng học kỳ." }
                     };
                 }
 
@@ -188,15 +199,34 @@ namespace StudentManagement.Services
                 // Update section enrollment count
                 section.EnrolledCount = section.Enrollments.Count + 1;
                 context.Sections.Update(section);
-                await context.SaveChangesAsync();
 
+                // Handle practice group enrollment
+                string practiceGroupInfo = "";
+                if (section.CurriculumCourse.Course.CreditsLab > 0)
+                {
+                    if (request.PracticeGroupId.HasValue)
+                    {
+                        // Sinh viên đã chọn nhóm thực hành cụ thể
+                        var practiceGroupResult = await EnrollInSpecificPracticeGroupAsync(student.Id, request.PracticeGroupId.Value);
+                        practiceGroupInfo = practiceGroupResult.IsSuccess ? 
+                            $". Đã đăng ký nhóm thực hành {practiceGroupResult.GroupName}" : 
+                            $". Lỗi đăng ký nhóm thực hành: {practiceGroupResult.ErrorMessage}";
+                    }
+                    else
+                    {
+                        // Không chọn nhóm - có thể tự động phân hoặc để trống
+                        practiceGroupInfo = ". Chưa chọn nhóm thực hành - vui lòng chọn nhóm sau";
+                    }
+                }
+
+                await context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 // Create successful response
                 return new EnrollmentResultResponse
                 {
                     IsSuccess = true,
-                    Message = "Successfully enrolled in course",
+                    Message = "Successfully enrolled in course" + practiceGroupInfo,
                     EnrollmentId = enrollment.EnrollmentId,
                     EnrollmentDetails = new EnrollmentDetailInfo
                     {
@@ -231,11 +261,6 @@ namespace StudentManagement.Services
                     .Where(e => e.Section.SectionId == section.SectionId)
                     .ToList();
 
-            // Check if section is full
-            if (enrollments.Count >= section.Capacity)
-            {
-                errors.Add("Section is full");
-            }
 
             // Check registration period
             var registrationPeriod = await context.RegistrationPeriods
@@ -269,7 +294,7 @@ namespace StudentManagement.Services
 
                     if (!hasCompletedPrerequisite)
                     {
-                        errors.Add($"Prerequisite not met: {prerequisite.PrerequisiteCourse.CourseCode} - {prerequisite.PrerequisiteCourse.CourseName}");
+                        errors.Add($"Chưa đạt học phần tiên quyết: {prerequisite.PrerequisiteCourse.CourseCode} - {prerequisite.PrerequisiteCourse.CourseName}.");
                     }
                 }
             }
@@ -297,7 +322,7 @@ namespace StudentManagement.Services
                         DoTimesOverlap(newSchedule.StartTime, newSchedule.EndTime, 
                                      existingSchedule.StartTime, existingSchedule.EndTime))
                     {
-                        errors.Add($"Schedule conflict: {newSchedule.DayOfWeek} {newSchedule.StartTime}-{newSchedule.EndTime}");
+                        errors.Add($"Lịch học bị trùng: {newSchedule.DayOfWeek} từ {newSchedule.StartTime} đến {newSchedule.EndTime}.");
                     }
 
                     // Check for conflicts on specific dates
@@ -306,7 +331,7 @@ namespace StudentManagement.Services
                         DoTimesOverlap(newSchedule.StartTime, newSchedule.EndTime,
                                      existingSchedule.StartTime, existingSchedule.EndTime))
                     {
-                        errors.Add($"Schedule conflict on {newSchedule.Date}: {newSchedule.StartTime}-{newSchedule.EndTime}");
+                        errors.Add($"Lịch học bị trùng: {newSchedule.DayOfWeek} từ {newSchedule.StartTime} đến {newSchedule.EndTime}.");
                     }
                 }
             }
@@ -378,7 +403,7 @@ namespace StudentManagement.Services
                     CourseName = course.CourseName,
                     ExpectedClass = GetExpectedClassInfo(section),
                     Credits = course.CreditsTheory + course.CreditsLab,
-                    LabGroup = GetLabGroupInfo(section, mainSchedules),
+                    LabGroup = await GetLabGroupInfoAsync(section, enrollment.Student.Id),
                     TuitionFee = tuitionFee,
                     PaymentDeadline = registrationPeriod?.EndDate ?? DateTime.Now.AddDays(30),
                     DayOfWeek = dayInfo,
@@ -485,7 +510,7 @@ namespace StudentManagement.Services
                     {
                         IsSuccess = false,
                         Message = "Cannot drop enrollment",
-                        Errors = { "Cannot drop enrollment because grades have been recorded for this course" }
+                        Errors = { "Không thể hủy đăng ký học phần vì điểm của môn học này đã được nhập" }
                     };
                 }
 
@@ -502,6 +527,8 @@ namespace StudentManagement.Services
                     RegisteredAt = existingEnrollment.RegisteredAt,
                     EnrollmentStatus = "Dropped"
                 };
+
+                section.EnrolledCount = Math.Max(0, section.EnrolledCount - 1);
 
                 context.Enrollments.Remove(existingEnrollment); 
                 await context.SaveChangesAsync();
@@ -541,20 +568,20 @@ namespace StudentManagement.Services
 
             if (registrationPeriod == null || !registrationPeriod.IsActive)
             {
-                errors.Add("Registration period is not active for your department");
+                errors.Add("Thời gian đăng ký hiện không còn hiệu lực đối với khoa của bạn.");
             }
 
             // Kiểm tra đã quá thời hạn hủy đăng ký chưa (thường là trong vòng 2 tuần đầu học kỳ)
             var dropDeadline = section.StartDate.AddDays(14); // 2 tuần sau khi bắt đầu học
             if (DateOnly.FromDateTime(DateTime.Now) > dropDeadline)
             {
-                errors.Add($"Drop deadline has passed. You can only drop before {dropDeadline:dd/MM/yyyy}");
+                errors.Add($"Đã quá hạn hủy đăng ký. Bạn chỉ có thể hủy trước ngày {dropDeadline:dd/MM/yyyy}.");
             }
 
             // Kiểm tra xem enrollment có đang ở trạng thái có thể hủy không
             if (enrollment.enrollmentStatus != EnrollmentStatus.Enrolled)
             {
-                errors.Add($"Cannot drop enrollment with status: {enrollment.enrollmentStatus}");
+                errors.Add($"Không thể hủy đăng ký có trạng thái: {enrollment.enrollmentStatus}.");
             }
 
             return (errors.Count == 0, errors);
@@ -602,16 +629,29 @@ namespace StudentManagement.Services
             return section.Class.ClassName ?? $"Lớp {section.Class.ClassName}";
         }
 
-        private string GetLabGroupInfo(Section section, List<Schedule> schedules)
+        private async Task<string> GetLabGroupInfoAsync(Section section, int studentId)
         {
-            var labSchedules = schedules.Where(sch => 
-                sch.ScheduleType.Name.Contains("Lab") || 
-                sch.ScheduleType.Name.Contains("Practice") ||
-                sch.ScheduleType.Name.Contains("TH")).ToList();
-            
-            if (labSchedules.Any())
+            // Kiểm tra xem sinh viên có nhóm thực hành cụ thể không
+            var studentPracticeGroup = await context.PracticeGroupEnrollments
+                .Include(pge => pge.PracticeGroup)
+                .Where(pge => pge.StudentId == studentId && 
+                             pge.PracticeGroup.SectionId == section.SectionId && 
+                             pge.IsActive)
+                .Select(pge => pge.PracticeGroup.GroupName)
+                .FirstOrDefaultAsync();
+
+            if (!string.IsNullOrEmpty(studentPracticeGroup))
             {
-                return $"Lab{section.SectionId % 10 + 1}";
+                return $"Nhóm {studentPracticeGroup}";
+            }
+
+            // Kiểm tra xem có nhóm thực hành không (nhưng sinh viên chưa chọn)
+            var hasPracticeGroups = await context.PracticeGroups
+                .AnyAsync(pg => pg.SectionId == section.SectionId && pg.IsActive);
+            
+            if (hasPracticeGroups)
+            {
+                return "Chưa chọn nhóm TH";
             }
             
             return "-";
@@ -621,6 +661,58 @@ namespace StudentManagement.Services
         {
             const decimal feePerCredit = 500000; // 500k per credit
             return totalCredits * feePerCredit;
+        }       
+
+        // Helper method để đăng ký nhóm thực hành cụ thể
+        private async Task<(bool IsSuccess, string GroupName, string ErrorMessage)> EnrollInSpecificPracticeGroupAsync(int studentId, int practiceGroupId)
+        {
+            try
+            {
+                // Kiểm tra nhóm thực hành có tồn tại và còn chỗ không
+                var practiceGroup = await context.PracticeGroups
+                    .FirstOrDefaultAsync(pg => pg.PracticeGroupId == practiceGroupId && pg.IsActive);
+
+                if (practiceGroup == null)
+                {
+                    return (false, "", "Nhóm thực hành không tồn tại");
+                }
+
+                if (practiceGroup.CurrentCount >= practiceGroup.MaxCapacity)
+                {
+                    return (false, "", "Nhóm thực hành đã đầy");
+                }
+
+                // Kiểm tra sinh viên đã có nhóm thực hành cho section này chưa
+                var existingPracticeEnrollment = await context.PracticeGroupEnrollments
+                    .Include(pge => pge.PracticeGroup)
+                    .FirstOrDefaultAsync(pge => pge.StudentId == studentId && 
+                                              pge.PracticeGroup.SectionId == practiceGroup.SectionId && 
+                                              pge.IsActive);
+
+                if (existingPracticeEnrollment != null)
+                {
+                    return (false, "", "Sinh viên đã có nhóm thực hành cho học phần này");
+                }
+
+                // Tạo enrollment vào nhóm thực hành
+                var practiceGroupEnrollment = new PracticeGroupEnrollment
+                {
+                    PracticeGroupId = practiceGroupId,
+                    StudentId = studentId
+                };
+
+                context.PracticeGroupEnrollments.Add(practiceGroupEnrollment);
+                practiceGroup.CurrentCount++;
+                context.PracticeGroups.Update(practiceGroup);
+
+                await context.SaveChangesAsync();
+
+                return (true, practiceGroup.GroupName, "");
+            }
+            catch (Exception ex)
+            {
+                return (false, "", ex.Message);
+            }
         }
     }
 }

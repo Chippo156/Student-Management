@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using StudentManagement.Data;
+using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services;
 using StudentManagement.Services.Interface;
@@ -62,6 +63,8 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISemesterService, SemesterService>();
 builder.Services.AddScoped<IBankAccountService, BankAccountService>();
 builder.Services.AddScoped<IFamilyRelationshipService, FamilyRelationshipService>();
+builder.Services.AddScoped<IPracticeGroupService, PracticeGroupService>();
+
 
 builder.Services.AddHttpContextAccessor();
 

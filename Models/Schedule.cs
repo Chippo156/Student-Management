@@ -1,4 +1,6 @@
-﻿namespace StudentManagement.Models
+﻿using System.Text.Json.Serialization;
+
+namespace StudentManagement.Models
 {
     public class Schedule
     {
@@ -11,5 +13,7 @@
         public TimeOnly EndTime { get; set; }
         public string Room { get; set; } = string.Empty;
         public string? OnlineLink { get; set; }
+        public int? PracticeGroupId { get; set; }
+        public PracticeGroup? PracticeGroup { get; set; }
     }
 }

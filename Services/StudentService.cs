@@ -41,27 +41,34 @@ namespace StudentManagement.Services
             return Task.FromResult(context.SaveChanges() > 0);
         }
 
-        public async Task<IEnumerable<StudentDetailDto>> GetAllStudentsAsync()
+        public async Task<PagedResult<Student>> GetAllStudentsAsync(PaginationParams pagination)
         {
-            return await context.Students.Select(
 
-                s => new StudentDetailDto
-                {
-                    StudentId = s.Id,
-                    MSSV = s.MSSV,
-                    User = new UserResponse
-                    {
-                        Username = s.User.Username,
-                        FullName = s.User.FullName,
-                        Email = s.User.Email,
-                        Phone = s.User.Phone,
-                        Address = s.User.Address,
-                        AccountStatus = s.User.AccountStatus,
-                        AvatarUrl = s.User.AvatarUrl,
-                        Role = s.User.Role
-                    },
-                    ClassName = s.Class.ClassName,
-                }).ToListAsync();
+            var query = context.Students
+                .Include(s => s.User)
+                .Include(s => s.Class)
+                    .ThenInclude(c => c.Program)
+                        .ThenInclude(p => p.Department)
+                .AsQueryable();
+
+            // Tổng số bản ghi
+            var totalCount = await query.CountAsync();
+
+            // Lấy trang hiện tại
+            var students = await query
+                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+
+
+            // Gói kết quả vào PagedResult
+            return new PagedResult<Student>
+            {
+                Items = students,
+                TotalCount = totalCount,
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize
+            };
         }
 
 

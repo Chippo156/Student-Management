@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
@@ -206,32 +206,95 @@ namespace StudentManagement.Services
             var registrationPeriod = await context.RegistrationPeriods
                 .Include(rp => rp.Semester)
                 .Include(rp => rp.Department)
-                .FirstOrDefaultAsync(rp => 
-                    rp.Semester.SemesterId == section.Semester.SemesterId && 
+                .FirstOrDefaultAsync(rp =>
+                    rp.Semester.SemesterId == section.Semester.SemesterId &&
                     rp.Department.DepartmentId == student.Class.Program.Department.DepartmentId);
 
             bool isRegistrationOpen = registrationPeriod?.IsActive ?? false;
 
-            // Get all schedules for this section
-            var schedules = await context.Schedules
+            // Get main schedules for this section (không bao gồm lịch thực hành của nhóm)
+            var mainSchedules = await context.Schedules
                 .Include(sch => sch.ScheduleType)
-                .Where(sch => sch.Section.SectionId == sectionId)
+                .Where(sch => sch.Section.SectionId == sectionId && !sch.PracticeGroupId.HasValue)
                 .OrderBy(sch => sch.DayOfWeek)
                 .ThenBy(sch => sch.StartTime)
                 .ThenBy(sch => sch.Date)
                 .ToListAsync();
 
-            var scheduleDetails = schedules.Select(sch => new ScheduleDetailInfo
+            // Get practice groups for this section
+            var practiceGroups = await context.PracticeGroups
+                .Include(pg => pg.Schedules)
+                    .ThenInclude(s => s.ScheduleType)
+                .Include(pg => pg.PracticeGroupEnrollments)
+                    .ThenInclude(pge => pge.Student)
+                .Where(pg => pg.SectionId == sectionId && pg.IsActive)
+                .ToListAsync();
+
+            // Check if student is enrolled in any practice group
+            var studentPracticeGroup = practiceGroups
+                .FirstOrDefault(pg => pg.PracticeGroupEnrollments
+                    .Any(pge => pge.StudentId == student.Id && pge.IsActive));
+
+            var scheduleDetails = mainSchedules.Select(sch => new ScheduleDetailInfo
             {
                 ScheduleId = sch.ScheduleId,
                 ScheduleTypeName = sch.ScheduleType.Name,
                 DayOfWeek = sch.DayOfWeek,
-                DayOfWeekName = sch.DayOfWeek?.ToString() ?? "",
+                DayOfWeekName = GetDayOfWeekInVietnamese(sch.DayOfWeek),
                 Date = sch.Date,
                 StartTime = sch.StartTime,
                 EndTime = sch.EndTime,
                 Room = sch.Room,
-                OnlineLink = sch.OnlineLink
+                OnlineLink = sch.OnlineLink,
+                PracticeGroupName = null // Main schedules don't belong to practice groups
+            }).ToList();
+
+            // Add practice group schedules if student is enrolled in a practice group
+            if (studentPracticeGroup != null)
+            {
+                var practiceSchedules = studentPracticeGroup.Schedules.Select(sch => new ScheduleDetailInfo
+                {
+                    ScheduleId = sch.ScheduleId,
+                    ScheduleTypeName = sch.ScheduleType.Name,
+                    DayOfWeek = sch.DayOfWeek,
+                    DayOfWeekName = GetDayOfWeekInVietnamese(sch.DayOfWeek),
+                    Date = sch.Date,
+                    StartTime = sch.StartTime,
+                    EndTime = sch.EndTime,
+                    Room = sch.Room,
+                    OnlineLink = sch.OnlineLink,
+                    PracticeGroupName = studentPracticeGroup.GroupName
+                });
+
+                scheduleDetails.AddRange(practiceSchedules);
+            }
+
+            // Sort all schedules
+            scheduleDetails = scheduleDetails
+                .OrderBy(sch => sch.DayOfWeek)
+                .ThenBy(sch => sch.StartTime)
+                .ThenBy(sch => sch.Date)
+                .ToList();
+
+            // Create practice group info for response
+            var practiceGroupInfo = practiceGroups.Select(pg => new PracticeGroupInfo
+            {
+                PracticeGroupId = pg.PracticeGroupId,
+                GroupName = pg.GroupName,
+                Description = pg.Description ?? "",
+                MaxCapacity = pg.MaxCapacity,
+                CurrentCount = pg.CurrentCount,
+                IsAvailable = pg.CurrentCount < pg.MaxCapacity,
+                IsStudentEnrolled = pg.PracticeGroupEnrollments.Any(pge => pge.StudentId == student.Id && pge.IsActive),
+                Schedules = pg.Schedules.Select(s => new PracticeScheduleInfo
+                {
+                    ScheduleId = s.ScheduleId,
+                    DayOfWeek = GetDayOfWeekInVietnamese(s.DayOfWeek),
+                    Date = s.Date,
+                    TimeSlot = $"{s.StartTime:HH:mm} - {s.EndTime:HH:mm}",
+                    Room = s.Room,
+                    ScheduleType = s.ScheduleType.Name
+                }).ToList()
             }).ToList();
 
             return new SectionScheduleWithRegistrationResponse
@@ -242,13 +305,43 @@ namespace StudentManagement.Services
                 LecturerName = section.Lecturer?.User?.FullName ?? "Not Assigned",
                 SemesterId = section.Semester.SemesterId,
                 SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
-                
+
                 // Registration status
                 IsRegistrationOpen = isRegistrationOpen,
                 RegistrationStartDate = registrationPeriod?.StartDate,
                 RegistrationEndDate = registrationPeriod?.EndDate,
-                
-                Schedules = scheduleDetails
+
+                // Course credits info
+                CreditsTheory = section.CurriculumCourse.Course.CreditsTheory,
+                CreditsLab = section.CurriculumCourse.Course.CreditsLab,
+                HasPracticeGroups = section.CurriculumCourse.Course.CreditsLab > 0 && practiceGroups.Any(),
+
+                Schedules = scheduleDetails,
+                PracticeGroups = practiceGroupInfo,
+                StudentCurrentPracticeGroup = studentPracticeGroup != null ? new StudentPracticeGroupInfo
+                {
+                    PracticeGroupId = studentPracticeGroup.PracticeGroupId,
+                    GroupName = studentPracticeGroup.GroupName,
+                    Description = studentPracticeGroup.Description ?? ""
+                } : null
+            };
+        }
+
+        // Helper method để convert DayOfWeek sang tiếng Việt
+        private static string GetDayOfWeekInVietnamese(DayOfWeek? dayOfWeek)
+        {
+            if (!dayOfWeek.HasValue) return "";
+
+            return dayOfWeek.Value switch
+            {
+                DayOfWeek.Monday => "Thứ 2",
+                DayOfWeek.Tuesday => "Thứ 3",
+                DayOfWeek.Wednesday => "Thứ 4",
+                DayOfWeek.Thursday => "Thứ 5",
+                DayOfWeek.Friday => "Thứ 6",
+                DayOfWeek.Saturday => "Thứ 7",
+                DayOfWeek.Sunday => "Chủ nhật",
+                _ => ""
             };
         }
 

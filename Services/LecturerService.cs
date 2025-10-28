@@ -46,11 +46,31 @@ namespace StudentManagement.Services
                 ToListAsync();
         }
 
-        public async Task<Lecturer?> GetLecturerByIdAsync(int lecturerId)
+        public async Task<PagedResult<Lecturer>> GetAllLecturersAsync(PaginationParams pagination)
         {
-            return await context.Lecturers
-                .Include(l => l.User)
-                .FirstOrDefaultAsync(l => l.Id == lecturerId);
+            var query = context.Lecturers
+               .Include(s => s.User)
+               .Include(s => s.Department)
+                .AsQueryable();
+
+            // Tổng số bản ghi
+            var totalCount = await query.CountAsync();
+
+            // Lấy trang hiện tại
+            var students = await query
+                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+
+
+            // Gói kết quả vào PagedResult
+            return new PagedResult<Lecturer>
+            {
+                Items = students,
+                TotalCount = totalCount,
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize
+            };
         }
         public async Task<LecturerDetailResponse?> GetLecturerDetailByCodeAsync(string lecturerCode)
 
@@ -260,8 +280,10 @@ namespace StudentManagement.Services
                 _ => ""
             };
         }
-    
 
-    
+        public Task<Lecturer?> GetLecturerByIdAsync(int lecturerId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

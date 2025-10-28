@@ -16,9 +16,10 @@ namespace StudentManagement.Controllers
         public static Student student = new Student();
         
         [HttpGet("GetAllStudents")]
-        public async Task<ActionResult<IEnumerable<Student>>> GetAllStudents()
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<IEnumerable<Student>>> GetAllStudents([FromQuery] PaginationParams pagination)
         {
-            var students = await studentService.GetAllStudentsAsync();
+            var students = await studentService.GetAllStudentsAsync(pagination);
             return Ok(ApiResponse.SuccessResponse(students, "Students retrieved successfully"));
         }
 
