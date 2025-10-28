@@ -85,8 +85,8 @@ const enrollmentService = {
   dropEnrollmentStudent: async (sectionId) => {
     try {
       const response = await axios.delete(
-        '/api/Enrollment/DropEnrollmentStudent',
-        { data: { sectionId } }
+        `/api/Enrollment/DropEnrollmentStudent`,
+        { params: { sectionId } }
       );
       if (!response?.success) {
         const errData = response?.data;

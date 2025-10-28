@@ -16,15 +16,10 @@ const AuthLoader = ({ children }) => {
     const loadUserFromToken = async () => {
       const token = localStorage.getItem('access_token');
       const refreshToken = localStorage.getItem('refresh_token');
-
       if (!token || !refreshToken) return;
-
-      // Nếu đã có user đầy đủ trong redux thì không fetch lại
       if (isAuthenticated && account && account.username) return;
-
       try {
-        const data = await userService.getUserInfo(); // trả về full data chứa totalCreditsRequired
-        // dispatch action để lưu tokens + full user data vào redux (không lưu user vào localStorage)
+        const data = await userService.getUserInfo();
         dispatch(
           doLoginAction({
             token: { accessToken: token, refreshToken },
@@ -32,8 +27,6 @@ const AuthLoader = ({ children }) => {
           })
         );
       } catch (err) {
-        console.error('AuthLoader: failed to load user from token', err);
-        // Nếu lỗi (token invalid) -> clear tokens và logout
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         dispatch(doLogoutAction());
@@ -42,7 +35,7 @@ const AuthLoader = ({ children }) => {
     };
 
     loadUserFromToken();
-  }, [dispatch, isAuthenticated, account]);
+  }, [dispatch]);
 
   return <>{children}</>;
 };

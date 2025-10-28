@@ -99,6 +99,7 @@ export const userSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isAuthenticated = true;
+        state.error = null;
         const token = action.payload.token;
         const user = action.payload.user;
         state.account = {

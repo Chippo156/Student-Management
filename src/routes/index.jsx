@@ -130,9 +130,9 @@ const AppRoutes = () => {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute allowedRole={1}>
-              <LayoutAdmin />
-            </ProtectedRoute>
+            // <ProtectedRoute allowedRole={1}>
+            <LayoutAdmin />
+            // </ProtectedRoute>
           }
         >
           <Route index element={<AdminDashboard />} />
@@ -226,9 +226,9 @@ const AppRoutes = () => {
         <Route
           path="/teacher"
           element={
-            <ProtectedRoute allowedRole={3}>
-              <LayoutTeacher />
-            </ProtectedRoute>
+            // <ProtectedRoute allowedRole={3}>
+            <LayoutTeacher />
+            // </ProtectedRoute>
           }
         >
           <Route index element={<TeacherDashboard />} />
@@ -240,9 +240,9 @@ const AppRoutes = () => {
         <Route
           path="/student"
           element={
-            <ProtectedRoute allowedRole={2}>
-              <LayoutStudent />
-            </ProtectedRoute>
+            // <ProtectedRoute allowedRole={2}>
+            <LayoutStudent />
+            // </ProtectedRoute>
           }
         >
           {/* Dashboard mặc định */}

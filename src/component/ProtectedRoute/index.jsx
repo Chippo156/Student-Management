@@ -21,7 +21,7 @@ const ProtectedRoute = ({ children, allowedRole = 0 }) => {
   }
 
   // Check role-based access
-  const userRoleId = account.role.roleId;
+  const userRoleId = account?.role?.roleId || localStorage.getItem('role');
 
   // If user doesn't have required role, redirect to their dashboard
   if (userRoleId !== allowedRole) {
