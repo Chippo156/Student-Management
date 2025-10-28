@@ -109,5 +109,51 @@ namespace StudentManagement.Controllers
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
+
+        [HttpGet("semester/{semesterId}/student/GetEnrolledByStudent")]
+        public async Task<IActionResult> GetEnrolledSectionsBySemester(int semesterId)
+        {
+            try
+            {
+                var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+                if (UserNameStr == null)
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+                }
+                var enrolledSections = await enrollmentService.GetEnrolledSectionsBySemesterAsync(UserNameStr, semesterId);
+                return Ok(ApiResponse.SuccessResponse(enrolledSections, "Enrolled sections retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+
+        [HttpDelete("DropEnrollmentStudent")]
+        public async Task<IActionResult> DropEnrollment(int sectionId)
+        {
+            try
+            {
+                var mssv = User.FindFirstValue(ClaimTypes.Name);
+                if (mssv == null)
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+                }
+                var result = await enrollmentService.DropEnrollmentAsync(mssv, sectionId);
+                
+                if (result.IsSuccess)
+                {
+                    return Ok(ApiResponse.SuccessResponse(result, "Enrollment dropped successfully"));
+                }
+                else
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, result.Message, result.Errors));
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
     }
 }
