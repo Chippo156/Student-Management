@@ -299,93 +299,88 @@ const StudentInfoPage = () => {
         }
       >
         <Row gutter={[24, 24]}>
-          {/* Cha */}
-          <Col xs={24} md={24}>
-            <Card
-              type="inner"
-              title="Cha"
-              headStyle={{ background: '#e6f7ff' }}
-            >
-              <Descriptions bordered column={1} size="small">
-                <Descriptions.Item label="Họ tên cha">
-                  <InfoText>{father?.fullName}</InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="SĐT cha">
-                  <InfoText>{father?.phone}</InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="Năm sinh cha">
-                  <InfoText>
-                    {father?.dateOfBirth
-                      ? dayjs(father.dateOfBirth).format('DD/MM/YYYY')
-                      : ''}
-                  </InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="Email cha">
-                  <InfoText>{father?.email}</InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="Nghề nghiệp cha">
-                  <InfoText>{father?.occupation}</InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="Nơi làm việc cha">
-                  <InfoText>{father?.workplace}</InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="Địa chỉ cha">
-                  <InfoText>{father?.address}</InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="Là người giám hộ">
-                  <InfoText>
-                    {father?.isGuardian === true
-                      ? 'Có'
-                      : father?.isGuardian === false
-                        ? 'Không'
+          {familyRelationships.map((member, idx) => (
+            <Col xs={24} md={24} key={member.familyRelationshipId || idx}>
+              <Card
+                type="inner"
+                title={member.relationshipTypeName || 'Người thân'}
+                headStyle={{ background: '#e6f7ff' }}
+              >
+                <Descriptions bordered column={1} size="small">
+                  <Descriptions.Item label="Họ tên">
+                    <InfoText>{member.fullName}</InfoText>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="SĐT">
+                    <InfoText>{member.phone}</InfoText>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Năm sinh">
+                    <InfoText>
+                      {member.dateOfBirth
+                        ? dayjs(member.dateOfBirth).format('DD/MM/YYYY')
                         : ''}
-                  </InfoText>
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-          </Col>
-
-          {/* Mẹ */}
-          <Col xs={24} md={24}>
-            <Card type="inner" title="Mẹ" headStyle={{ background: '#fffbe6' }}>
-              <Descriptions bordered column={1} size="small">
-                <Descriptions.Item label="Họ tên mẹ">
-                  <InfoText>{mother?.fullName}</InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="SĐT mẹ">
-                  <InfoText>{mother?.phone}</InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="Năm sinh mẹ">
-                  <InfoText>
-                    {mother?.dateOfBirth
-                      ? dayjs(mother.dateOfBirth).format('DD/MM/YYYY')
-                      : ''}
-                  </InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="Email mẹ">
-                  <InfoText>{mother?.email}</InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="Nghề nghiệp mẹ">
-                  <InfoText>{mother?.occupation}</InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="Nơi làm việc mẹ">
-                  <InfoText>{mother?.workplace}</InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="Địa chỉ mẹ">
-                  <InfoText>{mother?.address}</InfoText>
-                </Descriptions.Item>
-                <Descriptions.Item label="Là người giám hộ">
-                  <InfoText>
-                    {mother?.isGuardian === true
-                      ? 'Có'
-                      : mother?.isGuardian === false
-                        ? 'Không'
+                    </InfoText>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Email">
+                    <InfoText>{member.email}</InfoText>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Nghề nghiệp">
+                    <InfoText>{member.occupation}</InfoText>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Nơi làm việc">
+                    <InfoText>{member.workplace}</InfoText>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="CCCD">
+                    <InfoText>{member.citizenIdCard}</InfoText>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Ngày cấp">
+                    <InfoText>
+                      {member.issuedDate
+                        ? dayjs(member.issuedDate).format('DD/MM/YYYY')
                         : ''}
-                  </InfoText>
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-          </Col>
+                    </InfoText>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Nơi cấp">
+                    <InfoText>{member.issuedPlace}</InfoText>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Địa chỉ thường trú">
+                    <InfoText>{member.permanentAddress}</InfoText>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Địa chỉ cụ thể">
+                    <InfoText>
+                      {member.fullAddress || member.detailAddress}
+                    </InfoText>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Là người giám hộ">
+                    <InfoText>
+                      {member.isGuardian === true
+                        ? 'Có'
+                        : member.isGuardian === false
+                          ? 'Không'
+                          : ''}
+                    </InfoText>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Đã mất">
+                    <InfoText>
+                      {member.isDeceased === true
+                        ? 'Có'
+                        : member.isDeceased === false
+                          ? 'Không'
+                          : ''}
+                    </InfoText>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Chủ hộ">
+                    <InfoText>
+                      {member.isHouseholder === true
+                        ? 'Có'
+                        : member.isHouseholder === false
+                          ? 'Không'
+                          : ''}
+                    </InfoText>
+                  </Descriptions.Item>
+                </Descriptions>
+              </Card>
+            </Col>
+          ))}
         </Row>
       </Card>
     </div>

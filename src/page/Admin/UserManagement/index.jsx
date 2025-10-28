@@ -106,11 +106,10 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [anchorEl, setAnchorEl] = (useState < null) | (HTMLElement > null);
-  const [selectedUser, setSelectedUser] = (useState < User) | (null > null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMode, setDialogMode] =
-    (useState < 'create') | ('edit' > 'create');
+  const [dialogMode, setDialogMode] = useState('create');
 
   const colors = useMemo(
     () => ({

@@ -11,8 +11,10 @@ import {
   Col,
   message,
   Spin,
-  Divider,
   Checkbox,
+  Modal,
+  Space,
+  Descriptions,
 } from 'antd';
 import { Box, Paper } from '@mui/material';
 import { userService } from '../../../service/userService';
@@ -25,50 +27,61 @@ import { useNavigate } from 'react-router-dom';
 const { Option } = Select;
 const { TabPane } = Tabs;
 
+// Danh sách loại quan hệ
+const RELATIONSHIP_TYPES = [
+  { value: 1, label: 'Cha' },
+  { value: 2, label: 'Mẹ' },
+  { value: 3, label: 'Ông nội' },
+  { value: 4, label: 'Bà nội' },
+  { value: 5, label: 'Chú' },
+  { value: 6, label: 'Cô' },
+  { value: 7, label: 'Anh' },
+  { value: 8, label: 'Chị' },
+  { value: 9, label: 'Vợ/Chồng' },
+  { value: 10, label: 'Giám hộ' },
+  { value: 11, label: 'Khác' },
+];
+
 const StudentEditInfoPage = () => {
   const [formPersonal] = Form.useForm();
-  const [formFamily] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [studentInfo, setStudentInfo] = useState({});
-  const [familyData, setFamilyData] = useState({
-    father: {},
-    mother: {},
-    guardian: {},
-  });
+  const [familyList, setFamilyList] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
 
-  // Danh sách địa lý
+  // Địa lý cá nhân
   const [provinces, setProvinces] = useState([]);
-  // Quê quán
   const [hometownDistricts, setHometownDistricts] = useState([]);
   const [hometownWards, setHometownWards] = useState([]);
-  // Nơi sinh
   const [birthDistricts, setBirthDistricts] = useState([]);
   const [birthWards, setBirthWards] = useState([]);
-  // Nơi cấp giấy khai sinh
   const [birthCertDistricts, setBirthCertDistricts] = useState([]);
   const [birthCertWards, setBirthCertWards] = useState([]);
-  // Hộ khẩu thường trú
   const [permanentDistricts, setPermanentDistricts] = useState([]);
   const [permanentWards, setPermanentWards] = useState([]);
 
-  // Các giá trị chọn hiện tại
   const [selectedHometownProvince, setSelectedHometownProvince] =
     useState(null);
   const [selectedHometownDistrict, setSelectedHometownDistrict] =
     useState(null);
-
   const [selectedBirthProvince, setSelectedBirthProvince] = useState(null);
   const [selectedBirthDistrict, setSelectedBirthDistrict] = useState(null);
-
   const [selectedBirthCertProvince, setSelectedBirthCertProvince] =
     useState(null);
   const [selectedBirthCertDistrict, setSelectedBirthCertDistrict] =
     useState(null);
-
   const [selectedPermanentProvince, setSelectedPermanentProvince] =
     useState(null);
   const [selectedPermanentDistrict, setSelectedPermanentDistrict] =
     useState(null);
+
+  // Địa chỉ người thân (modal)
+  const [familyProvinces, setFamilyProvinces] = useState([]);
+  const [familyDistricts, setFamilyDistricts] = useState([]);
+  const [familyWards, setFamilyWards] = useState([]);
+  const [selectedFamilyProvince, setSelectedFamilyProvince] = useState(null);
+  const [selectedFamilyDistrict, setSelectedFamilyDistrict] = useState(null);
 
   const navigate = useNavigate();
 
@@ -89,25 +102,21 @@ const StudentEditInfoPage = () => {
         const userRes = await userService.getUserInfo();
         setStudentInfo(userRes?.user || {});
 
+        // Lấy người thân động
         const familyRes =
           await familyRelationshipService.getFamilyRelationshipsByStudent();
-        const familyList = Array.isArray(familyRes)
+        const familyListRaw = Array.isArray(familyRes)
           ? familyRes
           : familyRes?.data || [];
-
-        const father =
-          familyList.find((i) => i.relationshipTypeName === 'Cha') || {};
-        const mother =
-          familyList.find((i) => i.relationshipTypeName === 'Mẹ') || {};
-        const guardian =
-          familyList.find((i) => i.relationshipTypeName === 'Người giám hộ') ||
-          {};
-
-        setFamilyData({ father, mother, guardian });
+        // Chuyển familyRelationshipId thành id
+        const familyList = familyListRaw.map((item) => ({
+          ...item,
+          id: item.familyRelationshipId,
+        }));
+        setFamilyList(familyList);
 
         // Lấy danh sách tỉnh/thành
         const provinceData = await externalBankService.getProvinces();
-        // Sửa lại dòng này:
         const provincesList = normalizeList(provinceData);
         setProvinces(provincesList);
 
@@ -126,7 +135,6 @@ const StudentEditInfoPage = () => {
           dateOfJoinParty: userRes?.user?.dateOfJoinParty
             ? dayjs(userRes?.user?.dateOfJoinParty)
             : null,
-          // ...các trường ngày tháng khác nếu có
           gender:
             userRes?.user?.gender === 0
               ? 'Nam'
@@ -192,21 +200,6 @@ const StudentEditInfoPage = () => {
           );
           setPermanentWards(normalizeList(wards?.data || wards));
         }
-
-        formFamily.setFieldsValue({
-          fatherName: father?.fullName,
-          fatherPhone: father?.phone,
-          fatherDOB: father?.dateOfBirth
-            ? dayjs(father?.dateOfBirth)
-            : undefined,
-          motherName: mother?.fullName,
-          motherPhone: mother?.phone,
-          motherDOB: mother?.dateOfBirth
-            ? dayjs(mother?.dateOfBirth)
-            : undefined,
-          guardianName: guardian?.fullName,
-          guardianPhone: guardian?.phone,
-        });
       } catch (error) {
         if (showError) {
           message.error('Không thể tải dữ liệu sinh viên!');
@@ -217,7 +210,7 @@ const StudentEditInfoPage = () => {
     };
 
     fetchData();
-  }, [formPersonal, formFamily]);
+  }, [formPersonal]);
 
   // Quê quán
   const handleHometownProvinceChange = async (provinceCode) => {
@@ -338,18 +331,121 @@ const StudentEditInfoPage = () => {
       };
       await studentServices.updateStudentInformation(data);
       message.success('Cập nhật thông tin cá nhân thành công!');
-      fetchData(); // Không hiện toast lỗi khi fetch lại
     } catch (err) {}
   };
 
+  // --- Người thân động ---
+  const handleAddFamily = () => {
+    setEditingMember(null);
+    setShowModal(true);
+  };
+
+  const handleEditFamily = (member) => {
+    setEditingMember(member);
+    setShowModal(true);
+  };
+
+  const handleDeleteFamily = (member) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc muốn xóa người thân này?',
+      okText: 'Xóa',
+      cancelText: 'Hủy',
+      onOk: () => {
+        setFamilyList((prev) => prev.filter((f) => f !== member));
+      },
+    });
+  };
+
+  const handleSaveFamilyMember = (values) => {
+    // Lấy tên tỉnh/huyện/xã từ code
+    const provinceName =
+      familyProvinces.find((p) => p.code === values.province)?.name || null;
+    const districtName =
+      familyDistricts.find((d) => d.code === values.district)?.name || null;
+    const wardName =
+      familyWards.find((w) => w.code === values.ward)?.name || null;
+
+    const newValues = {
+      ...values,
+      id: editingMember?.id, // giữ lại id nếu đang sửa
+      dateOfBirth: values.dateOfBirth
+        ? typeof values.dateOfBirth.format === 'function'
+          ? values.dateOfBirth.format('YYYY-MM-DD')
+          : values.dateOfBirth
+        : null,
+      issuedDate: values.issuedDate
+        ? typeof values.issuedDate.format === 'function'
+          ? values.issuedDate.format('YYYY-MM-DD')
+          : values.issuedDate
+        : null,
+      province: provinceName,
+      district: districtName,
+      ward: wardName,
+    };
+
+    if (editingMember) {
+      setFamilyList((prev) =>
+        prev.map((f) =>
+          f === editingMember ? { ...editingMember, ...newValues } : f
+        )
+      );
+    } else {
+      setFamilyList((prev) => [...prev, newValues]);
+    }
+    setShowModal(false);
+  };
   // Lưu thông tin gia đình
   const handleSaveFamily = async () => {
     try {
-      const values = await formFamily.validateFields();
-      // TODO: Gọi API lưu thông tin gia đình nếu cần
+      // Tách thành 2 nhóm: đã có id (update), chưa có id (create)
+      const updateList = familyList.filter((item) => item.id);
+      const createList = familyList.filter((item) => !item.id);
+
+      // Gọi update cho từng người thân đã có id
+      for (const member of updateList) {
+        await familyRelationshipService.updateFamilyRelationship(
+          member.id,
+          member
+        );
+      }
+      // Gọi create cho từng người thân mới
+      for (const member of createList) {
+        await familyRelationshipService.createFamilyRelationship(member);
+      }
+
       message.success('Cập nhật thông tin gia đình thành công!');
-      fetchData(); // Không hiện toast lỗi khi fetch lại
-    } catch {}
+    } catch {
+      message.error('Cập nhật thông tin gia đình thất bại!');
+    }
+  };
+
+  // Khi mở modal thì load tỉnh
+  useEffect(() => {
+    if (showModal) {
+      externalBankService.getProvinces().then((data) => {
+        setFamilyProvinces(normalizeList(data));
+      });
+      setFamilyDistricts([]);
+      setFamilyWards([]);
+      setSelectedFamilyProvince(null);
+      setSelectedFamilyDistrict(null);
+    }
+  }, [showModal]);
+
+  const handleFamilyProvinceChange = async (provinceCode) => {
+    setSelectedFamilyProvince(provinceCode);
+    setSelectedFamilyDistrict(null);
+    setFamilyWards([]);
+    const districts =
+      await externalBankService.getDistrictsByProvince(provinceCode);
+    setFamilyDistricts(normalizeList(districts?.data || districts));
+  };
+
+  const handleFamilyDistrictChange = async (districtCode) => {
+    setSelectedFamilyDistrict(districtCode);
+    const wards = await externalBankService.getWardsByDistrict(districtCode);
+    setFamilyWards(normalizeList(wards?.data || wards));
   };
 
   if (loading) {
@@ -757,212 +853,365 @@ const StudentEditInfoPage = () => {
             </Card>
           </TabPane>
           <TabPane tab="Quan hệ gia đình" key="2">
-            <Form
-              form={formFamily}
-              layout="vertical"
-              onFinish={handleSaveFamily}
+            <Button
+              type="primary"
+              onClick={handleAddFamily}
+              style={{ marginBottom: 16 }}
             >
-              {/* CHA */}
-              <Card
-                title="Thông tin Cha"
-                style={{ background: '#f7fbff', marginBottom: 16 }}
-                bordered={false}
+              Thêm người thân
+            </Button>
+            <Row gutter={[24, 24]}>
+              {familyList.map((member, idx) => (
+                <Col xs={24} md={24} key={member.id || idx}>
+                  <Card
+                    type="inner"
+                    title={
+                      RELATIONSHIP_TYPES.find(
+                        (t) => t.value === member.relationshipType
+                      )?.label ||
+                      member.relationshipTypeName ||
+                      'Người thân'
+                    }
+                    headStyle={{ background: '#e6f7ff' }}
+                    extra={
+                      <>
+                        <Button
+                          size="small"
+                          onClick={() => handleEditFamily(member)}
+                        >
+                          Sửa
+                        </Button>
+                        <Button
+                          size="small"
+                          danger
+                          onClick={() => handleDeleteFamily(member)}
+                          style={{ marginLeft: 8 }}
+                        >
+                          Xóa
+                        </Button>
+                      </>
+                    }
+                    style={{ marginBottom: 16 }}
+                  >
+                    <Descriptions bordered column={2} size="small">
+                      <Descriptions.Item label="Họ tên">
+                        {member.fullName || (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="SĐT">
+                        {member.phone || (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Ngày sinh">
+                        {member.dateOfBirth ? (
+                          dayjs(member.dateOfBirth).format('DD/MM/YYYY')
+                        ) : (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Email">
+                        {member.email || (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Nghề nghiệp">
+                        {member.occupation || (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Nơi làm việc">
+                        {member.workplace || (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="CCCD">
+                        {member.citizenIdCard || (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Ngày cấp">
+                        {member.issuedDate ? (
+                          dayjs(member.issuedDate).format('DD/MM/YYYY')
+                        ) : (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Nơi cấp" span={2}>
+                        {member.issuedPlace || (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Địa chỉ thường trú" span={2}>
+                        {member.permanentAddress || (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Địa chỉ cụ thể" span={2}>
+                        {member.fullAddress || member.detailAddress || (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Là người giám hộ">
+                        {member.isGuardian === true ? (
+                          'Có'
+                        ) : member.isGuardian === false ? (
+                          'Không'
+                        ) : (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Đã mất">
+                        {member.isDeceased === true ? (
+                          'Có'
+                        ) : member.isDeceased === false ? (
+                          'Không'
+                        ) : (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Chủ hộ">
+                        {member.isHouseholder === true ? (
+                          'Có'
+                        ) : member.isHouseholder === false ? (
+                          'Không'
+                        ) : (
+                          <span style={{ color: '#999' }}>Chưa cập nhật</span>
+                        )}
+                      </Descriptions.Item>
+                    </Descriptions>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+            <Modal
+              open={showModal}
+              title={editingMember ? 'Sửa người thân' : 'Thêm người thân'}
+              onCancel={() => setShowModal(false)}
+              footer={null}
+              destroyOnClose
+            >
+              <Form
+                layout="vertical"
+                initialValues={
+                  editingMember
+                    ? {
+                        ...editingMember,
+                        dateOfBirth: editingMember.dateOfBirth
+                          ? dayjs(editingMember.dateOfBirth)
+                          : null,
+                        issuedDate: editingMember.issuedDate
+                          ? dayjs(editingMember.issuedDate)
+                          : null,
+                      }
+                    : {
+                        relationshipType: 1,
+                        isGuardian: false,
+                        isDeceased: false,
+                        isHouseholder: false,
+                      }
+                }
+                onFinish={handleSaveFamilyMember}
               >
-                <Row gutter={24}>
-                  <Col span={6}>
-                    <Form.Item label="Họ và tên" name="fatherName">
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      label="Loại quan hệ"
+                      name="relationshipType"
+                      rules={[{ required: true }]}
+                    >
+                      <Select>
+                        {RELATIONSHIP_TYPES.map((t) => (
+                          <Option key={t.value} value={t.value}>
+                            {t.label}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      label="Họ và tên"
+                      name="fullName"
+                      rules={[{ required: true }]}
+                    >
                       <Input />
                     </Form.Item>
                   </Col>
-                  <Col span={6}>
-                    <Form.Item label="Ngày sinh" name="fatherDOB">
+                </Row>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item label="Ngày sinh" name="dateOfBirth">
                       <DatePicker
                         style={{ width: '100%' }}
                         format="DD/MM/YYYY"
                       />
                     </Form.Item>
                   </Col>
-                  <Col span={6}>
-                    <Form.Item label="Số CMND" name="fatherIdNumber">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Nơi cấp CMND" name="fatherIdPlace">
+                  <Col span={12}>
+                    <Form.Item label="Số điện thoại" name="phone">
                       <Input />
                     </Form.Item>
                   </Col>
                 </Row>
-                <Row gutter={24}>
-                  <Col span={6}>
-                    <Form.Item label="Ngày cấp CMND" name="fatherIdDate">
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item label="Email" name="email">
+                      <Input />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item label="Nghề nghiệp" name="occupation">
+                      <Input />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item label="Nơi làm việc" name="workplace">
+                      <Input />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item label="CCCD" name="citizenIdCard">
+                      <Input />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item label="Ngày cấp" name="issuedDate">
                       <DatePicker
                         style={{ width: '100%' }}
                         format="DD/MM/YYYY"
                       />
                     </Form.Item>
                   </Col>
-                  <Col span={6}>
-                    <Form.Item label="Số điện thoại" name="fatherPhone">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Nghề nghiệp" name="fatherJob">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Hộ khẩu thường trú" name="fatherAddress">
+                  <Col span={12}>
+                    <Form.Item label="Nơi cấp" name="issuedPlace">
                       <Input />
                     </Form.Item>
                   </Col>
                 </Row>
-                <Row gutter={24}>
-                  <Col span={6}>
-                    <Form.Item label="Tỉnh/Thành phố" name="fatherProvince">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Huyện/Quận" name="fatherDistrict">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Xã/Phường" name="fatherWard">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Địa chỉ" name="fatherDetailAddress">
+                <Row gutter={16}>
+                  <Col span={24}>
+                    <Form.Item
+                      label="Địa chỉ thường trú"
+                      name="permanentAddress"
+                    >
                       <Input />
                     </Form.Item>
                   </Col>
                 </Row>
-                <Row gutter={24}>
-                  <Col span={6}>
-                    <Form.Item name="fatherIsDead" valuePropName="checked">
+                <Row gutter={16}>
+                  <Col span={24}>
+                    <Form.Item label="Địa chỉ liên hệ" name="contactAddress">
+                      <Input />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row gutter={16}>
+                  <Col span={8}>
+                    <Form.Item name="isGuardian" valuePropName="checked">
+                      <Checkbox>Là người giám hộ</Checkbox>
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item name="isDeceased" valuePropName="checked">
                       <Checkbox>Đã mất</Checkbox>
                     </Form.Item>
                   </Col>
-                  <Col span={6}>
-                    <Form.Item
-                      name="fatherIsHouseholdHead"
-                      valuePropName="checked"
-                    >
+                  <Col span={8}>
+                    <Form.Item name="isHouseholder" valuePropName="checked">
                       <Checkbox>Là chủ hộ</Checkbox>
                     </Form.Item>
                   </Col>
                 </Row>
-              </Card>
-              {/* MẸ */}
-              <Card
-                title="Thông tin Mẹ"
-                style={{ background: '#f7fbff', marginBottom: 16 }}
-                bordered={false}
+                <Row gutter={16}>
+                  <Col span={8}>
+                    <Form.Item label="Tỉnh/Thành" name="province">
+                      <Select
+                        showSearch
+                        placeholder="Chọn tỉnh/thành"
+                        value={selectedFamilyProvince}
+                        onChange={handleFamilyProvinceChange}
+                        allowClear
+                      >
+                        {familyProvinces.map((p) => (
+                          <Option key={p.code} value={p.code}>
+                            {p.name}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item label="Quận/Huyện" name="district">
+                      <Select
+                        showSearch
+                        placeholder="Chọn quận/huyện"
+                        value={selectedFamilyDistrict}
+                        onChange={handleFamilyDistrictChange}
+                        disabled={!selectedFamilyProvince}
+                        allowClear
+                      >
+                        {familyDistricts.map((d) => (
+                          <Option key={d.code} value={d.code}>
+                            {d.name}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item label="Xã/Phường" name="ward">
+                      <Select
+                        showSearch
+                        placeholder="Chọn xã/phường"
+                        disabled={!selectedFamilyDistrict}
+                        allowClear
+                      >
+                        {familyWards.map((w) => (
+                          <Option key={w.code} value={w.code}>
+                            {w.name}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row gutter={16}>
+                  <Col span={24}>
+                    <Form.Item label="Địa chỉ cụ thể" name="detailAddress">
+                      <Input />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <div style={{ textAlign: 'right' }}>
+                  <Button
+                    onClick={() => setShowModal(false)}
+                    style={{ marginRight: 8 }}
+                  >
+                    Hủy
+                  </Button>
+                  <Button type="primary" htmlType="submit">
+                    Lưu
+                  </Button>
+                </div>
+              </Form>
+            </Modal>
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                style={{ minWidth: 120, marginRight: 8 }}
+                onClick={handleSaveFamily}
               >
-                <Row gutter={24}>
-                  <Col span={6}>
-                    <Form.Item label="Họ và tên" name="motherName">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Ngày sinh" name="motherDOB">
-                      <DatePicker
-                        style={{ width: '100%' }}
-                        format="DD/MM/YYYY"
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Số CMND" name="motherIdNumber">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Nơi cấp CMND" name="motherIdPlace">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={24}>
-                  <Col span={6}>
-                    <Form.Item label="Ngày cấp CMND" name="motherIdDate">
-                      <DatePicker
-                        style={{ width: '100%' }}
-                        format="DD/MM/YYYY"
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Số điện thoại" name="motherPhone">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Nghề nghiệp" name="motherJob">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Hộ khẩu thường trú" name="motherAddress">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={24}>
-                  <Col span={6}>
-                    <Form.Item label="Tỉnh/Thành phố" name="motherProvince">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Huyện/Quận" name="motherDistrict">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Xã/Phường" name="motherWard">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label="Địa chỉ" name="motherDetailAddress">
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={24}>
-                  <Col span={6}>
-                    <Form.Item name="motherIsDead" valuePropName="checked">
-                      <Checkbox>Đã mất</Checkbox>
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item
-                      name="motherIsHouseholdHead"
-                      valuePropName="checked"
-                    >
-                      <Checkbox>Là chủ hộ</Checkbox>
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </Card>
-              {/* NGƯỜI GIÁM HỘ */}
-              <Divider />
-              <div style={{ textAlign: 'center', marginTop: 16 }}>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  style={{ minWidth: 120, marginRight: 8 }}
-                >
-                  Lưu
-                </Button>
-                <Button onClick={() => navigate('/student/info')}>Hủy</Button>
-              </div>
-            </Form>
+                Lưu
+              </Button>
+              <Button onClick={() => navigate('/student/info')}>Hủy</Button>
+            </div>
           </TabPane>
         </Tabs>
       </Paper>
