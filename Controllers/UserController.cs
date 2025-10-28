@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.InteropServices;
 
 namespace StudentManagement.Controllers
 {
@@ -13,10 +16,11 @@ namespace StudentManagement.Controllers
         public static User user = new User();
 
         [HttpGet("GetAllUsers")]
-        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers([FromQuery] PaginationParams pagination)
         {
-            var users = await userService.GetAllUsersAsync();
-            return Ok(ApiResponse.SuccessResponse(users, "Users retrieved successfully"));
+            var result = await userService.GetAllUsersAsync(pagination);
+            return Ok(ApiResponse.SuccessResponse(result, "Danh sách người dùng"));
         }
 
         [HttpGet("{id}")]

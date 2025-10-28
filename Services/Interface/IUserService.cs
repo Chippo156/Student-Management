@@ -7,7 +7,7 @@ namespace StudentManagement.Services.Interface
     public interface IUserService
     {
         Task<UserResponse?> GetUserByIdAsync(int userId);
-        Task<IEnumerable<UserResponse>> GetAllUsersAsync();
+        Task<PagedResult<UserResponse>> GetAllUsersAsync(PaginationParams pagination);
         Task<UserResponse?> UpdateUserAsync(int userId, UpdateUserRequest user);
         Task<bool> ResetPassword(int userId, string newPassword);
     }
