@@ -1,5 +1,4 @@
-﻿
-using AuthProject.Models;
+﻿using AuthProject.Models;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
@@ -11,7 +10,7 @@ namespace StudentManagement.Services.Interface
         Task<LoginResponse?> LoginAsync(UserLoginRequest request);
         Task<bool> LogoutAsync(int userId);
         Task<User?> RegisterAsync(UserRequest request);
-
         Task<TokenResponse?> RefreshTokenAsync(RefreshTokenRequest refreshTokenRequestDto);
+        Task<UserResponse?> GetCurrentUserAsync(string username); // Thêm method này
     }
 }   

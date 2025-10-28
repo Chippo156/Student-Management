@@ -12,7 +12,7 @@ namespace StudentManagement.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    public class AuthController(IAuthService authService) : ControllerBase
+    public class AuthController(IAuthService authService, IStudentService studentService, ILecturerService lecturerService) : ControllerBase
     {
         public static User user = new User();
 
@@ -79,6 +79,58 @@ namespace StudentManagement.Controllers
             }
             return Ok(ApiResponse.SuccessResponse(null, "Logout successful."));
         }
+
+        [HttpGet("GetCurrentUserByToken")]
+        [Authorize]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            try
+            {
+                // 1️⃣ Lấy thông tin cơ bản từ token
+                var username = User.FindFirstValue(ClaimTypes.Name);
+                var role = User.FindFirstValue(ClaimTypes.Role);
+
+                if (string.IsNullOrEmpty(username))
+                {
+                    return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "Invalid token", null));
+                }
+
+                object? userInfo = null;
+
+                // 2️⃣ Xử lý theo role
+                switch (role)
+                {
+                    case "Student":
+                        userInfo = await studentService.GetStudentByMSSV(username);
+                        break;
+
+                    case "Lecturer":
+                        userInfo = await lecturerService.GetLecturerDetailByCodeAsync(username);
+                        break;
+
+                    case "Admin":
+                        userInfo = await authService.GetCurrentUserAsync(username);
+                        break;
+
+                    default:
+                        return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, $"Unsupported role: {role}", null));
+                }
+
+                // 3️⃣ Kiểm tra kết quả
+                if (userInfo == null)
+                {
+                    return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, "User not found", null));
+                }
+
+                // 4️⃣ Trả kết quả thành công
+                return Ok(ApiResponse.SuccessResponse(userInfo, "User information retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+
 
     }
 }

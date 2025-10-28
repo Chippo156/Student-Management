@@ -4,6 +4,7 @@ namespace StudentManagement.Models.Dto.Response
 {
     public class EnrolledSectionResponse
     {
+        public int SectionId { get; set; } 
         public string SectionCode { get; set; } = string.Empty; // Mã LHP
         public string CourseName { get; set; } = string.Empty; // Tên môn học
         public string ExpectedClass { get; set; } = string.Empty; // Lớp học dự kiến

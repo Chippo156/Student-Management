@@ -373,6 +373,7 @@ namespace StudentManagement.Services
 
                 var enrolledSection = new EnrolledSectionResponse
                 {
+                    SectionId = section.SectionId,
                     SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
                     CourseName = course.CourseName,
                     ExpectedClass = GetExpectedClassInfo(section),

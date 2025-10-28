@@ -192,6 +192,30 @@ namespace StudentManagement.Services
                 return false;
             }
         }
+
+        public Task<UserResponse?> GetCurrentUserAsync(string username)
+        {
+            var user = context.Users
+                .Include(u => u.Role)
+                .FirstOrDefault(u => u.Username == username);
+            if (user == null)
+                {
+                return Task.FromResult<UserResponse?>(null);
+            }
+            var userResponse = new UserResponse
+            {
+                Username = user.Username,
+                FullName = user.FullName,
+                Email = user.Email,
+                Phone = user.Phone,
+                Address = user.Address,
+                AccountStatus = user.AccountStatus,
+                AvatarUrl = user.AvatarUrl,
+                Role = user.Role
+            };
+
+            return Task.FromResult<UserResponse?>(userResponse);
+        }
     }
 
 }
