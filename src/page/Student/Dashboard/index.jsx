@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import reportService from '../../../service/reportService';
 import scheduleService from '../../../service/scheduleService';
 import { semesterService } from '../../../service/semesterService';
+import enrollmentService from '../../../service/enrollmentService';
 
 // Component con
 import StudentProfileCard from '../../../component/Student/Dashboard/StudentProfileCard';
@@ -34,6 +35,7 @@ const Dashboard = () => {
   const account = useSelector((state) => state.user.account);
   const [semesterReport, setSemesterReport] = useState(null);
   const [creditsSummary, setCreditsSummary] = useState(null);
+  const [enrollmentList, setEnrollmentList] = useState([]);
   const [scheduleCount, setScheduleCount] = useState({
     countScheduleOfWeek: 0,
     countTestOfWeek: 0,
@@ -143,18 +145,13 @@ const Dashboard = () => {
   const outerCredits = useMemo(
     () => [
       {
-        name: 'Tín chỉ hoàn thành',
-        value: completedCredits,
+        name: 'Tổng tiến độ',
+        value: 100,
         color: colors.chart2,
-      },
-      {
-        name: 'Còn lại',
-        value:
-          totalCredits > completedCredits ? totalCredits - completedCredits : 0,
-        color: alpha(colors.sub, 0.2),
+        label: 'Tổng tiến độ',
       },
     ],
-    [completedCredits, colors, totalCredits]
+    [colors]
   );
 
   useEffect(() => {
@@ -190,7 +187,21 @@ const Dashboard = () => {
     };
     fetchSemesters();
   }, []);
-
+  useEffect(() => {
+    const fetchEnrollment = async () => {
+      if (selectedSemesterId) {
+        try {
+          const res =
+            await enrollmentService.getEnrollmentBySemester(selectedSemesterId);
+          setEnrollmentList(res || []);
+        } catch (error) {
+          setEnrollmentList([]);
+          console.error('Enrollment API error:', error);
+        }
+      }
+    };
+    fetchEnrollment();
+  }, [selectedSemesterId]);
   const handleSemesterChange = (value) => {
     setSelectedSemesterId(value);
   };
@@ -297,7 +308,7 @@ const Dashboard = () => {
         </Col>
         <Col xs={24} lg={6}>
           <StudentClassList
-            semesterReport={semesterReport}
+            enrollmentList={enrollmentList}
             semesters={semesters}
             selectedSemesterId={selectedSemesterId}
             handleSemesterChange={handleSemesterChange}

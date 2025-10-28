@@ -59,11 +59,11 @@ const HeaderPage = () => {
   };
 
   const getDashboardByRole = () => {
-    if (!account || !account.role || !account.role.roleId) {
+    const userRoleId = account?.role?.roleId;
+    if (!userRoleId) {
       return '/login';
     }
-    const userRoleId = account.role.roleId;
-    switch (userRoleId) {
+    switch (!!userRoleId) {
       case 1:
         return '/admin';
       case 2:

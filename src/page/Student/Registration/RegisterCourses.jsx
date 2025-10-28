@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   Table,
   Button,
@@ -11,40 +11,44 @@ import {
   Modal,
   Spin,
   Radio,
-} from "antd";
+  Tag,
+  Checkbox,
+} from 'antd';
 import {
-  BookOutlined,
-  AppstoreAddOutlined,
   UnorderedListOutlined,
   CheckSquareOutlined,
-} from "@ant-design/icons";
-import { Box } from "@mui/material";
-import sectionService from "../../../service/sectionService";
-import enrollmentService from "../../../service/enrollmentService";
-import { semesterService } from "../../../service/semesterService";
-import curriculumCourseService from "../../../service/curriculumCourseService";
+  DeleteOutlined,
+} from '@ant-design/icons';
+import { Box } from '@mui/material';
+import sectionService from '../../../service/sectionService';
+import enrollmentService from '../../../service/enrollmentService';
+import { semesterService } from '../../../service/semesterService';
+import curriculumCourseService from '../../../service/curriculumCourseService';
+import { Dropdown, Menu, Popconfirm } from 'antd';
 
 const { Title } = Typography;
-const { Option } = Select;
 
 const RegisterCourses = () => {
   const [semesters, setSemesters] = useState([]);
   const [semester, setSemester] = useState(null);
-  const [registerType, setRegisterType] = useState("new");
-  const [courses, setCourses] = useState([]); // danh sách môn học
-  const [sections, setSections] = useState([]); // danh sách lớp học phần
+  const [registerType, setRegisterType] = useState('new');
+  const [courses, setCourses] = useState([]);
+  const [sections, setSections] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedSection, setSelectedSection] = useState(null);
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [enrolledSections, setEnrolledSections] = useState([]);
+  const [showOnlyNonConflict, setShowOnlyNonConflict] = useState(false);
 
   // ===== LOAD DANH SÁCH HỌC KỲ =====
   useEffect(() => {
     const fetchSemesters = async () => {
       try {
         setLoading(true);
-        const res = await semesterService.getSemesterByStudentAndAcceptRegister();
+        const res =
+          await semesterService.getSemesterByStudentAndAcceptRegister();
         if (res && Array.isArray(res)) {
           const mapped = res.map((s) => ({
             label: `${s.term} (${s.year})`,
@@ -54,7 +58,7 @@ const RegisterCourses = () => {
           setSemester(mapped[0]?.value || null);
         }
       } catch {
-        message.error("Không thể tải danh sách học kỳ!");
+        message.error('Không thể tải danh sách học kỳ!');
       } finally {
         setLoading(false);
       }
@@ -68,27 +72,50 @@ const RegisterCourses = () => {
       if (!semester) return;
       try {
         setLoading(true);
-        // map type string sang số (API yêu cầu)
         const filterType =
-          registerType === "new" ? 1 : registerType === "retake" ? 2 : 3;
+          registerType === 'new' ? 1 : registerType === 'retake' ? 2 : 3;
         const res = await curriculumCourseService.getCoursesByStudentDepartment(
           semester,
           filterType
         );
-        if (res) {
-          setCourses(res);
+        if (res && Array.isArray(res)) {
+          setCourses(
+            res.map((c) => ({
+              ...c,
+              prerequisites: c.prerequisites || [],
+              registrationNote: c.registrationNote || '',
+            }))
+          );
         } else {
-          message.warning("Không có môn học nào cho học kỳ này!");
+          message.warning('Không có môn học nào cho học kỳ này!');
           setCourses([]);
         }
       } catch (err) {
-        message.error(err.message || "Lỗi tải môn học!");
+        message.error(err.message || 'Lỗi tải môn học!');
       } finally {
         setLoading(false);
       }
     };
     fetchCourses();
   }, [semester, registerType]);
+
+  // ===== LẤY DANH SÁCH LỚP HỌC PHẦN ĐÃ ĐĂNG KÝ TRONG KỲ =====
+  useEffect(() => {
+    const fetchEnrolledSections = async () => {
+      if (!semester) return;
+      try {
+        setLoading(true);
+        const res = await enrollmentService.getEnrolledByStudent(semester);
+        setEnrolledSections(res || []);
+      } catch (err) {
+        setEnrolledSections([]);
+        message.error('Không thể tải lớp học phần đã đăng ký!');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEnrolledSections();
+  }, [semester]);
 
   // ===== KHI CHỌN MỘT MÔN HỌC =====
   const handleCourseSelect = async (record) => {
@@ -97,18 +124,19 @@ const RegisterCourses = () => {
     setSchedule([]);
     try {
       setLoading(true);
-      const data = await sectionService.getSectionsByCurriculumCourseAndSemester(
-        record.curriculumCourseId,
-        semester
-      );
+      const data =
+        await sectionService.getSectionsByCurriculumCourseAndSemester(
+          record.curriculumCourseId,
+          semester
+        );
       if (data && data.length > 0) {
         setSections(data);
       } else {
-        message.warning("Không tìm thấy lớp học phần!");
+        message.warning('Không tìm thấy lớp học phần!');
         setSections([]);
       }
     } catch (err) {
-      message.error(err.message || "Lỗi tải lớp học phần!");
+      message.error(err.message || 'Lỗi tải lớp học phần!');
     } finally {
       setLoading(false);
     }
@@ -125,11 +153,11 @@ const RegisterCourses = () => {
       if (data && data.schedules) {
         setSchedule(data.schedules);
       } else {
-        message.warning("Không tìm thấy lịch học!");
+        message.warning('Không tìm thấy lịch học!');
         setSchedule([]);
       }
     } catch (err) {
-      message.error(err.message || "Lỗi tải lịch học!");
+      message.error(err.message || 'Lỗi tải lịch học!');
     } finally {
       setLoading(false);
     }
@@ -137,108 +165,325 @@ const RegisterCourses = () => {
 
   // ===== ĐĂNG KÝ HỌC PHẦN =====
   const handleEnroll = async () => {
-    if (!selectedSection) return message.warning("Vui lòng chọn lớp học phần!");
+    if (!selectedSection) return message.warning('Vui lòng chọn lớp học phần!');
     try {
       setLoading(true);
       await enrollmentService.enrollInCourse({
         sectionId: selectedSection.sectionId,
       });
-      message.success("Đăng ký học phần thành công!");
+      message.success('Đăng ký học phần thành công!');
     } catch (err) {
-      message.error(err.message || "Đăng ký học phần thất bại!");
+      message.error(err.message || 'Đăng ký học phần thất bại!');
     } finally {
       setLoading(false);
     }
   };
 
-  // ===== CỘT MÔN HỌC =====
+  // ===== HỦY ĐĂNG KÝ HỌC PHẦN =====
+  const handleDropEnrollment = async (sectionId) => {
+    try {
+      setLoading(true);
+      await enrollmentService.dropEnrollmentStudent(sectionId);
+      message.success('Hủy đăng ký học phần thành công!');
+      // Reload danh sách đã đăng ký
+      const res = await enrollmentService.getEnrolledByStudent(semester);
+      setEnrolledSections(res || []);
+    } catch (err) {
+      message.error(err.message || 'Hủy đăng ký học phần thất bại!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ===== CỘT MÔN HỌC CHỜ ĐĂNG KÝ =====
   const courseColumns = [
-    { title: "Mã HP", dataIndex: "courseCode", width: 120 },
-    { title: "Tên học phần", dataIndex: "courseName", width: 250 },
-    { title: "Tín chỉ", dataIndex: "totalCredits", align: "center", width: 100 },
-    { title: "Khoa", dataIndex: "facultyName", width: 180 },
     {
-      title: "Bắt buộc",
-      dataIndex: "isRequired",
-      align: "center",
-      render: (v) => (v ? "Có" : "Không"),
-      width: 100,
+      title: 'STT',
+      dataIndex: 'index',
+      align: 'center',
+      width: 50,
+      render: (_, __, i) => i + 1,
+    },
+    { title: 'Mã HP', dataIndex: 'courseCode', align: 'center', width: 110 },
+    { title: 'Tên môn học', dataIndex: 'courseName', width: 250 },
+    {
+      title: 'TC',
+      dataIndex: 'totalCredits',
+      align: 'center',
+      width: 60,
+    },
+    {
+      title: 'Bắt buộc',
+      dataIndex: 'isRequired',
+      align: 'center',
+      width: 80,
+      render: (v) =>
+        v ? (
+          <CheckSquareOutlined style={{ color: '#52c41a', fontSize: 18 }} />
+        ) : (
+          <DeleteOutlined style={{ color: '#ff4d4f', fontSize: 18 }} />
+        ),
+    },
+    {
+      title: 'Học phần tiên quyết',
+      dataIndex: 'prerequisites',
+      width: 200,
+      render: (arr) =>
+        arr && arr.length
+          ? arr.map((p) => `${p.courseCode} (${p.courseName})`).join(', ')
+          : '',
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'registrationNote',
+      width: 180,
+      render: (v) => <span style={{ color: '#d32f2f' }}>{v}</span>,
     },
   ];
 
-  // ===== CỘT LỚP HỌC PHẦN =====
+  // ===== CỘT LỚP HỌC PHẦN CHỜ ĐĂNG KÝ =====
   const sectionColumns = [
-    { title: "Mã lớp", dataIndex: "sectionCode", width: 120 },
-    { title: "Giảng viên", dataIndex: "lecturerName", width: 180 },
     {
-      title: "Sĩ số tối đa",
-      dataIndex: "maxCapacity",
-      align: "center",
+      title: '',
+      dataIndex: 'radio',
+      width: 40,
+      render: (_, record) => (
+        <Radio
+          checked={selectedSection?.sectionId === record.sectionId}
+          onChange={() => handleSectionSelect(record)}
+        />
+      ),
+    },
+    {
+      title: 'STT',
+      dataIndex: 'index',
+      align: 'center',
+      width: 50,
+      render: (_, __, i) => i + 1,
+    },
+    { title: 'Mã LHP', dataIndex: 'sectionCode', align: 'center', width: 120 },
+    { title: 'Tên lớp học phần', dataIndex: 'sectionName', width: 200 },
+    {
+      title: 'Lớp dự kiến',
+      dataIndex: 'expectedClass',
+      align: 'center',
+      width: 120,
+    },
+    {
+      title: 'Sĩ số tối đa',
+      dataIndex: 'maxCapacity',
+      align: 'center',
       width: 100,
     },
     {
-      title: "Đã đăng ký",
-      dataIndex: "currentEnrollment",
-      align: "center",
+      title: 'Đã đăng ký',
+      dataIndex: 'currentEnrollment',
+      align: 'center',
       width: 100,
     },
     {
-      title: "Còn lại",
-      dataIndex: "remainingSlots",
-      align: "center",
+      title: 'Trạng thái',
+      dataIndex: 'isRegistrationOpen',
+      align: 'center',
       width: 100,
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "isRegistrationOpen",
-      align: "center",
       render: (v) =>
         v ? (
-          <span style={{ color: "green", fontWeight: 500 }}>Mở đăng ký</span>
+          <span style={{ color: 'green', fontWeight: 500 }}>Mở đăng ký</span>
         ) : (
-          <span style={{ color: "red", fontWeight: 500 }}>Đã khóa</span>
+          <span style={{ color: 'red', fontWeight: 500 }}>Đã khóa</span>
         ),
     },
   ];
 
-  // ===== CỘT LỊCH HỌC =====
-  const scheduleColumns = [
-    { title: "Thứ", dataIndex: "dayOfWeekName", width: 80 },
-    { title: "Bắt đầu", dataIndex: "startTime", width: 100 },
-    { title: "Kết thúc", dataIndex: "endTime", width: 100 },
-    { title: "Phòng", dataIndex: "room", width: 120 },
-    { title: "Loại", dataIndex: "scheduleTypeName", width: 150 },
+  // ===== CỘT LỚP HỌC PHẦN ĐÃ ĐĂNG KÝ =====
+  const enrolledColumns = [
+    {
+      title: 'Thao tác',
+      dataIndex: 'action',
+      align: 'center',
+      width: 90,
+      render: (_, record) => (
+        <Dropdown
+          trigger={['click']}
+          overlay={
+            <Menu>
+              <Menu.Item
+                key="detail"
+                onClick={() => {
+                  setSchedule(
+                    (record.dayOfWeek || '').split(',').map((day, idx) => ({
+                      key: idx + 1,
+                      dayOfWeekName: day,
+                      startTime:
+                        (record.timeSlot || '')
+                          .split(',')
+                          [idx]?.split('-')[0] || '',
+                      endTime:
+                        (record.timeSlot || '')
+                          .split(',')
+                          [idx]?.split('-')[1] || '',
+                      room: (record.room || '').split(',')[idx] || '',
+                      lecturerName: record.lecturerName,
+                    }))
+                  );
+                  setShowScheduleModal(true);
+                }}
+              >
+                <UnorderedListOutlined style={{ marginRight: 8 }} />
+                Xem chi tiết
+              </Menu.Item>
+              <Menu.Item key="drop" danger>
+                <Popconfirm
+                  title="Bạn chắc chắn muốn hủy đăng ký lớp học phần này?"
+                  okText="Hủy đăng ký"
+                  cancelText="Không"
+                  onConfirm={() => handleDropEnrollment(record.sectionId)}
+                >
+                  <DeleteOutlined style={{ marginRight: 8 }} />
+                  Hủy đăng ký
+                </Popconfirm>
+              </Menu.Item>
+            </Menu>
+          }
+        >
+          <Button icon={<UnorderedListOutlined />} size="small">
+            Thao tác
+          </Button>
+        </Dropdown>
+      ),
+    },
+    {
+      title: 'STT',
+      dataIndex: 'index',
+      align: 'center',
+      width: 50,
+      render: (_, __, i) => i + 1,
+    },
+    { title: 'Mã LHP', dataIndex: 'sectionCode', align: 'center', width: 120 },
+    { title: 'Tên môn học', dataIndex: 'courseName', width: 200 },
+    {
+      title: 'Lớp học dự kiến',
+      dataIndex: 'expectedClass',
+      align: 'center',
+      width: 120,
+    },
+    { title: 'Số TC', dataIndex: 'credits', align: 'center', width: 70 },
+    { title: 'Nhóm TH', dataIndex: 'labGroup', align: 'center', width: 80 },
+    {
+      title: 'Học phí',
+      dataIndex: 'tuitionFee',
+      align: 'right',
+      width: 110,
+      render: (v) => v?.toLocaleString('vi-VN') + ' đ',
+    },
+    {
+      title: 'Hạn nộp',
+      dataIndex: 'paymentDeadline',
+      align: 'center',
+      width: 110,
+      render: (v) => (v ? new Date(v).toLocaleDateString('vi-VN') : ''),
+    },
+    {
+      title: 'Thu',
+      dataIndex: 'isPaid',
+      align: 'center',
+      width: 60,
+      render: () => (
+        <span>
+          <CheckSquareOutlined style={{ color: '#52c41a' }} />
+        </span>
+      ),
+    },
+    {
+      title: 'Trạng thái ĐK',
+      dataIndex: 'registrationStatus',
+      align: 'center',
+      width: 110,
+      render: (v) =>
+        v === 'Đã đăng ký' ? (
+          <Tag color="green">Đã đăng ký</Tag>
+        ) : (
+          <Tag color="red">{v}</Tag>
+        ),
+    },
+    {
+      title: 'Ngày ĐK',
+      dataIndex: 'registrationDate',
+      align: 'center',
+      width: 110,
+      render: (v) => (v ? new Date(v).toLocaleDateString('vi-VN') : ''),
+    },
+    {
+      title: 'Trạng thái LHP',
+      dataIndex: 'sectionStatus',
+      align: 'center',
+      width: 110,
+      render: (v) =>
+        v === 'Available' ? (
+          <Tag color="blue">Còn mở</Tag>
+        ) : (
+          <Tag color="red">{v}</Tag>
+        ),
+    },
   ];
 
+  // ===== CSS cho Table =====
+  const tableRowClassName = (record, idx) => {
+    if (selectedCourse && record.key === selectedCourse.curriculumCourseId) {
+      return 'table-row-selected';
+    }
+    if (selectedSection && record.key === selectedSection.sectionId) {
+      return 'table-row-selected';
+    }
+    return idx % 2 === 0 ? 'table-row-light' : 'table-row-dark';
+  };
+
   return (
-    <Box sx={{ background: "#f4f6fb", minHeight: "100vh", p: 3 }}>
+    <Box sx={{ background: '#f4f6fb', minHeight: '100vh', p: 3 }}>
+      <style>
+        {`
+        .ant-table-thead > tr > th {
+          background: #e3f0ff !important;
+          font-weight: 600;
+          text-align: center;
+        }
+        .table-row-light {
+          background: #fff;
+        }
+        .table-row-dark {
+          background: #f8fafd;
+        }
+        .table-row-selected {
+          background: #fff8e1 !important;
+        }
+        `}
+      </style>
       <Card
         style={{
-          maxWidth: 1150,
-          margin: "0 auto",
+          maxWidth: 1300,
+          margin: '0 auto',
           borderRadius: 12,
-          border: "none",
-          boxShadow: "0 2px 12px #e6e6e6",
+          border: 'none',
+          boxShadow: '0 2px 12px #e6e6e6',
         }}
         bodyStyle={{ padding: 32 }}
       >
         <Title
           level={3}
           style={{
-            color: "#1677ff",
-            textAlign: "center",
+            color: '#1677ff',
+            textAlign: 'center',
             marginBottom: 28,
             fontWeight: 700,
           }}
         >
-          <BookOutlined style={{ marginRight: 10 }} />
           ĐĂNG KÝ HỌC PHẦN
         </Title>
 
         {/* HỌC KỲ + LOẠI ĐĂNG KÝ */}
         <Row gutter={16} align="middle" style={{ marginBottom: 24 }}>
           <Col>
-            <span style={{ fontWeight: 500 }}>Học kỳ:</span>
+            <span style={{ fontWeight: 500 }}>Đợt đăng ký</span>
             <Select
               value={semester}
               onChange={setSemester}
@@ -248,128 +493,203 @@ const RegisterCourses = () => {
             />
           </Col>
           <Col>
-            <span style={{ marginLeft: 24, fontWeight: 500 }}>Loại đăng ký:</span>
             <Radio.Group
               value={registerType}
               onChange={(e) => setRegisterType(e.target.value)}
-              style={{ marginLeft: 12 }}
+              style={{ marginLeft: 32 }}
             >
-              <Radio value="new">Học mới</Radio>
-              <Radio value="retake">Học lại</Radio>
-              <Radio value="improve">Học cải thiện</Radio>
+              <Radio value="new">HỌC MỚI</Radio>
+              <Radio value="retake">HỌC LẠI</Radio>
+              <Radio value="improve">HỌC CẢI THIỆN</Radio>
             </Radio.Group>
           </Col>
         </Row>
 
-        {/* DANH SÁCH MÔN HỌC */}
-        <Card
-          title={
-            <span style={{ color: "#f57c00", fontWeight: 600, fontSize: 16 }}>
-              <AppstoreAddOutlined style={{ marginRight: 8, color: "#f57c00" }} />
-              DANH SÁCH MÔN HỌC
-            </span>
-          }
-          style={{ marginBottom: 24 }}
+        {/* MÔN HỌC PHẦN ĐANG CHỜ ĐĂNG KÝ */}
+        <div
+          style={{
+            fontWeight: 600,
+            color: '#f57c00',
+            fontSize: 16,
+            marginBottom: 8,
+          }}
         >
-          <Spin spinning={loading}>
-            <Table
-              rowSelection={{
-                type: "radio",
-                selectedRowKeys: selectedCourse
-                  ? [selectedCourse.curriculumCourseId]
-                  : [],
-                onChange: (_, rows) => handleCourseSelect(rows[0]),
-              }}
-              columns={courseColumns}
-              dataSource={courses.map((c) => ({
-                ...c,
-                key: c.curriculumCourseId,
-              }))}
-              pagination={false}
-              size="small"
-              bordered
-              locale={{ emptyText: "Không có môn học" }}
-            />
-          </Spin>
-        </Card>
+          MÔN HỌC PHẦN ĐANG CHỜ ĐĂNG KÝ
+        </div>
+        <Spin spinning={loading}>
+          <Table
+            rowSelection={{
+              type: 'radio',
+              selectedRowKeys: selectedCourse
+                ? [selectedCourse.curriculumCourseId]
+                : [],
+              onChange: (_, rows) => handleCourseSelect(rows[0]),
+              columnTitle: '',
+            }}
+            columns={courseColumns}
+            dataSource={courses.map((c, i) => ({
+              ...c,
+              key: c.curriculumCourseId,
+              index: i + 1,
+            }))}
+            pagination={false}
+            size="small"
+            bordered
+            rowClassName={tableRowClassName}
+            locale={{ emptyText: 'Không có môn học' }}
+            scroll={{ x: 1200 }}
+          />
+        </Spin>
 
-        {/* DANH SÁCH LỚP HỌC PHẦN */}
+        {/* LỚP HỌC PHẦN CHỜ ĐĂNG KÝ */}
         {selectedCourse && (
-          <Card
-            title={
-              <span style={{ color: "#f57c00", fontWeight: 600, fontSize: 16 }}>
-                <AppstoreAddOutlined
-                  style={{ marginRight: 8, color: "#f57c00" }}
-                />
-                DANH SÁCH LỚP HỌC PHẦN
-              </span>
-            }
-            style={{ marginBottom: 24 }}
-          >
-            <Table
-              rowSelection={{
-                type: "radio",
-                selectedRowKeys: selectedSection
-                  ? [selectedSection.sectionId]
-                  : [],
-                onChange: (_, rows) => handleSectionSelect(rows[0]),
+          <>
+            <div
+              style={{
+                fontWeight: 600,
+                color: '#f57c00',
+                fontSize: 16,
+                margin: '24px 0 8px',
               }}
-              columns={sectionColumns}
-              dataSource={sections.map((s) => ({ ...s, key: s.sectionId }))}
-              pagination={false}
-              size="small"
-              bordered
-              locale={{
-                emptyText: "Chưa có lớp học phần cho môn này",
-              }}
-            />
-          </Card>
+            >
+              LỚP HỌC PHẦN CHỜ ĐĂNG KÝ
+              <Checkbox
+                style={{ marginLeft: 24, color: '#d32f2f', fontWeight: 500 }}
+                checked={showOnlyNonConflict}
+                onChange={(e) => setShowOnlyNonConflict(e.target.checked)}
+              >
+                HIỆN THỊ LỚP HỌC PHẦN KHÔNG TRÙNG LỊCH
+              </Checkbox>
+            </div>
+            <Spin spinning={loading}>
+              <Table
+                columns={sectionColumns}
+                dataSource={sections.map((s, i) => ({
+                  ...s,
+                  key: s.sectionId,
+                  index: i + 1,
+                }))}
+                pagination={false}
+                size="small"
+                bordered
+                rowClassName={tableRowClassName}
+                locale={{ emptyText: 'Chưa có lớp học phần cho môn này' }}
+                scroll={{ x: 1200 }}
+              />
+            </Spin>
+          </>
         )}
 
         {/* CHI TIẾT LỊCH HỌC */}
         {selectedSection && (
           <Card
             title={
-              <span style={{ color: "#f57c00", fontWeight: 600, fontSize: 16 }}>
+              <span style={{ color: '#f57c00', fontWeight: 600, fontSize: 16 }}>
                 <UnorderedListOutlined
-                  style={{ marginRight: 8, color: "#f57c00" }}
+                  style={{ marginRight: 8, color: '#f57c00' }}
                 />
-                LỊCH HỌC CỦA LỚP HỌC PHẦN
+                CHI TIẾT LỚP HỌC PHẦN
               </span>
             }
+            style={{ marginTop: 24 }}
           >
             <Table
-              columns={scheduleColumns}
-              dataSource={schedule.map((s, i) => ({ ...s, key: i + 1 }))}
+              columns={[
+                {
+                  title: 'STT',
+                  dataIndex: 'index',
+                  width: 50,
+                  align: 'center',
+                  render: (_, __, i) => i + 1,
+                },
+                { title: 'Thứ', dataIndex: 'dayOfWeekName', width: 120 },
+                { title: 'Bắt đầu', dataIndex: 'startTime', width: 100 },
+                { title: 'Kết thúc', dataIndex: 'endTime', width: 100 },
+                { title: 'Phòng', dataIndex: 'room', width: 120 },
+                { title: 'Loại', dataIndex: 'scheduleTypeName', width: 120 },
+              ]}
+              dataSource={schedule.map((s, i) => ({
+                ...s,
+                key: i + 1,
+                index: i + 1,
+              }))}
               pagination={false}
               bordered
               size="small"
-              locale={{ emptyText: "Không có lịch học" }}
+              locale={{ emptyText: 'Không có lịch học' }}
+              scroll={{ x: 900 }}
             />
-            <div style={{ textAlign: "right", marginTop: 16 }}>
+            <div style={{ textAlign: 'right', marginTop: 16 }}>
               <Button
                 type="primary"
                 icon={<CheckSquareOutlined />}
                 onClick={handleEnroll}
                 disabled={!selectedSection}
               >
-                Đăng ký học phần
+                Đăng ký môn học
               </Button>
             </div>
           </Card>
         )}
+
+        {/* LỚP HỌC PHẦN ĐÃ ĐĂNG KÝ TRONG HỌC KỲ NÀY */}
+        <div
+          style={{
+            fontWeight: 600,
+            color: '#1677ff',
+            fontSize: 16,
+            margin: '32px 0 8px',
+          }}
+        >
+          LỚP HỌC PHẦN ĐÃ ĐĂNG KÝ TRONG HỌC KỲ NÀY
+        </div>
+        <Spin spinning={loading}>
+          <Table
+            columns={enrolledColumns}
+            dataSource={enrolledSections.map((s, i) => ({
+              ...s,
+              key: s.sectionCode,
+              index: i + 1,
+            }))}
+            pagination={false}
+            size="small"
+            bordered
+            locale={{ emptyText: 'Chưa đăng ký lớp học phần nào' }}
+            scroll={{ x: 1400 }}
+            rowClassName={tableRowClassName}
+          />
+        </Spin>
       </Card>
 
       {/* MODAL XEM LỊCH HỌC */}
       <Modal
         open={showScheduleModal}
         onCancel={() => setShowScheduleModal(false)}
-        footer={<Button onClick={() => setShowScheduleModal(false)}>Đóng</Button>}
+        footer={
+          <Button onClick={() => setShowScheduleModal(false)}>Đóng</Button>
+        }
         title="Lịch học phần chi tiết"
       >
         <Table
-          columns={scheduleColumns}
-          dataSource={schedule.map((s, i) => ({ ...s, key: i + 1 }))}
+          columns={[
+            {
+              title: 'STT',
+              dataIndex: 'index',
+              width: 50,
+              align: 'center',
+              render: (_, __, i) => i + 1,
+            },
+            { title: 'Thứ', dataIndex: 'dayOfWeekName', width: 120 },
+            { title: 'Bắt đầu', dataIndex: 'startTime', width: 100 },
+            { title: 'Kết thúc', dataIndex: 'endTime', width: 100 },
+            { title: 'Phòng', dataIndex: 'room', width: 120 },
+            { title: 'Loại', dataIndex: 'scheduleTypeName', width: 120 },
+          ]}
+          dataSource={schedule.map((s, i) => ({
+            ...s,
+            key: i + 1,
+            index: i + 1,
+          }))}
           pagination={false}
           size="small"
         />

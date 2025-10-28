@@ -32,7 +32,7 @@ import StudentGrades from '../page/Student/Study/StudentGrades';
 import StudentSchedule from '../page/Student/Study/StudentSchedule';
 import StudentEditInfoPage from '../page/Student/General information/StudentEditInfoPage';
 import RegisterCourses from '../page/Student/Registration/RegisterCourses';
-
+import CurriculumPage from '../page/Student/Registration/CurriculumPage';
 // Teacher pages
 import TeacherDashboard from '../component/Teacher/Dashboard';
 import TeacherCourses from '../component/Teacher/Pages/CoursesPage';
@@ -45,14 +45,6 @@ import LayoutStudent from '../component/LayoutStudent/LayoutStudent';
 import LayoutTeacher from '../component/LayoutTeacher/LayoutTeacher';
 import CourseManagement from '~/page/Admin/courseManagement';
 import SystemSettings from '~/page/Admin/systemSettings';
-
-// Placeholder components for unfinished features
-const CurriculumPage = () => (
-  <div style={{ padding: '24px' }}>
-    <h2>Chương trình khung</h2>
-    <p>Component chương trình khung đang được phát triển...</p>
-  </div>
-);
 
 const RegisterCoursePage = () => (
   <div style={{ padding: '24px' }}>
@@ -161,10 +153,8 @@ const AppRoutes = () => {
           {/* Quản lý Đào tạo */}
           <Route path="courses" element={<CourseManagement />} />
           <Route path="classes" element={<Classes />} />
-          <Route
-            path="curriculum"
-            element={<div>Chương trình đào tạo - Coming Soon</div>}
-          />
+          <Route path="curriculum" element={<CurriculumPage />} />
+
           <Route path="schedule" element={<div>Lịch học - Coming Soon</div>} />
 
           {/* Phân quyền */}

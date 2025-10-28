@@ -277,7 +277,7 @@ const menuData = [
 const LayoutAdmin = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKey, setSelectedKey] = useState('dashboard');
-  const [openMenus, setOpenMenus] = useState < OpenMenusState > {};
+  const [openMenus, setOpenMenus] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();

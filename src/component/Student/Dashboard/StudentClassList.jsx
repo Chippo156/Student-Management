@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, Tag, Select } from 'antd';
 
 const StudentClassList = ({
-  semesterReport,
+  enrollmentList = [],
   semesters,
   selectedSemesterId,
   handleSemesterChange,
@@ -36,10 +36,10 @@ const StudentClassList = ({
       },
     }}
   >
-    {semesterReport?.courses && semesterReport.courses.length > 0 ? (
-      semesterReport.courses.map((course) => (
+    {enrollmentList.length > 0 ? (
+      enrollmentList.map((course) => (
         <div
-          key={course.courseId}
+          key={course.courseCode}
           style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -53,7 +53,7 @@ const StudentClassList = ({
           <span style={{ color: colors.primary, fontWeight: 600 }}>
             {course.courseCode} - {course.courseName}
           </span>
-          <Tag color="blue">{course.totalCredits} TC</Tag>
+          <Tag color="blue">{course.creditsTheory + course.creditsLab} TC</Tag>
         </div>
       ))
     ) : (

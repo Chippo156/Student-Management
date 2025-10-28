@@ -47,9 +47,7 @@ export const userSlice = createSlice({
       };
       localStorage.setItem('access_token', token.accessToken);
       localStorage.setItem('refresh_token', token.refreshToken);
-      const persistedUserId = user.studentId ?? user.user?.userId ?? undefined;
-      if (persistedUserId)
-        localStorage.setItem('user_id', String(persistedUserId));
+      // localStorage.setItem('role', user.role?.roleId ?? user.role ?? '1');
     },
     doGetAccountAction: (state, action) => {
       if (state.account) {
@@ -61,7 +59,7 @@ export const userSlice = createSlice({
     doLogoutAction: (state) => {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user_id');
+      localStorage.removeItem('role');
       state.isAuthenticated = false;
       state.account = null;
       state.error = null;
@@ -112,10 +110,7 @@ export const userSlice = createSlice({
         };
         localStorage.setItem('access_token', token.accessToken);
         localStorage.setItem('refresh_token', token.refreshToken);
-        const persistedUserId =
-          user.studentId ?? user.user?.userId ?? undefined;
-        if (persistedUserId)
-          localStorage.setItem('user_id', String(persistedUserId));
+        localStorage.setItem('role', user.role?.roleId ?? user.role ?? '1');
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -126,7 +121,7 @@ export const userSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state) => {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user_id');
+        localStorage.removeItem('role');
         state.isAuthenticated = false;
         state.account = null;
         state.error = null;
