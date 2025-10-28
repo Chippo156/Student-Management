@@ -6,6 +6,7 @@ using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
+using System.Runtime.InteropServices;
 using System.Security.Claims;
 
 namespace StudentManagement.Controllers
@@ -130,10 +131,11 @@ namespace StudentManagement.Controllers
         }
 
         [HttpDelete("DropEnrollmentStudent")]
-        public async Task<IActionResult> DropEnrollment(int sectionId)
+        public async Task<IActionResult> DropEnrollment([FromQuery] int sectionId)
         {
             try
             {
+
                 var mssv = User.FindFirstValue(ClaimTypes.Name);
                 if (mssv == null)
                 {

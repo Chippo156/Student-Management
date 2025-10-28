@@ -11,5 +11,7 @@ namespace StudentManagement.Models
         public int YearOfAdmission { get; set; }
         public DateOnly? DateOfAdmission { get; set; }
         public StudentStatus StudentStatus { get; set; } = StudentStatus.Active;
+
+
     }
 }

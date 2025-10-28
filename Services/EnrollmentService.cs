@@ -332,7 +332,7 @@ namespace StudentManagement.Services
                 .Include(e => e.Section.Semester)
                 .Include(e => e.Section.Schedules)
                     .ThenInclude(sch => sch.ScheduleType)
-                .Where(e => e.Student.MSSV == mssv && e.Section.Semester.SemesterId == semesterId)
+                .Where(e => e.Student.MSSV == mssv && e.Section.Semester.SemesterId == semesterId && e.enrollmentStatus != EnrollmentStatus.Dropped)
                 .ToListAsync();
 
             var result = new List<EnrolledSectionResponse>();
@@ -434,6 +434,7 @@ namespace StudentManagement.Services
                         .ThenInclude(l => l.User)
                     .Include(s => s.Semester)
                     .Include(s => s.Enrollments)
+
                     .FirstOrDefaultAsync(s => s.SectionId == sectionId);
 
                 if (section == null)
@@ -502,23 +503,16 @@ namespace StudentManagement.Services
                     EnrollmentStatus = "Dropped"
                 };
 
-                // Cập nhật trạng thái thay vì xóa (để giữ lại lịch sử)
-                existingEnrollment.enrollmentStatus = EnrollmentStatus.Dropped;
-                context.Enrollments.Update(existingEnrollment);
-
-                // Cập nhật số lượng đăng ký của section
-                section.EnrolledCount = section.Enrollments.Count(e => e.enrollmentStatus == EnrollmentStatus.Enrolled);
-                context.Sections.Update(section);
-
+                context.Enrollments.Remove(existingEnrollment); 
                 await context.SaveChangesAsync();
+                
                 await transaction.CommitAsync();
 
                 return new EnrollmentResultResponse
                 {
                     IsSuccess = true,
                     Message = "Successfully dropped enrollment",
-                    EnrollmentId = existingEnrollment.EnrollmentId,
-                    EnrollmentDetails = enrollmentDetails
+
                 };
             }
             catch (Exception ex)
