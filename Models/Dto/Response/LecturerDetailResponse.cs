@@ -17,14 +17,14 @@ namespace StudentManagement.Models.Dto.Response
         // User Information
         public UserResponse User { get; set; } = null!;
         
-        // Teaching Statistics
-        public TeachingStatistics Statistics { get; set; } = new();
+        //// Teaching Statistics
+        //public TeachingStatistics Statistics { get; set; } = new();
         
-        // Current Sections Teaching
-        public List<CurrentSectionInfo> CurrentSections { get; set; } = new();
+        //// Current Sections Teaching
+        //public List<CurrentSectionInfo> CurrentSections { get; set; } = new();
         
-        // Class Advisor Information
-        public List<AdvisorClassInfo> AdvisorClasses { get; set; } = new();
+        //// Class Advisor Information
+        //public List<AdvisorClassInfo> AdvisorClasses { get; set; } = new();
     }
 
     public class TeachingStatistics

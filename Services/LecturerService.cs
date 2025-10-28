@@ -112,13 +112,13 @@ namespace StudentManagement.Services
                 };
 
                 // Get current semester
-                var currentSemester = await GetCurrentSemesterAsync();
+                //var currentSemester = await GetCurrentSemesterAsync();
 
-                // Get current sections teaching
-                var currentSections = await GetCurrentSectionsAsync(lecturer.Id, currentSemester?.SemesterId);
+                //// Get current sections teaching
+                //var currentSections = await GetCurrentSectionsAsync(lecturer.Id, currentSemester?.SemesterId);
 
-                // Get teaching statistics
-                var statistics = await GetTeachingStatisticsAsync(lecturer.Id);
+                //// Get teaching statistics
+                //var statistics = await GetTeachingStatisticsAsync(lecturer.Id);
 
                 // Get advisor classes
 
@@ -131,8 +131,8 @@ namespace StudentManagement.Services
                     DepartmentName = lecturer.Department?.DepartmentName ?? "Not Assigned",
                     FacultyName = lecturer.Department?.Faculty?.FacultyName ?? "Not Assigned",
                     User = userResponse,
-                    Statistics = statistics,
-                    CurrentSections = currentSections,
+                    //Statistics = statistics,
+                    //CurrentSections = currentSections,
                 };
 
                 return response;
