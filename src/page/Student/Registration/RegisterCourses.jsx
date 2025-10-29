@@ -19,6 +19,7 @@ import {
   CheckSquareOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
+import { DownOutlined } from '@ant-design/icons';
 import { Box } from '@mui/material';
 import sectionService from '../../../service/sectionService';
 import enrollmentService from '../../../service/enrollmentService';
@@ -41,6 +42,9 @@ const RegisterCourses = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [enrolledSections, setEnrolledSections] = useState([]);
   const [showOnlyNonConflict, setShowOnlyNonConflict] = useState(false);
+  const [practiceGroups, setPracticeGroups] = useState([]);
+  const [selectedPracticeGroup, setSelectedPracticeGroup] = useState(null);
+  const [modalSchedule, setModalSchedule] = useState([]); // Thêm state riêng cho modal
 
   // ===== LOAD DANH SÁCH HỌC KỲ =====
   useEffect(() => {
@@ -116,7 +120,14 @@ const RegisterCourses = () => {
     };
     fetchEnrolledSections();
   }, [semester]);
-
+  useEffect(() => {
+    setSelectedCourse(null);
+    setSelectedSection(null);
+    setSections([]);
+    setSchedule([]);
+    setPracticeGroups([]);
+    setSelectedPracticeGroup(null);
+  }, [semester, registerType]);
   // ===== KHI CHỌN MỘT MÔN HỌC =====
   const handleCourseSelect = async (record) => {
     setSelectedCourse(record);
@@ -151,10 +162,23 @@ const RegisterCourses = () => {
         record.sectionId
       );
       if (data && data.schedules) {
-        setSchedule(data.schedules);
+        setSchedule(data.schedules); // Lịch lý thuyết (chỉ 1)
+        setPracticeGroups(data.practiceGroups || []);
+        // Nếu chỉ có 1 nhóm thực hành thì tự chọn luôn
+        if (data.practiceGroups && data.practiceGroups.length === 1) {
+          setSelectedPracticeGroup(data.practiceGroups[0].practiceGroupId);
+        } else {
+          setSelectedPracticeGroup(
+            data.studentCurrentPracticeGroup
+              ? data.studentCurrentPracticeGroup
+              : null
+          );
+        }
       } else {
         message.warning('Không tìm thấy lịch học!');
         setSchedule([]);
+        setPracticeGroups([]);
+        setSelectedPracticeGroup(null);
       }
     } catch (err) {
       message.error(err.message || 'Lỗi tải lịch học!');
@@ -170,8 +194,13 @@ const RegisterCourses = () => {
       setLoading(true);
       await enrollmentService.enrollInCourse({
         sectionId: selectedSection.sectionId,
+        practiceGroupId:
+          practiceGroups.length > 0 ? selectedPracticeGroup : null,
       });
       message.success('Đăng ký học phần thành công!');
+      // Gọi lại để lấy danh sách lớp học phần đã đăng ký trong kỳ này
+      const res = await enrollmentService.getEnrolledByStudent(semester);
+      setEnrolledSections(res || []);
     } catch (err) {
       message.error(err.message || 'Đăng ký học phần thất bại!');
     } finally {
@@ -185,7 +214,7 @@ const RegisterCourses = () => {
       setLoading(true);
       await enrollmentService.dropEnrollmentStudent(sectionId);
       message.success('Hủy đăng ký học phần thành công!');
-      // Reload danh sách đã đăng ký
+      // Gọi lại để lấy danh sách lớp học phần đã đăng ký trong kỳ này
       const res = await enrollmentService.getEnrolledByStudent(semester);
       setEnrolledSections(res || []);
     } catch (err) {
@@ -193,6 +222,11 @@ const RegisterCourses = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ===== ĐỔI NHÓM THỰC HÀNH =====
+  const handlePracticeGroupChange = (groupId) => {
+    setSelectedPracticeGroup(groupId);
   };
 
   // ===== CỘT MÔN HỌC CHỜ ĐĂNG KÝ =====
@@ -241,12 +275,13 @@ const RegisterCourses = () => {
     },
   ];
 
-  // ===== CỘT LỚP HỌC PHẦN CHỜ ĐĂNG KÝ =====
+  // ===== CỘT LỚP HỌC PHẦN CHỜ ĐĂNG KÝ (SỬA THEO API MỚI) =====
   const sectionColumns = [
     {
       title: '',
       dataIndex: 'radio',
-      width: 40,
+      align: 'center',
+      width: 15,
       render: (_, record) => (
         <Radio
           checked={selectedSection?.sectionId === record.sectionId}
@@ -258,34 +293,41 @@ const RegisterCourses = () => {
       title: 'STT',
       dataIndex: 'index',
       align: 'center',
-      width: 50,
+      width: 15,
       render: (_, __, i) => i + 1,
     },
-    { title: 'Mã LHP', dataIndex: 'sectionCode', align: 'center', width: 120 },
-    { title: 'Tên lớp học phần', dataIndex: 'sectionName', width: 200 },
+    { title: 'Mã LHP', dataIndex: 'sectionId', align: 'center', width: 30 },
+    {
+      title: 'Tên môn học',
+      dataIndex: 'courseName',
+      align: 'center',
+      width: 100,
+    },
     {
       title: 'Lớp dự kiến',
-      dataIndex: 'expectedClass',
+      dataIndex: 'className',
       align: 'center',
-      width: 120,
+      width: 40,
     },
+    { title: 'Giảng viên', dataIndex: 'lecturerName', width: 80 },
+
     {
       title: 'Sĩ số tối đa',
       dataIndex: 'maxCapacity',
       align: 'center',
-      width: 100,
+      width: 30,
     },
     {
       title: 'Đã đăng ký',
       dataIndex: 'currentEnrollment',
       align: 'center',
-      width: 100,
+      width: 30,
     },
     {
       title: 'Trạng thái',
       dataIndex: 'isRegistrationOpen',
       align: 'center',
-      width: 100,
+      width: 50,
       render: (v) =>
         v ? (
           <span style={{ color: 'green', fontWeight: 500 }}>Mở đăng ký</span>
@@ -293,6 +335,19 @@ const RegisterCourses = () => {
           <span style={{ color: 'red', fontWeight: 500 }}>Đã khóa</span>
         ),
     },
+    // {
+    //   title: 'Tín chỉ LT',
+    //   dataIndex: 'creditsTheory',
+    //   align: 'center',
+    //   width: 80,
+    // },
+    // {
+    //   title: 'Tín chỉ TH',
+    //   dataIndex: 'creditsLab',
+    //   align: 'center',
+    //   width: 80,
+    // },
+    // { title: 'Tổng TC', dataIndex: 'totalCredits', align: 'center', width: 80 },
   ];
 
   // ===== CỘT LỚP HỌC PHẦN ĐÃ ĐĂNG KÝ =====
@@ -310,7 +365,8 @@ const RegisterCourses = () => {
               <Menu.Item
                 key="detail"
                 onClick={() => {
-                  setSchedule(
+                  // Tạo dữ liệu lịch học riêng cho modal, không ảnh hưởng state chính
+                  setModalSchedule(
                     (record.dayOfWeek || '').split(',').map((day, idx) => ({
                       key: idx + 1,
                       dayOfWeekName: day,
@@ -324,6 +380,7 @@ const RegisterCourses = () => {
                           [idx]?.split('-')[1] || '',
                       room: (record.room || '').split(',')[idx] || '',
                       lecturerName: record.lecturerName,
+                      scheduleTypeName: record.scheduleTypeName || '',
                     }))
                   );
                   setShowScheduleModal(true);
@@ -438,8 +495,28 @@ const RegisterCourses = () => {
     return idx % 2 === 0 ? 'table-row-light' : 'table-row-dark';
   };
 
+  // ===== CSS cho lịch học phần =====
+  const scheduleRowClassName = (record) => {
+    if (record.scheduleTypeName?.toLowerCase().includes('lý thuyết')) {
+      return 'schedule-row-lythuyet';
+    }
+    if (record.scheduleTypeName?.toLowerCase().includes('thực hành')) {
+      if (
+        practiceGroups.length > 0 &&
+        selectedPracticeGroup &&
+        record.practiceGroupName === selectedPracticeGroup
+      ) {
+        return 'schedule-row-thuchanh-active';
+      }
+      return 'schedule-row-thuchanh';
+    }
+    return '';
+  };
+
   return (
-    <Box sx={{ background: '#f4f6fb', minHeight: '100vh', p: 3 }}>
+    <Box
+      sx={{ background: '#f4f6fb', minHeight: '100vh', p: 3, width: '100%' }}
+    >
       <style>
         {`
         .ant-table-thead > tr > th {
@@ -455,6 +532,15 @@ const RegisterCourses = () => {
         }
         .table-row-selected {
           background: #fff8e1 !important;
+        }
+        .schedule-row-lythuyet {
+          background: #e3f7ff !important;
+        }
+        .schedule-row-thuchanh-active {
+          background: #fff7e0 !important;
+        }
+        .schedule-row-thuchanh {
+          background: #fff !important;
         }
         `}
       </style>
@@ -574,7 +660,7 @@ const RegisterCourses = () => {
                 bordered
                 rowClassName={tableRowClassName}
                 locale={{ emptyText: 'Chưa có lớp học phần cho môn này' }}
-                scroll={{ x: 1200 }}
+                scroll={{ x: 1600 }}
               />
             </Spin>
           </>
@@ -592,6 +678,23 @@ const RegisterCourses = () => {
               </span>
             }
             style={{ marginTop: 24 }}
+            extra={
+              practiceGroups.length > 0 && (
+                <Select
+                  style={{ minWidth: 220 }}
+                  value={selectedPracticeGroup}
+                  onChange={handlePracticeGroupChange}
+                  placeholder="Chọn nhóm thực hành"
+                  suffixIcon={<DownOutlined />}
+                  options={practiceGroups.map((g) => ({
+                    value: g.practiceGroupId,
+                    label: `${g.groupName} (${g.currentCount}/${g.maxCapacity})`,
+                    disabled: !g.isAvailable,
+                  }))}
+                  allowClear
+                />
+              )
+            }
           >
             <Table
               columns={[
@@ -602,29 +705,119 @@ const RegisterCourses = () => {
                   align: 'center',
                   render: (_, __, i) => i + 1,
                 },
-                { title: 'Thứ', dataIndex: 'dayOfWeekName', width: 120 },
-                { title: 'Bắt đầu', dataIndex: 'startTime', width: 100 },
-                { title: 'Kết thúc', dataIndex: 'endTime', width: 100 },
-                { title: 'Phòng', dataIndex: 'room', width: 120 },
-                { title: 'Loại', dataIndex: 'scheduleTypeName', width: 120 },
+                {
+                  title: 'Nhóm',
+                  dataIndex: 'groupName',
+                  width: 110,
+                  align: 'center',
+                },
+                {
+                  title: 'Thứ',
+                  dataIndex: 'dayOfWeek',
+                  width: 100,
+                  align: 'center',
+                },
+                {
+                  title: 'Thời gian',
+                  dataIndex: 'time',
+                  width: 160,
+                  align: 'center',
+                  render: (_, r) =>
+                    r.startTime && r.endTime
+                      ? `${r.startTime} - ${r.endTime}`
+                      : r.timeSlot || '',
+                },
+                {
+                  title: 'Phòng',
+                  dataIndex: 'room',
+                  width: 120,
+                  align: 'center',
+                },
+                {
+                  title: 'Loại',
+                  dataIndex: 'type',
+                  width: 120,
+                  align: 'center',
+                },
+                {
+                  title: 'Số lượng',
+                  dataIndex: 'currentCount',
+                  width: 110,
+                  align: 'center',
+                  render: (_, r) =>
+                    r.maxCapacity
+                      ? `${r.currentCount || 0}/${r.maxCapacity}`
+                      : '',
+                },
               ]}
-              dataSource={schedule.map((s, i) => ({
-                ...s,
-                key: i + 1,
-                index: i + 1,
-              }))}
+              dataSource={[
+                // Lịch lý thuyết (chỉ 1, không có nhóm)
+                ...schedule.map((s, i) => ({
+                  key: `lythuyet-${i}`,
+                  index: i + 1,
+                  groupName: '', // Không có nhóm
+                  dayOfWeek: s.dayOfWeekName,
+                  startTime: s.startTime,
+                  endTime: s.endTime,
+                  room: s.room,
+                  type: s.scheduleTypeName,
+                  currentCount: '',
+                  maxCapacity: '',
+                })),
+                // Hiển thị tất cả nhóm thực hành
+                ...practiceGroups.flatMap((group, gi) =>
+                  (group.schedules || []).map((s, si) => {
+                    let startTime = '';
+                    let endTime = '';
+                    if (s.timeSlot) {
+                      const [start, end] = s.timeSlot
+                        .split('-')
+                        .map((t) => t.trim());
+                      startTime = start || '';
+                      endTime = end || '';
+                    }
+                    return {
+                      key: `thuchanh-${group.practiceGroupId}-${si}`,
+                      index: schedule.length + gi + si + 1,
+                      groupName: group.groupName,
+                      dayOfWeek: s.dayOfWeek,
+                      startTime,
+                      endTime,
+                      timeSlot: s.timeSlot,
+                      room: s.room,
+                      type: s.scheduleType,
+                      currentCount: group.currentCount,
+                      maxCapacity: group.maxCapacity,
+                      isActive: selectedPracticeGroup === group.practiceGroupId,
+                    };
+                  })
+                ),
+              ]}
               pagination={false}
               bordered
               size="small"
               locale={{ emptyText: 'Không có lịch học' }}
               scroll={{ x: 900 }}
+              rowClassName={(record) => {
+                if (record.type?.toLowerCase().includes('thực hành')) {
+                  return record.isActive
+                    ? 'schedule-row-thuchanh-active'
+                    : 'schedule-row-thuchanh';
+                }
+                return 'schedule-row-lythuyet';
+              }}
+              style={{ marginBottom: 16 }}
             />
+
             <div style={{ textAlign: 'right', marginTop: 16 }}>
               <Button
                 type="primary"
                 icon={<CheckSquareOutlined />}
                 onClick={handleEnroll}
-                disabled={!selectedSection}
+                disabled={
+                  !selectedSection ||
+                  (practiceGroups.length > 0 && !selectedPracticeGroup)
+                }
               >
                 Đăng ký môn học
               </Button>
@@ -685,7 +878,7 @@ const RegisterCourses = () => {
             { title: 'Phòng', dataIndex: 'room', width: 120 },
             { title: 'Loại', dataIndex: 'scheduleTypeName', width: 120 },
           ]}
-          dataSource={schedule.map((s, i) => ({
+          dataSource={modalSchedule.map((s, i) => ({
             ...s,
             key: i + 1,
             index: i + 1,
