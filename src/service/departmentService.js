@@ -1,84 +1,39 @@
 import axios from '../until/customize-axios';
+import { message } from 'antd';
 
 export const departmentService = {
-  // getAllDepartments: async (params: any) => {
-  //   try {
-  //     const response = await axios.get("/departments", { params });
-  //     return response;
-  //   } catch (error) {
-  //     console.error("Get all departments error:", error);
-  //     throw error;
-  //   }
-  // },
-  // getDepartmentById: async (id: number) => {
-  //   try {
-  //     const response = await axios.get(`/departments/${id}`);
-  //     return response;
-  //   } catch (error) {
-  //     console.error("Get department by id error:", error);
-  //     throw error;
-  //   }
-  // },
-  // createDepartment: async (data: { name: string; description: string }) => {
-  //   try {
-  //     const response = await axios.post("/departments", data);
-  //     return response;
-  //   } catch (error) {
-  //     console.error("Create department error:", error);
-  //     throw error;
-  //   }
-  // },
-  // updateDepartment: async (id: number, data: { name: string; description: string }) => {
-  //   try {
-  //     const response = await axios.put(`/departments/${id}`, data);
-  //     return response;
-  //   } catch (error) {
-  //     console.error("Update department error:", error);
-  //     throw error;
-  //   }
-  // },
-  // deleteDepartment: async (id: number) => {
-  //   try {
-  //     const response = await axios.delete(`/departments/${id}`);
-  //     return response;
-  //   } catch (error) {
-  //     console.error("Delete department error:", error);
-  //     throw error;
-  //   }
-  // },
-  // getDepartmentTeachers: async (departmentId, params) => {
-  //   try {
-  //     const response = await axios.get(
-  //       `/departments/${departmentId}/teachers`,
-  //       { params }
-  //     );
-  //     return response;
-  //   } catch (error) {
-  //     console.error("Get department teachers error:", error);
-  //     throw error;
-  //   }
-  // },
-  // getDepartmentStudents: async (departmentId, params) => {
-  //   try {
-  //     const response = await axios.get(
-  //       `/departments/${departmentId}/students`,
-  //       { params }
-  //     );
-  //     return response;
-  //   } catch (error) {
-  //     console.error("Get department students error:", error);
-  //     throw error;
-  //   }
-  // },
-  // getDepartmentCourses: async (departmentId, params) => {
-  //   try {
-  //     const response = await axios.get(`/departments/${departmentId}/courses`, {
-  //       params,
-  //     });
-  //     return response;
-  //   } catch (error) {
-  //     console.error("Get department courses error:", error);
-  //     throw error;
-  //   }
-  // },
+  // Lấy danh sách chuyên ngành (bộ môn) theo khoa cho dropdown
+  getDepartmentsDropdownByFaculty: async (facultyId) => {
+    try {
+      const response = await axios.get(
+        `/api/Department/dropdown/faculty/${facultyId}`
+      );
+      if (response?.data?.success === false) {
+        const errData = response?.data?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            response?.data?.message || 'Lấy danh sách chuyên ngành thất bại'
+          );
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Lấy danh sách chuyên ngành thất bại'
+          );
+        }
+      } else {
+        message.error(error.message || 'Lấy danh sách chuyên ngành thất bại');
+      }
+      return null;
+    }
+  },
 };

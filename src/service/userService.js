@@ -156,4 +156,123 @@ export const userService = {
       return null;
     }
   },
+  createUserWithRole: async (userData) => {
+    try {
+      const response = await axios.post('/api/User/create-with-role', userData);
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Tạo người dùng thất bại');
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(error.response.data.message || 'Create user failed');
+        }
+      } else {
+        message.error(error.message || 'Create user failed');
+      }
+      return null;
+    }
+  },
+
+  deactivateUser: async (userId) => {
+    try {
+      const response = await axios.put(`/api/User/deactivate/${userId}`);
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Vô hiệu hóa người dùng thất bại');
+        }
+        return null;
+      }
+      return response;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Deactivate user failed'
+          );
+        }
+      } else {
+        message.error(error.message || 'Deactivate user failed');
+      }
+      return null;
+    }
+  },
+
+  reactivateUser: async (userId) => {
+    try {
+      const response = await axios.put(`/api/User/reactivate/${userId}`);
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            response?.message || 'Kích hoạt lại người dùng thất bại'
+          );
+        }
+        return null;
+      }
+      return response;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Reactivate user failed'
+          );
+        }
+      } else {
+        message.error(error.message || 'Reactivate user failed');
+      }
+      return null;
+    }
+  },
+  updateUserWithRole: async (userId, userData) => {
+    try {
+      const response = await axios.put(
+        `/api/User/update-with-role/${userId}`,
+        userData
+      );
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Cập nhật người dùng thất bại');
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(error.response.data.message || 'Update user failed');
+        }
+      } else {
+        message.error(error.message || 'Update user failed');
+      }
+      return null;
+    }
+  },
 };

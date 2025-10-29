@@ -115,9 +115,7 @@ const CourseManagement = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMode, setDialogMode] =
-    (useState < 'create') | ('edit' > 'create');
-
+  const [dialogMode, setDialogMode] = useState('create');
   const colors = useMemo(
     () => ({
       primary: theme.palette.primary.main,

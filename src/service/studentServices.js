@@ -1,15 +1,74 @@
 import customizeAxios from '../until/customize-axios';
+import { message } from 'antd';
 
 export const studentServices = {
   updateStudentInformation: async (data) => {
-    const res = await customizeAxios.put(
-      `/api/Student/UpdateStudentInformation`,
-      data
-    );
-    if (!res.success) {
-      message.error(res.message || 'Cập nhật thông tin người dùng thất bại');
-      throw new Error(res.message || 'Get user info failed');
+    try {
+      const res = await customizeAxios.put(
+        `/api/Student/UpdateStudentInformation`,
+        data
+      );
+      if (res?.success === false) {
+        message.error(res?.message || 'Cập nhật thông tin người dùng thất bại');
+        throw new Error(
+          res?.message || 'Cập nhật thông tin người dùng thất bại'
+        );
+      }
+      return res.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message ||
+              'Cập nhật thông tin người dùng thất bại'
+          );
+        }
+      } else {
+        message.error(
+          error.message || 'Cập nhật thông tin người dùng thất bại'
+        );
+      }
+      return null;
     }
-    return res.data;
+  },
+
+  getAllStudents: async (pageNumber, pageSize) => {
+    try {
+      const response = await customizeAxios.get('/api/Student/GetAllStudents', {
+        params: {
+          PageNumber: pageNumber,
+          PageSize: pageSize,
+        },
+      });
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            response?.message || 'Lấy danh sách sinh viên thất bại'
+          );
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Lấy danh sách sinh viên thất bại'
+          );
+        }
+      } else {
+        message.error(error.message || 'Lấy danh sách sinh viên thất bại');
+      }
+      return null;
+    }
   },
 };

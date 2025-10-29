@@ -134,6 +134,12 @@ const menuData = [
         key: 'schedule',
         path: '/admin/schedule',
       },
+      {
+        label: 'Quản lý giảng viên',
+        icon: <GroupIcon />,
+        key: 'teacher-management',
+        path: '/admin/teacher',
+      },
     ],
   },
   {

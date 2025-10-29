@@ -13,13 +13,17 @@ import Login from '../page/Login';
 // Admin pages
 import AdminDashboard from '../page/Admin/Dashboard';
 import UserManagement from '../page/Admin/UserManagement';
-import CreateUser from '../page/Admin/CreateUser';
-import UserProfiles from '../page/Admin/UserProfiles';
-import StudentProfiles from '../page/Admin/StudentProfiles';
-import AdminStudentInfo from '../page/Admin/StudentInfo';
-import Classes from '../page/Admin/Classes';
-import TuitionList from '../page/Admin/TuitionList';
+import CreateUser from '../page/Admin/UserManagement/CreateUser';
+import UserProfiles from '../page/Admin/UserManagement/UserProfiles';
+import StudentProfiles from '../page/Admin/StudentManagement/StudentProfiles';
+import AdminStudentInfo from '../page/Admin/StudentManagement/StudentInfo';
+import Classes from '../page/Admin/EducationManagement/Classes';
+import TuitionList from '../page/Admin/TuitionManagement/TuitionList';
 import SendNotifications from '../page/Admin/SendNotifications';
+
+// Admin management pages
+import StudentList from '../page/Admin/StudentManagement/StudentList';
+import TeacherList from '../page/Admin/EducationManagement/TeacherList';
 
 // Student pages
 import StudentDashboard from '../page/Student/Dashboard';
@@ -143,10 +147,7 @@ const AppRoutes = () => {
           <Route path="user-profiles" element={<UserProfiles />} />
 
           {/* Quản lý Hồ sơ Sinh viên */}
-          <Route
-            path="students"
-            element={<div>Danh sách sinh viên - Coming Soon</div>}
-          />
+          <Route path="students" element={<StudentList />} />
           <Route path="student-profiles" element={<StudentProfiles />} />
           <Route path="student-info" element={<AdminStudentInfo />} />
 
@@ -154,6 +155,9 @@ const AppRoutes = () => {
           <Route path="courses" element={<CourseManagement />} />
           <Route path="classes" element={<Classes />} />
           <Route path="curriculum" element={<CurriculumPage />} />
+
+          {/* Thêm router quản lý giảng viên */}
+          <Route path="teacher" element={<TeacherList />} />
 
           <Route path="schedule" element={<div>Lịch học - Coming Soon</div>} />
 
