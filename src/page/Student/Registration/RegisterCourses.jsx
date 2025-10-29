@@ -71,35 +71,43 @@ const RegisterCourses = () => {
   }, []);
 
   // ===== LOAD MÔN HỌC THEO HỌC KỲ + LOẠI ĐĂNG KÝ =====
-  useEffect(() => {
-    const fetchCourses = async () => {
-      if (!semester) return;
-      try {
-        setLoading(true);
-        const filterType =
-          registerType === 'new' ? 1 : registerType === 'retake' ? 2 : 3;
-        const res = await curriculumCourseService.getCoursesByStudentDepartment(
-          semester,
-          filterType
+  const fetchCourses = async (
+    currentSemester = semester,
+    currentRegisterType = registerType
+  ) => {
+    if (!currentSemester) return;
+    try {
+      setLoading(true);
+      const filterType =
+        currentRegisterType === 'new'
+          ? 1
+          : currentRegisterType === 'retake'
+            ? 2
+            : 3;
+      const res = await curriculumCourseService.getCoursesByStudentDepartment(
+        currentSemester,
+        filterType
+      );
+      if (res && Array.isArray(res)) {
+        setCourses(
+          res.map((c) => ({
+            ...c,
+            prerequisites: c.prerequisites || [],
+            registrationNote: c.registrationNote || '',
+          }))
         );
-        if (res && Array.isArray(res)) {
-          setCourses(
-            res.map((c) => ({
-              ...c,
-              prerequisites: c.prerequisites || [],
-              registrationNote: c.registrationNote || '',
-            }))
-          );
-        } else {
-          message.warning('Không có môn học nào cho học kỳ này!');
-          setCourses([]);
-        }
-      } catch (err) {
-        message.error(err.message || 'Lỗi tải môn học!');
-      } finally {
-        setLoading(false);
+      } else {
+        message.warning('Không có môn học nào cho học kỳ này!');
+        setCourses([]);
       }
-    };
+    } catch (err) {
+      message.error(err.message || 'Lỗi tải môn học!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchCourses();
   }, [semester, registerType]);
 
@@ -201,6 +209,15 @@ const RegisterCourses = () => {
       // Gọi lại để lấy danh sách lớp học phần đã đăng ký trong kỳ này
       const res = await enrollmentService.getEnrolledByStudent(semester);
       setEnrolledSections(res || []);
+      // Gọi lại để lấy danh sách môn học phần đang chờ đăng ký
+      await fetchCourses();
+      // Reset chọn môn học và lịch học
+      setSelectedCourse(null);
+      setSelectedSection(null);
+      setSections([]);
+      setSchedule([]);
+      setPracticeGroups([]);
+      setSelectedPracticeGroup(null);
     } catch (err) {
       message.error(err.message || 'Đăng ký học phần thất bại!');
     } finally {
@@ -217,6 +234,15 @@ const RegisterCourses = () => {
       // Gọi lại để lấy danh sách lớp học phần đã đăng ký trong kỳ này
       const res = await enrollmentService.getEnrolledByStudent(semester);
       setEnrolledSections(res || []);
+      // Gọi lại để lấy danh sách môn học phần đang chờ đăng ký
+      await fetchCourses();
+      // Reset chọn môn học và lịch học
+      setSelectedCourse(null);
+      setSelectedSection(null);
+      setSections([]);
+      setSchedule([]);
+      setPracticeGroups([]);
+      setSelectedPracticeGroup(null);
     } catch (err) {
       message.error(err.message || 'Hủy đăng ký học phần thất bại!');
     } finally {
@@ -546,8 +572,6 @@ const RegisterCourses = () => {
       </style>
       <Card
         style={{
-          maxWidth: 1300,
-          margin: '0 auto',
           borderRadius: 12,
           border: 'none',
           boxShadow: '0 2px 12px #e6e6e6',
@@ -623,7 +647,7 @@ const RegisterCourses = () => {
             bordered
             rowClassName={tableRowClassName}
             locale={{ emptyText: 'Không có môn học' }}
-            scroll={{ x: 1200 }}
+            scroll={{ x: 1000 }}
           />
         </Spin>
 
@@ -660,7 +684,7 @@ const RegisterCourses = () => {
                 bordered
                 rowClassName={tableRowClassName}
                 locale={{ emptyText: 'Chưa có lớp học phần cho môn này' }}
-                scroll={{ x: 1600 }}
+                scroll={{ x: 1000 }}
               />
             </Spin>
           </>
@@ -797,7 +821,7 @@ const RegisterCourses = () => {
               bordered
               size="small"
               locale={{ emptyText: 'Không có lịch học' }}
-              scroll={{ x: 900 }}
+              scroll={{ x: 1000 }}
               rowClassName={(record) => {
                 if (record.type?.toLowerCase().includes('thực hành')) {
                   return record.isActive
@@ -848,7 +872,7 @@ const RegisterCourses = () => {
             size="small"
             bordered
             locale={{ emptyText: 'Chưa đăng ký lớp học phần nào' }}
-            scroll={{ x: 1400 }}
+            scroll={{ x: 1000 }}
             rowClassName={tableRowClassName}
           />
         </Spin>

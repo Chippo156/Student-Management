@@ -162,7 +162,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 0 }}>
       <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
         Tổng quan hệ thống
       </Typography>
@@ -331,6 +331,7 @@ const AdminDashboard = () => {
             </Typography>
             <ResponsiveContainer width="100%" height="90%">
               <LineChart data={enrollmentData}>
+                ''
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
