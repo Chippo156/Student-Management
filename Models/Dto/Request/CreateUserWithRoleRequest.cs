@@ -144,9 +144,6 @@ namespace StudentManagement.Models.Dto.Request
 
         [StringLength(200)]
         public string? AcademicTitle { get; set; }
-
-        public DateOnly? HireDate { get; set; }
-        public decimal? Salary { get; set; }
     }
 
     public class FamilyRelationshipData
