@@ -6,12 +6,13 @@ using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.InteropServices;
+using System.Security.Claims;
 
 namespace StudentManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController(IUserService userService) : ControllerBase
+    public class UserController(IUserService userService) : BaseController
     {
         public static User user = new User();
 
@@ -35,15 +36,55 @@ namespace StudentManagement.Controllers
         }
 
         [HttpPut("Update/{id}")]
-        public async Task<ActionResult<User>> UpdateUser(int id, [FromForm] UpdateUserRequest user)
+        [Authorize]
+        public async Task<ActionResult<User>> UpdateUser(int id, [FromForm] UpdateUserRequest request)
         {
-            var updatedUser = await userService.UpdateUserAsync(id, user);
-            if (updatedUser is null)
+            try
             {
-                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"User with ID {id} not found.", null));
+                // Kiểm tra quyền: chỉ admin hoặc chính user đó mới có thể cập nhật
+                var currentUserId = GetAuthenticatedUserId();
+                var role = User.FindFirstValue(ClaimTypes.Role);
+
+                if (currentUserId.UserId != id && role != "Admin")
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Not role admin ", null));
+
+                }
+
+                // Validate request
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid input data.", errors));
+                }
+
+                var updatedUser = await userService.UpdateUserAsync(id, request);
+                
+                if (updatedUser is null)
+                {
+                    return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"User with ID {id} not found.", null));
+                }
+
+                return Ok(ApiResponse.SuccessResponse(updatedUser, "User updated successfully"));
             }
-            return Ok(ApiResponse.SuccessResponse(updatedUser, "User updated successfully"));
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ApiResponse.ErrorResponse(ErrorCodes.Conflict, ex.Message, null));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, "An error occurred while updating user.", new List<string> { ex.Message }));
+            }
         }
+
         [HttpPut("ResetPassword/{id}")]
         public async Task<ActionResult> ResetPassword(int id, [FromBody] ResetPasswordRequest request)
         {

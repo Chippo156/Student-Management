@@ -132,40 +132,103 @@ namespace StudentManagement.Services
             return await context.SaveChangesAsync() > 0;
         }
 
-        public async Task<UserResponse?> UpdateUserAsync(int userId, UpdateUserRequest user)
+        public async Task<User?> UpdateUserAsync(int userId, UpdateUserRequest request)
         {
-            var existingUser = await context.Users.FindAsync(userId);
-            if (existingUser is null) return null;
-            existingUser.FullName = user.FullName;
-            existingUser.Email = user.Email;
-            existingUser.Phone = user.Phone;
-            existingUser.Address = user.Address;
-            existingUser.Gender = user.Gender;
+            using var transaction = await context.Database.BeginTransactionAsync();
 
-            if (user.AvatarUrl is not null)
+            try
             {
-                FileRequest fileRequest = new FileRequest
+                var user = await context.Users.FindAsync(userId);
+                if (user == null)
                 {
-                    File = user.AvatarUrl,
-                    UploadedByUserId = userId
-                };
-                FileResponse file = await fileService.UploadFileAsync(fileRequest, "avatars");
-                existingUser.AvatarUrl = file.FilePath;
-                // You may want to update existingUser.AvatarPath or similar here if needed
+                    return null;
+                }
+
+                // Kiểm tra email trùng lặp (nếu có thay đổi)
+                if (!string.IsNullOrEmpty(request.Email) && request.Email != user.Email)
+                {
+                    var emailExists = await context.Users
+                        .AnyAsync(u => u.Email == request.Email && u.UserId != userId);
+
+                    if (emailExists)
+                    {
+                        throw new InvalidOperationException("Email address is already in use by another user");
+                    }
+                }
+
+                // Kiểm tra CMND/CCCD trùng lặp (nếu có thay đổi)
+                if (!string.IsNullOrEmpty(request.CitizenIdCard) && request.CitizenIdCard != user.CitizenIdCard)
+                {
+                    var citizenIdExists = await context.Users
+                        .AnyAsync(u => u.CitizenIdCard == request.CitizenIdCard && u.UserId != userId);
+
+                    if (citizenIdExists)
+                    {
+                        throw new InvalidOperationException("Citizen ID card is already in use by another user");
+                    }
+                }
+
+                // Xử lý upload avatar
+                string? avatarUrl = user.AvatarUrl;
+                if (request.AvatarFile != null)
+                {
+                    try
+                    {
+                        // Xóa avatar cũ nếu có
+                        //if (!string.IsNullOrEmpty(user.AvatarUrl))
+                        //{
+                        //    await fileService.DeleteFileAsync(user.AvatarUrl);
+                        //}
+
+                        // Upload avatar mới
+                        //avatarUrl = await fileService.UploadFileAsync(request.AvatarFile, "avatars");
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException($"Failed to upload avatar: {ex.Message}");
+                    }
+                }
+
+                // Cập nhật thông tin user
+                user.FullName = request.FullName.Trim();
+                user.Gender = request.Gender;
+                user.DateOfBirth = request.DateOfBirth;
+                user.Ethnicity = request.Ethnicity?.Trim();
+                user.Nationality = request.Nationality?.Trim();
+                user.CitizenIdCard = request.CitizenIdCard?.Trim();
+                user.IssuedDate = request.IssuedDate;
+                user.IssuedPlace = request.IssuedPlace?.Trim();
+                user.HealthInsuranceNumber = request.HealthInsuranceNumber?.Trim();
+                user.HealthInsuranceRegistrationPlace = request.HealthInsuranceRegistrationPlace?.Trim();
+                user.Email = request.Email?.Trim().ToLowerInvariant();
+                user.Phone = request.Phone?.Trim();
+                user.Address = request.Address?.Trim();
+                user.TemporaryAddress = request.TemporaryAddress?.Trim();
+                user.PlaceOfBirth = request.PlaceOfBirth?.Trim();
+                user.Religion = request.Religion?.Trim();
+                user.AvatarUrl = avatarUrl ?? user.AvatarUrl;
+
+
+
+                // Cập nhật thông tin mở rộng
+                user.Object = request.Object?.Trim();
+                user.PolicyArea = request.PolicyArea?.Trim();
+                user.DateOfJoinUnion = request.DateOfJoinUnion;
+                user.DateOfJoinParty = request.DateOfJoinParty;
+
+                context.Users.Update(user);
+                await  context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                // Log 
+                return user;
             }
-            context.Users.Update(existingUser);
-            await context.SaveChangesAsync();
-            return new UserResponse
+            catch
             {
-                Username = existingUser.Username,
-                FullName = existingUser.FullName,
-                Email = existingUser.Email,
-                Phone = existingUser.Phone,
-                Address = existingUser.Address,
-                AccountStatus = existingUser.AccountStatus,
-                AvatarUrl = existingUser.AvatarUrl,
-                Role = existingUser.Role
-            };
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
 

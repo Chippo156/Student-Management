@@ -352,6 +352,7 @@ namespace StudentManagement.Services
                 .Include(e => e.Section)
                     .ThenInclude(s => s.CurriculumCourse)
                         .ThenInclude(cc => cc.Course)
+                
                 .Include(e => e.Section.Lecturer)
                     .ThenInclude(l => l.User)
                 .Include(e => e.Section.Semester)
@@ -529,6 +530,14 @@ namespace StudentManagement.Services
                 };
 
                 section.EnrolledCount = Math.Max(0, section.EnrolledCount - 1);
+
+                var practiceGroupEnrollments = await context.PracticeGroupEnrollments
+                    .Where(pge => pge.StudentId == student.Id && 
+                                  pge.PracticeGroup.SectionId == section.SectionId && 
+                                  pge.IsActive)
+                    .ToListAsync();
+
+                context.PracticeGroupEnrollments.RemoveRange(practiceGroupEnrollments);
 
                 context.Enrollments.Remove(existingEnrollment); 
                 await context.SaveChangesAsync();
