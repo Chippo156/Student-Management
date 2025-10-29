@@ -537,7 +537,20 @@ namespace StudentManagement.Services
                                   pge.IsActive)
                     .ToListAsync();
 
+                // Khi drop thì giảm số lượng trong practicegroup tương ứng
+                foreach (var pge in practiceGroupEnrollments)
+                {
+                    var practiceGroup = await context.PracticeGroups
+                        .FirstOrDefaultAsync(pg => pg.PracticeGroupId == pge.PracticeGroupId);
+                    if (practiceGroup != null)
+                    {
+                        practiceGroup.CurrentCount = Math.Max(0, practiceGroup.CurrentCount - 1);
+                        context.PracticeGroups.Update(practiceGroup);
+                    }
+                }
+
                 context.PracticeGroupEnrollments.RemoveRange(practiceGroupEnrollments);
+                
 
                 context.Enrollments.Remove(existingEnrollment); 
                 await context.SaveChangesAsync();
@@ -651,7 +664,7 @@ namespace StudentManagement.Services
 
             if (!string.IsNullOrEmpty(studentPracticeGroup))
             {
-                return $"Nhóm {studentPracticeGroup}";
+                return $"{studentPracticeGroup}";
             }
 
             // Kiểm tra xem có nhóm thực hành không (nhưng sinh viên chưa chọn)
