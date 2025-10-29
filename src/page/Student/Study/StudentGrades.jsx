@@ -1,19 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Card,
-  Table,
-  Progress,
-  Typography,
-  Row,
-  Col,
-  Statistic,
-} from 'antd';
+import { Card, Table, Progress, Typography, Row, Col, Statistic } from 'antd';
 import {
   TrophyOutlined,
   BookOutlined,
   WarningOutlined,
   CheckCircleOutlined,
   LineChartOutlined,
+  CheckCircleTwoTone,
+  CloseCircleTwoTone,
 } from '@ant-design/icons';
 import gradeService from '../../../service/gradeService';
 import reportService from '../../../service/reportService';
@@ -45,17 +39,88 @@ const getGradeColor = (grade) => {
     case 'F':
       return 'red';
     default:
-      return 'default';
+      return '#222';
   }
+};
+
+// Màu xếp loại
+const getRankColor = (rank) => {
+  if (!rank) return '#aaa';
+  if (rank.includes('Xuất sắc')) return '#722ed1';
+  if (rank.includes('Giỏi')) return '#1890ff';
+  if (rank.includes('Khá')) return '#52c41a';
+  if (rank.includes('Trung bình')) return '#faad14';
+  if (rank.includes('Yếu')) return '#ff4d4f';
+  return '#aaa';
+};
+
+// Mapping xếp loại theo điểm tổng kết (10)
+const getRankByScore = (score) => {
+  if (score === '' || score === null || score === undefined) return '';
+  const s = Number(score);
+  if (s >= 8.5) return 'Giỏi';
+  if (s >= 7.0) return 'Khá';
+  if (s >= 5.5) return 'Trung bình';
+  if (s >= 4.0) return 'Yếu';
+  return 'Kém';
+};
+
+// Hàm kiểm tra ĐẠT: chỉ đạt nếu điểm tổng kết >= 5.5 (Trung bình trở lên)
+const isPassed = (record) => {
+  // Nếu API trả về passed thì ưu tiên, nếu không thì tự tính
+  if (
+    record.passed !== undefined &&
+    record.passed !== null &&
+    record.passed !== ''
+  ) {
+    return (
+      record.passed === true || record.passed === 1 || record.passed === '1'
+    );
+  }
+  // Tự tính theo điểm tổng kết
+  const score = Number(record.finalScore);
+  return !isNaN(score) && score >= 5.5;
 };
 
 // Cột Table
 const columns = [
-  { title: 'STT', dataIndex: 'index', key: 'index', width: 60, align: 'center', fixed: 'left' },
-  { title: 'Mã lớp học phần', dataIndex: 'courseCode', key: 'courseCode', width: 180, fixed: 'left' },
-  { title: 'Tên môn học/học phần', dataIndex: 'courseName', key: 'courseName', width: 240, fixed: 'left' },
-  { title: 'Số tín chỉ', dataIndex: 'credits', key: 'credits', width: 80, align: 'center', fixed: 'left' },
-  { title: 'Giữa kỳ', dataIndex: 'midterm', key: 'midterm', width: 80, align: 'center' },
+  {
+    title: 'STT',
+    dataIndex: 'index',
+    key: 'index',
+    width: 60,
+    align: 'center',
+    fixed: 'left',
+  },
+  {
+    title: 'Mã lớp học phần',
+    dataIndex: 'courseCode',
+    key: 'courseCode',
+    width: 180,
+    fixed: 'left',
+  },
+  {
+    title: 'Tên môn học/học phần',
+    dataIndex: 'courseName',
+    key: 'courseName',
+    width: 240,
+    fixed: 'left',
+  },
+  {
+    title: 'Số tín chỉ',
+    dataIndex: 'credits',
+    key: 'credits',
+    width: 80,
+    align: 'center',
+    fixed: 'left',
+  },
+  {
+    title: 'Giữa kỳ',
+    dataIndex: 'midterm',
+    key: 'midterm',
+    width: 80,
+    align: 'center',
+  },
   ...Array.from({ length: REGULAR_COLS }).map((_, i) => ({
     title: `Thường kỳ ${i + 1}`,
     dataIndex: `regular${i + 1}`,
@@ -70,17 +135,88 @@ const columns = [
     width: 80,
     align: 'center',
   })),
-  { title: 'Cuối kỳ', dataIndex: 'final', key: 'final', width: 80, align: 'center' },
-  { title: 'Điểm tổng kết', dataIndex: 'finalScore', key: 'finalScore', width: 100, align: 'center' },
-  { title: 'Thang điểm 4', dataIndex: 'gpa4', key: 'gpa4', width: 90, align: 'center' },
-  { title: 'Điểm chữ', dataIndex: 'gradeLetter', key: 'gradeLetter', width: 80, align: 'center' },
-  { title: 'Xếp loại', dataIndex: 'rank', key: 'rank', width: 90, align: 'center' },
-  { title: 'Ghi chú', dataIndex: 'note', key: 'note', width: 120, align: 'center' },
+  {
+    title: 'Cuối kỳ',
+    dataIndex: 'final',
+    key: 'final',
+    width: 80,
+    align: 'center',
+  },
+  {
+    title: 'Điểm tổng kết',
+    dataIndex: 'finalScore',
+    key: 'finalScore',
+    width: 100,
+    align: 'center',
+  },
+  {
+    title: 'Thang điểm 4',
+    dataIndex: 'gpa4',
+    key: 'gpa4',
+    width: 90,
+    align: 'center',
+  },
+  {
+    title: 'Điểm chữ',
+    dataIndex: 'gradeLetter',
+    key: 'gradeLetter',
+    width: 80,
+    align: 'center',
+    render: (value) => (
+      <span
+        style={{
+          color: getGradeColor(value),
+          fontWeight: 600,
+        }}
+      >
+        {value}
+      </span>
+    ),
+  },
+  {
+    title: 'Xếp loại',
+    dataIndex: 'rank',
+    key: 'rank',
+    width: 90,
+    align: 'center',
+    render: (value, record) => {
+      // Nếu có rank từ API thì dùng, nếu không thì mapping theo điểm tổng kết
+      const rank = value || getRankByScore(record.finalScore);
+      return (
+        <span
+          style={{
+            color: getRankColor(rank),
+            fontWeight: 600,
+          }}
+        >
+          {rank}
+        </span>
+      );
+    },
+  },
+  {
+    title: 'Ghi chú',
+    dataIndex: 'note',
+    key: 'note',
+    width: 120,
+    align: 'center',
+  },
   { title: 'TBQT', dataIndex: 'tbqt', key: 'tbqt', width: 70, align: 'center' },
-  { title: 'Đạt', dataIndex: 'passed', key: 'passed', width: 60, align: 'center' },
+  {
+    title: 'Đạt',
+    dataIndex: 'passed',
+    key: 'passed',
+    width: 60,
+    align: 'center',
+    render: (value, record) =>
+      isPassed(record) ? (
+        <CheckCircleTwoTone twoToneColor="#52c41a" />
+      ) : (
+        <CloseCircleTwoTone twoToneColor="#ff4d4f" />
+      ),
+  },
 ];
 
-// Map dữ liệu môn học từ API
 const mapCourseGrades = (courseGrades) =>
   (courseGrades || []).map((course, idx) => {
     let midterm = '';
@@ -88,8 +224,8 @@ const mapCourseGrades = (courseGrades) =>
     let regulars = [];
     let practices = [];
     (course.assessments || []).forEach((a) => {
-      if (a.assessmentTypeId === 4) midterm = a.score ?? '';
-      if (a.assessmentTypeId === 5) final = a.score ?? '';
+      if (a.assessmentTypeId === 3) midterm = a.score ?? ''; // Giữa kỳ
+      if (a.assessmentTypeId === 4) final = a.score ?? ''; // Cuối kỳ
       if (a.assessmentTypeId === 1 && Array.isArray(a.regularPointsDetails))
         regulars = a.regularPointsDetails.map((r) => r.score ?? '');
       if (a.assessmentTypeId === 2 && Array.isArray(a.regularPointsDetails))
@@ -159,22 +295,52 @@ const StudentGrades = () => {
       semesterGPA10: semester.semesterGPA10,
     });
 
-    const courses = mapCourseGrades(semester.courseGrades).map((c) => ({ ...c, semesterId: semester.semesterId }));
+    const courses = mapCourseGrades(semester.courseGrades).map((c) => ({
+      ...c,
+      semesterId: semester.semesterId,
+    }));
     tableData = tableData.concat(courses);
 
     const col1Rows = [
-      { colLabel: 'Điểm trung bình học kỳ hệ 10', colValue: semester.semesterGPA10 },
-      { colLabel: 'Điểm trung bình tích lũy', colValue: semester.cumulativeGPA10 },
-      { colLabel: 'Tổng số tín chỉ đã đăng ký', colValue: semester.totalCreditsRegistered },
-      { colLabel: 'Tổng số tín chỉ đạt', colValue: semester.totalCreditsEarned },
-      { colLabel: 'Xếp loại học lực tích lũy', colValue: semester.cumulativeRank },
+      {
+        colLabel: 'Điểm trung bình học kỳ hệ 10',
+        colValue: semester.semesterGPA10,
+      },
+      {
+        colLabel: 'Điểm trung bình tích lũy',
+        colValue: semester.cumulativeGPA10,
+      },
+      {
+        colLabel: 'Tổng số tín chỉ đã đăng ký',
+        colValue: semester.totalCreditsRegistered,
+      },
+      {
+        colLabel: 'Tổng số tín chỉ đạt',
+        colValue: semester.totalCreditsEarned,
+      },
+      {
+        colLabel: 'Xếp loại học lực tích lũy',
+        colValue: semester.cumulativeRank,
+      },
     ];
 
     const col2Rows = [
-      { colLabel: 'Điểm trung bình học kỳ hệ 4', colValue: semester.semesterGPA4 },
-      { colLabel: 'Điểm trung bình tích lũy (hệ 4)', colValue: semester.cumulativeGPA4 },
-      { colLabel: 'Tổng số tín chỉ tích lũy', colValue: semester.totalCreditsEarned },
-      { colLabel: 'Tổng số tín chỉ nợ tính đến hiện tại', colValue: semester.totalCreditsDebt },
+      {
+        colLabel: 'Điểm trung bình học kỳ hệ 4',
+        colValue: semester.semesterGPA4,
+      },
+      {
+        colLabel: 'Điểm trung bình tích lũy (hệ 4)',
+        colValue: semester.cumulativeGPA4,
+      },
+      {
+        colLabel: 'Tổng số tín chỉ tích lũy',
+        colValue: semester.totalCreditsEarned,
+      },
+      {
+        colLabel: 'Tổng số tín chỉ nợ tính đến hiện tại',
+        colValue: semester.totalCreditsDebt,
+      },
       { colLabel: 'Xếp loại học lực học kỳ', colValue: semester.semesterRank },
     ];
 
@@ -194,8 +360,12 @@ const StudentGrades = () => {
   const mergedColumns = columns.map((col, idx) => ({
     ...col,
     onCell: (record) => {
-      if (record.isGroup) return { style: { background: '#f6faff', fontWeight: 600, border: 'none' } };
-      if (record.isSummary) return { style: { background: '#f8fafd', fontWeight: 500 } };
+      if (record.isGroup)
+        return {
+          style: { background: '#f6faff', fontWeight: 600, border: 'none' },
+        };
+      if (record.isSummary)
+        return { style: { background: '#f8fafd', fontWeight: 500 } };
       return {};
     },
     render: (value, record) => {
@@ -213,7 +383,9 @@ const StudentGrades = () => {
               }}
             >
               {record.semesterName}
-              <span style={{ marginLeft: 16, color: '#722ed1', fontWeight: 500 }}>
+              <span
+                style={{ marginLeft: 16, color: '#722ed1', fontWeight: 500 }}
+              >
                 GPA: {record.semesterGPA10 ?? ''}
               </span>
             </div>
@@ -250,7 +422,14 @@ const StudentGrades = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 24,
+        }}
+      >
         <Title level={2}>
           <BookOutlined style={{ marginRight: 8 }} />
           Kết quả học tập
@@ -305,7 +484,12 @@ const StudentGrades = () => {
               title="Môn học rớt"
               value={summary?.failedCourses?.length ?? 0}
               prefix={<WarningOutlined />}
-              valueStyle={{ color: (summary?.failedCourses?.length ?? 0) > 0 ? '#ff4d4f' : '#52c41a' }}
+              valueStyle={{
+                color:
+                  (summary?.failedCourses?.length ?? 0) > 0
+                    ? '#ff4d4f'
+                    : '#52c41a',
+              }}
             />
           </Card>
         </Col>
