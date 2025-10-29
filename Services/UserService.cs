@@ -605,6 +605,432 @@ namespace StudentManagement.Services
 
             return (errors.Count == 0, errors);
         }
+        public async Task<UserUpdateResult> UpdateUserWithRoleAsync(int userId, UpdateUserWithRoleRequest request)
+        {
+            using var transaction = await context.Database.BeginTransactionAsync();
 
+            try
+            {
+                var user = await context.Users
+                    .Include(u => u.Role)
+                    .FirstOrDefaultAsync(u => u.UserId == userId);
+
+                if (user == null)
+                {
+                    return new UserUpdateResult
+                    {
+                        IsSuccess = false,
+                        Message = "User not found",
+                        Errors = { "User with provided ID does not exist" }
+                    };
+                }
+
+                // Validate request
+                var validationResult = await ValidateUserUpdateRequestAsync(userId, request);
+                if (!validationResult.IsValid)
+                {
+                    return new UserUpdateResult
+                    {
+                        IsSuccess = false,
+                        Message = "Validation failed",
+                        Errors = validationResult.Errors
+                    };
+                }
+
+                // Get new role if different
+                var newRole = await context.Roles.FindAsync(request.RoleId);
+                if (newRole == null)
+                {
+                    return new UserUpdateResult
+                    {
+                        IsSuccess = false,
+                        Message = "Invalid role",
+                        Errors = { "Specified role does not exist" }
+                    };
+                }
+
+                // Check if role is changing
+                bool roleChanged = user.Role.RoleId != request.RoleId;
+
+                // Handle avatar upload
+                //string? avatarUrl = user.AvatarUrl;
+                //if (request.AvatarFile != null)
+                //{
+                //    try
+                //    {
+                //        // Upload new avatar
+                //        avatarUrl = await fileService.UploadFileAsync(request.AvatarFile, "avatars");
+
+                //        // Delete old avatar if exists and upload successful
+                //        if (!string.IsNullOrEmpty(user.AvatarUrl))
+                //        {
+                //            await fileService.DeleteFileAsync(user.AvatarUrl);
+                //        }
+                //    }
+                //    catch (Exception ex)
+                //    {
+                //        return new UserUpdateResult
+                //        {
+                //            IsSuccess = false,
+                //            Message = "Avatar upload failed",
+                //            Errors = { ex.Message }
+                //        };
+                //    }
+                //}
+
+                // Update user basic information
+                user.FullName = request.FullName.Trim();
+                user.Gender = request.Gender;
+                user.DateOfBirth = request.DateOfBirth;
+                user.Ethnicity = request.Ethnicity?.Trim();
+                user.Nationality = request.Nationality?.Trim();
+                user.CitizenIdCard = request.CitizenIdCard?.Trim();
+                user.IssuedDate = request.IssuedDate;
+                user.IssuedPlace = request.IssuedPlace?.Trim();
+                user.HealthInsuranceNumber = request.HealthInsuranceNumber?.Trim();
+                user.HealthInsuranceRegistrationPlace = request.HealthInsuranceRegistrationPlace?.Trim();
+                user.Email = request.Email?.Trim().ToLowerInvariant();
+                user.Phone = request.Phone?.Trim();
+                user.Address = request.Address?.Trim();
+                user.TemporaryAddress = request.TemporaryAddress?.Trim();
+                user.PlaceOfBirth = request.PlaceOfBirth?.Trim();
+                user.Religion = request.Religion?.Trim();
+
+                //// Update address details
+                //user.HometownProvince = request.HometownProvince?.Trim();
+                //user.HometownDistrict = request.HometownDistrict?.Trim();
+                //user.HometownWard = request.HometownWard?.Trim();
+                //user.BirthProvince = request.BirthProvince?.Trim();
+                //user.BirthDistrict = request.BirthDistrict?.Trim();
+                //user.BirthWard = request.BirthWard?.Trim();
+                //user.PermanentProvince = request.PermanentProvince?.Trim();
+                //user.PermanentDistrict = request.PermanentDistrict?.Trim();
+                //user.PermanentWard = request.PermanentWard?.Trim();
+
+                // Update additional info
+                user.Object = request.Object?.Trim();
+                user.PolicyArea = request.PolicyArea?.Trim();
+                user.DateOfJoinUnion = request.DateOfJoinUnion;
+                user.DateOfJoinParty = request.DateOfJoinParty;
+
+                // Update role if changed
+                if (roleChanged)
+                {
+                    user.Role = newRole;
+                }
+
+                context.Users.Update(user);
+                await context.SaveChangesAsync();
+
+                // Handle role-specific entity updates
+                object? roleSpecificEntity = null;
+                string roleSpecificMessage = "";
+
+                if (roleChanged)
+                {
+                    // If role changed, handle old and new role entities
+                    await HandleRoleChangeAsync(user, user.Role.RoleId, request.RoleId, request);
+                    roleSpecificMessage = $" Role changed from {user.Role.RoleName} to {newRole.RoleName}.";
+                }
+                else
+                {
+                    // If role didn't change, just update the existing role-specific entity
+                    roleSpecificEntity = await UpdateRoleSpecificEntityAsync(user, request);
+                    roleSpecificMessage = " Role-specific information updated.";
+                }
+
+                await transaction.CommitAsync();
+
+                return new UserUpdateResult
+                {
+                    IsSuccess = true,
+                    Message = $"User updated successfully.{roleSpecificMessage}",
+                    User = user,
+                    RoleSpecificEntity = roleSpecificEntity
+                };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return new UserUpdateResult
+                {
+                    IsSuccess = false,
+                    Message = "Update failed due to system error",
+                    Errors = { ex.Message }
+                };
+            }
+        }
+
+        private async Task<object?> UpdateRoleSpecificEntityAsync(User user, UpdateUserWithRoleRequest request)
+        {
+            switch (request.RoleId)
+            {
+                case 2: // Student
+                    if (request.StudentSpecificData != null)
+                    {
+                        var student = await context.Students
+                            .FirstOrDefaultAsync(s => s.User.UserId == user.UserId);
+
+                        if (student != null)
+                        {
+                            if (request.StudentSpecificData.ClassId.HasValue)
+                            {
+                                var newClass = await context.Classes.FindAsync(request.StudentSpecificData.ClassId.Value);
+                                if (newClass != null)
+                                {
+                                    student.Class = newClass;
+                                }
+                            }
+
+                            if (request.StudentSpecificData.StudentStatus.HasValue)
+                            {
+                                student.StudentStatus = request.StudentSpecificData.StudentStatus.Value;
+                            }
+
+                            if (request.StudentSpecificData.AdmissionDate.HasValue)
+                            {
+                                student.DateOfAdmission = request.StudentSpecificData.AdmissionDate.Value;
+                            }
+
+                            if (request.StudentSpecificData.Year.HasValue)
+                            {
+                                student.YearOfAdmission = request.StudentSpecificData.Year.Value;
+                            }
+
+                            context.Students.Update(student);
+                            await context.SaveChangesAsync();
+                            return student;
+                        }
+                    }
+                    break;
+
+                case 3: // Lecturer
+                    if (request.LecturerSpecificData != null)
+                    {
+                        var lecturer = await context.Lecturers
+                            .FirstOrDefaultAsync(l => l.User.UserId == user.UserId);
+
+                        if (lecturer != null)
+                        {
+                            if (request.LecturerSpecificData.DepartmentId.HasValue)
+                            {
+                                var newDepartment = await context.Departments.FindAsync(request.LecturerSpecificData.DepartmentId.Value);
+                                if (newDepartment != null)
+                                {
+                                    lecturer.Department = newDepartment;
+                                }
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(request.LecturerSpecificData.Position))
+                            {
+                                lecturer.Position = request.LecturerSpecificData.Position.Trim();
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(request.LecturerSpecificData.AcademicTitle))
+                            {
+                                lecturer.AcademicTitle = request.LecturerSpecificData.AcademicTitle.Trim();
+                            }
+
+                            context.Lecturers.Update(lecturer);
+                            await context.SaveChangesAsync();
+                            return lecturer;
+                        }
+                    }
+                    break;
+
+                case 1: // Admin
+                        // No specific entity for admin
+                    break;
+            }
+
+            return null;
+        }
+
+        private async Task HandleRoleChangeAsync(User user, int oldRoleId, int newRoleId, UpdateUserWithRoleRequest request)
+        {
+            // Remove old role-specific entity
+            switch (oldRoleId)
+            {
+                case 2: // Remove Student
+                    var oldStudent = await context.Students
+                        .FirstOrDefaultAsync(s => s.User.UserId == user.UserId);
+                    if (oldStudent != null)
+                    {
+                        context.Students.Remove(oldStudent);
+                    }
+                    break;
+
+                case 3: // Remove Lecturer
+                    var oldLecturer = await context.Lecturers
+                        .FirstOrDefaultAsync(l => l.User.UserId == user.UserId);
+                    if (oldLecturer != null)
+                    {
+                        context.Lecturers.Remove(oldLecturer);
+                    }
+                    break;
+            }
+
+            // Create new role-specific entity
+            switch (newRoleId)
+            {
+                case 2: // Create Student
+                    if (request.StudentSpecificData != null && request.StudentSpecificData.ClassId.HasValue)
+                    {
+                        var studentClass = await context.Classes.FindAsync(request.StudentSpecificData.ClassId.Value);
+                        if (studentClass != null)
+                        {
+                            var newStudent = new Student
+                            {
+                                User = user,
+                                MSSV = user.Username,
+                                Class = studentClass,
+                                StudentStatus = request.StudentSpecificData.StudentStatus ?? StudentStatus.Active,
+                                DateOfAdmission = request.StudentSpecificData.AdmissionDate ?? DateOnly.FromDateTime(DateTime.Now),
+                                YearOfAdmission = request.StudentSpecificData.Year ?? DateTime.Now.Year
+                            };
+
+                            context.Students.Add(newStudent);
+                        }
+                    }
+                    break;
+
+                case 3: // Create Lecturer
+                    if (request.LecturerSpecificData != null && request.LecturerSpecificData.DepartmentId.HasValue)
+                    {
+                        var department = await context.Departments.FindAsync(request.LecturerSpecificData.DepartmentId.Value);
+                        if (department != null)
+                        {
+                            var newLecturer = new Lecturer
+                            {
+                                User = user,
+                                LecturerCode = user.Username,
+                                Department = department,
+                                Position = request.LecturerSpecificData.Position?.Trim(),
+                                AcademicTitle = request.LecturerSpecificData.AcademicTitle?.Trim()
+                            };
+
+                            context.Lecturers.Add(newLecturer);
+                        }
+                    }
+                    break;
+            }
+
+            await context.SaveChangesAsync();
+        }
+
+        private async Task<(bool IsValid, List<string> Errors)> ValidateUserUpdateRequestAsync(int userId, UpdateUserWithRoleRequest request)
+        {
+            var errors = new List<string>();
+
+            // Check email uniqueness (if changed)
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                var emailExists = await context.Users
+                    .AnyAsync(u => u.Email == request.Email && u.UserId != userId);
+                if (emailExists)
+                {
+                    errors.Add("Email address is already in use by another user");
+                }
+            }
+
+            // Check citizen ID uniqueness (if changed)
+            if (!string.IsNullOrWhiteSpace(request.CitizenIdCard))
+            {
+                var citizenIdExists = await context.Users
+                    .AnyAsync(u => u.CitizenIdCard == request.CitizenIdCard && u.UserId != userId);
+                if (citizenIdExists)
+                {
+                    errors.Add("Citizen ID card is already in use by another user");
+                }
+            }
+
+            // Role-specific validation
+            switch (request.RoleId)
+            {
+                case 2: // Student
+                    if (request.StudentSpecificData?.ClassId.HasValue == true)
+                    {
+                        var classExists = await context.Classes.AnyAsync(c => c.ClassId == request.StudentSpecificData.ClassId.Value);
+                        if (!classExists)
+                        {
+                            errors.Add("Specified class does not exist");
+                        }
+                    }
+                    break;
+
+                case 3: // Lecturer
+                    if (request.LecturerSpecificData?.DepartmentId.HasValue == true)
+                    {
+                        var departmentExists = await context.Departments.AnyAsync(d => d.DepartmentId == request.LecturerSpecificData.DepartmentId.Value);
+                        if (!departmentExists)
+                        {
+                            errors.Add("Specified department does not exist");
+                        }
+                    }
+                    break;
+            }
+
+            return (errors.Count == 0, errors);
+        }
+
+        public async Task<bool> DeactivateUserAsync(int userId)
+        {
+            using var transaction = await context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var user = await context.Users.FindAsync(userId);
+                if (user == null)
+                    return false;
+
+                // Set user account status to inactive
+                user.AccountStatus = AccountStatus.InActive;
+
+                // Optionally clear refresh token to force logout
+                user.RefreshToken = null;
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(-1); // Set to past date
+
+                context.Users.Update(user);
+
+                // Deactivate all bank accounts of this user
+                var userBankAccounts = await context.BankAccounts
+                    .Where(ba => ba.User.UserId == userId && ba.AccountStatus == Enum.AccountStatus.Active)
+                    .ToListAsync();
+
+                foreach (var account in userBankAccounts)
+                {
+                    account.AccountStatus = Enum.AccountStatus.InActive;
+                    account.IsDefault = false;
+                }
+
+                if (userBankAccounts.Any())
+                {
+                    context.BankAccounts.UpdateRange(userBankAccounts);
+                }
+
+                await context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task<bool> ReactivateUserAsync(int userId)
+        {
+            var user = await context.Users.FindAsync(userId);
+            if (user == null)
+                return false;
+
+            // Reactivate the user account
+            user.AccountStatus = AccountStatus.Active;
+
+            context.Users.Update(user);
+            return await context.SaveChangesAsync() > 0;
+        }
     }
 }

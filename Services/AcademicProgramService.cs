@@ -21,7 +21,8 @@ namespace StudentManagement.Services
             {
                 ProgramName = request.ProgramName,
                 DegreeLevel = request.DegreeLevel,
-                Department = department
+                Department = department,
+                CreditsRequired = request.CreditsRequired
             };
 
             context.Programs.Add(program);

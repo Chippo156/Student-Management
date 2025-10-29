@@ -37,7 +37,8 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(programs, "Department programs retrieved successfully"));
         }
 
-        [HttpPost]
+        [HttpPost("CreateProgram")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateProgram([FromBody] AcademicProgramRequest request)
         {
             var program = await programService.CreateProgramAsync(request);

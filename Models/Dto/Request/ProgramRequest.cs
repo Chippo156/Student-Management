@@ -12,5 +12,7 @@ namespace StudentManagement.Models.Dto.Request
         
         [Required(ErrorMessage = "Department ID is required")]
         public int DepartmentId { get; set; }
+        [Required(ErrorMessage = "CreditsRequired is required")]
+        public int CreditsRequired { get; set; }
     }
 }

@@ -9,7 +9,10 @@ namespace StudentManagement.Services.Interface
         Task<PagedResult<UserResponse>> GetAllUsersAsync(PaginationParams pagination);
         Task<UserResponse?> GetUserByIdAsync(int userId);
         Task<User?> UpdateUserAsync(int userId, UpdateUserRequest request);
+        Task<UserUpdateResult> UpdateUserWithRoleAsync(int userId, UpdateUserWithRoleRequest request);
         Task<bool> ResetPassword(int userId, string newPassword);
+        Task<bool> DeactivateUserAsync(int userId);
+        Task<bool> ReactivateUserAsync(int userId);
         Task<UserCreationResult> CreateUserWithRoleAsync(CreateUserWithRoleRequest request);
     }
 }

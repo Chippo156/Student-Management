@@ -130,5 +130,81 @@ namespace StudentManagement.Controllers
                 return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, "An error occurred while creating user", new List<string> { ex.Message }));
             }
         }
+        [HttpPut("update-with-role/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateUserWithRole(int id, [FromBody] UpdateUserWithRoleRequest request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid input data", errors));
+                }
+
+                var result = await userService.UpdateUserWithRoleAsync(id, request);
+
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, result.Message, result.Errors));
+                }
+
+                return Ok(ApiResponse.SuccessResponse(new
+                {
+                    User = result.User,
+                    RoleSpecificEntity = result.RoleSpecificEntity,
+                    Message = result.Message
+                }, "User updated successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, "An error occurred while updating user", new List<string> { ex.Message }));
+            }
+        }
+        [HttpPut("deactivate/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeactivateUser(int id)
+        {
+            try
+            {
+                var result = await userService.DeactivateUserAsync(id);
+
+                if (!result)
+                {
+                    return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, "User not found", null));
+                }
+
+                return Ok(ApiResponse.SuccessResponse(null, "User account deactivated successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, "An error occurred while deactivating user", new List<string> { ex.Message }));
+            }
+        }
+
+        [HttpPut("reactivate/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ReactivateUser(int id)
+        {
+            try
+            {
+                var result = await userService.ReactivateUserAsync(id);
+
+                if (!result)
+                {
+                    return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, "User not found", null));
+                }
+
+                return Ok(ApiResponse.SuccessResponse(null, "User account reactivated successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, "An error occurred while reactivating user", new List<string> { ex.Message }));
+            }
+        }
     }
 }
