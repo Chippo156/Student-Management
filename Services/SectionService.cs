@@ -215,7 +215,7 @@ namespace StudentManagement.Services
             // Get main schedules for this section (không bao gồm lịch thực hành của nhóm)
             var mainSchedules = await context.Schedules
                 .Include(sch => sch.ScheduleType)
-                .Where(sch => sch.Section.SectionId == sectionId && !sch.PracticeGroupId.HasValue)
+                .Where(sch => sch.Section.SectionId == sectionId && !sch.PracticeGroupId.HasValue && sch.ScheduleType.ScheduleTypeId != 3)
                 .OrderBy(sch => sch.DayOfWeek)
                 .ThenBy(sch => sch.StartTime)
                 .ThenBy(sch => sch.Date)
