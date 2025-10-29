@@ -255,7 +255,7 @@ namespace StudentManagement.Services
                 var user = new User
                 {
                     Username = request.Username.Trim(),
-                    PasswordHash = new PasswordHasher<User>().HashPassword(null!, request.Password),
+                    PasswordHash = request.Password,
                     FullName = request.FullName.Trim(),
                     Email = request.Email?.Trim().ToLowerInvariant(),
                     Phone = request.Phone?.Trim(),
