@@ -83,11 +83,11 @@ const AppRoutes = () => {
   const location = useLocation();
 
   const getDashboardByRole = () => {
-    if (!account || !account.role) {
+    const role = localStorage.getItem('role');
+    if (!account || !role) {
       return '/login';
     }
-    const userRoleId = account.role.roleId;
-    switch (userRoleId) {
+    switch (role * 1) {
       case 1:
         return '/admin';
       case 2:
@@ -154,7 +154,10 @@ const AppRoutes = () => {
           {/* Quản lý Đào tạo */}
           <Route path="courses" element={<CourseManagement />} />
           <Route path="classes" element={<Classes />} />
-          <Route path="curriculum" element={<CurriculumPage />} />
+          <Route
+            path="curriculum"
+            element={<div>Coming Soon chương trình khung.</div>}
+          />
 
           {/* Thêm router quản lý giảng viên */}
           <Route path="teacher" element={<TeacherList />} />

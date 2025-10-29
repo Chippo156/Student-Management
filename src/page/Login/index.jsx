@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { loginUser, clearError } from '../../redux/UserSlice';
+import { doLoginAction } from '../../redux/UserSlice';
+
 import './login.scss';
+import { userService } from '../../service/userService';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -51,6 +54,17 @@ const Login = () => {
       try {
         const result = await dispatch(loginUser({ username, password }));
         if (result.meta.requestStatus === 'fulfilled') {
+          const data = await userService.getUserInfo();
+          if (data) {
+            const token = localStorage.getItem('access_token');
+            const refreshToken = localStorage.getItem('refresh_token');
+            dispatch(
+              doLoginAction({
+                token: { accessToken: token, refreshToken },
+                user: data,
+              })
+            );
+          }
           const userData = result.payload;
           if (userData?.user?.role?.roleId) {
             const dashboard = getDashboardByRole(userData.user.role.roleId);
