@@ -11,18 +11,35 @@ namespace StudentManagement.Services
     {
         public async Task<bool> CheckScheduleConflictsAsync(int sectionId, DateOnly? dateEvent, DayOfWeek? dayOfWeek, TimeOnly startTime, TimeOnly endTime, string room)
         {
-            // Check for room conflicts at the same time
-            var roomConflicts = await context.Schedules
+            // Check for room conflicts at the same time with main schedules (theory schedules)
+            var mainScheduleConflicts = await context.Schedules
                 .Where(s => s.DayOfWeek == dayOfWeek &&
-                            s.Date == dateEvent && 
+                            s.Date == dateEvent &&
                            s.Room == room &&
                            s.Section.SectionId != sectionId &&
+                           !s.PracticeGroupId.HasValue && // Only main/theory schedules
                            ((s.StartTime <= startTime && s.EndTime > startTime) ||
                             (s.StartTime < endTime && s.EndTime >= endTime) ||
                             (s.StartTime >= startTime && s.EndTime <= endTime)))
                 .AnyAsync();
 
-            return roomConflicts;
+            if (mainScheduleConflicts)
+            {
+                return true;
+            }
+
+            // Check for room conflicts with practice group schedules
+            var practiceScheduleConflicts = await context.Schedules
+                .Where(s => s.DayOfWeek == dayOfWeek &&
+                            s.Date == dateEvent &&
+                           s.Room == room &&
+                           s.PracticeGroupId.HasValue && // Only practice group schedules
+                           ((s.StartTime <= startTime && s.EndTime > startTime) ||
+                            (s.StartTime < endTime && s.EndTime >= endTime) ||
+                            (s.StartTime >= startTime && s.EndTime <= endTime)))
+                .AnyAsync();
+
+            return practiceScheduleConflicts;
         }
 
         public async Task<CountSchedule> countSchedule(string mssv)
