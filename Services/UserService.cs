@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
+using StudentManagement.Enum;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
@@ -231,7 +232,379 @@ namespace StudentManagement.Services
             }
         }
 
+        public async Task<UserCreationResult> CreateUserWithRoleAsync(CreateUserWithRoleRequest request)
+        {
+            using var transaction = await context.Database.BeginTransactionAsync();
 
+            try
+            {
+                // Validate request
+                var validationResult = await ValidateUserCreationRequestAsync(request);
+                if (!validationResult.IsValid)
+                {
+                    return new UserCreationResult
+                    {
+                        IsSuccess = false,
+                        Message = "Validation failed",
+                        Errors = validationResult.Errors
+                    };
+                }
+                var role = await context.Roles.FindAsync(request.RoleId);
+
+                // Create User first
+                var user = new User
+                {
+                    Username = request.Username.Trim(),
+                    PasswordHash = new PasswordHasher<User>().HashPassword(null!, request.Password),
+                    FullName = request.FullName.Trim(),
+                    Email = request.Email?.Trim().ToLowerInvariant(),
+                    Phone = request.Phone?.Trim(),
+                    Address = request.Address?.Trim(),
+                    Gender = request.Gender,
+                    DateOfBirth = request.DateOfBirth,
+                    CitizenIdCard = request.CitizenIdCard?.Trim(),
+                    IssuedDate = request.IssuedDate,
+                    IssuedPlace = request.IssuedPlace?.Trim(),
+                    Role = role,
+                    AccountStatus = AccountStatus.Active,
+
+                    // Extended information
+                    Ethnicity = request.Ethnicity?.Trim(),
+                    Nationality = request.Nationality?.Trim(),
+                    HealthInsuranceNumber = request.HealthInsuranceNumber?.Trim(),
+                    HealthInsuranceRegistrationPlace = request.HealthInsuranceRegistrationPlace?.Trim(),
+                    TemporaryAddress = request.TemporaryAddress?.Trim(),
+                    PlaceOfBirth = request.PlaceOfBirth?.Trim(),
+                    Religion = request.Religion?.Trim(),
+
+                    // Address details
+                    //HometownProvince = request.HometownProvince?.Trim(),
+                    //HometownDistrict = request.HometownDistrict?.Trim(),
+                    //HometownWard = request.HometownWard?.Trim(),
+                    //BirthProvince = request.BirthProvince?.Trim(),
+                    //BirthDistrict = request.BirthDistrict?.Trim(),
+                    //BirthWard = request.BirthWard?.Trim(),
+                    //PermanentProvince = request.PermanentProvince?.Trim(),
+                    //PermanentDistrict = request.PermanentDistrict?.Trim(),
+                    //PermanentWard = request.PermanentWard?.Trim(),
+
+                    // Additional info
+                    Object = request.Object?.Trim(),
+                    PolicyArea = request.PolicyArea?.Trim(),
+                    DateOfJoinUnion = request.DateOfJoinUnion,
+                    DateOfJoinParty = request.DateOfJoinParty
+                };
+
+                context.Users.Add(user);
+                await context.SaveChangesAsync();
+
+                object? roleSpecificEntity = null;
+                string roleSpecificMessage = "";
+
+                // Create role-specific entity based on role
+                switch (request.RoleId)
+                {
+                    case 2:
+                        var studentResult = await CreateStudentEntityAsync(user, request.StudentSpecificData!);
+                        if (!studentResult.IsSuccess)
+                        {
+                            await transaction.RollbackAsync();
+                            return new UserCreationResult
+                            {
+                                IsSuccess = false,
+                                Message = "Failed to create student entity",
+                                Errors = studentResult.Errors
+                            };
+                        }
+                        roleSpecificEntity = studentResult.Student;
+                        roleSpecificMessage = $"Student created with MSSV: {studentResult.Student?.MSSV}";
+                        break;
+
+                    case 3:
+                        var lecturerResult = await CreateLecturerEntityAsync(user, request.LecturerSpecificData!);
+                        if (!lecturerResult.IsSuccess)
+                        {
+                            await transaction.RollbackAsync();
+                            return new UserCreationResult
+                            {
+                                IsSuccess = false,
+                                Message = "Failed to create lecturer entity",
+                                Errors = lecturerResult.Errors
+                            };
+                        }
+                        roleSpecificEntity = lecturerResult.Lecturer;
+                        roleSpecificMessage = $"Lecturer created with code: {lecturerResult.Lecturer?.LecturerCode}";
+                        break;
+
+                    case 1:
+                        roleSpecificMessage = "Admin user created successfully";
+                        break;
+
+                    default:
+                        await transaction.RollbackAsync();
+                        return new UserCreationResult
+                        {
+                            IsSuccess = false,
+                            Message = "Invalid role specified",
+                            Errors = { "Role must be Student, Lecturer, or Admin" }
+                        };
+                }
+
+                await transaction.CommitAsync();
+
+                return new UserCreationResult
+                {
+                    IsSuccess = true,
+                    Message = $"User created successfully. {roleSpecificMessage}",
+                    User = user,
+                    RoleSpecificEntity = roleSpecificEntity
+                };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return new UserCreationResult
+                {
+                    IsSuccess = false,
+                    Message = "User creation failed due to system error",
+                    Errors = { ex.Message }
+                };
+            }
+        }
+
+        private async Task<StudentCreationResult> CreateStudentEntityAsync(User user, StudentSpecificData studentData)
+        {
+            try
+            {
+                var mssv = user.Username;
+                // Validate student-specific data
+                if (string.IsNullOrWhiteSpace(mssv))
+                {
+                    return new StudentCreationResult
+                    {
+                        IsSuccess = false,
+                        Errors = { "MSSV is required for student" }
+                    };
+                }
+
+                // Check if MSSV already exists
+                var existingStudent = await context.Students.FirstOrDefaultAsync(s => s.MSSV == mssv);
+                if (existingStudent != null)
+                {
+                    return new StudentCreationResult
+                    {
+                        IsSuccess = false,
+                        Errors = { $"Student with MSSV {mssv} already exists" }
+                    };
+                }
+
+                // Validate class exists
+                var studentClass = await context.Classes.FindAsync(studentData.ClassId);
+                if (studentClass == null)
+                {
+                    return new StudentCreationResult
+                    {
+                        IsSuccess = false,
+                        Errors = { "Specified class not found" }
+                    };
+                }
+
+                var student = new Student
+                {
+                    User = user,
+                    MSSV = mssv.Trim(),
+                    Class = studentClass,
+                    StudentStatus = studentData.StudentStatus ?? StudentStatus.Active,
+                    DateOfAdmission = studentData.AdmissionDate ?? DateOnly.FromDateTime(DateTime.Now),
+                    YearOfAdmission = studentData.Year
+                };
+
+                context.Students.Add(student);
+                await context.SaveChangesAsync();
+
+                // Create family relationships if provided
+                //if (studentData.FamilyRelationships?.Any() == true)
+                //{
+                //    await CreateFamilyRelationshipsAsync(student, studentData.FamilyRelationships);
+                //}
+
+                return new StudentCreationResult
+                {
+                    IsSuccess = true,
+                    Student = student
+                };
+            }
+            catch (Exception ex)
+            {
+                return new StudentCreationResult
+                {
+                    IsSuccess = false,
+                    Errors = { ex.Message }
+                };
+            }
+        }
+
+        private async Task<LecturerCreationResult> CreateLecturerEntityAsync(User user, LecturerSpecificData lecturerData)
+        {
+            try
+            {
+                var lecturerCode = user.Username;
+                // Validate lecturer-specific data
+                if (string.IsNullOrWhiteSpace(lecturerCode))
+                {
+                    return new LecturerCreationResult
+                    {
+                        IsSuccess = false,
+                        Errors = { "Lecturer code is required" }
+                    };
+                }
+
+                // Check if lecturer code already exists
+                var existingLecturer = await context.Lecturers
+                    .FirstOrDefaultAsync(l => l.LecturerCode == lecturerCode);
+                if (existingLecturer != null)
+                {
+                    return new LecturerCreationResult
+                    {
+                        IsSuccess = false,
+                        Errors = { $"Lecturer with code {lecturerCode} already exists" }
+                    };
+                }
+
+                // Validate department exists
+                var department = await context.Departments.FindAsync(lecturerData.DepartmentId);
+                if (department == null)
+                {
+                    return new LecturerCreationResult
+                    {
+                        IsSuccess = false,
+                        Errors = { "Specified department not found" }
+                    };
+                }
+
+                var lecturer = new Lecturer
+                {
+                    User = user,
+                    LecturerCode = lecturerCode.Trim(),
+                    Department = department,
+                    Position = lecturerData.Position?.Trim(),
+                    AcademicTitle = lecturerData.AcademicTitle?.Trim(),
+                };
+
+                context.Lecturers.Add(lecturer);
+                await context.SaveChangesAsync();
+
+                return new LecturerCreationResult
+                {
+                    IsSuccess = true,
+                    Lecturer = lecturer
+                };
+            }
+            catch (Exception ex)
+            {
+                return new LecturerCreationResult
+                {
+                    IsSuccess = false,
+                    Errors = { ex.Message }
+                };
+            }
+        }
+
+        private async Task CreateFamilyRelationshipsAsync(Student student, List<FamilyRelationshipData> familyData)
+        {
+            foreach (var familyMember in familyData)
+            {
+                var relationship = new FamilyRelationship
+                {
+                    Student = student,
+                    FullName = familyMember.FullName.Trim(),
+                    RelationshipType = familyMember.RelationshipType,
+                    DateOfBirth = familyMember.DateOfBirth,
+                    Phone = familyMember.Phone?.Trim(),
+                    Email = familyMember.Email?.Trim(),
+                    Occupation = familyMember.Occupation?.Trim(),
+                    Workplace = familyMember.Workplace?.Trim(),
+                    CitizenIdCard = familyMember.CitizenIdCard?.Trim(),
+                    IssuedDate = familyMember.IssuedDate,
+                    IssuedPlace = familyMember.IssuedPlace?.Trim(),
+                    Province = familyMember.Province?.Trim(),
+                    District = familyMember.District?.Trim(),
+                    Ward = familyMember.Ward?.Trim(),
+                    DetailAddress = familyMember.DetailAddress?.Trim(),
+                    IsGuardian = familyMember.IsGuardian,
+                    IsDeceased = familyMember.IsDeceased,
+                    IsHouseholder = familyMember.IsHouseholder
+                };
+
+                context.FamilyRelationships.Add(relationship);
+            }
+
+            await context.SaveChangesAsync();
+        }
+
+        private async Task<(bool IsValid, List<string> Errors)> ValidateUserCreationRequestAsync(CreateUserWithRoleRequest request)
+        {
+            var errors = new List<string>();
+
+            // Basic validation
+            if (string.IsNullOrWhiteSpace(request.Username))
+                errors.Add("Username is required");
+
+            if (string.IsNullOrWhiteSpace(request.Password))
+                errors.Add("Password is required");
+
+            if (string.IsNullOrWhiteSpace(request.FullName))
+                errors.Add("Full name is required");
+
+            // Check username uniqueness
+            if (!string.IsNullOrWhiteSpace(request.Username))
+            {
+                var existingUser = await context.Users
+                    .FirstOrDefaultAsync(u => u.Username == request.Username);
+                if (existingUser != null)
+                {
+                    errors.Add("Username already exists");
+                }
+            }
+
+            // Check email uniqueness
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                var existingEmail = await context.Users
+                    .FirstOrDefaultAsync(u => u.Email == request.Email);
+                if (existingEmail != null)
+                {
+                    errors.Add("Email already exists");
+                }
+            }
+
+            // Check citizen ID uniqueness
+            if (!string.IsNullOrWhiteSpace(request.CitizenIdCard))
+            {
+                var existingCitizenId = await context.Users
+                    .FirstOrDefaultAsync(u => u.CitizenIdCard == request.CitizenIdCard);
+                if (existingCitizenId != null)
+                {
+                    errors.Add("Citizen ID card already exists");
+                }
+            }
+
+            // Role-specific validation
+            switch (request.RoleId)
+            {
+                case 2:
+                    if (request.StudentSpecificData == null)
+                        errors.Add("Student specific data is required for student role");
+                    break;
+
+                case 3:
+                    if (request.LecturerSpecificData == null)
+                        errors.Add("Lecturer specific data is required for lecturer role");
+                    break;
+            }
+
+            return (errors.Count == 0, errors);
+        }
 
     }
 }

@@ -95,5 +95,40 @@ namespace StudentManagement.Controllers
             }
             return Ok(ApiResponse.SuccessResponse(null, "Password reset successfully"));
         }
+        [HttpPost("create-with-role")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CreateUserWithRole([FromBody] CreateUserWithRoleRequest request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid input data", errors));
+                }
+
+                var result = await userService.CreateUserWithRoleAsync(request);
+
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, result.Message, result.Errors));
+                }
+
+                return Ok(ApiResponse.SuccessResponse(new
+                {
+                    User = result.User,
+                    RoleSpecificEntity = result.RoleSpecificEntity,
+                    Message = result.Message
+                }, "User created successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, "An error occurred while creating user", new List<string> { ex.Message }));
+            }
+        }
     }
 }
