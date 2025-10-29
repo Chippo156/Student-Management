@@ -1,5 +1,6 @@
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 
 namespace StudentManagement.Services.Interface
 {
@@ -9,6 +10,11 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<Class>> GetAllClassesAsync();
         Task<Class> CreateClassAsync(ClassRequest classRequest);
         Task<Class?> UpdateClassAsync(int classId, string className);
-        Task<bool> DeleteClassAsync(int classId);   
+        Task<bool> DeleteClassAsync(int classId);
+
+        // Dropdown methods
+        Task<IEnumerable<ClassDropdownResponse>> GetClassesDropdownAsync();
+        Task<IEnumerable<ClassDropdownResponse>> GetClassesByProgramDropdownAsync(int programId);
+        Task<IEnumerable<ClassDropdownResponse>> GetClassesByDepartmentDropdownAsync(int departmentId);
     }
 }

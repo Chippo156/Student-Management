@@ -25,6 +25,12 @@ namespace StudentManagement.Controllers
             var faculties = await falcutyService.GetAllFacultiesAsync();
             return Ok(ApiResponse.SuccessResponse(faculties, "Faculties retrieved successfully"));
         }
+        [HttpGet("dropdown/Faculties")]
+        public async Task<IActionResult> GetDropdownFaculties()
+        {
+            var faculties = await falcutyService.GetAllFacultiesAsync();
+            return Ok(ApiResponse.SuccessResponse(faculties, "Faculties retrieved successfully"));
+        }
         [HttpPost]
         public async Task<IActionResult> CreateFaculty([FromBody] Models.Dto.Request.FacultyRequest facultyRequest)
         {

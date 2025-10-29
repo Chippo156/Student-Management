@@ -1,62 +1,157 @@
+using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Services
 {
     public class ClassService(AppDbContext context) : IClassService
     {
-        public Task<Class> CreateClassAsync(ClassRequest classRequest)
+        public async Task<Class> CreateClassAsync(ClassRequest classRequest)
         {
-            Class newClass = new Class
+            var program = await context.Programs.FindAsync(classRequest.ProgramId)
+                ?? throw new Exception("Program not found");
+
+            var newClass = new Class
             {
-                ClassName = classRequest.ClassName
+                ClassName = classRequest.ClassName.Trim(),
+                ClassCode = GenerateClassCode(classRequest.ClassName),
+                Program = program
             };
-            
-            var program = context.Programs.Find(classRequest.ProgramId);
-            if (program is null)
-            {
-                throw new Exception("Program not found");
-            }
-            newClass.Program = program;
 
             context.Classes.Add(newClass);
-            context.SaveChanges();
-            return Task.FromResult(newClass);
+            await context.SaveChangesAsync();
+            return newClass;
         }
 
-        public Task<bool> DeleteClassAsync(int classId)
+        public async Task<bool> DeleteClassAsync(int classId)
         {
-            Class classEntity = context.Classes.Find(classId) ?? throw new Exception("Class not found");
+            var classEntity = await context.Classes.FindAsync(classId);
+            if (classEntity == null)
+                return false;
+
             context.Classes.Remove(classEntity);
-            return Task.FromResult(context.SaveChanges() > 0);
+            return await context.SaveChangesAsync() > 0;
         }
 
-        public Task<IEnumerable<Class>> GetAllClassesAsync()
+        public async Task<IEnumerable<Class>> GetAllClassesAsync()
         {
-            return Task.FromResult(context.Classes.AsEnumerable());
+            return await context.Classes
+                .Include(c => c.Program)
+                    .ThenInclude(p => p.Department)
+                .Include(c => c.AdviserAssignment)
+                    .ThenInclude(aa => aa.Lecturer)
+                        .ThenInclude(l => l.User)
+                .OrderBy(c => c.Program.Department.DepartmentName)
+                .ThenBy(c => c.Program.ProgramName)
+                .ThenBy(c => c.ClassName)
+                .ToListAsync();
         }
 
-        public Task<Class?> GetClassByIdAsync(int classId)
+        public async Task<Class?> GetClassByIdAsync(int classId)
         {
-            Class? classEntity = context.Classes.Find(classId);
-            return Task.FromResult(classEntity);
+            return await context.Classes
+                .Include(c => c.Program)
+                    .ThenInclude(p => p.Department)
+                .Include(c => c.AdviserAssignment)
+                    .ThenInclude(aa => aa.Lecturer)
+                        .ThenInclude(l => l.User)
+                .FirstOrDefaultAsync(c => c.ClassId == classId);
         }
 
-        public Task<Class?> UpdateClassAsync(int classId, string className)
+        public async Task<Class?> UpdateClassAsync(int classId, string className)
         {
-            Class? classEntity = context.Classes.Find(classId);
-            if (classEntity is null)
-            {
-                return Task.FromResult<Class?>(null);
-            }
+            var classEntity = await context.Classes.FindAsync(classId);
+            if (classEntity == null)
+                return null;
 
-            classEntity.ClassName = className;
+            classEntity.ClassName = className.Trim();
+            classEntity.ClassCode = GenerateClassCode(className);
 
             context.Classes.Update(classEntity);
-            context.SaveChanges();
-            return Task.FromResult<Class?>(classEntity);
+            await context.SaveChangesAsync();
+            return classEntity;
+        }
+
+        // Dropdown methods
+        public async Task<IEnumerable<ClassDropdownResponse>> GetClassesDropdownAsync()
+        {
+            return await context.Classes
+                .Include(c => c.Program)
+                    .ThenInclude(p => p.Department)
+                .OrderBy(c => c.Program.Department.DepartmentName)
+                .ThenBy(c => c.Program.ProgramName)
+                .ThenBy(c => c.ClassName)
+                .Select(c => new ClassDropdownResponse
+                {
+                    ClassId = c.ClassId,
+                    ClassName = c.ClassName,
+                    ClassCode = c.ClassCode,
+                    ProgramId = c.Program.AcademicProgramId,
+                    ProgramName = c.Program.ProgramName,
+                    DegreeLevel = c.Program.DegreeLevel,
+                    DepartmentId = c.Program.Department.DepartmentId,
+                    DepartmentName = c.Program.Department.DepartmentName
+                })
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<ClassDropdownResponse>> GetClassesByProgramDropdownAsync(int programId)
+        {
+            return await context.Classes
+                .Include(c => c.Program)
+                    .ThenInclude(p => p.Department)
+                .Where(c => c.Program.AcademicProgramId == programId)
+                .OrderBy(c => c.ClassName)
+                .Select(c => new ClassDropdownResponse
+                {
+                    ClassId = c.ClassId,
+                    ClassName = c.ClassName,
+                    ClassCode = c.ClassCode,
+                    ProgramId = c.Program.AcademicProgramId,
+                    ProgramName = c.Program.ProgramName,
+                    DegreeLevel = c.Program.DegreeLevel,
+                    DepartmentId = c.Program.Department.DepartmentId,
+                    DepartmentName = c.Program.Department.DepartmentName
+                })
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<ClassDropdownResponse>> GetClassesByDepartmentDropdownAsync(int departmentId)
+        {
+            return await context.Classes
+                .Include(c => c.Program)
+                    .ThenInclude(p => p.Department)
+                .Where(c => c.Program.Department.DepartmentId == departmentId)
+                .OrderBy(c => c.Program.ProgramName)
+                .ThenBy(c => c.ClassName)
+                .Select(c => new ClassDropdownResponse
+                {
+                    ClassId = c.ClassId,
+                    ClassName = c.ClassName,
+                    ClassCode = c.ClassCode,
+                    ProgramId = c.Program.AcademicProgramId,
+                    ProgramName = c.Program.ProgramName,
+                    DegreeLevel = c.Program.DegreeLevel,
+                    DepartmentId = c.Program.Department.DepartmentId,
+                    DepartmentName = c.Program.Department.DepartmentName
+                })
+                .ToListAsync();
+        }
+
+        // Helper method to generate class code
+        private static string GenerateClassCode(string className)
+        {
+            // Simple logic to generate class code from class name
+            // You can customize this based on your requirements
+            var words = className.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var code = string.Join("", words.Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
+
+            // Add some randomness or timestamp if needed
+            var timestamp = DateTime.Now.ToString("yyMM");
+            return $"{code}{timestamp}";
         }
     }
 }

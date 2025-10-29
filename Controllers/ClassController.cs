@@ -61,5 +61,47 @@ namespace StudentManagement.Controllers
             }
             return Ok(ApiResponse.SuccessResponse(null, "Class deleted successfully"));
         }
+
+        [HttpGet("dropdown")]
+        public async Task<IActionResult> GetClassesDropdown()
+        {
+            try
+            {
+                var classes = await classService.GetClassesDropdownAsync();
+                return Ok(ApiResponse.SuccessResponse(classes, "Classes dropdown retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, "An error occurred while retrieving classes dropdown", new List<string> { ex.Message }));
+            }
+        }
+
+        [HttpGet("dropdown/program/{programId}")]
+        public async Task<IActionResult> GetClassesByProgramDropdown(int programId)
+        {
+            try
+            {
+                var classes = await classService.GetClassesByProgramDropdownAsync(programId);
+                return Ok(ApiResponse.SuccessResponse(classes, "Classes by program dropdown retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, "An error occurred while retrieving classes by program dropdown", new List<string> { ex.Message }));
+            }
+        }
+
+        [HttpGet("dropdown/department/{departmentId}")]
+        public async Task<IActionResult> GetClassesByDepartmentDropdown(int departmentId)
+        {
+            try
+            {
+                var classes = await classService.GetClassesByDepartmentDropdownAsync(departmentId);
+                return Ok(ApiResponse.SuccessResponse(classes, "Classes by department dropdown retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, "An error occurred while retrieving classes by department dropdown", new List<string> { ex.Message }));
+            }
+        }
     }
 }

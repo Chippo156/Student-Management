@@ -1,62 +1,104 @@
-﻿using StudentManagement.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using StudentManagement.Data;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Services
 {
     public class DepartmentService(AppDbContext context) : IDepartmentService
     {
-        public Task<Department> CreateDepartmentAsync(DepartmentRequest departmentRequest)
+        public async Task<Department> CreateDepartmentAsync(DepartmentRequest request)
         {
-            Department department = new Department
+            var faculty = await context.Falcuties.FindAsync(request.FacultyId)
+                ?? throw new Exception("Faculty not found");
+
+            var department = new Department
             {
-                DepartmentName = departmentRequest.DepartmentName
+                DepartmentName = request.DepartmentName.Trim(),
+                Faculty = faculty
             };
-            var faculty = context.Falcuties.Find(departmentRequest.FacultyId);
-            if (faculty is null)
-            {
-                throw new Exception("Faculty not found");
-            }
-            department.Faculty = faculty;
 
             context.Departments.Add(department);
-            context.SaveChanges();
-            return Task.FromResult(department);
+            await context.SaveChangesAsync();
+            return department;
         }
 
-        public Task<bool> DeleteDepartmentAsync(int departmentId)
+        public async Task<bool> DeleteDepartmentAsync(int departmentId)
         {
-           Department department
-                = context.Departments.Find(departmentId) ?? throw new Exception("Department not found");
+            var department = await context.Departments.FindAsync(departmentId);
+            if (department == null)
+                return false;
+
             context.Departments.Remove(department);
-            return Task.FromResult(context.SaveChanges() > 0);
+            return await context.SaveChangesAsync() > 0;
         }
 
-        public Task<IEnumerable<Department>> GetAllDepartmentsAsync()
+        public async Task<IEnumerable<Department>> GetAllDepartmentsAsync()
         {
-            return Task.FromResult(context.Departments.AsEnumerable());
+            return await context.Departments
+                .Include(d => d.Faculty)
+                .OrderBy(d => d.Faculty.FacultyName)
+                .ThenBy(d => d.DepartmentName)
+                .ToListAsync();
         }
 
-        public Task<Department?> GetDepartmentByIdAsync(int departmentId)
+        public async Task<Department?> GetDepartmentByIdAsync(int departmentId)
         {
-            Department? department
-                = context.Departments.Find(departmentId);
-            return Task.FromResult(department);
+            return await context.Departments
+                .Include(d => d.Faculty)
+                .FirstOrDefaultAsync(d => d.DepartmentId == departmentId);
         }
 
-        public Task<Department?> UpdateDepartmentAsync(int departmentId, string newDepartmentName)
+        public async Task<Department?> UpdateDepartmentAsync(int departmentId, DepartmentRequest request)
         {
-            Department? department
-                = context.Departments.Find(departmentId);
-            if (department is null)
-                {
-                return Task.FromResult<Department?>(null);
-            }
-            department.DepartmentName = newDepartmentName;
+            var department = await context.Departments.FindAsync(departmentId);
+            if (department == null)
+                return null;
+
+            var faculty = await context.Falcuties.FindAsync(request.FacultyId)
+                ?? throw new Exception("Faculty not found");
+
+            department.DepartmentName = request.DepartmentName.Trim();
+            department.Faculty = faculty;
+
             context.Departments.Update(department);
-            context.SaveChanges();
-            return Task.FromResult<Department?>(department);
+            await context.SaveChangesAsync();
+            return department;
+        }
+
+        // Dropdown methods
+        public async Task<IEnumerable<DepartmentDropdownResponse>> GetDepartmentsDropdownAsync()
+        {
+            return await context.Departments
+                .Include(d => d.Faculty)
+                .OrderBy(d => d.Faculty.FacultyName)
+                .ThenBy(d => d.DepartmentName)
+                .Select(d => new DepartmentDropdownResponse
+                {
+                    DepartmentId = d.DepartmentId,
+                    DepartmentName = d.DepartmentName,
+                    FacultyId = d.Faculty.FacultyId,
+                    FacultyName = d.Faculty.FacultyName
+                })
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<DepartmentDropdownResponse>> GetDepartmentsByFacultyDropdownAsync(int facultyId)
+        {
+            return await context.Departments
+                .Include(d => d.Faculty)
+                .Where(d => d.Faculty.FacultyId == facultyId)
+                .OrderBy(d => d.DepartmentName)
+                .Select(d => new DepartmentDropdownResponse
+                {
+                    DepartmentId = d.DepartmentId,
+                    DepartmentName = d.DepartmentName,
+                    FacultyId = d.Faculty.FacultyId,
+                    FacultyName = d.Faculty.FacultyName
+                })
+                .ToListAsync();
         }
     }
 }
