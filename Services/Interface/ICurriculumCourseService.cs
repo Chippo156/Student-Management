@@ -9,6 +9,12 @@ namespace StudentManagement.Services.Interface
     {
         Task<CurriculumCourse?> GetCurriculumCourseByIdAsync(int id);
         Task<IEnumerable<CurriculumCourse>> GetAllCurriculumCoursesAsync();
+        Task<PagedResult<CurriculumCourseResponse>> GetAllCurriculumCoursesWithPaginationAsync(
+              PaginationParams pagination,
+              string? searchCourseCode = null,
+              string? searchCourseName = null,
+              int? programId = null,
+              int? departmentId = null);
         Task<IEnumerable<CurriculumCourse>> GetCurriculumCoursesByProgramAsync(int programId);
         Task<IEnumerable<CurriculumCourse>> GetCurriculumCoursesBySemesterAsync(int programId, int semester);
         Task<CurriculumCourse> CreateCurriculumCourseAsync(CurriculumCourseRequest request);

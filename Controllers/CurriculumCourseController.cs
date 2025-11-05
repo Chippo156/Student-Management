@@ -20,6 +20,29 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(courses, "Curriculum courses retrieved successfully"));
         }
 
+        [HttpGet("GetAllCurriculumCourse")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetCurriculumCoursesWithPagination(
+          [FromQuery] PaginationParams pagination,
+          [FromQuery] string? courseCode = null,
+          [FromQuery] string? courseName = null,
+          [FromQuery] int? programId = null,
+          [FromQuery] int? departmentId = null)
+        {
+            try
+            {
+                var result = await curriculumCourseService.GetAllCurriculumCoursesWithPaginationAsync(
+                    pagination, courseCode, courseName, programId, departmentId);
+
+                return Ok(ApiResponse.SuccessResponse(result, "Curriculum courses retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving curriculum courses", new List<string> { ex.Message }));
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCurriculumCourseById(int id)
         {

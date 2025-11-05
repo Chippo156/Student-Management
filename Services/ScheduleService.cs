@@ -176,13 +176,253 @@ namespace StudentManagement.Services
             return await context.SaveChangesAsync() > 0;
         }
 
-        public async Task<IEnumerable<Schedule>> GetAllSchedulesAsync()
+        public async Task<PagedResult<ScheduleListResponse>> GetAllSchedulesWithFiltersAsync(ScheduleFilterRequest filterRequest)
         {
-            return await context.Schedules
+            var query = context.Schedules
                 .Include(s => s.Section)
                     .ThenInclude(s => s.CurriculumCourse)
-                .Include(s => s.Section.Lecturer)
+                        .ThenInclude(cc => cc.Course)
+                .Include(s => s.Section)
+                    .ThenInclude(s => s.Lecturer)
+                        .ThenInclude(l => l.User)
+                .Include(s => s.Section)
+                    .ThenInclude(s => s.Semester)
+                .Include(s => s.Section)
+                    .ThenInclude(s => s.Class)
+                .Include(s => s.ScheduleType)
+                .Include(s => s.PracticeGroup)
+                .AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrWhiteSpace(filterRequest.CourseCode))
+            {
+                query = query.Where(s => s.Section.CurriculumCourse.Course.CourseCode.Contains(filterRequest.CourseCode.Trim()));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.CourseName))
+            {
+                query = query.Where(s => s.Section.CurriculumCourse.Course.CourseName.Contains(filterRequest.CourseName.Trim()));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.LecturerName))
+            {
+                query = query.Where(s => s.Section.Lecturer != null &&
+                                       s.Section.Lecturer.User.FullName.Contains(filterRequest.LecturerName.Trim()));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.Room))
+            {
+                query = query.Where(s => !string.IsNullOrEmpty(s.Room) && s.Room.Contains(filterRequest.Room.Trim()));
+            }
+
+            if (filterRequest.SectionId.HasValue)
+            {
+                query = query.Where(s => s.Section.SectionId == filterRequest.SectionId.Value);
+            }
+
+            if (filterRequest.SemesterId.HasValue)
+            {
+                query = query.Where(s => s.Section.Semester.SemesterId == filterRequest.SemesterId.Value);
+            }
+
+            if (filterRequest.DepartmentId.HasValue)
+            {
+                query = query.Where(s => s.Section.CurriculumCourse.Program.Department.DepartmentId == filterRequest.DepartmentId.Value);
+            }
+
+            if (filterRequest.ScheduleTypeId.HasValue)
+            {
+                query = query.Where(s => s.ScheduleType.ScheduleTypeId == filterRequest.ScheduleTypeId.Value);
+            }
+
+            if (filterRequest.DayOfWeek.HasValue)
+            {
+                query = query.Where(s => s.DayOfWeek == filterRequest.DayOfWeek.Value);
+            }
+
+            if (filterRequest.Date.HasValue)
+            {
+                query = query.Where(s => s.Date == filterRequest.Date.Value);
+            }
+
+            if (filterRequest.StartDateFrom.HasValue)
+            {
+                query = query.Where(s => s.Date >= filterRequest.StartDateFrom.Value ||
+                                       (s.Date == null && s.Section.StartDate >= filterRequest.StartDateFrom.Value));
+            }
+
+            if (filterRequest.StartDateTo.HasValue)
+            {
+                query = query.Where(s => s.Date <= filterRequest.StartDateTo.Value ||
+                                       (s.Date == null && s.Section.StartDate <= filterRequest.StartDateTo.Value));
+            }
+
+            if (filterRequest.StartTimeFrom.HasValue)
+            {
+                query = query.Where(s => s.StartTime >= filterRequest.StartTimeFrom.Value);
+            }
+
+            if (filterRequest.StartTimeTo.HasValue)
+            {
+                query = query.Where(s => s.StartTime <= filterRequest.StartTimeTo.Value);
+            }
+
+            if (filterRequest.ClassId.HasValue)
+            {
+                query = query.Where(s => s.Section.Class.ClassId == filterRequest.ClassId.Value);
+            }
+
+            if (filterRequest.IsPracticeGroup.HasValue)
+            {
+                if (filterRequest.IsPracticeGroup.Value)
+                {
+                    query = query.Where(s => s.PracticeGroupId.HasValue);
+                }
+                else
+                {
+                    query = query.Where(s => !s.PracticeGroupId.HasValue);
+                }
+            }
+
+            if (filterRequest.PracticeGroupId.HasValue)
+            {
+                query = query.Where(s => s.PracticeGroupId == filterRequest.PracticeGroupId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.SectionCode))
+            {
+                query = query.Where(s => !string.IsNullOrEmpty(s.Section.SectionCode) &&
+                                       s.Section.SectionCode.Contains(filterRequest.SectionCode.Trim()));
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply sorting
+            query = filterRequest.SortBy?.ToLower() switch
+            {
+                "coursecode" => filterRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.Section.CurriculumCourse.Course.CourseCode)
+                    : query.OrderBy(s => s.Section.CurriculumCourse.Course.CourseCode),
+                "coursename" => filterRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.Section.CurriculumCourse.Course.CourseName)
+                    : query.OrderBy(s => s.Section.CurriculumCourse.Course.CourseName),
+                "lecturer" => filterRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.Section.Lecturer.User.FullName)
+                    : query.OrderBy(s => s.Section.Lecturer.User.FullName),
+                "dayofweek" => filterRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.DayOfWeek)
+                    : query.OrderBy(s => s.DayOfWeek),
+                "starttime" => filterRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.StartTime)
+                    : query.OrderBy(s => s.StartTime),
+                "room" => filterRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.Room)
+                    : query.OrderBy(s => s.Room),
+                "semester" => filterRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.Section.Semester.Year).ThenByDescending(s => s.Section.Semester.Term)
+                    : query.OrderBy(s => s.Section.Semester.Year).ThenBy(s => s.Section.Semester.Term),
+                "date" => filterRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.Date)
+                    : query.OrderBy(s => s.Date),
+                _ => query.OrderBy(s => s.Section.Semester.Year)
+                    .ThenBy(s => s.Section.Semester.Term)
+                    .ThenBy(s => s.Section.CurriculumCourse.Course.CourseCode)
+                    .ThenBy(s => s.DayOfWeek)
+                    .ThenBy(s => s.StartTime)
+            };
+
+            // Apply pagination
+            var schedules = await query
+                .Skip((filterRequest.PageNumber - 1) * filterRequest.PageSize)
+                .Take(filterRequest.PageSize)
                 .ToListAsync();
+
+            // Map to response DTOs
+            var responses = schedules.Select(schedule => new ScheduleListResponse
+            {
+                ScheduleId = schedule.ScheduleId,
+                ScheduleType = schedule.ScheduleType?.Name ?? "Unknown",
+                ScheduleTypeId = schedule.ScheduleType?.ScheduleTypeId ?? 0,
+
+                // Section information
+                SectionId = schedule.Section.SectionId,
+                SectionCode = schedule.Section.SectionCode ?? $"SEC{schedule.Section.SectionId}",
+
+                // Course information
+                CourseId = schedule.Section.CurriculumCourse.Course.CourseId,
+                CourseCode = schedule.Section.CurriculumCourse.Course.CourseCode,
+                CourseName = schedule.Section.CurriculumCourse.Course.CourseName,
+                Credits = schedule.Section.CurriculumCourse.Course.CreditsTheory + schedule.Section.CurriculumCourse.Course.CreditsLab,
+
+                LecturerId = schedule.Section.Lecturer?.Id,
+                LecturerName = schedule.Section.Lecturer?.User?.FullName ?? "Not Assigned",
+                LecturerCode = schedule.Section.Lecturer?.LecturerCode ?? "",
+
+                // Class information
+                ClassId = schedule.Section.Class.ClassId,
+                ClassName = schedule.Section.Class.ClassName,
+                ClassCode = schedule.Section.Class.ClassCode,
+
+                //// Semester information
+                SemesterId = schedule.Section.Semester.SemesterId,
+                SemesterName = $"{schedule.Section.Semester.Year} - {schedule.Section.Semester.Term}",
+                Year = schedule.Section.Semester.Year,
+                Term = schedule.Section.Semester.Term,
+
+                // Schedule details
+                DayOfWeek = schedule.DayOfWeek,
+                DayOfWeekText = schedule.DayOfWeek.HasValue ? GetDayOfWeekInVietnamese(schedule.DayOfWeek.Value) : "",
+                Date = schedule.Date,
+                StartTime = schedule.StartTime,
+                EndTime = schedule.EndTime,
+                Duration = $"{schedule.StartTime:HH:mm} - {schedule.EndTime:HH:mm}",
+                Room = schedule.Room ?? "",
+                OnlineLink = schedule.OnlineLink,
+
+                //// Practice Group information
+                IsPracticeGroup = schedule.PracticeGroupId.HasValue,
+                PracticeGroupId = schedule.PracticeGroupId,
+                PracticeGroupName = schedule.PracticeGroup?.GroupName ?? "",
+
+                // Section details
+                SectionCapacity = schedule.Section.Capacity,
+                SectionEnrolledCount = schedule.Section.EnrolledCount,
+                SectionAvailableSlots = Math.Max(0, schedule.Section.Capacity - schedule.Section.EnrolledCount),
+
+                //// Department information
+                //DepartmentName = schedule.Section.CurriculumCourse.Program.Department.DepartmentName,
+                //FacultyName = schedule.Section.CurriculumCourse.Program.Department.Faculty.FacultyName,
+
+                //// Additional info
+                //IsRecurring = schedule.DayOfWeek.HasValue && !schedule.Date.HasValue,
+                //IsOneTimeEvent = schedule.Date.HasValue,
+                IsExam = schedule.ScheduleType?.ScheduleTypeId == 3
+
+            }).ToList();
+
+            return new PagedResult<ScheduleListResponse>
+            {
+                Items = responses,
+                TotalCount = totalCount,
+                PageNumber = filterRequest.PageNumber,
+                PageSize = filterRequest.PageSize
+            };
+        }
+
+        private string GetDayOfWeekInVietnamese(DayOfWeek dayOfWeek)
+        {
+            return dayOfWeek switch
+            {
+                DayOfWeek.Monday => "Thứ 2",
+                DayOfWeek.Tuesday => "Thứ 3",
+                DayOfWeek.Wednesday => "Thứ 4",
+                DayOfWeek.Thursday => "Thứ 5",
+                DayOfWeek.Friday => "Thứ 6",
+                DayOfWeek.Saturday => "Thứ 7",
+                DayOfWeek.Sunday => "Chủ nhật",
+                _ => ""
+            };
         }
 
         public async Task<IEnumerable<ScheduleType>> GetAllScheduleType()

@@ -49,6 +49,73 @@ namespace StudentManagement.Services
                 .ToListAsync();
         }
 
+        public async Task<PagedResult<AcademicProgramResponse>> GetAllProgramsWithPaginationAsync(
+            PaginationParams pagination,
+            string? searchProgramName = null,
+            int? departmentId = null,
+            string? degreeLevel = null)
+        {
+            var query = context.Programs
+                .Include(p => p.Department)
+                    .ThenInclude(d => d.Faculty)
+                .AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrWhiteSpace(searchProgramName))
+            {
+                query = query.Where(p => p.ProgramName.Contains(searchProgramName.Trim()));
+            }
+
+            if (departmentId.HasValue)
+            {
+                query = query.Where(p => p.Department.DepartmentId == departmentId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(degreeLevel))
+            {
+                query = query.Where(p => p.DegreeLevel.Contains(degreeLevel.Trim()));
+            }
+
+            // Get total count for pagination
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination and ordering
+            var academicPrograms = await query
+                .OrderBy(p => p.Department.DepartmentName)
+                .ThenBy(p => p.DegreeLevel)
+                .ThenBy(p => p.ProgramName)
+                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+
+            // Map to response DTOs
+            var programResponses = academicPrograms.Select(p => new AcademicProgramResponse
+            {
+                AcademicProgramId = p.AcademicProgramId,
+                ProgramName = p.ProgramName,
+                DegreeLevel = p.DegreeLevel,
+                CreditsRequired = p.CreditsRequired,
+
+                // Department information
+                DepartmentId = p.Department.DepartmentId,
+                DepartmentName = p.Department.DepartmentName,
+                FacultyId = p.Department.Faculty.FacultyId,
+                FacultyName = p.Department.Faculty.FacultyName,
+
+                // Statistics (you can add more if needed)
+                CreatedAt = DateTime.Now, // Add if you have this field in AcademicProgram model
+                IsActive = true // Add if you have this field in AcademicProgram model
+            }).ToList();
+
+            return new PagedResult<AcademicProgramResponse>
+            {
+                Items = programResponses,
+                TotalCount = totalCount,
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize
+            };
+        }
+
         public async Task<AcademicProgram?> GetProgramByIdAsync(int programId)
         {
             return await context.Programs

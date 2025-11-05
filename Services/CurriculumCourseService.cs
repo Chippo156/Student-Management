@@ -49,8 +49,248 @@ namespace StudentManagement.Services
         {
             return await context.CurriculumCourses
                 .Include(cc => cc.Program)
+                  .Include(cc => cc.Program.Department)
+                    .Include(cc => cc.Program.Department.Faculty)
                 .Include(cc => cc.Course)
                 .ToListAsync();
+        }
+        public async Task<PagedResult<CurriculumCourseResponse>> GetAllCurriculumCoursesWithPaginationAsync(
+    PaginationParams pagination,
+    string? searchCourseCode = null,
+    string? searchCourseName = null,
+    int? programId = null,
+    int? departmentId = null)
+        {
+            var query = context.CurriculumCourses
+                .Include(cc => cc.Program)
+                    .ThenInclude(p => p.Department)
+                        .ThenInclude(d => d.Faculty)
+                .Include(cc => cc.Course)
+                .AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrWhiteSpace(searchCourseCode))
+            {
+                query = query.Where(cc => cc.Course.CourseCode.Contains(searchCourseCode.Trim()));
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchCourseName))
+            {
+                query = query.Where(cc => cc.Course.CourseName.Contains(searchCourseName.Trim()));
+            }
+
+            if (programId.HasValue)
+            {
+                query = query.Where(cc => cc.Program.AcademicProgramId == programId.Value);
+            }
+
+            if (departmentId.HasValue)
+            {
+                query = query.Where(cc => cc.Program.Department.DepartmentId == departmentId.Value);
+            }
+
+            // Get total count for pagination
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination and ordering
+            var curriculumCourses = await query
+                .OrderBy(cc => cc.Program.Department.DepartmentName)
+                .ThenBy(cc => cc.Program.ProgramName)
+                .ThenBy(cc => cc.SemeterSuggested)
+                .ThenBy(cc => cc.Course.CourseCode)
+                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+
+            // Map to response DTOs
+            var curriculumCourseResponses = new List<CurriculumCourseResponse>();
+
+            foreach (var cc in curriculumCourses)
+            {
+                // Get prerequisites for this course
+                var prerequisites = await context.Prerequisites
+                    .Include(p => p.PrerequisiteCourse)
+                    .Where(p => p.CourseId == cc.Course.CourseId)
+                    .Select(p => new PrerequisiteCourseInfo
+                    {
+                        CourseId = p.PrerequisiteCourse.CourseId,
+                        CourseCode = p.PrerequisiteCourse.CourseCode,
+                        CourseName = p.PrerequisiteCourse.CourseName,
+                        TotalCredits = p.PrerequisiteCourse.CreditsTheory + p.PrerequisiteCourse.CreditsLab
+                    })
+                    .ToListAsync();
+
+                curriculumCourseResponses.Add(new CurriculumCourseResponse
+                {
+                    CurriculumCourseId = cc.Id,
+                    CourseId = cc.Course.CourseId,
+                    CourseCode = cc.Course.CourseCode,
+                    CourseName = cc.Course.CourseName,
+                    CreditsTheory = cc.Course.CreditsTheory,
+                    CreditsLab = cc.Course.CreditsLab,
+                    TotalCredits = cc.Course.CreditsTheory + cc.Course.CreditsLab,
+                    IsRequired = cc.isRequired,
+                    SemesterSuggested = cc.SemeterSuggested,
+                    CourseType = cc.isRequired ? "Bắt buộc" : "Tự chọn",
+
+                    // Program information
+                    ProgramId = cc.Program.AcademicProgramId,
+                    ProgramName = cc.Program.ProgramName,
+                    DegreeLevel = cc.Program.DegreeLevel,
+
+                    // Department information
+                    DepartmentId = cc.Program.Department.DepartmentId,
+                    DepartmentName = cc.Program.Department.DepartmentName,
+                    FacultyName = cc.Program.Department.Faculty.FacultyName,
+
+                    // Prerequisites
+                    Prerequisites = prerequisites
+                });
+            }
+
+            return new PagedResult<CurriculumCourseResponse>
+            {
+                Items = curriculumCourseResponses,
+                TotalCount = totalCount,
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize
+            };
+        }
+
+        public async Task<PagedResult<CurriculumCourseResponse>> SearchCurriculumCoursesAsync(
+            CurriculumCourseSearchRequest searchRequest)
+        {
+            var query = context.CurriculumCourses
+                .Include(cc => cc.Program)
+                    .ThenInclude(p => p.Department)
+                        .ThenInclude(d => d.Faculty)
+                .Include(cc => cc.Course)
+                .AsQueryable();
+
+            // Apply search filters
+            if (!string.IsNullOrWhiteSpace(searchRequest.CourseCode))
+            {
+                query = query.Where(cc => cc.Course.CourseCode.Contains(searchRequest.CourseCode.Trim()));
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchRequest.CourseName))
+            {
+                query = query.Where(cc => cc.Course.CourseName.Contains(searchRequest.CourseName.Trim()));
+            }
+
+            if (searchRequest.ProgramId.HasValue)
+            {
+                query = query.Where(cc => cc.Program.AcademicProgramId == searchRequest.ProgramId.Value);
+            }
+
+            if (searchRequest.DepartmentId.HasValue)
+            {
+                query = query.Where(cc => cc.Program.Department.DepartmentId == searchRequest.DepartmentId.Value);
+            }
+
+            if (searchRequest.SemesterSuggested.HasValue)
+            {
+                query = query.Where(cc => cc.SemeterSuggested == searchRequest.SemesterSuggested.Value);
+            }
+
+            if (searchRequest.IsRequired.HasValue)
+            {
+                query = query.Where(cc => cc.isRequired == searchRequest.IsRequired.Value);
+            }
+
+            if (searchRequest.MinCredits.HasValue)
+            {
+                query = query.Where(cc => (cc.Course.CreditsTheory + cc.Course.CreditsLab) >= searchRequest.MinCredits.Value);
+            }
+
+            if (searchRequest.MaxCredits.HasValue)
+            {
+                query = query.Where(cc => (cc.Course.CreditsTheory + cc.Course.CreditsLab) <= searchRequest.MaxCredits.Value);
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply sorting
+            query = searchRequest.SortBy?.ToLower() switch
+            {
+                "coursecode" => searchRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(cc => cc.Course.CourseCode)
+                    : query.OrderBy(cc => cc.Course.CourseCode),
+                "coursename" => searchRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(cc => cc.Course.CourseName)
+                    : query.OrderBy(cc => cc.Course.CourseName),
+                "credits" => searchRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(cc => cc.Course.CreditsTheory + cc.Course.CreditsLab)
+                    : query.OrderBy(cc => cc.Course.CreditsTheory + cc.Course.CreditsLab),
+                "semester" => searchRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(cc => cc.SemeterSuggested)
+                    : query.OrderBy(cc => cc.SemeterSuggested),
+                _ => query.OrderBy(cc => cc.Program.Department.DepartmentName)
+                    .ThenBy(cc => cc.Program.ProgramName)
+                    .ThenBy(cc => cc.SemeterSuggested)
+                    .ThenBy(cc => cc.Course.CourseCode)
+            };
+
+            // Apply pagination
+            var curriculumCourses = await query
+                .Skip((searchRequest.PageNumber - 1) * searchRequest.PageSize)
+                .Take(searchRequest.PageSize)
+                .ToListAsync();
+
+            // Map to response (same logic as above)
+            var responses = await MapToCurriculumCourseResponsesAsync(curriculumCourses);
+
+            return new PagedResult<CurriculumCourseResponse>
+            {
+                Items = responses,
+                TotalCount = totalCount,
+                PageNumber = searchRequest.PageNumber,
+                PageSize = searchRequest.PageSize
+            };
+        }
+
+        private async Task<List<CurriculumCourseResponse>> MapToCurriculumCourseResponsesAsync(List<CurriculumCourse> curriculumCourses)
+        {
+            var responses = new List<CurriculumCourseResponse>();
+
+            foreach (var cc in curriculumCourses)
+            {
+                var prerequisites = await context.Prerequisites
+                    .Include(p => p.PrerequisiteCourse)
+                    .Where(p => p.CourseId == cc.Course.CourseId)
+                    .Select(p => new PrerequisiteCourseInfo
+                    {
+                        CourseId = p.PrerequisiteCourse.CourseId,
+                        CourseCode = p.PrerequisiteCourse.CourseCode,
+                        CourseName = p.PrerequisiteCourse.CourseName,
+                        TotalCredits = p.PrerequisiteCourse.CreditsTheory + p.PrerequisiteCourse.CreditsLab
+                    })
+                    .ToListAsync();
+
+                responses.Add(new CurriculumCourseResponse
+                {
+                    CurriculumCourseId = cc.Id,
+                    CourseId = cc.Course.CourseId,
+                    CourseCode = cc.Course.CourseCode,
+                    CourseName = cc.Course.CourseName,
+                    CreditsTheory = cc.Course.CreditsTheory,
+                    CreditsLab = cc.Course.CreditsLab,
+                    TotalCredits = cc.Course.CreditsTheory + cc.Course.CreditsLab,
+                    IsRequired = cc.isRequired,
+                    SemesterSuggested = cc.SemeterSuggested,
+                    CourseType = cc.isRequired ? "Bắt buộc" : "Tự chọn",
+                    ProgramId = cc.Program.AcademicProgramId,
+                    ProgramName = cc.Program.ProgramName,
+                    DegreeLevel = cc.Program.DegreeLevel,
+                    DepartmentId = cc.Program.Department.DepartmentId,
+                    DepartmentName = cc.Program.Department.DepartmentName,
+                    FacultyName = cc.Program.Department.Faculty.FacultyName,
+                    Prerequisites = prerequisites
+                });
+            }
+
+            return responses;
         }
 
         public async Task<CurriculumCourse?> GetCurriculumCourseByIdAsync(int id)

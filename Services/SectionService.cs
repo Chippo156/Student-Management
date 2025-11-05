@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
+using StudentManagement.Enum;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
@@ -327,6 +328,271 @@ namespace StudentManagement.Services
             };
         }
 
+        public async Task<PagedResult<SectionListResponse>> GetSectionsWithPaginationAsync(SectionSearchRequest searchRequest)
+        {
+            var query = context.Sections
+                .Include(s => s.CurriculumCourse)
+                    .ThenInclude(cc => cc.Course)
+                .Include(s => s.CurriculumCourse)
+                    .ThenInclude(cc => cc.Program)
+                        .ThenInclude(p => p.Department)
+                            .ThenInclude(d => d.Faculty)
+                .Include(s => s.Lecturer)
+                    .ThenInclude(l => l.User)
+                .Include(s => s.Semester)
+                .Include(s => s.Class)
+                .AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrWhiteSpace(searchRequest.SectionCode))
+            {
+                query = query.Where(s => s.SectionCode != null && s.SectionCode.Contains(searchRequest.SectionCode.Trim()));
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchRequest.CourseName))
+            {
+                query = query.Where(s => s.CurriculumCourse.Course.CourseName.Contains(searchRequest.CourseName.Trim()));
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchRequest.LecturerName))
+            {
+                query = query.Where(s => s.Lecturer != null && s.Lecturer.User.FullName.Contains(searchRequest.LecturerName.Trim()));
+            }
+
+            if (searchRequest.SemesterId.HasValue)
+            {
+                query = query.Where(s => s.Semester.SemesterId == searchRequest.SemesterId.Value);
+            }
+
+            if (searchRequest.DepartmentId.HasValue)
+            {
+                query = query.Where(s => s.CurriculumCourse.Program.Department.DepartmentId == searchRequest.DepartmentId.Value);
+            }
+
+            if (searchRequest.CourseId.HasValue)
+            {
+                query = query.Where(s => s.CurriculumCourse.Course.CourseId == searchRequest.CourseId.Value);
+            }
+
+            if (searchRequest.Status.HasValue)
+            {
+                query = query.Where(s => s.Status == searchRequest.Status.Value);
+            }
+
+            if (searchRequest.ClassId.HasValue)
+            {
+                query = query.Where(s => s.Class.ClassId == searchRequest.ClassId.Value);
+            }
+
+            // Date filters
+            if (searchRequest.StartDateFrom.HasValue)
+            {
+                query = query.Where(s => s.StartDate >= searchRequest.StartDateFrom.Value);
+            }
+
+            if (searchRequest.StartDateTo.HasValue)
+            {
+                query = query.Where(s => s.StartDate <= searchRequest.StartDateTo.Value);
+            }
+
+            if (searchRequest.EndDateFrom.HasValue)
+            {
+                query = query.Where(s => s.EndDate >= searchRequest.EndDateFrom.Value);
+            }
+
+            if (searchRequest.EndDateTo.HasValue)
+            {
+                query = query.Where(s => s.EndDate <= searchRequest.EndDateTo.Value);
+            }
+
+            // Capacity filters
+            if (searchRequest.MinCapacity.HasValue)
+            {
+                query = query.Where(s => s.Capacity >= searchRequest.MinCapacity.Value);
+            }
+
+            if (searchRequest.MaxCapacity.HasValue)
+            {
+                query = query.Where(s => s.Capacity <= searchRequest.MaxCapacity.Value);
+            }
+
+            if (searchRequest.HasAvailableSlots.HasValue && searchRequest.HasAvailableSlots.Value)
+            {
+                query = query.Where(s => s.EnrolledCount < s.Capacity);
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply sorting
+            query = searchRequest.SortBy?.ToLower() switch
+            {
+                "sectioncode" => searchRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.SectionCode)
+                    : query.OrderBy(s => s.SectionCode),
+                "coursename" => searchRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.CurriculumCourse.Course.CourseName)
+                    : query.OrderBy(s => s.CurriculumCourse.Course.CourseName),
+                "startdate" => searchRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.StartDate)
+                    : query.OrderBy(s => s.StartDate),
+                "capacity" => searchRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.Capacity)
+                    : query.OrderBy(s => s.Capacity),
+                "enrolledcount" => searchRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.EnrolledCount)
+                    : query.OrderBy(s => s.EnrolledCount),
+                "lecturer" => searchRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.Lecturer.User.FullName)
+                    : query.OrderBy(s => s.Lecturer.User.FullName),
+                "semester" => searchRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.Semester.Year).ThenByDescending(s => s.Semester.Term)
+                    : query.OrderBy(s => s.Semester.Year).ThenBy(s => s.Semester.Term),
+                _ => query.OrderBy(s => s.SectionCode ?? "").ThenBy(s => s.CurriculumCourse.Course.CourseName)
+            };
+
+            // Apply pagination
+            var sections = await query
+                .Skip((searchRequest.PageNumber - 1) * searchRequest.PageSize)
+                .Take(searchRequest.PageSize)
+                .ToListAsync();
+
+            // Map to response DTOs
+            var responses = await MapToSectionListResponsesAsync(sections);
+
+            return new PagedResult<SectionListResponse>
+            {
+                Items = responses,
+                TotalCount = totalCount,
+                PageNumber = searchRequest.PageNumber,
+                PageSize = searchRequest.PageSize
+            };
+        }
+
+        public async Task<PagedResult<SectionListResponse>> GetAllSectionsWithPaginationAsync(
+            PaginationParams pagination,
+            string? sectionCode = null,
+            string? courseName = null,
+            SectionStatus? status = null,
+            int? semesterId = null)
+        {
+            var searchRequest = new SectionSearchRequest
+            {
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize,
+                SectionCode = sectionCode,
+                CourseName = courseName,
+                Status = status,
+                SemesterId = semesterId
+            };
+
+            return await GetSectionsWithPaginationAsync(searchRequest);
+        }
+
+        private async Task<List<SectionListResponse>> MapToSectionListResponsesAsync(List<Section> sections)
+        {
+            var responses = new List<SectionListResponse>();
+
+            foreach (var section in sections)
+            {
+                // Get schedule summary
+                var schedules = await context.Schedules
+                    .Include(sch => sch.ScheduleType)
+                    .Where(sch => sch.Section.SectionId == section.SectionId && !sch.PracticeGroupId.HasValue)
+                    .OrderBy(sch => sch.DayOfWeek)
+                    .ThenBy(sch => sch.StartTime)
+                    .ToListAsync();
+
+                var scheduleSummary = string.Join(", ", schedules
+                    .Where(sch => sch.DayOfWeek.HasValue)
+                    .Select(sch => $"{GetDayOfWeekInVietnamese(sch.DayOfWeek.Value)} {sch.StartTime:HH:mm}-{sch.EndTime:HH:mm}"));
+
+                var roomSummary = string.Join(", ", schedules
+                    .Where(sch => !string.IsNullOrEmpty(sch.Room))
+                    .Select(sch => sch.Room)
+                    .Distinct());
+
+                // Get practice groups count
+                var practiceGroupCount = await context.PracticeGroups
+                    .CountAsync(pg => pg.SectionId == section.SectionId && pg.IsActive);
+
+                var availableSlots = Math.Max(0, section.Capacity - section.EnrolledCount);
+                var enrollmentPercentage = section.Capacity > 0 ? 
+                    Math.Round((decimal)section.EnrolledCount / section.Capacity * 100, 2) : 0;
+
+                responses.Add(new SectionListResponse
+                {
+                    SectionId = section.SectionId,
+                    SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
+                    Status = section.Status,
+                    StatusName = GetSectionStatusInVietnamese(section.Status),
+                    
+                    // Course information
+                    CourseId = section.CurriculumCourse.Course.CourseId,
+                    CourseCode = section.CurriculumCourse.Course.CourseCode,
+                    CourseName = section.CurriculumCourse.Course.CourseName,
+                    CreditsTheory = section.CurriculumCourse.Course.CreditsTheory,
+                    CreditsLab = section.CurriculumCourse.Course.CreditsLab,
+                    TotalCredits = section.CurriculumCourse.Course.CreditsTheory + section.CurriculumCourse.Course.CreditsLab,
+                    
+                    // Lecturer information
+                    LecturerId = section.Lecturer?.Id,
+                    LecturerName = section.Lecturer?.User?.FullName ?? "Chưa phân công",
+                    LecturerEmail = section.Lecturer?.User?.Email ?? "",
+                    
+                    // Class information
+                    ClassId = section.Class.ClassId,
+                    ClassName = section.Class.ClassName,
+                    ClassCode = section.Class.ClassCode,
+                    
+                    // Semester information
+                    SemesterId = section.Semester.SemesterId,
+                    SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
+                    Year = section.Semester.Year,
+                    Term = section.Semester.Term,
+                    
+                    // Section details
+                    StartDate = section.StartDate,
+                    EndDate = section.EndDate,
+                    Capacity = section.Capacity,
+                    EnrolledCount = section.EnrolledCount,
+                    AvailableSlots = availableSlots,
+                    EnrollmentPercentage = enrollmentPercentage,
+                    
+                    // Department information
+                    DepartmentName = section.CurriculumCourse.Program.Department.DepartmentName,
+                    FacultyName = section.CurriculumCourse.Program.Department.Faculty.FacultyName,
+                    
+                    // Schedule summary
+                    ScheduleSummary = scheduleSummary,
+                    RoomSummary = roomSummary,
+                    
+                    // Practice groups info
+                    PracticeGroupCount = practiceGroupCount,
+                    HasPracticeGroups = section.CurriculumCourse.Course.CreditsLab > 0 && practiceGroupCount > 0,
+                    
+                    // Additional info
+                    CreatedAt = DateTime.Now, // Add if you have CreatedAt field
+                    IsActive = section.Status != SectionStatus.IsClosed
+                });
+            }
+
+            return responses;
+        }
+
+
+
+        private static string GetSectionStatusInVietnamese(SectionStatus status)
+        {
+            return status switch
+            {
+                SectionStatus.IsOpening => "Đang mở",
+                SectionStatus.IsPreparing => "Đang chuẩn bị", 
+                SectionStatus.IsClosed => "Đã đóng",
+                _ => "Không xác định"
+            };
+        }
+
         // Helper method để convert DayOfWeek sang tiếng Việt
         private static string GetDayOfWeekInVietnamese(DayOfWeek? dayOfWeek)
         {
@@ -344,6 +610,5 @@ namespace StudentManagement.Services
                 _ => ""
             };
         }
-
     }
 }

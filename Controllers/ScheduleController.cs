@@ -14,13 +14,31 @@ namespace StudentManagement.Controllers
     [ApiController]
     public class ScheduleController(IScheduleService scheduleService) : ControllerBase
     {
-        [HttpGet]
-        public async Task<IActionResult> GetAllSchedules()
-        {
-            var schedules = await scheduleService.GetAllSchedulesAsync();
-            return Ok(ApiResponse.SuccessResponse(schedules, "Schedules retrieved successfully"));
-        }
 
+
+        [HttpPost("GetAllSchedules")]
+        public async Task<IActionResult> GetAllSchedulesWithFilters([FromQuery] ScheduleFilterRequest filterRequest)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid filter parameters", errors));
+                }
+
+                var result = await scheduleService.GetAllSchedulesWithFiltersAsync(filterRequest);
+                return Ok(ApiResponse.SuccessResponse(result, "Schedules retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving schedules", new List<string> { ex.Message }));
+            }
+        }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetScheduleById(int id)
         {
@@ -122,5 +140,6 @@ namespace StudentManagement.Controllers
             var scheduleTypes = await scheduleService.GetAllScheduleType();
             return Ok(ApiResponse.SuccessResponse(scheduleTypes, "Schedule types retrieved successfully"));
         }
+
     }
 }

@@ -18,6 +18,26 @@ namespace StudentManagement.Controllers
             var programs = await programService.GetAllProgramsAsync();
             return Ok(ApiResponse.SuccessResponse(programs, "Academic programs retrieved successfully"));
         }
+        [HttpGet("GetAllProgram")]
+        public async Task<IActionResult> GetProgramsWithPagination(
+          [FromQuery] PaginationParams pagination,
+          [FromQuery] string? programName = null,
+          [FromQuery] int? departmentId = null,
+          [FromQuery] string? degreeLevel = null)
+        {
+            try
+            {
+                var result = await programService.GetAllProgramsWithPaginationAsync(
+                    pagination, programName, departmentId, degreeLevel);
+
+                return Ok(ApiResponse.SuccessResponse(result, "Academic programs retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving academic programs", new List<string> { ex.Message }));
+            }
+        }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProgramById(int id)

@@ -8,6 +8,11 @@ namespace StudentManagement.Services.Interface
     {
         Task<AcademicProgram?> GetProgramByIdAsync(int programId);
         Task<IEnumerable<AcademicProgram>> GetAllProgramsAsync();
+        Task<PagedResult<AcademicProgramResponse>> GetAllProgramsWithPaginationAsync(
+            PaginationParams pagination,
+            string? searchProgramName = null,
+            int? departmentId = null,
+            string? degreeLevel = null);
         Task<AcademicProgram> CreateProgramAsync(AcademicProgramRequest request);
         Task<AcademicProgram?> UpdateProgramAsync(int programId, AcademicProgramRequest request);
         Task<bool> DeleteProgramAsync(int programId);
