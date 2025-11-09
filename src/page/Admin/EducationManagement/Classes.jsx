@@ -1,49 +1,9 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Grid,
-  Card,
-  CardContent,
-  Avatar,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TablePagination,
-  InputAdornment,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  Fab,
-} from '@mui/material';
-import {
-  Class as ClassIcon,
-  Search as SearchIcon,
-  Edit as EditIcon,
-  Visibility as VisibilityIcon,
-  FilterList as FilterListIcon,
-  Person as PersonIcon,
-  School as SchoolIcon,
-  Add as AddIcon,
-  Groups as GroupsIcon,
-  Schedule as ScheduleIcon,
-} from '@mui/icons-material';
+import { Box, Typography, Avatar, Fab } from '@mui/material';
+import { Class as ClassIcon, Add as AddIcon } from '@mui/icons-material';
+import ClassFilterBar from '../../../component/Admin/ClassesPage/ClassFilterBar';
+import ClassTable from '../../../component/Admin/ClassesPage/ClassTable';
+import ClassDetailDialog from '../../../component/Admin/ClassesPage/ClassDetailDialog';
 
 const Classes = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -127,21 +87,6 @@ const Classes = () => {
     },
   ];
 
-  const departments = [
-    'Công nghệ thông tin',
-    'Kinh tế',
-    'Ngoại ngữ',
-    'Khoa học tự nhiên',
-    'Kỹ thuật',
-    'Y khoa',
-  ];
-  const years = [1, 2, 3, 4, 5];
-  const statuses = [
-    { value: 'active', label: 'Đang diễn ra' },
-    { value: 'inactive', label: 'Tạm dừng' },
-    { value: 'completed', label: 'Đã kết thúc' },
-  ];
-
   const filteredClasses = classes.filter((classInfo) => {
     const matchesSearch =
       classInfo.className.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -160,39 +105,21 @@ const Classes = () => {
     setViewDialogOpen(true);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'inactive':
-        return 'warning';
-      case 'completed':
-        return 'default';
-      default:
-        return 'default';
-    }
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setDepartmentFilter('');
+    setStatusFilter('');
+    setYearFilter('');
   };
 
-  const getStatusLabel = (status) => {
-    const statusObj = statuses.find((s) => s.value === status);
-    return statusObj ? statusObj.label : status;
-  };
-
-  const getCapacityColor = (current, max) => {
-    const ratio = current / max;
-    if (ratio >= 0.9) return 'error';
-    if (ratio >= 0.7) return 'warning';
-    return 'success';
+  const handleRowsPerPageChange = (value) => {
+    setRowsPerPage(value);
+    setPage(0);
   };
 
   return (
     <Box sx={{ p: 3, maxWidth: '100%', overflow: 'hidden' }}>
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        mb={3}
-      >
+      <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
         <Box display="flex" alignItems="center" gap={2}>
           <Avatar sx={{ bgcolor: 'primary.main' }}>
             <ClassIcon />
@@ -206,339 +133,32 @@ const Classes = () => {
         </Fab>
       </Box>
 
-      {/* Filters */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth
-              placeholder="Tìm kiếm lớp học, mã lớp, giảng viên..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Khoa</InputLabel>
-              <Select
-                value={departmentFilter}
-                onChange={(e) => setDepartmentFilter(e.target.value)}
-                label="Khoa"
-              >
-                <MenuItem value="">Tất cả</MenuItem>
-                {departments.map((dept) => (
-                  <MenuItem key={dept} value={dept}>
-                    {dept}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Năm học</InputLabel>
-              <Select
-                value={yearFilter}
-                onChange={(e) => setYearFilter(e.target.value)}
-                label="Năm học"
-              >
-                <MenuItem value="">Tất cả</MenuItem>
-                {years.map((year) => (
-                  <MenuItem key={year} value={year.toString()}>
-                    Năm {year}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Trạng thái</InputLabel>
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                label="Trạng thái"
-              >
-                <MenuItem value="">Tất cả</MenuItem>
-                {statuses.map((status) => (
-                  <MenuItem key={status.value} value={status.value}>
-                    {status.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<FilterListIcon />}
-              onClick={() => {
-                setSearchTerm('');
-                setDepartmentFilter('');
-                setStatusFilter('');
-                setYearFilter('');
-              }}
-            >
-              Xóa bộ lọc
-            </Button>
-          </Grid>
-        </Grid>
-      </Paper>
+      <ClassFilterBar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        departmentFilter={departmentFilter}
+        setDepartmentFilter={setDepartmentFilter}
+        yearFilter={yearFilter}
+        setYearFilter={setYearFilter}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        onClearFilters={handleClearFilters}
+      />
 
-      {/* Classes Table */}
-      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-        <TableContainer sx={{ maxHeight: 'calc(100vh - 400px)' }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell>Lớp học</TableCell>
-                <TableCell>Khoa/Ngành</TableCell>
-                <TableCell>Giảng viên</TableCell>
-                <TableCell>Sĩ số</TableCell>
-                <TableCell>Lịch học</TableCell>
-                <TableCell>Trạng thái</TableCell>
-                <TableCell align="center">Thao tác</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredClasses
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((classInfo) => (
-                  <TableRow key={classInfo.id} hover>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body2" fontWeight="bold">
-                          {classInfo.className}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {classInfo.classCode} • {classInfo.semester}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight="bold">
-                        {classInfo.department}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {classInfo.major} - Năm {classInfo.year}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Avatar
-                          sx={{
-                            width: 32,
-                            height: 32,
-                            bgcolor: 'secondary.main',
-                          }}
-                        >
-                          <PersonIcon fontSize="small" />
-                        </Avatar>
-                        <Typography variant="body2">
-                          {classInfo.instructor}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <GroupsIcon color="action" />
-                        <Chip
-                          label={`${classInfo.studentCount}/${classInfo.maxStudents}`}
-                          color={getCapacityColor(
-                            classInfo.studentCount,
-                            classInfo.maxStudents
-                          )}
-                          size="small"
-                        />
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {classInfo.schedule}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Phòng: {classInfo.room}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={getStatusLabel(classInfo.status)}
-                        color={getStatusColor(classInfo.status)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleViewClass(classInfo)}
-                        color="primary"
-                      >
-                        <VisibilityIcon />
-                      </IconButton>
-                      <IconButton size="small" color="primary">
-                        <EditIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={filteredClasses.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={(_, newPage) => setPage(newPage)}
-          onRowsPerPageChange={(e) => {
-            setRowsPerPage(parseInt(e.target.value, 10));
-            setPage(0);
-          }}
-          labelRowsPerPage="Số dòng mỗi trang:"
-          labelDisplayedRows={({ from, to, count }) =>
-            `${from}-${to} của ${count !== -1 ? count : `hơn ${to}`}`
-          }
-        />
-      </Paper>
+      <ClassTable
+        classes={filteredClasses}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        onPageChange={setPage}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        onViewClass={handleViewClass}
+      />
 
-      {/* View Class Dialog */}
-      <Dialog
+      <ClassDetailDialog
         open={viewDialogOpen}
         onClose={() => setViewDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Chi tiết lớp học: {selectedClass?.className}</DialogTitle>
-        <DialogContent>
-          {selectedClass && (
-            <Grid container spacing={3} sx={{ mt: 1 }}>
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom color="primary">
-                      Thông tin cơ bản
-                    </Typography>
-                    <List dense>
-                      <ListItem>
-                        <ListItemText
-                          primary="Mã lớp"
-                          secondary={selectedClass.classCode}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="Tên lớp"
-                          secondary={selectedClass.className}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="Khoa/Ngành"
-                          secondary={`${selectedClass.department} - ${selectedClass.major}`}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="Học kỳ"
-                          secondary={`${selectedClass.semester} - Năm ${selectedClass.year}`}
-                        />
-                      </ListItem>
-                    </List>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom color="primary">
-                      Thông tin giảng dạy
-                    </Typography>
-                    <List dense>
-                      <ListItem>
-                        <ListItemText
-                          primary="Giảng viên"
-                          secondary={selectedClass.instructor}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="Lịch học"
-                          secondary={selectedClass.schedule}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="Phòng học"
-                          secondary={selectedClass.room}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemText
-                          primary="Sĩ số"
-                          secondary={`${selectedClass.studentCount}/${selectedClass.maxStudents} sinh viên`}
-                        />
-                      </ListItem>
-                    </List>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom color="primary">
-                      Thời gian
-                    </Typography>
-                    <Grid container spacing={2}>
-                      <Grid item xs={6}>
-                        <Typography variant="body2">
-                          <strong>Bắt đầu:</strong>{' '}
-                          {new Date(selectedClass.startDate).toLocaleDateString(
-                            'vi-VN'
-                          )}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="body2">
-                          <strong>Kết thúc:</strong>{' '}
-                          {new Date(selectedClass.endDate).toLocaleDateString(
-                            'vi-VN'
-                          )}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                    <Box mt={2}>
-                      <Chip
-                        label={getStatusLabel(selectedClass.status)}
-                        color={getStatusColor(selectedClass.status)}
-                      />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setViewDialogOpen(false)}>Đóng</Button>
-          <Button variant="outlined" startIcon={<ScheduleIcon />}>
-            Xem lịch học
-          </Button>
-          <Button variant="contained" startIcon={<EditIcon />}>
-            Chỉnh sửa
-          </Button>
-        </DialogActions>
-      </Dialog>
+        classData={selectedClass}
+      />
     </Box>
   );
 };

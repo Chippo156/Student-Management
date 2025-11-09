@@ -44,18 +44,18 @@ const getTheme = (mode = 'light') =>
               dark: '#DC2626',
             },
             background: {
-              default: '#F8FAFC',
+              default: '#F1F5F9',
               paper: '#FFFFFF',
               menu: '#FFFFFF',
-              header: '#EEF2FF',
-              secondary: '#F1F5F9',
-              hover: '#E0E7FF',
+              header: '#FFFFFF',
+              secondary: '#F8FAFC',
+              hover: '#EEF2FF',
             },
             text: {
-              primary: '#0F172A',
+              primary: '#1E293B',
               secondary: '#64748B',
               disabled: '#CBD5E1',
-              menu: '#1E293B',
+              menu: '#334155',
               hint: '#94A3B8',
             },
             divider: '#E2E8F0',
@@ -68,8 +68,8 @@ const getTheme = (mode = 'light') =>
               secondary: '#64748B',
             },
             menu: {
-              active: '#E0E7FF',
-              selected: '#C7D2FE',
+              active: '#EEF2FF',
+              selected: '#DDD6FE',
             },
             common: {
               black: '#000000',
@@ -156,10 +156,58 @@ const getTheme = (mode = 'light') =>
           },
         },
       },
+      MuiPaper: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            backgroundImage: 'none',
+            ...(theme.palette.mode === 'light' && {
+              boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+              border: `1px solid ${theme.palette.divider}`,
+            }),
+          }),
+          elevation1: ({ theme }) => ({
+            ...(theme.palette.mode === 'light' && {
+              boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+            }),
+          }),
+          elevation2: ({ theme }) => ({
+            ...(theme.palette.mode === 'light' && {
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+            }),
+          }),
+          elevation3: ({ theme }) => ({
+            ...(theme.palette.mode === 'light' && {
+              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+            }),
+          }),
+          elevation4: ({ theme }) => ({
+            ...(theme.palette.mode === 'light' && {
+              boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+            }),
+          }),
+        },
+      },
+      MuiCard: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            backgroundImage: 'none',
+            ...(theme.palette.mode === 'light' && {
+              boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+              border: `1px solid ${theme.palette.divider}`,
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                borderColor: theme.palette.primary.light,
+              },
+            }),
+          }),
+        },
+      },
       MuiOutlinedInput: {
         styleOverrides: {
           root: ({ theme }) => ({
             fontSize: '1rem',
+            backgroundColor: theme.palette.mode === 'light' ? '#FFFFFF' : 'transparent',
             '& .MuiOutlinedInput-notchedOutline': {
               borderColor: theme.palette.divider,
             },
@@ -171,15 +219,17 @@ const getTheme = (mode = 'light') =>
             },
             '& fieldset': { borderWidth: '1px !important' },
             '&:hover fieldset': { borderWidth: '2px !important' },
-            '&.Mui-focused fieldset': { borderWidth: '1px !important' },
+            '&.Mui-focused fieldset': { borderWidth: '2px !important' },
           }),
         },
       },
       MuiInputLabel: {
         styleOverrides: {
           root: ({ theme }) => ({
+            color: theme.palette.text.secondary,
             '&.Mui-focused': {
               color: theme.palette.primary.main,
+              fontWeight: 500,
             },
           }),
         },
@@ -195,13 +245,47 @@ const getTheme = (mode = 'light') =>
       },
       MuiButton: {
         styleOverrides: {
-          root: {
+          root: ({ theme }) => ({
             textTransform: 'none',
-            borderWidth: '0.5px',
+            fontWeight: 500,
+            borderRadius: '8px',
+            boxShadow: 'none',
             '&:hover': {
-              borderWidth: '1px',
+              boxShadow: theme.palette.mode === 'light'
+                ? '0 1px 3px 0 rgb(0 0 0 / 0.1)'
+                : 'none',
             },
-          },
+          }),
+          contained: ({ theme }) => ({
+            ...(theme.palette.mode === 'light' && {
+              boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+              '&:hover': {
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+              },
+            }),
+          }),
+          outlined: ({ theme }) => ({
+            borderWidth: '1.5px',
+            '&:hover': {
+              borderWidth: '1.5px',
+              backgroundColor: theme.palette.mode === 'light'
+                ? theme.palette.background.hover
+                : 'rgba(255, 255, 255, 0.08)',
+            },
+          }),
+        },
+      },
+      MuiTableCell: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            borderColor: theme.palette.divider,
+          }),
+          head: ({ theme }) => ({
+            fontWeight: 600,
+            backgroundColor: theme.palette.mode === 'light'
+              ? theme.palette.background.secondary
+              : theme.palette.background.paper,
+          }),
         },
       },
     },
