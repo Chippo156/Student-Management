@@ -1,0 +1,17 @@
+export const REGISTER_TYPES = {
+  NEW: 'new',
+  RETAKE: 'retake',
+  IMPROVE: 'improve',
+};
+
+export const REGISTER_TYPE_LABELS = {
+  [REGISTER_TYPES.NEW]: 'HỌC MỚI',
+  [REGISTER_TYPES.RETAKE]: 'HỌC LẠI',
+  [REGISTER_TYPES.IMPROVE]: 'HỌC CẢI THIỆN',
+};
+
+export const FILTER_TYPE_MAP = {
+  [REGISTER_TYPES.NEW]: 1,
+  [REGISTER_TYPES.RETAKE]: 2,
+  [REGISTER_TYPES.IMPROVE]: 3,
+};
