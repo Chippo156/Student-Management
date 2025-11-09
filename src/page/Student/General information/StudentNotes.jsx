@@ -17,6 +17,10 @@ import {
   Row,
   Col,
   Statistic,
+  Calendar,
+  Badge,
+  Progress,
+  Divider,
 } from 'antd';
 import {
   PlusOutlined,
@@ -26,7 +30,12 @@ import {
   ClockCircleOutlined,
   ExclamationCircleOutlined,
   CheckCircleOutlined,
+  CalendarOutlined,
+  TagsOutlined,
+  FireOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons';
+import { useTheme, alpha } from '@mui/material/styles';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -34,6 +43,7 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const StudentNotes = () => {
+  const theme = useTheme();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [form] = Form.useForm();
@@ -162,8 +172,28 @@ const StudentNotes = () => {
   const pendingNotes = notes.filter((note) => note.status === 'pending');
   const completedNotes = notes.filter((note) => note.status === 'completed');
 
+  // Completion rate
+  const completionRate = notes.length > 0
+    ? Math.round((completedNotes.length / notes.length) * 100)
+    : 0;
+
+  // Mock productivity data
+  const weeklyProductivity = [
+    { day: 'T2', completed: 3 },
+    { day: 'T3', completed: 2 },
+    { day: 'T4', completed: 4 },
+    { day: 'T5', completed: 1 },
+    { day: 'T6', completed: 3 },
+    { day: 'T7', completed: 0 },
+    { day: 'CN', completed: 2 },
+  ];
+
   return (
-    <div style={{ padding: '24px' }}>
+    <div style={{
+      padding: '24px',
+      minHeight: '100vh',
+      background: theme.palette.background.default,
+    }}>
       <div
         style={{
           display: 'flex',
@@ -172,191 +202,385 @@ const StudentNotes = () => {
           marginBottom: 24,
         }}
       >
-        <Title level={2}>Ghi chú nhắc nhở</Title>
+        <Title level={2} style={{ margin: 0, color: theme.palette.text.primary }}>
+          <BellOutlined style={{ marginRight: 8, color: theme.palette.primary.main }} />
+          Ghi chú nhắc nhở
+        </Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
           Thêm ghi chú
         </Button>
       </div>
 
       {/* Statistics */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={8}>
-          <Card>
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
             <Statistic
-              title="Đang chờ"
+              title={<span style={{ color: theme.palette.text.secondary }}>Đang chờ</span>}
               value={pendingNotes.length}
-              prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#faad14' }}
+              prefix={<ClockCircleOutlined style={{ color: theme.palette.warning.main }} />}
+              valueStyle={{ color: theme.palette.warning.main }}
             />
           </Card>
         </Col>
-        <Col span={8}>
-          <Card>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
             <Statistic
-              title="Đã hoàn thành"
+              title={<span style={{ color: theme.palette.text.secondary }}>Đã hoàn thành</span>}
               value={completedNotes.length}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#52c41a' }}
+              prefix={<CheckCircleOutlined style={{ color: theme.palette.success.main }} />}
+              valueStyle={{ color: theme.palette.success.main }}
             />
           </Card>
         </Col>
-        <Col span={8}>
-          <Card>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
             <Statistic
-              title="Ưu tiên cao"
+              title={<span style={{ color: theme.palette.text.secondary }}>Ưu tiên cao</span>}
               value={
                 notes.filter(
                   (note) =>
                     note.priority === 'high' && note.status === 'pending'
                 ).length
               }
-              prefix={<ExclamationCircleOutlined />}
-              valueStyle={{ color: '#f5222d' }}
+              prefix={<ExclamationCircleOutlined style={{ color: theme.palette.error.main }} />}
+              valueStyle={{ color: theme.palette.error.main }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+            <Statistic
+              title={<span style={{ color: theme.palette.text.secondary }}>Tỷ lệ hoàn thành</span>}
+              value={completionRate}
+              suffix="%"
+              prefix={<TrophyOutlined style={{ color: theme.palette.secondary.main }} />}
+              valueStyle={{ color: theme.palette.secondary.main }}
             />
           </Card>
         </Col>
       </Row>
 
-      {/* Pending Notes */}
-      <Card
-        title={
-          <span>
-            <BellOutlined style={{ marginRight: 8 }} />
-            Ghi chú đang chờ ({pendingNotes.length})
-          </span>
-        }
-        style={{ marginBottom: 24 }}
-      >
-        {pendingNotes.length > 0 ? (
-          <List
-            itemLayout="vertical"
-            dataSource={pendingNotes}
-            renderItem={(note) => (
-              <List.Item
-                actions={[
-                  <Button
-                    type="link"
-                    icon={<EditOutlined />}
-                    onClick={() => handleEdit(note)}
+      {/* Main Content Grid */}
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={16}>
+          {/* Pending Notes */}
+          <Card
+            bordered={false}
+            title={
+              <Space>
+                <BellOutlined style={{ color: theme.palette.warning.main }} />
+                <Text strong style={{ color: theme.palette.text.primary }}>
+                  Ghi chú đang chờ ({pendingNotes.length})
+                </Text>
+              </Space>
+            }
+            style={{
+              marginBottom: 16,
+              borderRadius: 8,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            }}
+          >
+            {pendingNotes.length > 0 ? (
+              <List
+                itemLayout="vertical"
+                dataSource={pendingNotes}
+                renderItem={(note) => (
+                  <List.Item
+                    actions={[
+                      <Button
+                        type="link"
+                        icon={<EditOutlined />}
+                        onClick={() => handleEdit(note)}
+                      >
+                        Sửa
+                      </Button>,
+                      <Button
+                        type="link"
+                        onClick={() => handleToggleStatus(note.id)}
+                      >
+                        Đánh dấu hoàn thành
+                      </Button>,
+                      <Popconfirm
+                        title="Bạn có chắc chắn muốn xóa ghi chú này?"
+                        onConfirm={() => handleDelete(note.id)}
+                        okText="Có"
+                        cancelText="Không"
+                      >
+                        <Button type="link" danger icon={<DeleteOutlined />}>
+                          Xóa
+                        </Button>
+                      </Popconfirm>,
+                    ]}
                   >
-                    Sửa
-                  </Button>,
-                  <Button
-                    type="link"
-                    onClick={() => handleToggleStatus(note.id)}
-                  >
-                    Đánh dấu hoàn thành
-                  </Button>,
-                  <Popconfirm
-                    title="Bạn có chắc chắn muốn xóa ghi chú này?"
-                    onConfirm={() => handleDelete(note.id)}
-                    okText="Có"
-                    cancelText="Không"
-                  >
-                    <Button type="link" danger icon={<DeleteOutlined />}>
-                      Xóa
-                    </Button>
-                  </Popconfirm>,
-                ]}
-              >
-                <List.Item.Meta
-                  title={
-                    <div
-                      style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-                    >
-                      <span>{note.title}</span>
-                      <Tag color={getPriorityColor(note.priority)}>
-                        {getPriorityText(note.priority)}
-                      </Tag>
-                    </div>
-                  }
-                  description={
-                    <Space direction="vertical" size="small">
-                      <Text>{note.content}</Text>
-                      <Space>
-                        <ClockCircleOutlined />
-                        <Text type="secondary">
-                          Hạn: {dayjs(note.dueDate).format('DD/MM/YYYY')}
-                        </Text>
-                        <Text type="secondary">
-                          (còn {dayjs(note.dueDate).diff(dayjs(), 'day')} ngày)
-                        </Text>
-                      </Space>
-                    </Space>
-                  }
-                />
-              </List.Item>
+                    <List.Item.Meta
+                      title={
+                        <div
+                          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                        >
+                          <span style={{ color: theme.palette.text.primary }}>{note.title}</span>
+                          <Tag color={getPriorityColor(note.priority)}>
+                            {getPriorityText(note.priority)}
+                          </Tag>
+                        </div>
+                      }
+                      description={
+                        <Space direction="vertical" size="small">
+                          <Text style={{ color: theme.palette.text.secondary }}>{note.content}</Text>
+                          <Space>
+                            <ClockCircleOutlined />
+                            <Text type="secondary">
+                              Hạn: {dayjs(note.dueDate).format('DD/MM/YYYY')}
+                            </Text>
+                            <Text type="secondary">
+                              (còn {dayjs(note.dueDate).diff(dayjs(), 'day')} ngày)
+                            </Text>
+                          </Space>
+                        </Space>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            ) : (
+              <Empty description="Không có ghi chú đang chờ" />
             )}
-          />
-        ) : (
-          <Empty description="Không có ghi chú đang chờ" />
-        )}
-      </Card>
+          </Card>
 
-      {/* Completed Notes */}
-      <Card
-        title={
-          <span>
-            <CheckCircleOutlined style={{ marginRight: 8 }} />
-            Ghi chú đã hoàn thành ({completedNotes.length})
-          </span>
-        }
-      >
-        {completedNotes.length > 0 ? (
-          <List
-            itemLayout="vertical"
-            dataSource={completedNotes}
-            renderItem={(note) => (
-              <List.Item
-                style={{ opacity: 0.7 }}
-                actions={[
-                  <Button
-                    type="link"
-                    onClick={() => handleToggleStatus(note.id)}
+          {/* Completed Notes */}
+          <Card
+            bordered={false}
+            title={
+              <Space>
+                <CheckCircleOutlined style={{ color: theme.palette.success.main }} />
+                <Text strong style={{ color: theme.palette.text.primary }}>
+                  Ghi chú đã hoàn thành ({completedNotes.length})
+                </Text>
+              </Space>
+            }
+            style={{
+              borderRadius: 8,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            }}
+          >
+            {completedNotes.length > 0 ? (
+              <List
+                itemLayout="vertical"
+                dataSource={completedNotes}
+                renderItem={(note) => (
+                  <List.Item
+                    style={{ opacity: 0.7 }}
+                    actions={[
+                      <Button
+                        type="link"
+                        onClick={() => handleToggleStatus(note.id)}
+                      >
+                        Đánh dấu chưa hoàn thành
+                      </Button>,
+                      <Popconfirm
+                        title="Bạn có chắc chắn muốn xóa ghi chú này?"
+                        onConfirm={() => handleDelete(note.id)}
+                        okText="Có"
+                        cancelText="Không"
+                      >
+                        <Button type="link" danger icon={<DeleteOutlined />}>
+                          Xóa
+                        </Button>
+                      </Popconfirm>,
+                    ]}
                   >
-                    Đánh dấu chưa hoàn thành
-                  </Button>,
-                  <Popconfirm
-                    title="Bạn có chắc chắn muốn xóa ghi chú này?"
-                    onConfirm={() => handleDelete(note.id)}
-                    okText="Có"
-                    cancelText="Không"
-                  >
-                    <Button type="link" danger icon={<DeleteOutlined />}>
-                      Xóa
-                    </Button>
-                  </Popconfirm>,
-                ]}
-              >
-                <List.Item.Meta
-                  title={
-                    <div
-                      style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-                    >
-                      <span style={{ textDecoration: 'line-through' }}>
-                        {note.title}
-                      </span>
-                      <Tag color="green">Hoàn thành</Tag>
-                    </div>
-                  }
-                  description={
-                    <Space direction="vertical" size="small">
-                      <Text style={{ textDecoration: 'line-through' }}>
-                        {note.content}
-                      </Text>
-                      <Text type="secondary">
-                        Hoàn thành: {dayjs(note.dueDate).format('DD/MM/YYYY')}
-                      </Text>
-                    </Space>
-                  }
-                />
-              </List.Item>
+                    <List.Item.Meta
+                      title={
+                        <div
+                          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                        >
+                          <span style={{
+                            textDecoration: 'line-through',
+                            color: theme.palette.text.secondary,
+                          }}>
+                            {note.title}
+                          </span>
+                          <Tag color="green">Hoàn thành</Tag>
+                        </div>
+                      }
+                      description={
+                        <Space direction="vertical" size="small">
+                          <Text style={{
+                            textDecoration: 'line-through',
+                            color: theme.palette.text.secondary,
+                          }}>
+                            {note.content}
+                          </Text>
+                          <Text type="secondary">
+                            Hoàn thành: {dayjs(note.dueDate).format('DD/MM/YYYY')}
+                          </Text>
+                        </Space>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            ) : (
+              <Empty description="Chưa cập nhật ghi chú nào được hoàn thành" />
             )}
-          />
-        ) : (
-          <Empty description="Chưa cập nhật ghi chú nào được hoàn thành" />
-        )}
-      </Card>
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={8}>
+          {/* Weekly Productivity */}
+          <Card
+            bordered={false}
+            title={
+              <Space>
+                <FireOutlined style={{ color: theme.palette.primary.main }} />
+                <Text strong style={{ color: theme.palette.text.primary }}>
+                  Năng suất tuần này
+                </Text>
+              </Space>
+            }
+            style={{
+              marginBottom: 16,
+              borderRadius: 8,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            }}
+          >
+            <Space direction="vertical" size={12} style={{ width: '100%' }}>
+              {weeklyProductivity.map((item, index) => (
+                <div key={index}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <Text style={{ color: theme.palette.text.secondary }}>{item.day}</Text>
+                    <Text strong style={{ color: theme.palette.text.primary }}>
+                      {item.completed} ghi chú
+                    </Text>
+                  </div>
+                  <Progress
+                    percent={(item.completed / 5) * 100}
+                    strokeColor={theme.palette.primary.main}
+                    showInfo={false}
+                    size="small"
+                  />
+                </div>
+              ))}
+              <Divider style={{ margin: '8px 0' }} />
+              <div style={{
+                padding: 12,
+                background: alpha(theme.palette.primary.main, 0.1),
+                borderRadius: 8,
+                textAlign: 'center',
+              }}>
+                <Statistic
+                  title={<span style={{ color: theme.palette.text.secondary, fontSize: 12 }}>
+                    Tổng hoàn thành tuần
+                  </span>}
+                  value={weeklyProductivity.reduce((sum, item) => sum + item.completed, 0)}
+                  suffix="ghi chú"
+                  valueStyle={{ color: theme.palette.primary.main, fontSize: 24 }}
+                />
+              </div>
+            </Space>
+          </Card>
+
+          {/* Categories Overview */}
+          <Card
+            bordered={false}
+            title={
+              <Space>
+                <TagsOutlined style={{ color: theme.palette.secondary.main }} />
+                <Text strong style={{ color: theme.palette.text.primary }}>
+                  Phân loại ghi chú
+                </Text>
+              </Space>
+            }
+            style={{
+              marginBottom: 16,
+              borderRadius: 8,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            }}
+          >
+            <Space direction="vertical" size={12} style={{ width: '100%' }}>
+              <div style={{
+                padding: 12,
+                background: alpha(theme.palette.error.main, 0.1),
+                borderLeft: `4px solid ${theme.palette.error.main}`,
+                borderRadius: 4,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={{ color: theme.palette.text.primary }}>Ưu tiên cao</Text>
+                  <Tag color="red">
+                    {notes.filter(n => n.priority === 'high' && n.status === 'pending').length} ghi chú
+                  </Tag>
+                </div>
+              </div>
+              <div style={{
+                padding: 12,
+                background: alpha(theme.palette.warning.main, 0.1),
+                borderLeft: `4px solid ${theme.palette.warning.main}`,
+                borderRadius: 4,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={{ color: theme.palette.text.primary }}>Ưu tiên trung bình</Text>
+                  <Tag color="orange">
+                    {notes.filter(n => n.priority === 'medium' && n.status === 'pending').length} ghi chú
+                  </Tag>
+                </div>
+              </div>
+              <div style={{
+                padding: 12,
+                background: alpha(theme.palette.info.main, 0.1),
+                borderLeft: `4px solid ${theme.palette.info.main}`,
+                borderRadius: 4,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={{ color: theme.palette.text.primary }}>Ưu tiên thấp</Text>
+                  <Tag color="blue">
+                    {notes.filter(n => n.priority === 'low' && n.status === 'pending').length} ghi chú
+                  </Tag>
+                </div>
+              </div>
+            </Space>
+          </Card>
+
+          {/* Quick Add */}
+          <Card
+            bordered={false}
+            title={
+              <Space>
+                <CalendarOutlined style={{ color: theme.palette.success.main }} />
+                <Text strong style={{ color: theme.palette.text.primary }}>
+                  Hành động nhanh
+                </Text>
+              </Space>
+            }
+            style={{
+              borderRadius: 8,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            }}
+          >
+            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+              <Button
+                type="primary"
+                block
+                icon={<PlusOutlined />}
+                onClick={handleAdd}
+              >
+                Thêm ghi chú mới
+              </Button>
+              <Button
+                block
+                icon={<CheckCircleOutlined />}
+                onClick={() => {
+                  if (pendingNotes.length > 0) {
+                    handleToggleStatus(pendingNotes[0].id);
+                  }
+                }}
+                disabled={pendingNotes.length === 0}
+              >
+                Hoàn thành ghi chú đầu tiên
+              </Button>
+            </Space>
+          </Card>
+        </Col>
+      </Row>
 
       {/* Modal */}
       <Modal

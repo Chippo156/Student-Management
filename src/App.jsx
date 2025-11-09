@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { ConfigProvider, theme as antdTheme } from 'antd';
 import { store } from './redux/store';
 import getTheme from './theme';
 import AppRoutes from './routes';
@@ -62,13 +63,45 @@ const AppContent = () => {
     return () => window.clearTimeout(t);
   }, [themeMode, theme]);
 
+  // Ant Design theme configuration
+  const antdThemeConfig = useMemo(() => ({
+    algorithm: theme.palette.mode === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+    token: {
+      colorPrimary: theme.palette.primary.main,
+      colorSuccess: theme.palette.success.main,
+      colorWarning: theme.palette.warning.main,
+      colorError: theme.palette.error.main,
+      colorInfo: theme.palette.primary.main,
+      colorBgBase: theme.palette.background.paper,
+      colorTextBase: theme.palette.text.primary,
+      borderRadius: 8,
+      fontSize: 14,
+    },
+    components: {
+      Table: {
+        headerBg: theme.palette.mode === 'dark' ? theme.palette.background.paper : theme.palette.primary.light + '20',
+        headerColor: theme.palette.text.primary,
+        rowHoverBg: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+      },
+      Card: {
+        colorBgContainer: theme.palette.background.paper,
+      },
+      Modal: {
+        contentBg: theme.palette.background.paper,
+        headerBg: theme.palette.background.paper,
+      },
+    },
+  }), [theme]);
+
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <ErrorBoundary>
-        <AppRoutes />
-      </ErrorBoundary>
-    </ThemeProvider>
+    <ConfigProvider theme={antdThemeConfig}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <ErrorBoundary>
+          <AppRoutes />
+        </ErrorBoundary>
+      </ThemeProvider>
+    </ConfigProvider>
   );
 };
 

@@ -17,6 +17,8 @@ import {
   Timeline,
   Progress,
   Alert,
+  Space,
+  Divider,
 } from 'antd';
 import {
   CheckCircleOutlined,
@@ -26,13 +28,17 @@ import {
   TrophyOutlined,
   BookOutlined,
   PlusOutlined,
+  FireOutlined,
+  StarOutlined,
 } from '@ant-design/icons';
+import { useTheme, alpha } from '@mui/material/styles';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const GraduatePage = () => {
+  const theme = useTheme();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
   const [form] = Form.useForm();
@@ -228,88 +234,191 @@ const GraduatePage = () => {
   ).length;
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Title level={2}>
+    <div style={{
+      padding: '24px',
+      minHeight: '100vh',
+      background: theme.palette.background.default,
+    }}>
+      <Title level={2} style={{ color: theme.palette.primary.main, marginBottom: 24 }}>
         <TrophyOutlined style={{ marginRight: 8 }} />
         Tiến độ tốt nghiệp
       </Title>
 
+      {/* Quick Stats */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+            <Statistic
+              title={<span style={{ color: theme.palette.text.secondary }}>Tiến độ tổng thể</span>}
+              value={overallProgress}
+              suffix="%"
+              prefix={<TrophyOutlined style={{ color: theme.palette.primary.main }} />}
+              valueStyle={{ color: theme.palette.primary.main }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+            <Statistic
+              title={<span style={{ color: theme.palette.text.secondary }}>Yêu cầu hoàn thành</span>}
+              value={completedRequirements}
+              suffix={`/ ${requirements.length}`}
+              prefix={<CheckCircleOutlined style={{ color: theme.palette.success.main }} />}
+              valueStyle={{ color: theme.palette.success.main }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+            <Statistic
+              title={<span style={{ color: theme.palette.text.secondary }}>Mục tiêu sắp tới</span>}
+              value={upcomingMilestones}
+              prefix={<ClockCircleOutlined style={{ color: theme.palette.warning.main }} />}
+              valueStyle={{ color: theme.palette.warning.main }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+            <Statistic
+              title={<span style={{ color: theme.palette.text.secondary }}>Tín chỉ tích lũy</span>}
+              value={totalCompleted}
+              suffix={`/ ${totalRequired}`}
+              prefix={<StarOutlined style={{ color: theme.palette.secondary.main }} />}
+              valueStyle={{ color: theme.palette.secondary.main }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
       {/* Overall Progress */}
-      <Card style={{ marginBottom: 24 }}>
-        <Row gutter={16}>
-          <Col span={12}>
+      <Card
+        bordered={false}
+        style={{
+          marginBottom: 24,
+          borderRadius: 8,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        }}
+      >
+        <Row gutter={[24, 24]}>
+          <Col xs={24} md={8}>
             <div style={{ textAlign: 'center' }}>
               <Progress
                 type="circle"
                 percent={overallProgress}
-                size={120}
+                size={140}
                 strokeColor={{
-                  '0%': '#108ee9',
-                  '100%': '#87d068',
+                  '0%': theme.palette.primary.main,
+                  '100%': theme.palette.success.main,
                 }}
               />
-              <Title level={4} style={{ marginTop: 16 }}>
+              <Title level={4} style={{ marginTop: 16, color: theme.palette.text.primary }}>
                 Tiến độ tổng thể
               </Title>
             </div>
           </Col>
-          <Col span={12}>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Statistic
-                  title="Yêu cầu hoàn thành"
-                  value={completedRequirements}
-                  suffix={`/ ${requirements.length}`}
-                  prefix={<CheckCircleOutlined />}
-                  valueStyle={{ color: '#52c41a' }}
-                />
-              </Col>
-              <Col span={12}>
-                <Statistic
-                  title="Mục tiêu sắp tới"
-                  value={upcomingMilestones}
-                  prefix={<ClockCircleOutlined />}
-                  valueStyle={{ color: '#faad14' }}
-                />
-              </Col>
-            </Row>
+          <Col xs={24} md={16}>
             <Alert
               message={
                 overallProgress >= 80
                   ? 'Bạn đang trên đường hoàn thành tốt nghiệp!'
                   : 'Cần nỗ lực thêm để đạt yêu cầu tốt nghiệp'
               }
+              description={
+                overallProgress >= 80
+                  ? 'Chỉ còn vài bước nữa là bạn sẽ đạt đủ điều kiện tốt nghiệp. Hãy tiếp tục duy trì!'
+                  : 'Hãy tập trung hoàn thành các yêu cầu còn lại để đảm bảo đủ điều kiện tốt nghiệp đúng hạn.'
+              }
               type={overallProgress >= 80 ? 'success' : 'warning'}
               showIcon
-              style={{ marginTop: 16 }}
+              style={{ marginBottom: 16 }}
             />
+            <div style={{
+              padding: 16,
+              background: alpha(theme.palette.primary.main, 0.05),
+              borderRadius: 8,
+            }}>
+              <Text strong style={{ color: theme.palette.text.primary, display: 'block', marginBottom: 12 }}>
+                Tổng quan tín chỉ
+              </Text>
+              <Progress
+                percent={Math.round((totalCompleted / totalRequired) * 100)}
+                strokeColor={{
+                  '0%': theme.palette.secondary.main,
+                  '100%': theme.palette.success.main,
+                }}
+                format={() => `${totalCompleted} / ${totalRequired}`}
+              />
+              <Row gutter={16} style={{ marginTop: 16 }}>
+                <Col span={8}>
+                  <div style={{ textAlign: 'center' }}>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Đã hoàn thành</Text>
+                    <Text strong style={{ fontSize: 18, color: theme.palette.success.main }}>{totalCompleted}</Text>
+                  </div>
+                </Col>
+                <Col span={8}>
+                  <div style={{ textAlign: 'center' }}>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Còn lại</Text>
+                    <Text strong style={{ fontSize: 18, color: theme.palette.warning.main }}>
+                      {totalRequired - totalCompleted}
+                    </Text>
+                  </div>
+                </Col>
+                <Col span={8}>
+                  <div style={{ textAlign: 'center' }}>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Tổng yêu cầu</Text>
+                    <Text strong style={{ fontSize: 18, color: theme.palette.primary.main }}>{totalRequired}</Text>
+                  </div>
+                </Col>
+              </Row>
+            </div>
           </Col>
         </Row>
       </Card>
 
       {/* Graduation Requirements */}
       <Card
+        bordered={false}
         title={
-          <span>
-            <BookOutlined style={{ marginRight: 8 }} />
-            Yêu cầu tốt nghiệp
-          </span>
+          <Space>
+            <BookOutlined style={{ color: theme.palette.primary.main }} />
+            <Text strong style={{ color: theme.palette.text.primary }}>Yêu cầu tốt nghiệp</Text>
+          </Space>
         }
-        style={{ marginBottom: 24 }}
+        style={{
+          marginBottom: 24,
+          borderRadius: 8,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        }}
       >
-        <Row gutter={16}>
+        <Row gutter={[16, 16]}>
           {requirements.map((req) => (
-            <Col span={12} key={req.id} style={{ marginBottom: 16 }}>
-              <Card size="small">
+            <Col xs={24} md={12} key={req.id}>
+              <div style={{
+                padding: 16,
+                background: alpha(
+                  req.status === 'completed' ? theme.palette.success.main :
+                  req.status === 'in-progress' ? theme.palette.primary.main :
+                  theme.palette.warning.main,
+                  0.05
+                ),
+                border: `1px solid ${alpha(
+                  req.status === 'completed' ? theme.palette.success.main :
+                  req.status === 'in-progress' ? theme.palette.primary.main :
+                  theme.palette.warning.main,
+                  0.2
+                )}`,
+                borderRadius: 8,
+              }}>
                 <div
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: 8,
+                    marginBottom: 12,
                   }}
                 >
-                  <Text strong>{req.category}</Text>
+                  <Text strong style={{ color: theme.palette.text.primary }}>{req.category}</Text>
                   <Tag color={getStatusColor(req.status)}>
                     {getStatusText(req.status)}
                   </Tag>
@@ -317,12 +426,16 @@ const GraduatePage = () => {
                 <Progress
                   percent={Math.round((req.completed / req.total) * 100)}
                   format={() => `${req.completed}/${req.total}`}
-                  strokeColor={getStatusColor(req.status)}
+                  strokeColor={
+                    req.status === 'completed' ? theme.palette.success.main :
+                    req.status === 'in-progress' ? theme.palette.primary.main :
+                    theme.palette.warning.main
+                  }
                 />
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" style={{ fontSize: 12, marginTop: 8, display: 'block' }}>
                   {req.description}
                 </Text>
-              </Card>
+              </div>
             </Col>
           ))}
         </Row>
@@ -330,11 +443,12 @@ const GraduatePage = () => {
 
       {/* Graduation Timeline */}
       <Card
+        bordered={false}
         title={
-          <span>
-            <CalendarOutlined style={{ marginRight: 8 }} />
-            Lộ trình tốt nghiệp
-          </span>
+          <Space>
+            <CalendarOutlined style={{ color: theme.palette.primary.main }} />
+            <Text strong style={{ color: theme.palette.text.primary }}>Lộ trình tốt nghiệp</Text>
+          </Space>
         }
         extra={
           <Button
@@ -345,6 +459,10 @@ const GraduatePage = () => {
             Thêm mục tiêu
           </Button>
         }
+        style={{
+          borderRadius: 8,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        }}
       >
         {milestones.length > 0 ? (
           <Timeline>
@@ -365,27 +483,41 @@ const GraduatePage = () => {
                     )
                   }
                 >
-                  <Card size="small" style={{ marginBottom: 16 }}>
+                  <div style={{
+                    padding: 16,
+                    background: alpha(
+                      milestone.status === 'completed' ? theme.palette.success.main :
+                      milestone.status === 'upcoming' ? theme.palette.primary.main :
+                      theme.palette.warning.main,
+                      0.05
+                    ),
+                    border: `1px solid ${alpha(
+                      milestone.status === 'completed' ? theme.palette.success.main :
+                      milestone.status === 'upcoming' ? theme.palette.primary.main :
+                      theme.palette.warning.main,
+                      0.2
+                    )}`,
+                    borderRadius: 8,
+                    marginBottom: 16,
+                  }}>
                     <div
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
+                        marginBottom: 8,
                       }}
                     >
                       <div>
-                        <Text strong>{milestone.title}</Text>
-                        <br />
-                        <Text type="secondary">
-                          {dayjs(milestone.date).format('DD/MM/YYYY')}
+                        <Text strong style={{ color: theme.palette.text.primary, display: 'block' }}>
+                          {milestone.title}
+                        </Text>
+                        <Text type="secondary" style={{ fontSize: 13 }}>
+                          <CalendarOutlined /> {dayjs(milestone.date).format('DD/MM/YYYY')}
                           {milestone.status === 'upcoming' && (
-                            <span>
+                            <span style={{ color: theme.palette.warning.main, fontWeight: 500 }}>
                               {' '}
-                              (còn {dayjs(milestone.date).diff(
-                                dayjs(),
-                                'day'
-                              )}{' '}
-                              ngày)
+                              (còn {dayjs(milestone.date).diff(dayjs(), 'day')} ngày)
                             </span>
                           )}
                         </Text>
@@ -403,22 +535,27 @@ const GraduatePage = () => {
                         </Button>
                       </div>
                     </div>
-                    <Text style={{ marginTop: 8, display: 'block' }}>
+                    <Text style={{ marginTop: 8, display: 'block', color: theme.palette.text.secondary }}>
                       {milestone.description}
                     </Text>
                     {milestone.documents.length > 0 && (
-                      <div style={{ marginTop: 8 }}>
-                        <Text type="secondary" style={{ fontSize: 12 }}>
+                      <div style={{
+                        marginTop: 12,
+                        padding: 12,
+                        background: alpha(theme.palette.info.main, 0.05),
+                        borderRadius: 4,
+                      }}>
+                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
                           <FileTextOutlined /> Tài liệu cần chuẩn bị:
                         </Text>
-                        <ul style={{ margin: '4px 0 0 16px', fontSize: 12 }}>
+                        <ul style={{ margin: '4px 0 0 16px', fontSize: 12, color: theme.palette.text.secondary }}>
                           {milestone.documents.map((doc, index) => (
                             <li key={index}>{doc}</li>
                           ))}
                         </ul>
                       </div>
                     )}
-                  </Card>
+                  </div>
                 </Timeline.Item>
               ))}
           </Timeline>

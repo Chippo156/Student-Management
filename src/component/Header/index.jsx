@@ -117,21 +117,60 @@ const HeaderPage = () => {
         <Toolbar
           sx={{ justifyContent: 'space-between', px: { xs: 1, sm: 2, md: 3 } }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <img
-              src="/vite.svg"
-              alt="Logo"
-              style={{ height: 40, marginRight: 12, cursor: 'pointer' }}
-              onClick={() => navigate('/')}
-            />
-            <Typography
-              variant="h6"
-              color="primary"
-              sx={{ fontWeight: 700, cursor: 'pointer' }}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: '12px',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: theme.shadows[2],
+              }}
               onClick={() => navigate('/')}
             >
-              T1 STUDENT
-            </Typography>
+              <Typography
+                sx={{
+                  fontSize: '24px',
+                  fontWeight: 900,
+                  color: theme.palette.primary.contrastText,
+                  letterSpacing: '-0.5px',
+                }}
+              >
+                UMS
+              </Typography>
+            </Box>
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  lineHeight: 1.2,
+                }}
+                onClick={() => navigate('/')}
+              >
+                Hệ thống Quản lý Đào tạo
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: theme.palette.text.secondary,
+                  fontSize: '0.7rem',
+                  display: 'block',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                University Management System
+              </Typography>
+            </Box>
           </Box>
           <Box
             sx={{

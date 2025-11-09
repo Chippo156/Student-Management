@@ -47,8 +47,8 @@ import LayoutUser from '../component/LayoutUser/LayoutUser';
 import LayoutAdmin from '../component/LayoutAdmin/LayoutAdmin';
 import LayoutStudent from '../component/LayoutStudent/LayoutStudent';
 import LayoutTeacher from '../component/LayoutTeacher/LayoutTeacher';
-import CourseManagement from '~/page/Admin/courseManagement';
-import SystemSettings from '~/page/Admin/systemSettings';
+import CourseManagement from '~/page/Admin/CourseManagement';
+import SystemSettings from '~/page/Admin/SystemSettings';
 
 const RegisterCoursePage = () => (
   <div style={{ padding: '24px' }}>
@@ -81,7 +81,6 @@ const TimelinePage = () => (
 const AppRoutes = () => {
   const { isAuthenticated, account } = useAppSelector((state) => state.user);
   const location = useLocation();
-
   const getDashboardByRole = () => {
     const role = localStorage.getItem('role');
     if (!account || !role) {

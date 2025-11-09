@@ -17,6 +17,7 @@ import {
   Descriptions,
 } from 'antd';
 import { Box, Paper } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { userService } from '../../../service/userService';
 import { familyRelationshipService } from '../../../service/familyRelationshipService';
 import { externalBankService } from '../../../service/helperService';
@@ -43,6 +44,7 @@ const RELATIONSHIP_TYPES = [
 ];
 
 const StudentEditInfoPage = () => {
+  const theme = useTheme();
   const [formPersonal] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [studentInfo, setStudentInfo] = useState({});
@@ -450,21 +452,21 @@ const StudentEditInfoPage = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: 60, textAlign: 'center' }}>
+      <div style={{ padding: 60, textAlign: 'center', background: theme.palette.background.default, minHeight: '100vh' }}>
         <Spin size="large" />
-        <div style={{ marginTop: 20 }}>Đang tải thông tin sinh viên...</div>
+        <div style={{ marginTop: 20, color: theme.palette.text.primary }}>Đang tải thông tin sinh viên...</div>
       </div>
     );
   }
 
   return (
-    <Box sx={{ mx: 'auto', mt: 4, maxWidth: 1100 }}>
-      <Paper elevation={3} sx={{ p: { xs: 2, md: 4 } }}>
+    <Box sx={{ mx: 'auto', mt: 4, maxWidth: 1100, p: 3, background: theme.palette.background.default, minHeight: '100vh' }}>
+      <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, background: theme.palette.background.paper }}>
         <Tabs defaultActiveKey="1">
           <TabPane tab="Thông tin cá nhân" key="1">
             <Card
               title="Cập nhật thông tin cá nhân"
-              style={{ background: '#fafcff', marginBottom: 20 }}
+              style={{ background: theme.palette.background.paper, marginBottom: 20, borderColor: theme.palette.divider }}
               bordered={false}
             >
               <Form
@@ -872,7 +874,7 @@ const StudentEditInfoPage = () => {
                       member.relationshipTypeName ||
                       'Người thân'
                     }
-                    headStyle={{ background: '#e6f7ff' }}
+                    headStyle={{ background: theme.palette.background.default, color: theme.palette.text.primary }}
                     extra={
                       <>
                         <Button

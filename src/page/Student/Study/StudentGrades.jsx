@@ -9,6 +9,7 @@ import {
   CheckCircleTwoTone,
   CloseCircleTwoTone,
 } from '@ant-design/icons';
+import { useTheme } from '@mui/material/styles';
 import gradeService from '../../../service/gradeService';
 import reportService from '../../../service/reportService';
 import { useSelector } from 'react-redux';
@@ -254,6 +255,7 @@ const mapCourseGrades = (courseGrades) =>
   });
 
 const StudentGrades = () => {
+  const theme = useTheme();
   const user = useSelector((state) => state.user.account);
   const [summary, setSummary] = useState(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
@@ -362,10 +364,10 @@ const StudentGrades = () => {
     onCell: (record) => {
       if (record.isGroup)
         return {
-          style: { background: '#f6faff', fontWeight: 600, border: 'none' },
+          style: { background: theme.palette.background.default, fontWeight: 600, border: 'none' },
         };
       if (record.isSummary)
-        return { style: { background: '#f8fafd', fontWeight: 500 } };
+        return { style: { background: theme.palette.background.secondary, fontWeight: 500 } };
       return {};
     },
     render: (value, record) => {
@@ -377,14 +379,14 @@ const StudentGrades = () => {
               style={{
                 width: '100%',
                 textAlign: 'left',
-                color: '#1677ff',
+                color: theme.palette.primary.main,
                 fontWeight: 600,
                 fontSize: 16,
               }}
             >
               {record.semesterName}
               <span
-                style={{ marginLeft: 16, color: '#722ed1', fontWeight: 500 }}
+                style={{ marginLeft: 16, color: theme.palette.secondary.main, fontWeight: 500 }}
               >
                 GPA: {record.semesterGPA10 ?? ''}
               </span>
@@ -421,7 +423,7 @@ const StudentGrades = () => {
   }));
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ padding: 24, background: theme.palette.background.default, minHeight: '100vh' }}>
       <div
         style={{
           display: 'flex',
@@ -430,37 +432,37 @@ const StudentGrades = () => {
           marginBottom: 24,
         }}
       >
-        <Title level={2}>
-          <BookOutlined style={{ marginRight: 8 }} />
+        <Title level={2} style={{ color: theme.palette.text.primary }}>
+          <BookOutlined style={{ marginRight: 8, color: theme.palette.primary.main }} />
           Kết quả học tập
         </Title>
       </div>
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col span={6}>
-          <Card style={{ minHeight: 140 }} loading={!summary}>
+          <Card style={{ minHeight: 140, background: theme.palette.background.paper, borderColor: theme.palette.divider }} loading={!summary}>
             <Statistic
-              title="GPA tích lũy"
+              title={<span style={{ color: theme.palette.text.secondary }}>GPA tích lũy</span>}
               value={summary?.gpa ?? 0}
               precision={2}
-              prefix={<TrophyOutlined />}
+              prefix={<TrophyOutlined style={{ color: theme.palette.warning.main }} />}
               valueStyle={{
                 color:
                   summary?.gpa >= 3.0
-                    ? '#52c41a'
+                    ? theme.palette.success.main
                     : summary?.gpa >= 2.0
-                      ? '#faad14'
-                      : '#ff4d4f',
+                      ? theme.palette.warning.main
+                      : theme.palette.error.main,
               }}
             />
             <Progress
               percent={Math.min((summary?.gpa / 4) * 100, 100)}
               strokeColor={
                 summary?.gpa >= 3.0
-                  ? '#52c41a'
+                  ? theme.palette.success.main
                   : summary?.gpa >= 2.0
-                    ? '#faad14'
-                    : '#ff4d4f'
+                    ? theme.palette.warning.main
+                    : theme.palette.error.main
               }
               showInfo={false}
               size="small"
@@ -468,45 +470,45 @@ const StudentGrades = () => {
           </Card>
         </Col>
         <Col span={6}>
-          <Card style={{ minHeight: 140 }} loading={!summary}>
+          <Card style={{ minHeight: 140, background: theme.palette.background.paper, borderColor: theme.palette.divider }} loading={!summary}>
             <Statistic
-              title="Tín chỉ tích lũy"
+              title={<span style={{ color: theme.palette.text.secondary }}>Tín chỉ tích lũy</span>}
               value={summary?.completedCredits ?? 0}
               suffix={summary ? `/ ${user.totalCreditsRequired}` : ''}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#1890ff' }}
+              prefix={<CheckCircleOutlined style={{ color: theme.palette.primary.main }} />}
+              valueStyle={{ color: theme.palette.primary.main }}
             />
           </Card>
         </Col>
         <Col span={6}>
-          <Card style={{ minHeight: 140 }} loading={!summary}>
+          <Card style={{ minHeight: 140, background: theme.palette.background.paper, borderColor: theme.palette.divider }} loading={!summary}>
             <Statistic
-              title="Môn học rớt"
+              title={<span style={{ color: theme.palette.text.secondary }}>Môn học rớt</span>}
               value={summary?.failedCourses?.length ?? 0}
-              prefix={<WarningOutlined />}
+              prefix={<WarningOutlined style={{ color: theme.palette.warning.main }} />}
               valueStyle={{
                 color:
                   (summary?.failedCourses?.length ?? 0) > 0
-                    ? '#ff4d4f'
-                    : '#52c41a',
+                    ? theme.palette.error.main
+                    : theme.palette.success.main,
               }}
             />
           </Card>
         </Col>
         <Col span={6}>
-          <Card style={{ minHeight: 140 }} loading={!summary}>
+          <Card style={{ minHeight: 140, background: theme.palette.background.paper, borderColor: theme.palette.divider }} loading={!summary}>
             <Statistic
-              title="Tỷ lệ hoàn thành"
+              title={<span style={{ color: theme.palette.text.secondary }}>Tỷ lệ hoàn thành</span>}
               value={summary?.completionRate ?? 0}
               suffix="%"
-              prefix={<LineChartOutlined />}
-              valueStyle={{ color: '#722ed1' }}
+              prefix={<LineChartOutlined style={{ color: theme.palette.secondary.main }} />}
+              valueStyle={{ color: theme.palette.secondary.main }}
             />
           </Card>
         </Col>
       </Row>
 
-      <div style={{ width: '100%', overflowX: 'auto', background: '#fff' }}>
+      <div style={{ width: '100%', overflowX: 'auto', background: theme.palette.background.paper, borderRadius: 8, padding: 16 }}>
         <Table
           columns={mergedColumns}
           dataSource={tableData}

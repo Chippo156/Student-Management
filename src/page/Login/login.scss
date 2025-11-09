@@ -3,7 +3,7 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%);
   padding: 20px;
 }
 
@@ -74,7 +74,7 @@
 .login-container button {
   width: 100%;
   padding: 10px;
-  background-color: #007bff;
+  background-color: #4F46E5;
   color: white;
   border: none;
   border-radius: 5px;
@@ -82,7 +82,7 @@
 }
 
 .login-container button:hover {
-  background-color: #0056b3;
+  background-color: #3730A3;
 }
 
 .login-links {
@@ -92,7 +92,7 @@
 }
 
 .login-links a {
-  color: #007bff;
+  color: #4F46E5;
   text-decoration: none;
 }
 
@@ -101,11 +101,11 @@
 }
 
 .login-links .forgot-password {
-  color: red;
+  color: #EF4444;
 }
 .ant-btn-primary {
-  background-color: #1890ff;
-  border-color: #1890ff;
+  background-color: #4F46E5;
+  border-color: #4F46E5;
   height: 40px;
   font-size: 16px;
   font-weight: 500;
@@ -113,7 +113,7 @@
 
   &:hover,
   &:focus {
-    background-color: #40a9ff;
-    border-color: #40a9ff;
+    background-color: #3730A3;
+    border-color: #3730A3;
   }
 }

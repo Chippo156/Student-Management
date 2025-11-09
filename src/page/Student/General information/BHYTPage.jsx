@@ -26,63 +26,63 @@ import {
   PhoneOutlined,
   EnvironmentOutlined,
 } from '@ant-design/icons';
+import { useTheme } from '@mui/material/styles';
 
 const { Title, Text } = Typography;
 
 const BHYTPage = () => {
+  const theme = useTheme();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [form] = Form.useForm();
 
-  const [insuranceInfo] =
-    useState <
-    InsuranceInfo >
-    {
-      id: '1',
-      cardNumber: 'HS4030012345678',
-      holderName: 'Nguyễn Văn A',
-      dateOfBirth: '2002-05-15',
-      gender: 'male',
-      address: '123 Đường ABC, Phường XYZ, Quận 1, TP.HCM',
-      phone: '0123456789',
-      issueDate: '2024-01-01',
-      expiryDate: '2025-12-31',
-      issuedBy: 'BHXH TP.HCM',
-      status: 'active',
-      hospitalRegistered: 'Bệnh viện Đại học Y Dược TP.HCM',
-      medicalHistory: [
-        {
-          id: '1',
-          date: '2024-09-15',
-          hospital: 'Bệnh viện Đại học Y Dược TP.HCM',
-          diagnosis: 'Cảm cúm thông thường',
-          treatment: 'Thuốc hạ sốt, kháng sinh',
-          cost: 250000,
-          covered: 200000,
-          notes: 'Nghỉ ngơi 3 ngày',
-        },
-        {
-          id: '2',
-          date: '2024-08-20',
-          hospital: 'Phòng khám Đa khoa Medlatec',
-          diagnosis: 'Khám sức khỏe định kỳ',
-          treatment: 'Xét nghiệm máu, đo huyết áp',
-          cost: 180000,
-          covered: 144000,
-          notes: 'Sức khỏe tốt',
-        },
-        {
-          id: '3',
-          date: '2024-07-10',
-          hospital: 'Bệnh viện Chợ Rẫy',
-          diagnosis: 'Viêm họng cấp',
-          treatment: 'Thuốc kháng viêm, xịt họng',
-          cost: 320000,
-          covered: 256000,
-          notes: 'Tái khám sau 1 tuần',
-        },
-      ],
-    };
+  // Sửa lỗi dấu phẩy ở useState
+  const [insuranceInfo] = useState({
+    id: '1',
+    cardNumber: 'HS4030012345678',
+    holderName: 'Nguyễn Văn A',
+    dateOfBirth: '2002-05-15',
+    gender: 'male',
+    address: '123 Đường ABC, Phường XYZ, Quận 1, TP.HCM',
+    phone: '0123456789',
+    issueDate: '2024-01-01',
+    expiryDate: '2025-12-31',
+    issuedBy: 'BHXH TP.HCM',
+    status: 'active',
+    hospitalRegistered: 'Bệnh viện Đại học Y Dược TP.HCM',
+    medicalHistory: [
+      {
+        id: '1',
+        date: '2024-09-15',
+        hospital: 'Bệnh viện Đại học Y Dược TP.HCM',
+        diagnosis: 'Cảm cúm thông thường',
+        treatment: 'Thuốc hạ sốt, kháng sinh',
+        cost: 250000,
+        covered: 200000,
+        notes: 'Nghỉ ngơi 3 ngày',
+      },
+      {
+        id: '2',
+        date: '2024-08-20',
+        hospital: 'Phòng khám Đa khoa Medlatec',
+        diagnosis: 'Khám sức khỏe định kỳ',
+        treatment: 'Xét nghiệm máu, đo huyết áp',
+        cost: 180000,
+        covered: 144000,
+        notes: 'Sức khỏe tốt',
+      },
+      {
+        id: '3',
+        date: '2024-07-10',
+        hospital: 'Bệnh viện Chợ Rẫy',
+        diagnosis: 'Viêm họng cấp',
+        treatment: 'Thuốc kháng viêm, xịt họng',
+        cost: 320000,
+        covered: 256000,
+        notes: 'Tái khám sau 1 tuần',
+      },
+    ],
+  });
 
   const [medicalHistory, setMedicalHistory] = useState(
     insuranceInfo.medicalHistory
@@ -159,11 +159,11 @@ const BHYTPage = () => {
   };
 
   const totalCost = medicalHistory.reduce(
-    (sum, record) => sum + record.cost,
+    (sum, record) => sum + Number(record.cost || 0),
     0
   );
   const totalCovered = medicalHistory.reduce(
-    (sum, record) => sum + record.covered,
+    (sum, record) => sum + Number(record.covered || 0),
     0
   );
   const coverageRate = totalCost > 0 ? (totalCovered / totalCost) * 100 : 0;
@@ -260,7 +260,7 @@ const BHYTPage = () => {
               title="Tổng chi phí"
               value={totalCost}
               suffix="₫"
-              valueStyle={{ color: '#f5222d' }}
+              valueStyle={{ color: theme.palette.error.main }}
               formatter={(value) =>
                 `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
               }
@@ -273,7 +273,7 @@ const BHYTPage = () => {
               title="BHYT chi trả"
               value={totalCovered}
               suffix="₫"
-              valueStyle={{ color: '#52c41a' }}
+              valueStyle={{ color: theme.palette.success.main }}
               formatter={(value) =>
                 `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
               }
@@ -287,7 +287,7 @@ const BHYTPage = () => {
               value={coverageRate}
               suffix="%"
               precision={1}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: theme.palette.primary.main }}
             />
           </Card>
         </Col>
@@ -296,7 +296,7 @@ const BHYTPage = () => {
             <Statistic
               title="Số lần khám"
               value={medicalHistory.length}
-              valueStyle={{ color: '#722ed1' }}
+              valueStyle={{ color: theme.palette.secondary.main }}
             />
           </Card>
         </Col>
@@ -355,15 +355,18 @@ const BHYTPage = () => {
                       <Space>
                         <Text>
                           <strong>Chi phí:</strong>{' '}
-                          {record.cost.toLocaleString()}₫
+                          {Number(record.cost).toLocaleString()}₫
                         </Text>
                         <Text type="success">
                           <strong>BHYT chi trả:</strong>{' '}
-                          {record.covered.toLocaleString()}₫
+                          {Number(record.covered).toLocaleString()}₫
                         </Text>
                         <Text type="secondary">
                           <strong>Tự trả:</strong>{' '}
-                          {(record.cost - record.covered).toLocaleString()}₫
+                          {Number(
+                            record.cost - record.covered
+                          ).toLocaleString()}
+                          ₫
                         </Text>
                       </Space>
                       {record.notes && (

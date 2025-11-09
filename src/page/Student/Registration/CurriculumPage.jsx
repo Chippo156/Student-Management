@@ -9,7 +9,19 @@ import {
   Row,
   Col,
   Tooltip,
+  Statistic,
+  Progress,
+  Space,
+  Divider,
 } from 'antd';
+import {
+  BookOutlined,
+  CheckCircleOutlined,
+  TrophyOutlined,
+  ClockCircleOutlined,
+  FireOutlined,
+} from '@ant-design/icons';
+import { useTheme, alpha } from '@mui/material/styles';
 import academicProgramService from '../../../service/academicProgramService';
 
 const { Title, Paragraph, Text } = Typography;
@@ -129,6 +141,7 @@ const columns = [
 ];
 
 const CurriculumPage = () => {
+  const theme = useTheme();
   const [curriculum, setCurriculum] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -142,67 +155,146 @@ const CurriculumPage = () => {
     fetchCurriculum();
   }, []);
 
+  // Mock data for completed credits (this should come from actual student progress)
+  const mockCompletedCredits = curriculum ? Math.floor(curriculum.totalCreditsRequired * 0.6) : 0;
+  const completionRate = curriculum ? Math.round((mockCompletedCredits / curriculum.totalCreditsRequired) * 100) : 0;
+
   return (
-    <Card
-      style={{
-        padding: 24,
-        // background: 'linear-gradient(90deg, #e6f0ff 0%, #f9f0ff 100%)',
-        borderRadius: 16,
-        boxShadow: '0 2px 12px #e6e6e6',
-      }}
-    >
-      <Title level={2} style={{ color: '#1677ff', fontWeight: 700 }}>
+    <div style={{
+      padding: 24,
+      minHeight: '100vh',
+      background: theme.palette.background.default,
+    }}>
+      <Title level={2} style={{ color: theme.palette.primary.main, fontWeight: 700, marginBottom: 24 }}>
+        <BookOutlined style={{ marginRight: 8 }} />
         Chương trình khung
       </Title>
       <Spin spinning={loading}>
         {curriculum ? (
           <>
-            <Row gutter={16} style={{ marginBottom: 16 }}>
-              <Col>
-                <Text strong style={{ color: '#0050b3' }}>
-                  Chương trình:
-                </Text>{' '}
-                {curriculum.programName}
+            {/* Quick Stats */}
+            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+              <Col xs={24} sm={12} lg={6}>
+                <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                  <Statistic
+                    title={<span style={{ color: theme.palette.text.secondary }}>Tổng TC yêu cầu</span>}
+                    value={curriculum.totalCreditsRequired}
+                    prefix={<BookOutlined style={{ color: theme.palette.primary.main }} />}
+                    valueStyle={{ color: theme.palette.primary.main }}
+                  />
+                </Card>
               </Col>
-              <Col>
-                <Text strong style={{ color: '#0050b3' }}>
-                  Khoa:
-                </Text>{' '}
-                {curriculum.facultyName}
+              <Col xs={24} sm={12} lg={6}>
+                <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                  <Statistic
+                    title={<span style={{ color: theme.palette.text.secondary }}>TC đã hoàn thành</span>}
+                    value={mockCompletedCredits}
+                    prefix={<CheckCircleOutlined style={{ color: theme.palette.success.main }} />}
+                    valueStyle={{ color: theme.palette.success.main }}
+                  />
+                </Card>
               </Col>
-              <Col>
-                <Text strong style={{ color: '#0050b3' }}>
-                  Ngành:
-                </Text>{' '}
-                {curriculum.departmentName}
+              <Col xs={24} sm={12} lg={6}>
+                <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                  <Statistic
+                    title={<span style={{ color: theme.palette.text.secondary }}>TC còn lại</span>}
+                    value={curriculum.totalCreditsRequired - mockCompletedCredits}
+                    prefix={<ClockCircleOutlined style={{ color: theme.palette.warning.main }} />}
+                    valueStyle={{ color: theme.palette.warning.main }}
+                  />
+                </Card>
               </Col>
-              <Col>
-                <Text strong style={{ color: '#0050b3' }}>
-                  Bậc đào tạo:
-                </Text>{' '}
-                {curriculum.degreeLevel}
+              <Col xs={24} sm={12} lg={6}>
+                <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                  <Statistic
+                    title={<span style={{ color: theme.palette.text.secondary }}>Tiến độ</span>}
+                    value={completionRate}
+                    suffix="%"
+                    prefix={<TrophyOutlined style={{ color: theme.palette.secondary.main }} />}
+                    valueStyle={{ color: theme.palette.secondary.main }}
+                  />
+                </Card>
               </Col>
             </Row>
-            <Collapse accordion>
+
+            {/* Program Information */}
+            <Card
+              bordered={false}
+              style={{
+                marginBottom: 16,
+                borderRadius: 8,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              }}
+            >
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12}>
+                  <Space>
+                    <Text strong style={{ color: theme.palette.primary.main }}>
+                      Chương trình:
+                    </Text>
+                    <Text style={{ color: theme.palette.text.primary }}>{curriculum.programName}</Text>
+                  </Space>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Space>
+                    <Text strong style={{ color: theme.palette.primary.main }}>
+                      Khoa:
+                    </Text>
+                    <Text style={{ color: theme.palette.text.primary }}>{curriculum.facultyName}</Text>
+                  </Space>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Space>
+                    <Text strong style={{ color: theme.palette.primary.main }}>
+                      Ngành:
+                    </Text>
+                    <Text style={{ color: theme.palette.text.primary }}>{curriculum.departmentName}</Text>
+                  </Space>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Space>
+                    <Text strong style={{ color: theme.palette.primary.main }}>
+                      Bậc đào tạo:
+                    </Text>
+                    <Text style={{ color: theme.palette.text.primary }}>{curriculum.degreeLevel}</Text>
+                  </Space>
+                </Col>
+              </Row>
+              <Divider />
+              <div>
+                <Text strong style={{ color: theme.palette.text.secondary, display: 'block', marginBottom: 8 }}>
+                  Tiến độ hoàn thành chương trình
+                </Text>
+                <Progress
+                  percent={completionRate}
+                  strokeColor={{
+                    '0%': theme.palette.primary.main,
+                    '100%': theme.palette.success.main,
+                  }}
+                  status="active"
+                />
+              </div>
+            </Card>
+            <Collapse accordion style={{ background: 'transparent', border: 'none' }}>
               {curriculum.semesterCourses?.map((semester, idx) => (
                 <Panel
                   header={
                     <span>
-                      <b style={{ color: '#096dd9' }}>
+                      <b style={{ color: theme.palette.primary.main }}>
                         {semester.semesterName}
                       </b>{' '}
                       &nbsp;
                       <Text type="secondary">
                         (Tổng số TC:{' '}
-                        <span style={{ color: '#d4380d', fontWeight: 600 }}>
+                        <span style={{ color: theme.palette.primary.main, fontWeight: 600 }}>
                           {semester.totalCredits}
                         </span>
                         , &nbsp;Bắt buộc:{' '}
-                        <span style={{ color: '#389e0d', fontWeight: 600 }}>
+                        <span style={{ color: theme.palette.success.main, fontWeight: 600 }}>
                           {semester.requiredCredits}
                         </span>
                         , &nbsp;Tự chọn:{' '}
-                        <span style={{ color: '#0958d9', fontWeight: 600 }}>
+                        <span style={{ color: theme.palette.secondary.main, fontWeight: 600 }}>
                           {semester.optionalCredits}
                         </span>
                         )
@@ -211,9 +303,10 @@ const CurriculumPage = () => {
                   }
                   key={semester.semesterNumber}
                   style={{
-                    background: semesterColors[idx % semesterColors.length],
+                    background: alpha(theme.palette.primary.main, 0.05),
                     borderRadius: 8,
                     marginBottom: 8,
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
                   }}
                 >
                   <Table
@@ -227,68 +320,101 @@ const CurriculumPage = () => {
                     size="small"
                     bordered
                     scroll={{ x: 900 }}
-                    rowClassName={(_, i) =>
-                      i % 2 === 0 ? 'table-row-light' : 'table-row-dark'
-                    }
+                    size="small"
                     style={{
-                      background: '#fff',
                       borderRadius: 8,
                     }}
                   />
                 </Panel>
               ))}
             </Collapse>
-            <div style={{ marginTop: 24 }}>
-              <Row gutter={32}>
-                <Col>
-                  <Text strong style={{ color: '#d4380d' }}>
-                    Tổng TC yêu cầu:{' '}
-                  </Text>
-                  <Text style={{ color: '#d4380d', fontWeight: 700 }}>
-                    {curriculum.totalCreditsRequired}
-                  </Text>
+
+            {/* Summary Card */}
+            <Card
+              bordered={false}
+              title={
+                <Text strong style={{ color: theme.palette.text.primary }}>
+                  Tổng kết chương trình
+                </Text>
+              }
+              style={{
+                marginTop: 24,
+                borderRadius: 8,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              }}
+            >
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={8}>
+                  <div style={{
+                    padding: 16,
+                    background: alpha(theme.palette.primary.main, 0.1),
+                    borderRadius: 8,
+                    textAlign: 'center',
+                  }}>
+                    <Text strong style={{ color: theme.palette.primary.main, display: 'block', fontSize: 14 }}>
+                      Tổng TC yêu cầu
+                    </Text>
+                    <Text style={{ color: theme.palette.primary.main, fontWeight: 700, fontSize: 28 }}>
+                      {curriculum.totalCreditsRequired}
+                    </Text>
+                  </div>
                 </Col>
-                <Col>
-                  <Text strong style={{ color: '#389e0d' }}>
-                    Tổng TC bắt buộc:{' '}
-                  </Text>
-                  <Text style={{ color: '#389e0d', fontWeight: 700 }}>
-                    {curriculum.totalRequiredCredits}
-                  </Text>
+                <Col xs={24} sm={8}>
+                  <div style={{
+                    padding: 16,
+                    background: alpha(theme.palette.success.main, 0.1),
+                    borderRadius: 8,
+                    textAlign: 'center',
+                  }}>
+                    <Text strong style={{ color: theme.palette.success.main, display: 'block', fontSize: 14 }}>
+                      Tổng TC bắt buộc
+                    </Text>
+                    <Text style={{ color: theme.palette.success.main, fontWeight: 700, fontSize: 28 }}>
+                      {curriculum.totalRequiredCredits}
+                    </Text>
+                  </div>
                 </Col>
-                <Col>
-                  <Text strong style={{ color: '#0958d9' }}>
-                    Tổng TC tự chọn:{' '}
-                  </Text>
-                  <Text style={{ color: '#0958d9', fontWeight: 700 }}>
-                    {curriculum.totalOptionalCredits}
-                  </Text>
+                <Col xs={24} sm={8}>
+                  <div style={{
+                    padding: 16,
+                    background: alpha(theme.palette.secondary.main, 0.1),
+                    borderRadius: 8,
+                    textAlign: 'center',
+                  }}>
+                    <Text strong style={{ color: theme.palette.secondary.main, display: 'block', fontSize: 14 }}>
+                      Tổng TC tự chọn
+                    </Text>
+                    <Text style={{ color: theme.palette.secondary.main, fontWeight: 700, fontSize: 28 }}>
+                      {curriculum.totalOptionalCredits}
+                    </Text>
+                  </div>
                 </Col>
               </Row>
-            </div>
-            <Paragraph type="secondary" style={{ marginTop: 16 }}>
-              <b>Ghi chú:</b> <br />
-              <Tag color="green" style={{ fontWeight: 500 }} /> Môn học/Học phần
-              đã (hoặc đang) học &nbsp;
-              <Tag color="red" style={{ fontWeight: 500 }} /> Môn học sinh viên
-              chưa đăng ký học tập
-            </Paragraph>
-            <style>
-              {`
-                .table-row-light { background: #f6faff !important; }
-                .table-row-dark { background: #fff !important; }
-                .ant-collapse > .ant-collapse-item > .ant-collapse-content > .ant-collapse-content-box {
-                  background: #fff;
-                  border-radius: 8px;
-                }
-              `}
-            </style>
+              <Divider />
+              <Paragraph type="secondary">
+                <b>Ghi chú:</b> <br />
+                <Tag color="green" style={{ fontWeight: 500 }} /> Môn học/Học phần
+                đã (hoặc đang) học &nbsp;
+                <Tag color="red" style={{ fontWeight: 500 }} /> Môn học sinh viên
+                chưa đăng ký học tập
+              </Paragraph>
+            </Card>
           </>
         ) : (
-          <Paragraph>Không có dữ liệu chương trình khung.</Paragraph>
+          <Card
+            bordered={false}
+            style={{
+              borderRadius: 8,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            }}
+          >
+            <Paragraph style={{ color: theme.palette.text.secondary }}>
+              Không có dữ liệu chương trình khung.
+            </Paragraph>
+          </Card>
         )}
       </Spin>
-    </Card>
+    </div>
   );
 };
 

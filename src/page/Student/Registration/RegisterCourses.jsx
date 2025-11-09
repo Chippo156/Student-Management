@@ -21,6 +21,7 @@ import {
 } from '@ant-design/icons';
 import { DownOutlined } from '@ant-design/icons';
 import { Box } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import sectionService from '../../../service/sectionService';
 import enrollmentService from '../../../service/enrollmentService';
 import { semesterService } from '../../../service/semesterService';
@@ -30,6 +31,7 @@ import { Dropdown, Menu, Popconfirm } from 'antd';
 const { Title } = Typography;
 
 const RegisterCourses = () => {
+  const theme = useTheme();
   const [semesters, setSemesters] = useState([]);
   const [semester, setSemester] = useState(null);
   const [registerType, setRegisterType] = useState('new');
@@ -279,9 +281,9 @@ const RegisterCourses = () => {
       width: 80,
       render: (v) =>
         v ? (
-          <CheckSquareOutlined style={{ color: '#52c41a', fontSize: 18 }} />
+          <CheckSquareOutlined style={{ color: theme.palette.success.main, fontSize: 18 }} />
         ) : (
-          <DeleteOutlined style={{ color: '#ff4d4f', fontSize: 18 }} />
+          <DeleteOutlined style={{ color: theme.palette.error.main, fontSize: 18 }} />
         ),
     },
     {
@@ -297,7 +299,7 @@ const RegisterCourses = () => {
       title: 'Ghi chú',
       dataIndex: 'registrationNote',
       width: 180,
-      render: (v) => <span style={{ color: '#d32f2f' }}>{v}</span>,
+      render: (v) => <span style={{ color: theme.palette.error.main }}>{v}</span>,
     },
   ];
 
@@ -473,7 +475,7 @@ const RegisterCourses = () => {
       width: 60,
       render: () => (
         <span>
-          <CheckSquareOutlined style={{ color: '#52c41a' }} />
+          <CheckSquareOutlined style={{ color: theme.palette.success.main }} />
         </span>
       ),
     },
@@ -541,47 +543,66 @@ const RegisterCourses = () => {
 
   return (
     <Box
-      sx={{ background: '#f4f6fb', minHeight: '100vh', p: 3, width: '100%' }}
+      sx={{ background: theme.palette.background.default, minHeight: '100vh', p: 3, width: '100%' }}
     >
       <style>
         {`
         .ant-table-thead > tr > th {
-          background: #e3f0ff !important;
+          background: ${theme.palette.mode === 'dark' ? theme.palette.background.paper : alpha(theme.palette.primary.light, 0.15)} !important;
+          color: ${theme.palette.text.primary} !important;
           font-weight: 600;
           text-align: center;
+          border-color: ${theme.palette.divider} !important;
+        }
+        .ant-table-tbody > tr > td {
+          border-color: ${theme.palette.divider} !important;
+          color: ${theme.palette.text.primary} !important;
         }
         .table-row-light {
-          background: #fff;
+          background: ${theme.palette.background.paper};
         }
         .table-row-dark {
-          background: #f8fafd;
+          background: ${alpha(theme.palette.background.paper, 0.5)};
         }
         .table-row-selected {
-          background: #fff8e1 !important;
+          background: ${alpha(theme.palette.warning.main, 0.15)} !important;
         }
         .schedule-row-lythuyet {
-          background: #e3f7ff !important;
+          background: ${alpha(theme.palette.primary.main, 0.1)} !important;
         }
         .schedule-row-thuchanh-active {
-          background: #fff7e0 !important;
+          background: ${alpha(theme.palette.warning.main, 0.12)} !important;
         }
         .schedule-row-thuchanh {
-          background: #fff !important;
+          background: ${theme.palette.background.paper} !important;
+        }
+        .ant-table {
+          background: ${theme.palette.background.paper};
+          color: ${theme.palette.text.primary};
+        }
+        .ant-select-selector {
+          background: ${theme.palette.background.paper} !important;
+          color: ${theme.palette.text.primary} !important;
+          border-color: ${theme.palette.divider} !important;
+        }
+        .ant-radio-wrapper {
+          color: ${theme.palette.text.primary};
         }
         `}
       </style>
       <Card
         style={{
           borderRadius: 12,
-          border: 'none',
-          boxShadow: '0 2px 12px #e6e6e6',
+          background: theme.palette.background.paper,
+          borderColor: theme.palette.divider,
+          boxShadow: theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.08)',
         }}
         bodyStyle={{ padding: 32 }}
       >
         <Title
           level={3}
           style={{
-            color: '#1677ff',
+            color: theme.palette.primary.main,
             textAlign: 'center',
             marginBottom: 28,
             fontWeight: 700,
@@ -591,35 +612,45 @@ const RegisterCourses = () => {
         </Title>
 
         {/* HỌC KỲ + LOẠI ĐĂNG KÝ */}
-        <Row gutter={16} align="middle" style={{ marginBottom: 24 }}>
-          <Col>
-            <span style={{ fontWeight: 500 }}>Đợt đăng ký</span>
-            <Select
-              value={semester}
-              onChange={setSemester}
-              style={{ width: 220, marginLeft: 8 }}
-              options={semesters}
-              placeholder="Chọn học kỳ"
-            />
-          </Col>
-          <Col>
-            <Radio.Group
-              value={registerType}
-              onChange={(e) => setRegisterType(e.target.value)}
-              style={{ marginLeft: 32 }}
-            >
-              <Radio value="new">HỌC MỚI</Radio>
-              <Radio value="retake">HỌC LẠI</Radio>
-              <Radio value="improve">HỌC CẢI THIỆN</Radio>
-            </Radio.Group>
-          </Col>
-        </Row>
+        <div style={{
+          background: alpha(theme.palette.primary.main, 0.05),
+          padding: 20,
+          borderRadius: 8,
+          marginBottom: 24,
+          border: `1px solid ${theme.palette.divider}`
+        }}>
+          <Row gutter={16} align="middle">
+            <Col>
+              <span style={{ fontWeight: 600, color: theme.palette.text.primary, marginRight: 12 }}>
+                Đợt đăng ký:
+              </span>
+              <Select
+                value={semester}
+                onChange={setSemester}
+                style={{ width: 250 }}
+                options={semesters}
+                placeholder="Chọn học kỳ"
+              />
+            </Col>
+            <Col>
+              <Radio.Group
+                value={registerType}
+                onChange={(e) => setRegisterType(e.target.value)}
+                style={{ marginLeft: 16 }}
+              >
+                <Radio value="new" style={{ fontWeight: 500 }}>HỌC MỚI</Radio>
+                <Radio value="retake" style={{ fontWeight: 500 }}>HỌC LẠI</Radio>
+                <Radio value="improve" style={{ fontWeight: 500 }}>HỌC CẢI THIỆN</Radio>
+              </Radio.Group>
+            </Col>
+          </Row>
+        </div>
 
         {/* MÔN HỌC PHẦN ĐANG CHỜ ĐĂNG KÝ */}
         <div
           style={{
             fontWeight: 600,
-            color: '#f57c00',
+            color: theme.palette.warning.dark,
             fontSize: 16,
             marginBottom: 8,
           }}
@@ -657,14 +688,14 @@ const RegisterCourses = () => {
             <div
               style={{
                 fontWeight: 600,
-                color: '#f57c00',
+                color: theme.palette.warning.dark,
                 fontSize: 16,
                 margin: '24px 0 8px',
               }}
             >
               LỚP HỌC PHẦN CHỜ ĐĂNG KÝ
               <Checkbox
-                style={{ marginLeft: 24, color: '#d32f2f', fontWeight: 500 }}
+                style={{ marginLeft: 24, color: theme.palette.error.main, fontWeight: 500 }}
                 checked={showOnlyNonConflict}
                 onChange={(e) => setShowOnlyNonConflict(e.target.checked)}
               >
@@ -694,14 +725,18 @@ const RegisterCourses = () => {
         {selectedSection && (
           <Card
             title={
-              <span style={{ color: '#f57c00', fontWeight: 600, fontSize: 16 }}>
+              <span style={{ color: theme.palette.warning.dark, fontWeight: 600, fontSize: 16 }}>
                 <UnorderedListOutlined
-                  style={{ marginRight: 8, color: '#f57c00' }}
+                  style={{ marginRight: 8, color: theme.palette.warning.dark }}
                 />
                 CHI TIẾT LỚP HỌC PHẦN
               </span>
             }
-            style={{ marginTop: 24 }}
+            style={{
+              marginTop: 24,
+              background: theme.palette.background.paper,
+              borderColor: theme.palette.divider
+            }}
             extra={
               practiceGroups.length > 0 && (
                 <Select
@@ -853,7 +888,7 @@ const RegisterCourses = () => {
         <div
           style={{
             fontWeight: 600,
-            color: '#1677ff',
+            color: theme.palette.primary.main,
             fontSize: 16,
             margin: '32px 0 8px',
           }}
@@ -886,6 +921,10 @@ const RegisterCourses = () => {
           <Button onClick={() => setShowScheduleModal(false)}>Đóng</Button>
         }
         title="Lịch học phần chi tiết"
+        styles={{
+          body: { background: theme.palette.background.paper },
+          header: { background: theme.palette.background.paper, color: theme.palette.text.primary },
+        }}
       >
         <Table
           columns={[
