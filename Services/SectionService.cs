@@ -379,48 +379,6 @@ namespace StudentManagement.Services
                 query = query.Where(s => s.Status == searchRequest.Status.Value);
             }
 
-            if (searchRequest.ClassId.HasValue)
-            {
-                query = query.Where(s => s.Class.ClassId == searchRequest.ClassId.Value);
-            }
-
-            // Date filters
-            if (searchRequest.StartDateFrom.HasValue)
-            {
-                query = query.Where(s => s.StartDate >= searchRequest.StartDateFrom.Value);
-            }
-
-            if (searchRequest.StartDateTo.HasValue)
-            {
-                query = query.Where(s => s.StartDate <= searchRequest.StartDateTo.Value);
-            }
-
-            if (searchRequest.EndDateFrom.HasValue)
-            {
-                query = query.Where(s => s.EndDate >= searchRequest.EndDateFrom.Value);
-            }
-
-            if (searchRequest.EndDateTo.HasValue)
-            {
-                query = query.Where(s => s.EndDate <= searchRequest.EndDateTo.Value);
-            }
-
-            // Capacity filters
-            if (searchRequest.MinCapacity.HasValue)
-            {
-                query = query.Where(s => s.Capacity >= searchRequest.MinCapacity.Value);
-            }
-
-            if (searchRequest.MaxCapacity.HasValue)
-            {
-                query = query.Where(s => s.Capacity <= searchRequest.MaxCapacity.Value);
-            }
-
-            if (searchRequest.HasAvailableSlots.HasValue && searchRequest.HasAvailableSlots.Value)
-            {
-                query = query.Where(s => s.EnrolledCount < s.Capacity);
-            }
-
             // Get total count
             var totalCount = await query.CountAsync();
 
@@ -580,7 +538,118 @@ namespace StudentManagement.Services
             return responses;
         }
 
+        public async Task<PagedResult<SectionSimpleResponse>> GetSectionsByLecturerAsync(SectionSearchRequest searchRequest, string lecturerCode)
+        {
+            var query = context.Sections
+                .Include(s => s.CurriculumCourse.Course)
+                .Include(s => s.Lecturer.User)
+                .Include(s => s.Semester)
+                .Where(s => s.Lecturer != null && s.Lecturer.User.Username == lecturerCode)
+                .AsQueryable();
 
+            // Apply filters (same as before)
+            if (!string.IsNullOrWhiteSpace(searchRequest.SectionCode))
+                query = query.Where(s => s.SectionCode != null && s.SectionCode.Contains(searchRequest.SectionCode.Trim()));
+
+            if (!string.IsNullOrWhiteSpace(searchRequest.CourseName))
+                query = query.Where(s => s.CurriculumCourse.Course.CourseName.Contains(searchRequest.CourseName.Trim()));
+
+            if (!string.IsNullOrWhiteSpace(searchRequest.LecturerName))
+                query = query.Where(s => s.Lecturer != null && s.Lecturer.User.FullName.Contains(searchRequest.LecturerName.Trim()));
+
+            if (searchRequest.SemesterId.HasValue)
+                query = query.Where(s => s.Semester.SemesterId == searchRequest.SemesterId.Value);
+
+            if (searchRequest.Status.HasValue)
+                query = query.Where(s => s.Status == searchRequest.Status.Value);
+
+
+            var totalCount = await query.CountAsync();
+
+            // Apply sorting
+            query = searchRequest.SortBy?.ToLower() switch
+            {
+                "coursename" => searchRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.CurriculumCourse.Course.CourseName)
+                    : query.OrderBy(s => s.CurriculumCourse.Course.CourseName),
+                "semester" => searchRequest.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(s => s.Semester.Year).ThenByDescending(s => s.Semester.Term)
+                    : query.OrderBy(s => s.Semester.Year).ThenBy(s => s.Semester.Term),
+                _ => query.OrderBy(s => s.SectionCode ?? "").ThenBy(s => s.CurriculumCourse.Course.CourseName)
+            };
+
+            var sections = await query
+                .Skip((searchRequest.PageNumber - 1) * searchRequest.PageSize)
+                .Take(searchRequest.PageSize)
+                .Select(s => new SectionSimpleResponse
+                {
+                    SectionId = s.SectionId,
+                    SectionCode = s.SectionCode ?? $"LHP{s.SectionId}",
+                    CourseCode = s.CurriculumCourse.Course.CourseCode,
+                    CourseName = s.CurriculumCourse.Course.CourseName,
+                    LecturerName = s.Lecturer != null ? s.Lecturer.User.FullName : "Chưa phân công",
+                    SemesterName = $"{s.Semester.Year} - {s.Semester.Term}",
+                    Capacity = s.Capacity,
+                    EnrolledCount = s.EnrolledCount,
+                    AvailableSlots = Math.Max(0, s.Capacity - s.EnrolledCount),
+                    Status = s.Status,
+                    StartDate = s.StartDate,
+                    EndDate = s.EndDate
+                })
+                .ToListAsync();
+
+            return new PagedResult<SectionSimpleResponse>
+            {
+                Items = sections,
+                TotalCount = totalCount,
+                PageNumber = searchRequest.PageNumber,
+                PageSize = searchRequest.PageSize
+            };
+        }
+
+        public async Task<IEnumerable<SectionDropdownResponse>> GetSectionDropdownForLecturerAsync(string lecturerCode, int? semesterId = null)
+        {
+            // Verify lecturer exists
+            var lecturer = await context.Lecturers
+                .Include(l => l.User)
+                .FirstOrDefaultAsync(l => l.User.Username == lecturerCode);
+
+            if (lecturer == null)
+            {
+                throw new Exception("Lecturer not found");
+            }
+
+            // Build query for sections taught by this lecturer
+            var query = context.Sections
+                .Include(s => s.CurriculumCourse)
+                    .ThenInclude(cc => cc.Course)
+                .Include(s => s.Semester)
+                .Include(s => s.Class)
+                .Where(s => s.Lecturer.Id == lecturer.Id);
+
+            // Filter by semester if specified
+            if (semesterId.HasValue)
+            {
+                query = query.Where(s => s.Semester.SemesterId == semesterId.Value);
+            }
+
+            // Get sections and map to dropdown response
+            var sections = await query
+                .OrderByDescending(s => s.Semester.Year)
+                .ThenByDescending(s => s.Semester.Term)
+                .ThenBy(s => s.CurriculumCourse.Course.CourseCode)
+                .ThenBy(s => s.SectionCode)
+                .ToListAsync();
+
+            var result = sections.Select(section => new SectionDropdownResponse
+            {
+                SectionId = section.SectionId,
+                DisplayName = $"{section.CurriculumCourse.Course.CourseCode} - {section.CurriculumCourse.Course.CourseName} ({section.SectionCode ?? $"LHP{section.SectionId}"})",
+                ClassName = section.Class.ClassName
+            }).ToList();
+
+            return result;
+        }
 
         private static string GetSectionStatusInVietnamese(SectionStatus status)
         {

@@ -176,5 +176,48 @@ namespace StudentManagement.Controllers
                     "An error occurred while retrieving sections by semester", new List<string> { ex.Message }));
             }
         }
+
+        [HttpGet("GetSectionsByLecturer")]
+        [Authorize(Roles = "Lecturer")]
+        public async Task<IActionResult> GetSectionsSimple([FromQuery] SectionSearchRequest searchRequest)
+        {
+            try
+            {
+                var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+                if (UserNameStr == null)
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid Lecturer code in token.", null));
+                }
+                var result = await sectionService.GetSectionsByLecturerAsync(searchRequest, UserNameStr);
+                return Ok(ApiResponse.SuccessResponse(result, "Sections retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, 
+                    "An error occurred while retrieving sections", new List<string> { ex.Message }));
+            }
+        }
+
+        [HttpGet("GetSectionDropdownForLecturer")]
+        [Authorize(Roles = "Lecturer")]
+        public async Task<IActionResult> GetSectionDropdownForLecturer([FromQuery] int? semesterId = null)
+        {
+            try
+            {
+                var lecturerCode = User.FindFirstValue(ClaimTypes.Name);
+                if (lecturerCode == null)
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid Lecturer code in token.", null));
+                }
+
+                var sections = await sectionService.GetSectionDropdownForLecturerAsync(lecturerCode, semesterId);
+                return Ok(ApiResponse.SuccessResponse(sections, "Sections dropdown retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving sections dropdown", new List<string> { ex.Message }));
+            }
+        }
     }
 }

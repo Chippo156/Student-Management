@@ -111,5 +111,14 @@ namespace StudentManagement.Controllers
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
+
+        [HttpGet("GetStudentsWithSection/{sectionId}")]
+        [Authorize(Roles = "Lecturer")]
+        public async Task<ActionResult<IEnumerable<StudentInSectionDto>>> GetStudentsWithSection(
+            int sectionId, [FromQuery] PaginationParams paginationParams, string? searchTerm = null)
+        {
+            var studentsWithSections = await studentService.GetStudentsBySectionWithPaginationAsync(sectionId, paginationParams, searchTerm);
+            return Ok(ApiResponse.SuccessResponse(studentsWithSections, "Students with section retrieved successfully"));
+        }
     }
 }

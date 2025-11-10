@@ -50,6 +50,20 @@ namespace StudentManagement.Services
             context.PracticeGroups.Add(practiceGroup);
             await context.SaveChangesAsync();
 
+            PracticeScheduleRequest practiceScheduleRequest = new PracticeScheduleRequest
+            {
+                PracticeGroupId = practiceGroup.PracticeGroupId,
+                ScheduleTypeId = request.ScheduleTypeId,
+                DayOfWeek = request.DayOfWeek,
+                Date = request.Date,
+                StartTime = request.StartTime,
+                EndTime = request.EndTime,
+                Room = request.Room,
+                OnlineLink = request.OnlineLink
+            };
+
+            await AddPracticeScheduleAsync(practiceScheduleRequest);
+
             return practiceGroup;
         }
 

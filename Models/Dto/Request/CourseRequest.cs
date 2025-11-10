@@ -16,5 +16,10 @@ namespace StudentManagement.Models.Dto.Request
         
         [Range(0, 10, ErrorMessage = "CreditsLab must be between 0 and 10")]
         public int CreditsLab { get; set; }
+        public bool isRequired { get; set; }
+        public int SemesterSuggested { get; set; }
+
+        [Required(ErrorMessage = "Program is required")]
+        public int ProgramId { get; set; }
     }
 }

@@ -20,7 +20,11 @@ namespace StudentManagement.Models
         
         // Danh sách lịch thực hành của nhóm
         public ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
-        
+
+        // Thông tin giáo viên dạy thực hành
+        public int? LecturerId { get; set; }
+        public Lecturer? Lecturer { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsActive { get; set; } = true;
     }

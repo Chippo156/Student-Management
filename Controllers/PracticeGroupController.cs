@@ -8,7 +8,7 @@ namespace StudentManagement.Controllers
     [Route("api/[controller]")]
     public class PracticeGroupController(IPracticeGroupService practiceGroupService) : ControllerBase
     {
-        [HttpPost]
+        [HttpPost("CreateSchedulePractice")]
         public async Task<IActionResult> CreatePracticeGroup([FromBody] PracticeGroupRequest request)
         {
             try

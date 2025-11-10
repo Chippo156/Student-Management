@@ -50,22 +50,7 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(schedule, "Schedule retrieved successfully"));
         }
 
-
-        [HttpGet("lecturer/{lecturerId}")]
-        public async Task<IActionResult> GetSchedulesByLecturer(int lecturerId)
-        {
-            var schedules = await scheduleService.GetSchedulesByLecturerAsync(lecturerId);
-            return Ok(ApiResponse.SuccessResponse(schedules, "Lecturer schedules retrieved successfully"));
-        }
-
-        [HttpGet("student/{studentId}")]
-        public async Task<IActionResult> GetSchedulesByStudent(int studentId)
-        {
-            var schedules = await scheduleService.GetSchedulesByStudentAsync(studentId);
-            return Ok(ApiResponse.SuccessResponse(schedules, "Student schedules retrieved successfully"));
-        }
-
-        [HttpPost]
+        [HttpPost("CreateScheduleTheory")]
         public async Task<IActionResult> CreateSchedule([FromBody] ScheduleRequest request)
         {
             try {
@@ -139,6 +124,34 @@ namespace StudentManagement.Controllers
         {
             var scheduleTypes = await scheduleService.GetAllScheduleType();
             return Ok(ApiResponse.SuccessResponse(scheduleTypes, "Schedule types retrieved successfully"));
+        }
+
+        [HttpGet("GetSchedulesOfLecturer")]
+        [Authorize]
+        public async Task<IActionResult> GetSchedulesOfLecturer([FromQuery] DateOnly date, [FromQuery] int scheduleTypeId)
+        {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+            var schedules = await scheduleService.GetSchedulesByDateAndLecturerAsync(date, UserNameStr, scheduleTypeId);
+            var responseList = schedules.ToResponseList();
+            return Ok(ApiResponse.SuccessResponse(responseList, "Schedules retrieved successfully"));
+        }
+
+        [HttpGet("countSchedulesOfLecturer")]
+        [Authorize]
+        public
+            async Task<IActionResult> countSchedulesOfLecturer()
+        {
+            var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+            if (UserNameStr == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid mssv in token.", null));
+            }
+            var count = await scheduleService.CountScheduleByLecturer(UserNameStr);
+            return Ok(ApiResponse.SuccessResponse(count, "Count retrieved successfully"));
         }
 
     }

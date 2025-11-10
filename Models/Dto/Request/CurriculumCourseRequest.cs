@@ -4,6 +4,7 @@ namespace StudentManagement.Models.Dto.Request
 {
     public class CurriculumCourseRequest
     {
+        public CourseRequest? Course { get; set; }
         [Required(ErrorMessage = "Program ID is required")]
         public int ProgramId { get; set; }
         

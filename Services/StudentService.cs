@@ -363,8 +363,113 @@ namespace StudentManagement.Services
                 throw;
             }
         }
+        public async Task<PagedResult<StudentInSectionDto>> GetStudentsBySectionWithPaginationAsync(
+    int sectionId,
+    PaginationParams pagination,
+    string? searchTerm = null)
+        {
+            // Kiểm tra section tồn tại
+            var sectionExists = await context.Sections.AnyAsync(s => s.SectionId == sectionId);
+            if (!sectionExists)
+            {
+                throw new Exception("Section not found");
+            }
 
+            // Build query cho enrollments
+            var query = context.Enrollments
+                .Include(e => e.Student)
+                    .ThenInclude(s => s.User)
+                .Include(e => e.Student)
+                    .ThenInclude(s => s.Class)
+                        .ThenInclude(c => c.Program)
+                .Where(e => e.Section.SectionId == sectionId &&
+                           e.enrollmentStatus == StudentManagement.Enum.EnrollmentStatus.Enrolled);
 
-       
+            // Apply search filter nếu có
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var searchLower = searchTerm.Trim().ToLower();
+                query = query.Where(e =>
+                    e.Student.MSSV.ToLower().Contains(searchLower) ||
+                    e.Student.User.FullName.ToLower().Contains(searchLower) ||
+                    e.Student.User.Email.ToLower().Contains(searchLower) ||
+                    e.Student.Class.ClassName.ToLower().Contains(searchLower));
+            }
+
+            // Tổng số bản ghi
+            var totalCount = await query.CountAsync();
+
+            // Lấy dữ liệu với phân trang, sắp xếp theo MSSV
+            var enrollments = await query
+                .OrderBy(e => e.Student.MSSV)
+                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+
+            // Lấy thông tin nhóm thực hành cho các sinh viên này
+            var studentIds = enrollments.Select(e => e.Student.Id).ToList();
+            var practiceGroups = await context.PracticeGroupEnrollments
+                .Include(pge => pge.PracticeGroup)
+                .Where(pge => studentIds.Contains(pge.StudentId) &&
+                             pge.PracticeGroup.SectionId == sectionId &&
+                             pge.IsActive)
+                .ToDictionaryAsync(pge => pge.StudentId, pge => pge.PracticeGroup.GroupName);
+
+            // Lấy điểm cuối kỳ nếu có
+            var finalResults = await context.FinalResults
+                .Where(fr => studentIds.Contains(fr.Student.Id) &&
+                            fr.Section.SectionId == sectionId)
+                .ToDictionaryAsync(fr => fr.Student.Id, fr => new { fr.FinalScore, fr.GradeLetter });
+
+            // Map to response DTO
+            var students = enrollments.Select(enrollment => new StudentInSectionDto
+            {
+                StudentId = enrollment.Student.Id,
+                MSSV = enrollment.Student.MSSV,
+                FullName = enrollment.Student.User.FullName,
+                Email = enrollment.Student.User.Email,
+                Phone = enrollment.Student.User.Phone ?? "",
+                ClassName = enrollment.Student.Class.ClassName,
+                ClassCode = enrollment.Student.Class.ClassCode,
+                ProgramName = enrollment.Student.Class.Program.ProgramName,
+
+                // Thông tin đăng ký
+                EnrollmentDate = enrollment.RegisteredAt,
+                EnrollmentStatus = GetEnrollmentStatusInVietnamese(enrollment.enrollmentStatus),
+
+                // Thông tin nhóm thực hành
+                PracticeGroupName = practiceGroups.GetValueOrDefault(enrollment.Student.Id, "Chưa có nhóm"),
+
+                // Thông tin điểm số
+                FinalScore = finalResults.ContainsKey(enrollment.Student.Id) ?
+                            Math.Round(finalResults[enrollment.Student.Id].FinalScore, 2) : (double?)null,
+                GradeLetter = finalResults.GetValueOrDefault(enrollment.Student.Id)?.GradeLetter,
+
+                // Thông tin bổ sung
+                AvatarUrl = enrollment.Student.User.AvatarUrl,
+                DateOfBirth = enrollment.Student.User.DateOfBirth,
+                AccountStatus = enrollment.Student.User.AccountStatus.ToString() ?? "Unknown"
+
+            }).ToList();
+
+            return new PagedResult<StudentInSectionDto>
+            {
+                Items = students,
+                TotalCount = totalCount,
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize
+            };
+        }
+
+        private string GetEnrollmentStatusInVietnamese(StudentManagement.Enum.EnrollmentStatus status)
+        {
+            return status switch
+            {
+                StudentManagement.Enum.EnrollmentStatus.Enrolled => "Đã đăng ký",
+                StudentManagement.Enum.EnrollmentStatus.Dropped => "Đã hủy",
+                StudentManagement.Enum.EnrollmentStatus.Completed => "Đã hoàn thành",
+                _ => "Unknown"
+            };
+        }
     }
 }

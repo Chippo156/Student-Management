@@ -12,19 +12,6 @@ namespace StudentManagement.Models.Dto.Request
         public int? DepartmentId { get; set; }
         public int? CourseId { get; set; }
         public SectionStatus? Status { get; set; }
-        public int? ClassId { get; set; }
-        
-        // Date filters
-        public DateOnly? StartDateFrom { get; set; }
-        public DateOnly? StartDateTo { get; set; }
-        public DateOnly? EndDateFrom { get; set; }
-        public DateOnly? EndDateTo { get; set; }
-        
-        // Capacity filters
-        public int? MinCapacity { get; set; }
-        public int? MaxCapacity { get; set; }
-        public bool? HasAvailableSlots { get; set; } // Còn chỗ trống
-        
         // Sorting options
         public string? SortBy { get; set; } = "SectionCode"; // "SectionCode", "CourseName", "StartDate", "Capacity", "EnrolledCount"
         public string? SortDirection { get; set; } = "asc"; // "asc" or "desc"

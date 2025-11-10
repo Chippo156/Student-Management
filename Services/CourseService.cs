@@ -18,6 +18,20 @@ namespace StudentManagement.Services
             };
             context.Courses.Add(newCourse);
             context.SaveChanges();
+
+            // With this line:
+            AcademicProgram program = context.Programs.Find(courseRequest.ProgramId) ?? throw new Exception("Program not found");
+            CurriculumCourse curriculum = new CurriculumCourse
+            {
+                Course = newCourse,
+                SemeterSuggested = courseRequest.SemesterSuggested,
+                isRequired = false,
+                Program = program
+            };
+
+            context.CurriculumCourses.Add(curriculum);
+            context.SaveChanges();
+
             return Task.FromResult(newCourse);
         }
 
