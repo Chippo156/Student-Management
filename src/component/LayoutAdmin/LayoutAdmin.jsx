@@ -42,6 +42,7 @@ import {
   Notifications as NotificationsIcon,
   Announcement as AnnouncementIcon,
   Email as EmailIcon,
+  EventAvailable as EventAvailableIcon, // Thêm icon mới
 } from '@mui/icons-material';
 import HeaderPage from '../Header';
 
@@ -121,6 +122,12 @@ const menuData = [
         icon: <ClassIcon />,
         key: 'classes',
         path: '/admin/classes',
+      },
+      {
+        label: 'Quản lý lớp học phần',
+        icon: <EventAvailableIcon />,
+        key: 'sections',
+        path: '/admin/sections',
       },
       {
         label: 'Chương trình đào tạo',

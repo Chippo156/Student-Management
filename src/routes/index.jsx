@@ -20,6 +20,8 @@ import AdminStudentInfo from '../page/Admin/StudentManagement/StudentInfo';
 import Classes from '../page/Admin/EducationManagement/Classes';
 import TuitionList from '../page/Admin/TuitionManagement/TuitionList';
 import SendNotifications from '../page/Admin/SendNotifications';
+import Curriculum from '../page/Admin/EducationManagement/Curriculum';
+import Sections from '../page/Admin/EducationManagement/Sections';
 
 // Admin management pages
 import StudentList from '../page/Admin/StudentManagement/StudentList';
@@ -153,11 +155,8 @@ const AppRoutes = () => {
           {/* Quản lý Đào tạo */}
           <Route path="courses" element={<CourseManagement />} />
           <Route path="classes" element={<Classes />} />
-          <Route
-            path="curriculum"
-            element={<div>Coming Soon chương trình khung.</div>}
-          />
-
+          <Route path="curriculum" element={<Curriculum />} />
+          <Route path="sections" element={<Sections />} />
           {/* Thêm router quản lý giảng viên */}
           <Route path="teacher" element={<TeacherList />} />
 

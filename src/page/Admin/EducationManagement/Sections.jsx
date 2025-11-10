@@ -17,45 +17,44 @@ import {
   IconButton,
   TextField,
   InputAdornment,
-  Menu,
-  MenuItem,
   FormControl,
   InputLabel,
   Select,
+  MenuItem,
   Grid,
   Tooltip,
   Avatar,
   TablePagination,
   CircularProgress,
+  LinearProgress,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  MoreVert as MoreVertIcon,
+  Visibility as VisibilityIcon,
   School as SchoolIcon,
   Person as PersonIcon,
-  Schedule as ScheduleIcon,
+  EventAvailable as EventAvailableIcon,
   Assignment as AssignmentIcon,
+  MoreVert as MoreVertIcon,
+  Group as GroupIcon,
 } from '@mui/icons-material';
-import curriculumCourseService from '../../../service/curriculumCourseService';
-import academicProgramService from '../../../service/academicProgramService';
+import sectionService from '../../../service/sectionService';
+import { semesterService } from '../../../service/semesterService';
 
-const CourseManagement = () => {
+const Sections = () => {
   const theme = useTheme();
-  const [courses, setCourses] = useState([]);
-  const [programs, setPrograms] = useState([]);
+  const [sections, setSections] = useState([]);
+  const [semesters, setSemesters] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterProgram, setFilterProgram] = useState('');
-  const [filterDepartment, setFilterDepartment] = useState('');
-  const [filterCourseType, setFilterCourseType] = useState('');
+  const [filterSemester, setFilterSemester] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedCourse, setSelectedCourse] = useState(null);
 
   const colors = useMemo(
     () => ({
@@ -73,65 +72,53 @@ const CourseManagement = () => {
     [theme]
   );
 
-  // Fetch programs for filter
+  const statusOptions = [
+    { value: 0, label: 'Chưa mở', color: 'default' },
+    { value: 1, label: 'Đang chuẩn bị', color: 'warning' },
+    { value: 2, label: 'Đang mở đăng ký', color: 'info' },
+    { value: 3, label: 'Đang diễn ra', color: 'success' },
+    { value: 4, label: 'Đã kết thúc', color: 'error' },
+  ];
+
+  // Fetch semesters for filter
   useEffect(() => {
-    const fetchPrograms = async () => {
-      const result = await academicProgramService.getAllPrograms({
-        pageSize: 100,
-      });
-      if (result) {
-        setPrograms(result.items || []);
+    const fetchSemesters = async () => {
+      try {
+        const data = await semesterService.getStudentSemesters();
+        setSemesters(data || []);
+      } catch (error) {
+        console.error('Failed to fetch semesters:', error);
       }
     };
-    fetchPrograms();
+    fetchSemesters();
   }, []);
 
-  // Fetch courses
+  // Fetch sections
   useEffect(() => {
-    fetchCourses();
-  }, [page, rowsPerPage, searchTerm, filterProgram, filterDepartment]);
+    fetchSections();
+  }, [page, rowsPerPage, searchTerm, filterSemester, filterStatus]);
 
-  const fetchCourses = async () => {
+  const fetchSections = async () => {
     setLoading(true);
     try {
-      const result = await curriculumCourseService.getAllCurriculumCourses({
+      const result = await sectionService.getAllSections({
         pageNumber: page + 1,
         pageSize: rowsPerPage,
-        courseCode: searchTerm,
+        sectionCode: searchTerm,
         courseName: searchTerm,
-        programId: filterProgram || null,
-        departmentId: filterDepartment || null,
+        status: filterStatus !== '' ? filterStatus : null,
+        semesterId: filterSemester || null,
       });
 
       if (result) {
-        setCourses(result.items || []);
+        setSections(result.items || []);
         setTotalCount(result.totalCount || 0);
       }
     } catch (error) {
-      console.error('Failed to fetch courses:', error);
+      console.error('Failed to fetch sections:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const filteredCourses = useMemo(() => {
-    return courses.filter((course) => {
-      const matchesCourseType =
-        !filterCourseType ||
-        (filterCourseType === 'required' && course.isRequired) ||
-        (filterCourseType === 'elective' && !course.isRequired);
-      return matchesCourseType;
-    });
-  }, [courses, filterCourseType]);
-
-  const handleMenuOpen = (event, course) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedCourse(course);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedCourse(null);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -143,19 +130,30 @@ const CourseManagement = () => {
     setPage(0);
   };
 
-  const uniqueDepartments = useMemo(() => {
-    const depts = new Set(courses.map((c) => c.departmentName));
-    return Array.from(depts);
-  }, [courses]);
+  const getStatusColor = (status) => {
+    const statusOption = statusOptions.find((s) => s.value === status);
+    return statusOption ? statusOption.color : 'default';
+  };
+
+  const getStatusLabel = (status) => {
+    const statusOption = statusOptions.find((s) => s.value === status);
+    return statusOption ? statusOption.label : 'Không xác định';
+  };
 
   const stats = useMemo(() => {
+    const totalCapacity = sections.reduce((sum, s) => sum + (s.capacity || 0), 0);
+    const totalEnrolled = sections.reduce((sum, s) => sum + (s.enrolledCount || 0), 0);
+    const avgEnrollment = sections.length > 0 
+      ? sections.reduce((sum, s) => sum + (s.enrollmentPercentage || 0), 0) / sections.length
+      : 0;
+
     return {
       total: totalCount,
-      required: courses.filter((c) => c.isRequired).length,
-      elective: courses.filter((c) => !c.isRequired).length,
-      departments: uniqueDepartments.length,
+      capacity: totalCapacity,
+      enrolled: totalEnrolled,
+      avgEnrollment: Math.round(avgEnrollment),
     };
-  }, [courses, totalCount, uniqueDepartments]);
+  }, [sections, totalCount]);
 
   return (
     <Box sx={{ p: 3, backgroundColor: colors.background, minHeight: '100vh' }}>
@@ -165,10 +163,10 @@ const CourseManagement = () => {
           variant="h4"
           sx={{ fontWeight: 700, color: colors.text, mb: 1 }}
         >
-          Quản lý môn học
+          Quản lý lớp học phần
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Quản lý thông tin môn học trong chương trình đào tạo
+          Quản lý thông tin lớp học phần và đăng ký
         </Typography>
       </Box>
 
@@ -195,7 +193,7 @@ const CourseManagement = () => {
                     color="text.secondary"
                     gutterBottom
                   >
-                    Tổng môn học
+                    Tổng lớp học phần
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
                     {stats.total}
@@ -234,10 +232,10 @@ const CourseManagement = () => {
                     color="text.secondary"
                     gutterBottom
                   >
-                    Môn bắt buộc
+                    Tổng sĩ số
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {stats.required}
+                    {stats.capacity}
                   </Typography>
                 </Box>
                 <Avatar
@@ -246,7 +244,7 @@ const CourseManagement = () => {
                     color: colors.success,
                   }}
                 >
-                  <AssignmentIcon />
+                  <GroupIcon />
                 </Avatar>
               </Box>
             </CardContent>
@@ -273,10 +271,10 @@ const CourseManagement = () => {
                     color="text.secondary"
                     gutterBottom
                   >
-                    Môn tự chọn
+                    Đã đăng ký
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {stats.elective}
+                    {stats.enrolled}
                   </Typography>
                 </Box>
                 <Avatar
@@ -312,10 +310,10 @@ const CourseManagement = () => {
                     color="text.secondary"
                     gutterBottom
                   >
-                    Khoa/Phòng ban
+                    Tỷ lệ đăng ký TB
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {stats.departments}
+                    {stats.avgEnrollment}%
                   </Typography>
                 </Box>
                 <Avatar
@@ -324,7 +322,7 @@ const CourseManagement = () => {
                     color: colors.warning,
                   }}
                 >
-                  <ScheduleIcon />
+                  <AssignmentIcon />
                 </Avatar>
               </Box>
             </CardContent>
@@ -339,7 +337,7 @@ const CourseManagement = () => {
             <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
-                placeholder="Tìm theo mã môn, tên môn..."
+                placeholder="Tìm theo mã lớp, tên môn học..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
@@ -352,54 +350,39 @@ const CourseManagement = () => {
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
             </Grid>
-            <Grid item xs={12} md={2}>
+            <Grid item xs={12} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Chương trình</InputLabel>
+                <InputLabel>Học kỳ</InputLabel>
                 <Select
-                  value={filterProgram}
-                  label="Chương trình"
-                  onChange={(e) => setFilterProgram(e.target.value)}
+                  value={filterSemester}
+                  label="Học kỳ"
+                  onChange={(e) => setFilterSemester(e.target.value)}
                   sx={{ borderRadius: 2 }}
                 >
                   <MenuItem value="">Tất cả</MenuItem>
-                  {programs.map((prog) => (
-                    <MenuItem key={prog.academicProgramId} value={prog.academicProgramId}>
-                      {prog.programName}
+                  {semesters.map((sem) => (
+                    <MenuItem key={sem.semesterId} value={sem.semesterId}>
+                      {sem.year} - {sem.term}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={2}>
+            <Grid item xs={12} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Khoa</InputLabel>
+                <InputLabel>Trạng thái</InputLabel>
                 <Select
-                  value={filterDepartment}
-                  label="Khoa"
-                  onChange={(e) => setFilterDepartment(e.target.value)}
+                  value={filterStatus}
+                  label="Trạng thái"
+                  onChange={(e) => setFilterStatus(e.target.value)}
                   sx={{ borderRadius: 2 }}
                 >
                   <MenuItem value="">Tất cả</MenuItem>
-                  {uniqueDepartments.map((dept) => (
-                    <MenuItem key={dept} value={dept}>
-                      {dept}
+                  {statusOptions.map((status) => (
+                    <MenuItem key={status.value} value={status.value}>
+                      {status.label}
                     </MenuItem>
                   ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <FormControl fullWidth>
-                <InputLabel>Loại môn học</InputLabel>
-                <Select
-                  value={filterCourseType}
-                  label="Loại môn học"
-                  onChange={(e) => setFilterCourseType(e.target.value)}
-                  sx={{ borderRadius: 2 }}
-                >
-                  <MenuItem value="">Tất cả</MenuItem>
-                  <MenuItem value="required">Bắt buộc</MenuItem>
-                  <MenuItem value="elective">Tự chọn</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -415,14 +398,14 @@ const CourseManagement = () => {
                   fontWeight: 600,
                 }}
               >
-                Thêm môn học
+                Thêm lớp học phần
               </Button>
             </Grid>
           </Grid>
         </CardContent>
       </Card>
 
-      {/* Courses Table */}
+      {/* Sections Table */}
       <Card sx={{ borderRadius: 2 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
@@ -436,20 +419,21 @@ const CourseManagement = () => {
                   <TableRow
                     sx={{ backgroundColor: alpha(colors.primary, 0.05) }}
                   >
-                    <TableCell sx={{ fontWeight: 600 }}>Mã môn học</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Tên môn học</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Chương trình</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Khoa</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Tín chỉ</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Mã LHP</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Môn học</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Giảng viên</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Lớp dự kiến</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Học kỳ</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Loại</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Sĩ số</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Lịch học</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Thao tác</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredCourses.map((course) => (
+                  {sections.map((section) => (
                     <TableRow
-                      key={course.curriculumCourseId}
+                      key={section.sectionId}
                       sx={{
                         '&:hover': {
                           backgroundColor: alpha(colors.primary, 0.02),
@@ -461,30 +445,28 @@ const CourseManagement = () => {
                           variant="body2"
                           sx={{ fontWeight: 600, color: colors.primary }}
                         >
-                          {course.courseCode}
+                          {section.sectionCode}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {course.courseName}
+                          {section.courseName}
                         </Typography>
-                        {course.prerequisites.length > 0 && (
-                          <Typography variant="caption" color="text.secondary">
-                            Tiên quyết: {course.prerequisites.map(p => p.courseCode).join(', ')}
-                          </Typography>
-                        )}
+                        <Typography variant="caption" color="text.secondary">
+                          {section.courseCode} ({section.totalCredits} TC)
+                        </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
-                          {course.programName}
+                          {section.lecturerName}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {course.degreeLevel}
+                          {section.lecturerEmail}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={course.departmentName}
+                          label={section.className}
                           size="small"
                           sx={{
                             backgroundColor: alpha(colors.info, 0.1),
@@ -494,40 +476,80 @@ const CourseManagement = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {course.totalCredits}
+                        <Typography variant="body2">
+                          {section.semesterName}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          LT: {course.creditsTheory} | TH: {course.creditsLab}
+                          {section.startDate} - {section.endDate}
                         </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {section.enrolledCount}/{section.capacity}
+                          </Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={section.enrollmentPercentage}
+                            sx={{
+                              height: 6,
+                              borderRadius: 3,
+                              mt: 0.5,
+                              backgroundColor: alpha(colors.primary, 0.1),
+                              '& .MuiLinearProgress-bar': {
+                                borderRadius: 3,
+                                backgroundColor:
+                                  section.enrollmentPercentage >= 80
+                                    ? colors.success
+                                    : section.enrollmentPercentage >= 50
+                                      ? colors.warning
+                                      : colors.error,
+                              },
+                            }}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            {section.enrollmentPercentage.toFixed(1)}%
+                          </Typography>
+                        </Box>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
-                          HK {course.semesterSuggested}
+                          {section.scheduleSummary}
                         </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Phòng: {section.roomSummary}
+                        </Typography>
+                        {section.hasPracticeGroups && (
+                          <Chip
+                            label={`${section.practiceGroupCount} nhóm TH`}
+                            size="small"
+                            sx={{
+                              mt: 0.5,
+                              height: 20,
+                              fontSize: 10,
+                              backgroundColor: alpha(colors.warning, 0.1),
+                              color: colors.warning,
+                            }}
+                          />
+                        )}
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={course.courseType}
+                          label={getStatusLabel(section.status)}
                           size="small"
-                          sx={{
-                            backgroundColor: course.isRequired
-                              ? alpha(colors.success, 0.1)
-                              : alpha(colors.warning, 0.1),
-                            color: course.isRequired
-                              ? colors.success
-                              : colors.warning,
-                            fontWeight: 600,
-                          }}
+                          color={getStatusColor(section.status)}
+                          sx={{ fontWeight: 600 }}
                         />
                       </TableCell>
                       <TableCell>
-                        <Tooltip title="Thêm tùy chọn">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => handleMenuOpen(e, course)}
-                          >
-                            <MoreVertIcon />
+                        <Tooltip title="Xem chi tiết">
+                          <IconButton size="small">
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Chỉnh sửa">
+                          <IconButton size="small">
+                            <EditIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       </TableCell>
@@ -552,24 +574,8 @@ const CourseManagement = () => {
           </>
         )}
       </Card>
-
-      {/* Action Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={handleMenuClose}>
-          <EditIcon sx={{ mr: 1 }} fontSize="small" />
-          Chỉnh sửa
-        </MenuItem>
-        <MenuItem onClick={handleMenuClose} sx={{ color: colors.error }}>
-          <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
-          Xóa
-        </MenuItem>
-      </Menu>
     </Box>
   );
 };
 
-export default CourseManagement;
+export default Sections;
