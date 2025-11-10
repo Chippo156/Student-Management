@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+// Ant Design - Layout & Container
 import {
-  Table,
   Input,
-  Tag,
   Card,
-  Avatar,
+  Avatar as AntAvatar,
   Button,
   Space,
   message,
@@ -23,8 +22,35 @@ import {
   EditOutlined,
   EyeOutlined,
   IdcardOutlined,
+  CheckCircleOutlined,
+  FileExcelOutlined,
 } from '@ant-design/icons';
+// Material-UI - Table & Animations
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  IconButton,
+  Tooltip,
+  Avatar,
+  TablePagination,
+  CircularProgress,
+  Paper,
+  useTheme,
+  alpha,
+  Box,
+  Typography,
+} from '@mui/material';
+import {
+  Edit as EditIcon,
+  Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 import { lecturerService } from '../../../service/lecturerService';
+import { StatCardAntd } from '../../../component/Shared/StatCard';
 
 const statusMap = {
   0: { color: 'green', text: 'Đang công tác' },
@@ -48,10 +74,11 @@ const fieldList = [
 ];
 
 const TeacherList = () => {
+  const theme = useTheme();
   const [lecturers, setLecturers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(0); // MUI uses 0-indexed
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [openDetail, setOpenDetail] = useState(false);
@@ -59,9 +86,9 @@ const TeacherList = () => {
   const [selectedLecturer, setSelectedLecturer] = useState(null);
   const [form] = Form.useForm();
 
-  const fetchLecturers = async (page = 1, size = 10, searchText = '') => {
+  const fetchLecturers = async (pageNum = 1, size = 10, searchText = '') => {
     setLoading(true);
-    const res = await lecturerService.getAllLecturers(page, size);
+    const res = await lecturerService.getAllLecturers(pageNum, size);
     if (res && res.items) {
       let items = res.items;
       if (searchText) {
@@ -82,15 +109,56 @@ const TeacherList = () => {
   };
 
   useEffect(() => {
-    fetchLecturers(pageNumber, pageSize, search);
+    fetchLecturers(page + 1, rowsPerPage, search); // +1 for API
     // eslint-disable-next-line
-  }, [pageNumber, pageSize]);
+  }, [page, rowsPerPage]);
 
   const handleSearch = (value) => {
     setSearch(value);
-    setPageNumber(1);
-    fetchLecturers(1, pageSize, value);
+    setPage(0);
+    fetchLecturers(1, rowsPerPage, value);
   };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Status color helper
+  const getStatusColor = (status) => {
+    return status === 0
+      ? {
+          bg: alpha(theme.palette.success.main, 0.1),
+          color: theme.palette.success.main,
+          label: 'Đang công tác',
+        }
+      : {
+          bg: alpha(theme.palette.error.main, 0.1),
+          color: theme.palette.error.main,
+          label: 'Nghỉ việc',
+        };
+  };
+
+  // Statistics
+  const stats = useMemo(() => {
+    const activeLecturers = lecturers.filter(
+      (l) => l.user.accountStatus === 0
+    ).length;
+    const uniqueDepartments = new Set(
+      lecturers.map((l) => l.department?.departmentName).filter(Boolean)
+    );
+    const withTitle = lecturers.filter((l) => l.academicTitle).length;
+    return {
+      total: totalCount,
+      active: activeLecturers,
+      departments: uniqueDepartments.size,
+      withTitle: withTitle,
+    };
+  }, [lecturers, totalCount]);
 
   const handleEditSubmit = async () => {
     try {
@@ -114,7 +182,7 @@ const TeacherList = () => {
       // await lecturerService.updateLecturer(payload);
       message.success('Cập nhật thông tin thành công');
       setOpenEdit(false);
-      fetchLecturers(pageNumber, pageSize, search);
+      fetchLecturers(page + 1, rowsPerPage, search); // +1 for API
     } catch (err) {
       // Validation error hoặc API error
     }
@@ -158,7 +226,7 @@ const TeacherList = () => {
               flexWrap: 'wrap',
             }}
           >
-            <Avatar
+            <AntAvatar
               src={selectedLecturer.user.avatarUrl}
               size={80}
               icon={<UserOutlined />}
@@ -302,174 +370,293 @@ const TeacherList = () => {
     </Modal>
   );
 
-  const columns = [
-    {
-      title: 'Avatar',
-      key: 'avatar',
-      width: 60,
-      render: (_, record) => (
-        <Avatar
-          src={record.user.avatarUrl}
-          icon={<UserOutlined />}
-          style={{ background: '#e6f4ff', color: '#1677ff' }}
-        >
-          {record.user.fullName?.charAt(0)}
-        </Avatar>
-      ),
-    },
-    {
-      title: 'Mã GV',
-      dataIndex: 'lecturerCode',
-      key: 'lecturerCode',
-      width: 110,
-    },
-    {
-      title: 'Họ và tên',
-      dataIndex: ['user', 'fullName'],
-      key: 'fullName',
-      width: 180,
-      render: (_, record) => record.user.fullName,
-    },
-    {
-      title: 'Email',
-      dataIndex: ['user', 'email'],
-      key: 'email',
-      width: 200,
-      render: (_, record) =>
-        record.user.email || (
-          <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
-        ),
-    },
-    {
-      title: 'Số điện thoại',
-      dataIndex: ['user', 'phone'],
-      key: 'phone',
-      width: 130,
-      render: (_, record) =>
-        record.user.phone || (
-          <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
-        ),
-    },
-    {
-      title: 'Khoa',
-      key: 'department',
-      width: 180,
-      render: (_, record) => record.department?.departmentName,
-    },
-    {
-      title: 'Chức vụ',
-      dataIndex: 'position',
-      key: 'position',
-      width: 120,
-    },
-    {
-      title: 'Học hàm',
-      dataIndex: 'academicTitle',
-      key: 'academicTitle',
-      width: 120,
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: ['user', 'accountStatus'],
-      key: 'accountStatus',
-      width: 120,
-      render: (status) => {
-        const s = statusMap[status] || {
-          color: 'default',
-          text: 'Không xác định',
-        };
-        return <Tag color={s.color}>{s.text}</Tag>;
-      },
-    },
-    {
-      title: 'Thao tác',
-      key: 'action',
-      width: 120,
-      render: (_, record) => (
-        <Space>
-          <Button
-            type="link"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => {
-              setSelectedLecturer(record);
-              setOpenDetail(true);
-            }}
-          >
-            Xem
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => {
-              setSelectedLecturer(record);
-              setOpenEdit(true);
-              form.setFieldsValue({
-                ...record.user,
-                lecturerCode: record.lecturerCode,
-                departmentName: record.department?.departmentName,
-                position: record.position,
-                academicTitle: record.academicTitle,
-                accountStatus: record.user.accountStatus,
-                fullName: record.user.fullName,
-                email: record.user.email,
-                phone: record.user.phone,
-              });
-            }}
-          >
-            Sửa
-          </Button>
-        </Space>
-      ),
-    },
-  ];
-
   return (
-    <Card
-      title="Danh sách giảng viên"
-      extra={
-        <Space>
-          <Input.Search
-            allowClear
-            placeholder="Tìm kiếm tên, mã GV, email..."
-            onSearch={handleSearch}
-            style={{ width: 260 }}
-            prefix={<SearchOutlined />}
+    <div style={{ padding: 24, minHeight: '100vh' }}>
+      <div style={{ marginBottom: 24 }}>
+        <h2 style={{ fontWeight: 700, marginBottom: 8 }}>Quản lý giảng viên</h2>
+        <div style={{ color: '#888' }}>
+          Quản lý thông tin giảng viên, khoa và trạng thái công tác.
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Tổng giảng viên"
+            value={stats.total}
+            icon={UserOutlined}
+            color="#1677ff"
+            bgColor="#e6f4ff"
           />
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => fetchLecturers(pageNumber, pageSize, search)}
-          >
-            Làm mới
-          </Button>
-        </Space>
-      }
-      style={{ margin: 24 }}
-      styles={{ body: { padding: 0 } }}
-    >
-      <Table
-        columns={columns}
-        dataSource={lecturers}
-        rowKey={(record) => record.id}
-        loading={loading}
-        pagination={{
-          current: pageNumber,
-          pageSize: pageSize,
-          total: totalCount,
-          showSizeChanger: true,
-          pageSizeOptions: ['5', '10', '20', '50'],
-          showTotal: (total) => `Tổng ${total} giảng viên`,
-          onChange: (page, size) => {
-            setPageNumber(page);
-            setPageSize(size);
-          },
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Đang công tác"
+            value={stats.active}
+            icon={CheckCircleOutlined}
+            color="#52c41a"
+            bgColor="#f6ffed"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Có học hàm"
+            value={stats.withTitle}
+            icon={IdcardOutlined}
+            color="#13c2c2"
+            bgColor="#e6fffb"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Khoa"
+            value={stats.departments}
+            icon={TeamOutlined}
+            color="#fa8c16"
+            bgColor="#fff7e6"
+          />
+        </Col>
+      </Row>
+
+      <Card
+        title="Danh sách giảng viên"
+        extra={
+          <Space>
+            <Input.Search
+              allowClear
+              placeholder="Tìm kiếm tên, mã GV, email..."
+              onSearch={handleSearch}
+              style={{ width: 260 }}
+              prefix={<SearchOutlined />}
+            />
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => fetchLecturers(page + 1, rowsPerPage, search)}
+            >
+              Làm mới
+            </Button>
+            <Button
+              icon={<FileExcelOutlined />}
+              type="primary"
+              style={{ background: '#52c41a', borderColor: '#52c41a' }}
+            >
+              Xuất Excel
+            </Button>
+          </Space>
+        }
+        style={{
+          borderRadius: 12,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         }}
-        scroll={{ x: 1000 }}
-      />
-      {DetailModal}
-      {EditModal}
-    </Card>
+        styles={{ body: { padding: 0 } }}
+      >
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+            <TableContainer component={Paper} elevation={0}>
+              <Table>
+                <TableHead>
+                  <TableRow
+                    sx={{
+                      backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                    }}
+                  >
+                    <TableCell sx={{ fontWeight: 600 }}>Giảng viên</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Mã GV</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      Số điện thoại
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Khoa</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Chức vụ</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Học hàm</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }} align="center">
+                      Thao tác
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {lecturers.map((lecturer) => {
+                    const statusInfo = getStatusColor(
+                      lecturer.user.accountStatus
+                    );
+                    return (
+                      <TableRow
+                        key={lecturer.id}
+                        sx={{
+                          '&:hover': {
+                            backgroundColor: alpha(
+                              theme.palette.primary.main,
+                              0.05
+                            ),
+                            transition: 'all 0.3s ease',
+                          },
+                        }}
+                      >
+                        <TableCell>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                          >
+                            <Avatar
+                              src={lecturer.user.avatarUrl}
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                bgcolor: '#e6f4ff',
+                                color: '#1677ff',
+                              }}
+                            >
+                              {lecturer.user.fullName?.[0]}
+                            </Avatar>
+                            <Box>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 600 }}
+                              >
+                                {lecturer.user.fullName}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 600,
+                              color: theme.palette.primary.main,
+                            }}
+                          >
+                            {lecturer.lecturerCode}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {lecturer.user.email || (
+                              <span style={{ color: '#aaa' }}>
+                                Chưa cập nhật
+                              </span>
+                            )}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {lecturer.user.phone || (
+                              <span style={{ color: '#aaa' }}>
+                                Chưa cập nhật
+                              </span>
+                            )}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {lecturer.department?.departmentName}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {lecturer.position || (
+                              <span style={{ color: '#aaa' }}>-</span>
+                            )}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {lecturer.academicTitle || (
+                              <span style={{ color: '#aaa' }}>-</span>
+                            )}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={statusInfo.label}
+                            size="small"
+                            sx={{
+                              backgroundColor: statusInfo.bg,
+                              color: statusInfo.color,
+                              fontWeight: 600,
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              gap: 0.5,
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Tooltip title="Xem chi tiết">
+                              <IconButton
+                                size="small"
+                                sx={{ color: '#13c2c2' }}
+                                onClick={() => {
+                                  setSelectedLecturer(lecturer);
+                                  setOpenDetail(true);
+                                }}
+                              >
+                                <VisibilityIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Chỉnh sửa">
+                              <IconButton
+                                size="small"
+                                sx={{ color: '#fa8c16' }}
+                                onClick={() => {
+                                  setSelectedLecturer(lecturer);
+                                  setOpenEdit(true);
+                                  form.setFieldsValue({
+                                    ...lecturer.user,
+                                    lecturerCode: lecturer.lecturerCode,
+                                    departmentName:
+                                      lecturer.department?.departmentName,
+                                    position: lecturer.position,
+                                    academicTitle: lecturer.academicTitle,
+                                    accountStatus: lecturer.user.accountStatus,
+                                    fullName: lecturer.user.fullName,
+                                    email: lecturer.user.email,
+                                    phone: lecturer.user.phone,
+                                  });
+                                }}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 20, 50]}
+              component="div"
+              count={totalCount}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              labelRowsPerPage="Số dòng mỗi trang:"
+              labelDisplayedRows={({ from, to, count }) =>
+                `${from}-${to} của ${count}`
+              }
+            />
+          </>
+        )}
+        {DetailModal}
+        {EditModal}
+      </Card>
+    </div>
   );
 };
 

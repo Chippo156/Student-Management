@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import {
   Edit as EditIcon,
+  Delete as DeleteIcon,
   Visibility as VisibilityIcon,
   Person as PersonIcon,
   Groups as GroupsIcon,
@@ -113,20 +114,28 @@ const ClassTable = ({
                     />
                   </TableCell>
                   <TableCell align="center">
-                    <IconButton
-                      size="small"
-                      onClick={() => onViewClass(classInfo)}
-                      color="primary"
-                    >
-                      <VisibilityIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => onEditClass?.(classInfo)}
-                      color="primary"
-                    >
-                      <EditIcon />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => onViewClass(classInfo)}
+                        sx={{ color: 'info.main' }}
+                      >
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => onEditClass?.(classInfo)}
+                        sx={{ color: 'warning.main' }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        sx={{ color: 'error.main' }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}

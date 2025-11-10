@@ -10,7 +10,11 @@ import {
   MenuItem,
   InputAdornment,
 } from '@mui/material';
-import { Search as SearchIcon, FilterList as FilterListIcon } from '@mui/icons-material';
+import {
+  Search as SearchIcon,
+  FilterList as FilterListIcon,
+  FileDownload as FileDownloadIcon,
+} from '@mui/icons-material';
 import { departments, years, statuses } from './constants';
 
 /**
@@ -26,6 +30,7 @@ const ClassFilterBar = ({
   statusFilter,
   setStatusFilter,
   onClearFilters,
+  onExportExcel,
 }) => {
   return (
     <Paper sx={{ p: 3, mb: 3 }}>
@@ -96,7 +101,7 @@ const ClassFilterBar = ({
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} md={1.5}>
           <Button
             fullWidth
             variant="outlined"
@@ -104,6 +109,17 @@ const ClassFilterBar = ({
             onClick={onClearFilters}
           >
             Xóa bộ lọc
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={1.5}>
+          <Button
+            fullWidth
+            variant="outlined"
+            color="success"
+            startIcon={<FileDownloadIcon />}
+            onClick={onExportExcel}
+          >
+            Xuất Excel
           </Button>
         </Grid>
       </Grid>

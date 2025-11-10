@@ -1,12 +1,21 @@
 import React, { useState, useMemo, useEffect } from 'react';
+// Ant Design - Layout & Container
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  useTheme,
-  alpha,
-  Button,
+  Row,
+  Col,
+  Card as AntCard,
+  Input,
+  Select as AntSelect,
+  Button as AntButton,
+  Space,
+} from 'antd';
+import {
+  SearchOutlined,
+  PlusOutlined,
+  FileExcelOutlined,
+} from '@ant-design/icons';
+// Material-UI - Table & Animations
+import {
   Table,
   TableBody,
   TableCell,
@@ -15,32 +24,30 @@ import {
   TableRow,
   Chip,
   IconButton,
-  TextField,
-  InputAdornment,
-  Menu,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  Grid,
   Tooltip,
-  Avatar,
   TablePagination,
   CircularProgress,
+  Paper,
+  useTheme,
+  alpha,
+  Box,
+  Typography,
 } from '@mui/material';
 import {
-  Search as SearchIcon,
-  Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  MoreVert as MoreVertIcon,
-  School as SchoolIcon,
-  Person as PersonIcon,
-  Schedule as ScheduleIcon,
+  MenuBook as MenuBookIcon,
   Assignment as AssignmentIcon,
+  Category as CategoryIcon,
+  School as SchoolIcon,
 } from '@mui/icons-material';
 import curriculumCourseService from '../../../service/curriculumCourseService';
 import academicProgramService from '../../../service/academicProgramService';
+import { facultyService } from '../../../service/facultyService';
+import { departmentService } from '../../../service/departmentService';
+import { classService } from '../../../service/classService';
+import * as XLSX from 'xlsx';
+import { StatCardAntd } from '../../../component/Shared/StatCard';
 
 const CourseManagement = () => {
   const theme = useTheme();
@@ -54,24 +61,14 @@ const CourseManagement = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedCourse, setSelectedCourse] = useState(null);
 
-  const colors = useMemo(
-    () => ({
-      primary: theme.palette.primary.main,
-      secondary: theme.palette.secondary.main,
-      success: theme.palette.success.main,
-      warning: theme.palette.warning.main,
-      error: theme.palette.error.main,
-      info: theme.palette.info.main,
-      background: theme.palette.background.default,
-      paper: theme.palette.background.paper,
-      text: theme.palette.text.primary,
-      textSecondary: theme.palette.text.secondary,
-    }),
-    [theme]
-  );
+  // Dropdown states
+  const [faculties, setFaculties] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [selectedFaculty, setSelectedFaculty] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedClass, setSelectedClass] = useState('');
 
   // Fetch programs for filter
   useEffect(() => {
@@ -85,6 +82,59 @@ const CourseManagement = () => {
     };
     fetchPrograms();
   }, []);
+
+  // Fetch faculties for dropdown
+  useEffect(() => {
+    const fetchFaculties = async () => {
+      const data = await facultyService.getFacultiesDropdown();
+      if (data) {
+        setFaculties(data);
+      }
+    };
+    fetchFaculties();
+  }, []);
+
+  // Fetch departments when faculty changes
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      if (selectedFaculty) {
+        const data =
+          await departmentService.getDepartmentsDropdownByFaculty(
+            selectedFaculty
+          );
+        if (data) {
+          setDepartments(data);
+        }
+        setSelectedDepartment('');
+        setClasses([]);
+        setSelectedClass('');
+      } else {
+        setDepartments([]);
+        setSelectedDepartment('');
+        setClasses([]);
+        setSelectedClass('');
+      }
+    };
+    fetchDepartments();
+  }, [selectedFaculty]);
+
+  // Fetch classes when department changes
+  useEffect(() => {
+    const fetchClasses = async () => {
+      if (selectedDepartment) {
+        const data =
+          await classService.getClassesDropdownByDepartment(selectedDepartment);
+        if (data) {
+          setClasses(data);
+        }
+        setSelectedClass('');
+      } else {
+        setClasses([]);
+        setSelectedClass('');
+      }
+    };
+    fetchClasses();
+  }, [selectedDepartment]);
 
   // Fetch courses
   useEffect(() => {
@@ -124,16 +174,6 @@ const CourseManagement = () => {
     });
   }, [courses, filterCourseType]);
 
-  const handleMenuOpen = (event, course) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedCourse(course);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedCourse(null);
-  };
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -141,6 +181,47 @@ const CourseManagement = () => {
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  // Export to Excel
+
+  const handleExportExcel = () => {
+    const exportData = filteredCourses.map((course, index) => ({
+      STT: index + 1,
+      'Mã môn học': course.courseCode,
+      'Tên môn học': course.courseName,
+      'Chương trình': course.programName,
+      'Bậc đào tạo': course.degreeLevel,
+      'Chuyên ngành': course.departmentName,
+      'Tổng tín chỉ': course.totalCredits,
+      'Tín chỉ lý thuyết': course.creditsTheory,
+      'Tín chỉ thực hành': course.creditsLab,
+      'Học kỳ đề xuất': course.semesterSuggested,
+      'Loại môn học': course.courseType,
+      'Môn tiên quyết': course.prerequisites
+        .map((p) => p.courseCode)
+        .join(', '),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách môn học');
+
+    // Auto-size columns
+    const maxWidth = exportData.reduce((acc, row) => {
+      Object.keys(row).forEach((key, index) => {
+        const cellLength = String(row[key]).length;
+        acc[index] = Math.max(acc[index] || 10, cellLength);
+      });
+      return acc;
+    }, []);
+
+    worksheet['!cols'] = maxWidth.map((w) => ({ width: Math.min(w + 2, 50) }));
+
+    XLSX.writeFile(
+      workbook,
+      `Danh_sach_mon_hoc_${new Date().toISOString().split('T')[0]}.xlsx`
+    );
   };
 
   const uniqueDepartments = useMemo(() => {
@@ -158,288 +239,174 @@ const CourseManagement = () => {
   }, [courses, totalCount, uniqueDepartments]);
 
   return (
-    <Box sx={{ p: 3, backgroundColor: colors.background, minHeight: '100vh' }}>
+    <div style={{ padding: 24, minHeight: '100vh' }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography
-          variant="h4"
-          sx={{ fontWeight: 700, color: colors.text, mb: 1 }}
-        >
+      <div style={{ marginBottom: 24 }}>
+        <h2 style={{ fontWeight: 700, marginBottom: 8, fontSize: 24 }}>
           Quản lý môn học
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
+        </h2>
+        <div style={{ color: '#888', fontSize: 14 }}>
           Quản lý thông tin môn học trong chương trình đào tạo
-        </Typography>
-      </Box>
+        </div>
+      </div>
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 2,
-              background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.primary, 0.05)} 100%)`,
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Tổng môn học
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {stats.total}
-                  </Typography>
-                </Box>
-                <Avatar
-                  sx={{
-                    backgroundColor: alpha(colors.primary, 0.1),
-                    color: colors.primary,
-                  }}
-                >
-                  <SchoolIcon />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 2,
-              background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.success, 0.05)} 100%)`,
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Môn bắt buộc
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {stats.required}
-                  </Typography>
-                </Box>
-                <Avatar
-                  sx={{
-                    backgroundColor: alpha(colors.success, 0.1),
-                    color: colors.success,
-                  }}
-                >
-                  <AssignmentIcon />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 2,
-              background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.info, 0.05)} 100%)`,
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Môn tự chọn
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {stats.elective}
-                  </Typography>
-                </Box>
-                <Avatar
-                  sx={{
-                    backgroundColor: alpha(colors.info, 0.1),
-                    color: colors.info,
-                  }}
-                >
-                  <PersonIcon />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 2,
-              background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.warning, 0.05)} 100%)`,
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Khoa/Phòng ban
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {stats.departments}
-                  </Typography>
-                </Box>
-                <Avatar
-                  sx={{
-                    backgroundColor: alpha(colors.warning, 0.1),
-                    color: colors.warning,
-                  }}
-                >
-                  <ScheduleIcon />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      {/* Stats Cards - Ant Design */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Tổng môn học"
+            value={stats.total}
+            icon={MenuBookIcon}
+            color="#1677ff"
+            bgColor="#e6f4ff"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Môn bắt buộc"
+            value={stats.required}
+            icon={AssignmentIcon}
+            color="#52c41a"
+            bgColor="#f6ffed"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Môn tự chọn"
+            value={stats.elective}
+            icon={CategoryIcon}
+            color="#1890ff"
+            bgColor="#e6f7ff"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Chuyên ngành"
+            value={stats.departments}
+            icon={SchoolIcon}
+            color="#fa8c16"
+            bgColor="#fff7e6"
+          />
+        </Col>
+      </Row>
 
-      {/* Filter and Search */}
-      <Card sx={{ mb: 3, borderRadius: 2 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={3}>
-              <TextField
-                fullWidth
-                placeholder="Tìm theo mã môn, tên môn..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon color="action" />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <FormControl fullWidth>
-                <InputLabel>Chương trình</InputLabel>
-                <Select
-                  value={filterProgram}
-                  label="Chương trình"
-                  onChange={(e) => setFilterProgram(e.target.value)}
-                  sx={{ borderRadius: 2 }}
+      {/* Filter, Search and Export - Ant Design */}
+      <AntCard style={{ marginBottom: 24, borderRadius: 12 }}>
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} md={6}>
+            <Input
+              placeholder="Tìm theo mã môn, tên môn..."
+              prefix={<SearchOutlined />}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              size="large"
+            />
+          </Col>
+          <Col xs={24} md={4}>
+            <AntSelect
+              placeholder="Chương trình"
+              value={filterProgram || undefined}
+              onChange={(value) => setFilterProgram(value || '')}
+              size="large"
+              style={{ width: '100%' }}
+            >
+              <AntSelect.Option value="">Tất cả</AntSelect.Option>
+              {programs.map((prog) => (
+                <AntSelect.Option
+                  key={prog.academicProgramId}
+                  value={prog.academicProgramId}
                 >
-                  <MenuItem value="">Tất cả</MenuItem>
-                  {programs.map((prog) => (
-                    <MenuItem key={prog.academicProgramId} value={prog.academicProgramId}>
-                      {prog.programName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <FormControl fullWidth>
-                <InputLabel>Khoa</InputLabel>
-                <Select
-                  value={filterDepartment}
-                  label="Khoa"
-                  onChange={(e) => setFilterDepartment(e.target.value)}
-                  sx={{ borderRadius: 2 }}
-                >
-                  <MenuItem value="">Tất cả</MenuItem>
-                  {uniqueDepartments.map((dept) => (
-                    <MenuItem key={dept} value={dept}>
-                      {dept}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <FormControl fullWidth>
-                <InputLabel>Loại môn học</InputLabel>
-                <Select
-                  value={filterCourseType}
-                  label="Loại môn học"
-                  onChange={(e) => setFilterCourseType(e.target.value)}
-                  sx={{ borderRadius: 2 }}
-                >
-                  <MenuItem value="">Tất cả</MenuItem>
-                  <MenuItem value="required">Bắt buộc</MenuItem>
-                  <MenuItem value="elective">Tự chọn</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<AddIcon />}
-                sx={{
-                  borderRadius: 2,
-                  height: 56,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
-              >
-                Thêm môn học
-              </Button>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+                  {prog.programName}
+                </AntSelect.Option>
+              ))}
+            </AntSelect>
+          </Col>
+          <Col xs={24} md={4}>
+            <AntSelect
+              placeholder="Chuyên ngành"
+              value={filterDepartment || undefined}
+              onChange={(value) => setFilterDepartment(value || '')}
+              size="large"
+              style={{ width: '100%' }}
+            >
+              <AntSelect.Option value="">Tất cả</AntSelect.Option>
+              {uniqueDepartments.map((dept) => (
+                <AntSelect.Option key={dept} value={dept}>
+                  {dept}
+                </AntSelect.Option>
+              ))}
+            </AntSelect>
+          </Col>
+          <Col xs={24} md={3}>
+            <AntSelect
+              placeholder="Loại môn học"
+              value={filterCourseType || undefined}
+              onChange={(value) => setFilterCourseType(value || '')}
+              size="large"
+              style={{ width: '100%' }}
+            >
+              <AntSelect.Option value="">Tất cả</AntSelect.Option>
+              <AntSelect.Option value="required">Bắt buộc</AntSelect.Option>
+              <AntSelect.Option value="elective">Tự chọn</AntSelect.Option>
+            </AntSelect>
+          </Col>
+          <Col xs={24} md={3}>
+            <AntButton
+              type="primary"
+              icon={<FileExcelOutlined />}
+              onClick={handleExportExcel}
+              disabled={filteredCourses.length === 0}
+              size="large"
+              style={{
+                width: '100%',
+                background: '#52c41a',
+                borderColor: '#52c41a',
+              }}
+            >
+              Xuất Excel
+            </AntButton>
+          </Col>
+          <Col xs={24} md={4}>
+            <AntButton
+              type="primary"
+              icon={<PlusOutlined />}
+              size="large"
+              style={{ width: '100%' }}
+            >
+              Thêm môn học
+            </AntButton>
+          </Col>
+        </Row>
+      </AntCard>
 
-      {/* Courses Table */}
-      <Card sx={{ borderRadius: 2 }}>
+      {/* Courses Table - Material-UI for animations */}
+      <AntCard
+        style={{
+          borderRadius: 12,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        }}
+        styles={{
+          body: { padding: 0 },
+        }}
+      >
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
             <CircularProgress />
           </Box>
         ) : (
           <>
-            <TableContainer>
+            <TableContainer component={Paper} elevation={0}>
               <Table>
                 <TableHead>
                   <TableRow
-                    sx={{ backgroundColor: alpha(colors.primary, 0.05) }}
+                    sx={{
+                      backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                    }}
                   >
                     <TableCell sx={{ fontWeight: 600 }}>Mã môn học</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Tên môn học</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Chương trình</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Khoa</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Chuyên Ngành</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Tín chỉ</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Học kỳ</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Loại</TableCell>
@@ -452,14 +419,21 @@ const CourseManagement = () => {
                       key={course.curriculumCourseId}
                       sx={{
                         '&:hover': {
-                          backgroundColor: alpha(colors.primary, 0.02),
+                          backgroundColor: alpha(
+                            theme.palette.primary.main,
+                            0.05
+                          ),
+                          transition: 'all 0.3s ease',
                         },
                       }}
                     >
                       <TableCell>
                         <Typography
                           variant="body2"
-                          sx={{ fontWeight: 600, color: colors.primary }}
+                          sx={{
+                            fontWeight: 600,
+                            color: theme.palette.primary.main,
+                          }}
                         >
                           {course.courseCode}
                         </Typography>
@@ -470,7 +444,10 @@ const CourseManagement = () => {
                         </Typography>
                         {course.prerequisites.length > 0 && (
                           <Typography variant="caption" color="text.secondary">
-                            Tiên quyết: {course.prerequisites.map(p => p.courseCode).join(', ')}
+                            Tiên quyết:{' '}
+                            {course.prerequisites
+                              .map((p) => p.courseCode)
+                              .join(', ')}
                           </Typography>
                         )}
                       </TableCell>
@@ -487,8 +464,11 @@ const CourseManagement = () => {
                           label={course.departmentName}
                           size="small"
                           sx={{
-                            backgroundColor: alpha(colors.info, 0.1),
-                            color: colors.info,
+                            backgroundColor: alpha(
+                              theme.palette.info.main,
+                              0.1
+                            ),
+                            color: theme.palette.info.main,
                             fontWeight: 600,
                           }}
                         />
@@ -512,24 +492,47 @@ const CourseManagement = () => {
                           size="small"
                           sx={{
                             backgroundColor: course.isRequired
-                              ? alpha(colors.success, 0.1)
-                              : alpha(colors.warning, 0.1),
+                              ? alpha(theme.palette.success.main, 0.1)
+                              : alpha(theme.palette.warning.main, 0.1),
                             color: course.isRequired
-                              ? colors.success
-                              : colors.warning,
+                              ? theme.palette.success.main
+                              : theme.palette.warning.main,
                             fontWeight: 600,
                           }}
                         />
                       </TableCell>
                       <TableCell>
-                        <Tooltip title="Thêm tùy chọn">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => handleMenuOpen(e, course)}
-                          >
-                            <MoreVertIcon />
-                          </IconButton>
-                        </Tooltip>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <Tooltip title="Chỉnh sửa">
+                            <IconButton
+                              size="small"
+                              sx={{
+                                color: '#fa8c16',
+                                '&:hover': {
+                                  backgroundColor: alpha('#fa8c16', 0.1),
+                                },
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Xóa">
+                            <IconButton
+                              size="small"
+                              sx={{
+                                color: theme.palette.error.main,
+                                '&:hover': {
+                                  backgroundColor: alpha(
+                                    theme.palette.error.main,
+                                    0.1
+                                  ),
+                                },
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -551,24 +554,8 @@ const CourseManagement = () => {
             />
           </>
         )}
-      </Card>
-
-      {/* Action Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={handleMenuClose}>
-          <EditIcon sx={{ mr: 1 }} fontSize="small" />
-          Chỉnh sửa
-        </MenuItem>
-        <MenuItem onClick={handleMenuClose} sx={{ color: colors.error }}>
-          <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
-          Xóa
-        </MenuItem>
-      </Menu>
-    </Box>
+      </AntCard>
+    </div>
   );
 };
 

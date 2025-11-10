@@ -1,12 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
+// Ant Design - Layout & Container
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  useTheme,
-  alpha,
-  Button,
+  Row,
+  Col,
+  Card as AntCard,
+  Input,
+  Select as AntSelect,
+  Button as AntButton,
+} from 'antd';
+import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
+// Material-UI - Table & Animations
+import {
   Table,
   TableBody,
   TableCell,
@@ -14,30 +18,20 @@ import {
   TableHead,
   TableRow,
   Chip,
-  IconButton,
-  TextField,
-  InputAdornment,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
-  Tooltip,
-  Avatar,
   TablePagination,
   CircularProgress,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  Paper,
+  useTheme,
+  alpha,
+  Box,
+  Typography,
 } from '@mui/material';
 import {
-  Search as SearchIcon,
-  Add as AddIcon,
   School as SchoolIcon,
-  ExpandMore as ExpandMoreIcon,
   MenuBook as MenuBookIcon,
 } from '@mui/icons-material';
 import academicProgramService from '../../../service/academicProgramService';
+import { StatCardAntd } from '../../../component/Shared/StatCard';
 
 const Curriculum = () => {
   const theme = useTheme();
@@ -49,22 +43,6 @@ const Curriculum = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
-
-  const colors = useMemo(
-    () => ({
-      primary: theme.palette.primary.main,
-      secondary: theme.palette.secondary.main,
-      success: theme.palette.success.main,
-      warning: theme.palette.warning.main,
-      error: theme.palette.error.main,
-      info: theme.palette.info.main,
-      background: theme.palette.background.default,
-      paper: theme.palette.background.paper,
-      text: theme.palette.text.primary,
-      textSecondary: theme.palette.text.secondary,
-    }),
-    [theme]
-  );
 
   useEffect(() => {
     fetchPrograms();
@@ -117,271 +95,142 @@ const Curriculum = () => {
   }, [programs, totalCount, uniqueDepartments]);
 
   return (
-    <Box sx={{ p: 3, backgroundColor: colors.background, minHeight: '100vh' }}>
+    <div style={{ padding: 24, minHeight: '100vh' }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography
-          variant="h4"
-          sx={{ fontWeight: 700, color: colors.text, mb: 1 }}
-        >
+      <div style={{ marginBottom: 24 }}>
+        <h2 style={{ fontWeight: 700, marginBottom: 8, fontSize: 24 }}>
           Quản lý chương trình đào tạo
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
+        </h2>
+        <div style={{ color: '#888', fontSize: 14 }}>
           Quản lý các chương trình đào tạo và chương trình khung
-        </Typography>
-      </Box>
+        </div>
+      </div>
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 2,
-              background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.primary, 0.05)} 100%)`,
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Tổng chương trình
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {stats.total}
-                  </Typography>
-                </Box>
-                <Avatar
-                  sx={{
-                    backgroundColor: alpha(colors.primary, 0.1),
-                    color: colors.primary,
-                  }}
-                >
-                  <SchoolIcon />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 2,
-              background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.success, 0.05)} 100%)`,
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Đại học
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {stats.undergraduate}
-                  </Typography>
-                </Box>
-                <Avatar
-                  sx={{
-                    backgroundColor: alpha(colors.success, 0.1),
-                    color: colors.success,
-                  }}
-                >
-                  <MenuBookIcon />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 2,
-              background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.info, 0.05)} 100%)`,
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Sau đại học
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {stats.graduate}
-                  </Typography>
-                </Box>
-                <Avatar
-                  sx={{
-                    backgroundColor: alpha(colors.info, 0.1),
-                    color: colors.info,
-                  }}
-                >
-                  <MenuBookIcon />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 2,
-              background: `linear-gradient(135deg, ${colors.paper} 0%, ${alpha(colors.warning, 0.05)} 100%)`,
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Khoa
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {stats.departments}
-                  </Typography>
-                </Box>
-                <Avatar
-                  sx={{
-                    backgroundColor: alpha(colors.warning, 0.1),
-                    color: colors.warning,
-                  }}
-                >
-                  <SchoolIcon />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      {/* Stats Cards - Ant Design */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Tổng chương trình"
+            value={stats.total}
+            icon={SchoolIcon}
+            color="#1677ff"
+            bgColor="#e6f4ff"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Đại học"
+            value={stats.undergraduate}
+            icon={MenuBookIcon}
+            color="#52c41a"
+            bgColor="#f6ffed"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Sau đại học"
+            value={stats.graduate}
+            icon={MenuBookIcon}
+            color="#1890ff"
+            bgColor="#e6f7ff"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Khoa"
+            value={stats.departments}
+            icon={SchoolIcon}
+            color="#fa8c16"
+            bgColor="#fff7e6"
+          />
+        </Col>
+      </Row>
 
-      {/* Filter and Search */}
-      <Card sx={{ mb: 3, borderRadius: 2 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                placeholder="Tìm theo tên chương trình..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon color="action" />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <FormControl fullWidth>
-                <InputLabel>Bậc đào tạo</InputLabel>
-                <Select
-                  value={filterDegree}
-                  label="Bậc đào tạo"
-                  onChange={(e) => setFilterDegree(e.target.value)}
-                  sx={{ borderRadius: 2 }}
-                >
-                  <MenuItem value="">Tất cả</MenuItem>
-                  {degreeLevels.map((level) => (
-                    <MenuItem key={level} value={level}>
-                      {level}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <FormControl fullWidth>
-                <InputLabel>Khoa</InputLabel>
-                <Select
-                  value={filterDepartment}
-                  label="Khoa"
-                  onChange={(e) => setFilterDepartment(e.target.value)}
-                  sx={{ borderRadius: 2 }}
-                >
-                  <MenuItem value="">Tất cả</MenuItem>
-                  {uniqueDepartments.map((dept) => (
-                    <MenuItem key={dept} value={dept}>
-                      {dept}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<AddIcon />}
-                sx={{
-                  borderRadius: 2,
-                  height: 56,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
-              >
-                Thêm chương trình
-              </Button>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+      {/* Filter and Search - Ant Design */}
+      <AntCard style={{ marginBottom: 24, borderRadius: 12 }}>
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} md={8}>
+            <Input
+              placeholder="Tìm theo tên chương trình..."
+              prefix={<SearchOutlined />}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              size="large"
+            />
+          </Col>
+          <Col xs={24} md={5}>
+            <AntSelect
+              placeholder="Bậc đào tạo"
+              value={filterDegree || undefined}
+              onChange={(value) => setFilterDegree(value || '')}
+              size="large"
+              style={{ width: '100%' }}
+            >
+              <AntSelect.Option value="">Tất cả</AntSelect.Option>
+              {degreeLevels.map((level) => (
+                <AntSelect.Option key={level} value={level}>
+                  {level}
+                </AntSelect.Option>
+              ))}
+            </AntSelect>
+          </Col>
+          <Col xs={24} md={5}>
+            <AntSelect
+              placeholder="Khoa"
+              value={filterDepartment || undefined}
+              onChange={(value) => setFilterDepartment(value || '')}
+              size="large"
+              style={{ width: '100%' }}
+            >
+              <AntSelect.Option value="">Tất cả</AntSelect.Option>
+              {uniqueDepartments.map((dept) => (
+                <AntSelect.Option key={dept} value={dept}>
+                  {dept}
+                </AntSelect.Option>
+              ))}
+            </AntSelect>
+          </Col>
+          <Col xs={24} md={6}>
+            <AntButton
+              type="primary"
+              icon={<PlusOutlined />}
+              size="large"
+              style={{ width: '100%' }}
+            >
+              Thêm chương trình
+            </AntButton>
+          </Col>
+        </Row>
+      </AntCard>
 
-      {/* Programs Table */}
-      <Card sx={{ borderRadius: 2 }}>
+      {/* Programs Table - Material-UI for animations */}
+      <AntCard
+        style={{
+          borderRadius: 12,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        }}
+        styles={{
+          body: { padding: 0 },
+        }}
+      >
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
             <CircularProgress />
           </Box>
         ) : (
           <>
-            <TableContainer>
+            <TableContainer component={Paper} elevation={0}>
               <Table>
                 <TableHead>
                   <TableRow
-                    sx={{ backgroundColor: alpha(colors.primary, 0.05) }}
+                    sx={{
+                      backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                    }}
                   >
                     <TableCell sx={{ fontWeight: 600 }}>Mã CTĐT</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Tên chương trình</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      Tên chương trình
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Bậc đào tạo</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Khoa</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Tín chỉ</TableCell>
@@ -394,14 +243,21 @@ const Curriculum = () => {
                       key={program.academicProgramId}
                       sx={{
                         '&:hover': {
-                          backgroundColor: alpha(colors.primary, 0.02),
+                          backgroundColor: alpha(
+                            theme.palette.primary.main,
+                            0.05
+                          ),
+                          transition: 'all 0.3s ease',
                         },
                       }}
                     >
                       <TableCell>
                         <Typography
                           variant="body2"
-                          sx={{ fontWeight: 600, color: colors.primary }}
+                          sx={{
+                            fontWeight: 600,
+                            color: theme.palette.primary.main,
+                          }}
                         >
                           {program.academicProgramId}
                         </Typography>
@@ -416,8 +272,11 @@ const Curriculum = () => {
                           label={program.degreeLevel}
                           size="small"
                           sx={{
-                            backgroundColor: alpha(colors.info, 0.1),
-                            color: colors.info,
+                            backgroundColor: alpha(
+                              theme.palette.info.main,
+                              0.1
+                            ),
+                            color: theme.palette.info.main,
                             fontWeight: 600,
                           }}
                         />
@@ -437,15 +296,19 @@ const Curriculum = () => {
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={program.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+                          label={
+                            program.isActive
+                              ? 'Đang hoạt động'
+                              : 'Ngừng hoạt động'
+                          }
                           size="small"
                           sx={{
                             backgroundColor: program.isActive
-                              ? alpha(colors.success, 0.1)
-                              : alpha(colors.error, 0.1),
+                              ? alpha(theme.palette.success.main, 0.1)
+                              : alpha(theme.palette.error.main, 0.1),
                             color: program.isActive
-                              ? colors.success
-                              : colors.error,
+                              ? theme.palette.success.main
+                              : theme.palette.error.main,
                             fontWeight: 600,
                           }}
                         />
@@ -470,8 +333,8 @@ const Curriculum = () => {
             />
           </>
         )}
-      </Card>
-    </Box>
+      </AntCard>
+    </div>
   );
 };
 

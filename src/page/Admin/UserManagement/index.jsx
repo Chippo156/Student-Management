@@ -1,39 +1,53 @@
 import React, { useState, useMemo, useEffect } from 'react';
+// Ant Design - Layout & Container
+import { Card, Row, Col, message, Popconfirm } from 'antd';
 import {
-  Card,
-  Button,
-  Avatar,
-  Tooltip,
-  Tag,
-  message,
-  Popconfirm,
-  Table,
-} from 'antd';
-import {
-  EditOutlined,
-  DeleteOutlined,
-  EyeOutlined,
+  TeamOutlined,
+  CheckCircleOutlined,
+  SafetyCertificateOutlined,
   UserOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  HomeOutlined,
-  FlagOutlined,
-  LockOutlined,
-  UnlockOutlined,
 } from '@ant-design/icons';
+// Material-UI - Table & Animations
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  IconButton,
+  Tooltip,
+  Avatar,
+  TablePagination,
+  CircularProgress,
+  Paper,
+  useTheme,
+  alpha,
+  Box,
+  Typography,
+} from '@mui/material';
+import {
+  Edit as EditIcon,
+  Visibility as VisibilityIcon,
+  Lock as LockIcon,
+  LockOpen as LockOpenIcon,
+} from '@mui/icons-material';
 import { userService } from '../../../service/userService';
 import { useNavigate } from 'react-router-dom';
 import { accountStatusMap } from '../../../component/Admin/UserManagementPage/constants';
 import UserFilterBar from '../../../component/Admin/UserManagementPage/UserFilterBar';
 import UserDetailModal from '../../../component/Admin/UserManagementPage/UserDetailModal';
 import UserEditModal from '../../../component/Admin/UserManagementPage/UserEditModal';
+import { StatCardAntd } from '../../../component/Shared/StatCard';
 
 const UserManagement = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(0); // MUI uses 0-indexed
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
@@ -45,7 +59,7 @@ const UserManagement = () => {
   // Fetch users
   const fetchUsers = async () => {
     setLoading(true);
-    const res = await userService.getAllUsers(pageNumber, pageSize);
+    const res = await userService.getAllUsers(page + 1, rowsPerPage); // +1 for API
     if (res) {
       setUsers(res.items || []);
       setTotalCount(res.totalCount || 0);
@@ -56,7 +70,7 @@ const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
     // eslint-disable-next-line
-  }, [pageNumber, pageSize]);
+  }, [page, rowsPerPage]);
 
   // Filtered users
   const filteredUsers = useMemo(() => {
@@ -64,7 +78,9 @@ const UserManagement = () => {
     if (searchTerm) {
       filtered = filtered.filter(
         (user) =>
-          (user.fullName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (user.fullName || '')
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
           (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -76,15 +92,37 @@ const UserManagement = () => {
     return filtered;
   }, [users, searchTerm, filterRole]);
 
-  const handleTableChange = (pagination) => {
-    setPageNumber(pagination.current);
-    setPageSize(pagination.pageSize);
+  // Statistics
+  const stats = useMemo(() => {
+    const activeUsers = users.filter((u) => u.accountStatus === 1).length;
+    const adminUsers = users.filter((u) => u.role?.roleName === 'Admin').length;
+    const teacherUsers = users.filter(
+      (u) => u.role?.roleName === 'Giảng viên'
+    ).length;
+    return {
+      total: totalCount,
+      active: activeUsers,
+      admins: adminUsers,
+      teachers: teacherUsers,
+    };
+  }, [users, totalCount]);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   // Handle edit save
   const handleEditSave = async (payload) => {
     setEditLoading(true);
-    const res = await userService.updateUserWithRole(selectedUser.userId, payload);
+    const res = await userService.updateUserWithRole(
+      selectedUser.userId,
+      payload
+    );
     setEditLoading(false);
     if (res) {
       message.success('Cập nhật người dùng thành công!');
@@ -93,210 +131,90 @@ const UserManagement = () => {
     }
   };
 
-  // Table columns
-  const columns = [
-    {
-      title: 'Người dùng',
-      dataIndex: 'fullName',
-      key: 'fullName',
-      render: (_, record) => (
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Avatar
-            src={record.avatarUrl}
-            icon={<UserOutlined />}
-            style={{ marginRight: 8, background: '#e6f4ff', color: '#1677ff' }}
-            size={44}
-          />
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 16 }}>
-              {record.fullName || record.username}
-            </div>
-            <div style={{ color: '#888', fontSize: 12 }}>{record.username}</div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: 'Vai trò',
-      dataIndex: ['role', 'roleName'],
-      key: 'role',
-      render: (roleName) => (
-        <Tag
-          color={
-            roleName === 'Admin'
-              ? 'volcano'
-              : roleName === 'Giảng viên'
-                ? 'geekblue'
-                : 'green'
-          }
-          style={{
-            fontWeight: 600,
-            fontSize: 14,
-            borderRadius: 8,
-            padding: '2px 12px',
-          }}
-        >
-          {roleName}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-      render: (email) => (
-        <span>
-          <MailOutlined style={{ color: '#1677ff' }} />{' '}
-          {email || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-        </span>
-      ),
-    },
-    {
-      title: 'Số điện thoại',
-      dataIndex: 'phone',
-      key: 'phone',
-      render: (phone) => (
-        <span>
-          <PhoneOutlined style={{ color: '#1677ff' }} />{' '}
-          {phone || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-        </span>
-      ),
-    },
-    {
-      title: 'Địa chỉ',
-      dataIndex: 'address',
-      key: 'address',
-      render: (address) => (
-        <span>
-          <HomeOutlined style={{ color: '#1677ff' }} />{' '}
-          {address || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-        </span>
-      ),
-    },
-    {
-      title: 'Quốc tịch',
-      dataIndex: 'nationality',
-      key: 'nationality',
-      render: (nationality) => (
-        <span>
-          <FlagOutlined style={{ color: '#1677ff' }} />{' '}
-          {nationality || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-        </span>
-      ),
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'accountStatus',
-      key: 'accountStatus',
-      align: 'center',
-      render: (status) => {
-        const info = accountStatusMap[status] || {
-          label: 'Không xác định',
-          color: 'default',
+  // Role color helper
+  const getRoleColor = (roleName) => {
+    switch (roleName) {
+      case 'Admin':
+        return {
+          bg: alpha(theme.palette.error.main, 0.1),
+          color: theme.palette.error.main,
         };
-        return (
-          <Tag
-            color={info.color}
-            style={{
-              fontWeight: 600,
-              fontSize: 14,
-              borderRadius: 8,
-              padding: '2px 12px',
-            }}
-          >
-            {info.label}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: 'Thao tác',
-      key: 'actions',
-      align: 'center',
-      render: (_, record) => (
-        <>
-          <Tooltip title="Xem chi tiết">
-            <Button
-              icon={<EyeOutlined />}
-              size="small"
-              type="link"
-              style={{ color: '#1677ff' }}
-              onClick={() => {
-                setSelectedUser(record);
-                setOpenDetail(true);
-              }}
-            />
-          </Tooltip>
-          <Tooltip title="Chỉnh sửa">
-            <Button
-              icon={<EditOutlined />}
-              size="small"
-              type="link"
-              style={{ color: '#faad14' }}
-              onClick={() => {
-                setSelectedUser(record);
-                setOpenEdit(true);
-              }}
-            />
-          </Tooltip>
-          {record.accountStatus === 1 ? (
-            <Popconfirm
-              title="Vô hiệu hóa tài khoản này?"
-              okText="Đồng ý"
-              cancelText="Hủy"
-              onConfirm={async () => {
-                const res = await userService.deactivateUser(record.userId);
-                if (res) {
-                  message.success('Đã vô hiệu hóa tài khoản!');
-                  await fetchUsers();
-                } else {
-                  message.error('Vô hiệu hóa thất bại!');
-                }
-              }}
-            >
-              <Button
-                icon={<LockOutlined />}
-                size="small"
-                type="link"
-                style={{ color: '#ff4d4f' }}
-              />
-            </Popconfirm>
-          ) : record.accountStatus === 2 || record.accountStatus === 3 ? (
-            <Popconfirm
-              title="Mở lại tài khoản này?"
-              okText="Đồng ý"
-              cancelText="Hủy"
-              onConfirm={async () => {
-                const res = await userService.reactivateUser(record.userId);
-                if (res) {
-                  message.success('Đã mở lại tài khoản!');
-                  await fetchUsers();
-                } else {
-                  message.error('Mở lại tài khoản thất bại!');
-                }
-              }}
-            >
-              <Button
-                icon={<UnlockOutlined />}
-                size="small"
-                type="link"
-                style={{ color: '#52c41a' }}
-              />
-            </Popconfirm>
-          ) : null}
-        </>
-      ),
-    },
-  ];
+      case 'Giảng viên':
+        return {
+          bg: alpha(theme.palette.primary.main, 0.1),
+          color: theme.palette.primary.main,
+        };
+      default:
+        return {
+          bg: alpha(theme.palette.success.main, 0.1),
+          color: theme.palette.success.main,
+        };
+    }
+  };
+
+  // Status color helper
+  const getStatusColor = (status) => {
+    return status === 1
+      ? {
+          bg: alpha(theme.palette.success.main, 0.1),
+          color: theme.palette.success.main,
+          label: 'Hoạt động',
+        }
+      : {
+          bg: alpha(theme.palette.error.main, 0.1),
+          color: theme.palette.error.main,
+          label: 'Bị khóa',
+        };
+  };
 
   return (
-    <div style={{ padding: 24, minHeight: '100vh', background: '#f5f7fa' }}>
+    <div style={{ padding: 24, minHeight: '100vh' }}>
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontWeight: 700, marginBottom: 8 }}>Quản lý người dùng</h2>
         <div style={{ color: '#888' }}>
           Quản lý thông tin người dùng, phân quyền và trạng thái hoạt động.
         </div>
       </div>
+
+      {/* Stats Cards */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Tổng người dùng"
+            value={stats.total}
+            icon={UserOutlined}
+            color="#1677ff"
+            bgColor="#e6f4ff"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Đang hoạt động"
+            value={stats.active}
+            icon={CheckCircleOutlined}
+            color="#52c41a"
+            bgColor="#f6ffed"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Quản trị viên"
+            value={stats.admins}
+            icon={SafetyCertificateOutlined}
+            color="#fa8c16"
+            bgColor="#fff7e6"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Giảng viên"
+            value={stats.teachers}
+            icon={TeamOutlined}
+            color="#13c2c2"
+            bgColor="#e6fffb"
+          />
+        </Col>
+      </Row>
 
       <UserFilterBar
         searchTerm={searchTerm}
@@ -306,23 +224,243 @@ const UserManagement = () => {
         onAddUser={() => navigate('/admin/create-user')}
       />
 
-      <Card>
-        <Table
-          columns={columns}
-          dataSource={filteredUsers}
-          rowKey="userId"
-          loading={loading}
-          pagination={{
-            current: pageNumber,
-            pageSize: pageSize,
-            total: totalCount,
-            showSizeChanger: true,
-            pageSizeOptions: ['5', '10', '20', '50'],
-            showTotal: (total) => `Tổng ${total} người dùng`,
-          }}
-          onChange={handleTableChange}
-          scroll={{ x: 1000 }}
-        />
+      <Card
+        style={{
+          borderRadius: 12,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        }}
+        styles={{
+          body: { padding: 0 },
+        }}
+      >
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+            <TableContainer component={Paper} elevation={0}>
+              <Table>
+                <TableHead>
+                  <TableRow
+                    sx={{
+                      backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                    }}
+                  >
+                    <TableCell sx={{ fontWeight: 600 }}>Người dùng</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Vai trò</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      Số điện thoại
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }} align="center">
+                      Thao tác
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredUsers.map((user) => {
+                    const roleColors = getRoleColor(user.role?.roleName);
+                    const statusInfo = getStatusColor(user.accountStatus);
+                    return (
+                      <TableRow
+                        key={user.userId}
+                        sx={{
+                          '&:hover': {
+                            backgroundColor: alpha(
+                              theme.palette.primary.main,
+                              0.05
+                            ),
+                            transition: 'all 0.3s ease',
+                          },
+                        }}
+                      >
+                        <TableCell>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                          >
+                            <Avatar
+                              src={user.avatarUrl}
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                bgcolor: '#e6f4ff',
+                                color: '#1677ff',
+                              }}
+                            >
+                              {user.fullName?.[0] || user.username?.[0]}
+                            </Avatar>
+                            <Box>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 600 }}
+                              >
+                                {user.fullName || user.username}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {user.username}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={user.role?.roleName}
+                            size="small"
+                            sx={{
+                              backgroundColor: roleColors.bg,
+                              color: roleColors.color,
+                              fontWeight: 600,
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {user.email || (
+                              <span style={{ color: '#aaa' }}>
+                                Chưa cập nhật
+                              </span>
+                            )}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {user.phone || (
+                              <span style={{ color: '#aaa' }}>
+                                Chưa cập nhật
+                              </span>
+                            )}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={statusInfo.label}
+                            size="small"
+                            sx={{
+                              backgroundColor: statusInfo.bg,
+                              color: statusInfo.color,
+                              fontWeight: 600,
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              gap: 0.5,
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Tooltip title="Xem chi tiết">
+                              <IconButton
+                                size="small"
+                                sx={{ color: '#13c2c2' }}
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setOpenDetail(true);
+                                }}
+                              >
+                                <VisibilityIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Chỉnh sửa">
+                              <IconButton
+                                size="small"
+                                sx={{ color: '#fa8c16' }}
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setOpenEdit(true);
+                                }}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            {user.accountStatus === 1 ? (
+                              <Popconfirm
+                                title="Vô hiệu hóa tài khoản này?"
+                                okText="Đồng ý"
+                                cancelText="Hủy"
+                                onConfirm={async () => {
+                                  const res = await userService.deactivateUser(
+                                    user.userId
+                                  );
+                                  if (res) {
+                                    message.success(
+                                      'Đã vô hiệu hóa tài khoản!'
+                                    );
+                                    await fetchUsers();
+                                  } else {
+                                    message.error('Vô hiệu hóa thất bại!');
+                                  }
+                                }}
+                              >
+                                <Tooltip title="Khóa tài khoản">
+                                  <IconButton
+                                    size="small"
+                                    sx={{ color: theme.palette.error.main }}
+                                  >
+                                    <LockIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Popconfirm>
+                            ) : (
+                              <Popconfirm
+                                title="Mở lại tài khoản này?"
+                                okText="Đồng ý"
+                                cancelText="Hủy"
+                                onConfirm={async () => {
+                                  const res = await userService.reactivateUser(
+                                    user.userId
+                                  );
+                                  if (res) {
+                                    message.success('Đã mở lại tài khoản!');
+                                    await fetchUsers();
+                                  } else {
+                                    message.error('Mở lại tài khoản thất bại!');
+                                  }
+                                }}
+                              >
+                                <Tooltip title="Mở khóa tài khoản">
+                                  <IconButton
+                                    size="small"
+                                    sx={{ color: theme.palette.success.main }}
+                                  >
+                                    <LockOpenIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Popconfirm>
+                            )}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 20, 50]}
+              component="div"
+              count={totalCount}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              labelRowsPerPage="Số dòng mỗi trang:"
+              labelDisplayedRows={({ from, to, count }) =>
+                `${from}-${to} của ${count}`
+              }
+            />
+          </>
+        )}
       </Card>
 
       <UserDetailModal
@@ -334,8 +472,8 @@ const UserManagement = () => {
       <UserEditModal
         open={openEdit}
         onCancel={() => setOpenEdit(false)}
-        onSave={handleEditSave}
         user={selectedUser}
+        onSave={handleEditSave}
         loading={editLoading}
       />
     </div>

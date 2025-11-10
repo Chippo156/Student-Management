@@ -5,7 +5,8 @@
       "Bash(tree:*)",
       "Bash(dir /s \"D:\\study\\hk1 nam 5\\Khóa luận\\fe\\Student-Management\")",
       "Bash(powershell -Command:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

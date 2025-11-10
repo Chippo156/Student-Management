@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
-import { Box, Typography, Avatar, Fab } from '@mui/material';
-import { Class as ClassIcon, Add as AddIcon } from '@mui/icons-material';
+import React, { useState, useMemo } from 'react';
+// Ant Design - Layout & Container
+import { Row, Col, Button as AntButton } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+// Material-UI - Kept for existing components
+import { useTheme } from '@mui/material';
+import {
+  Class as ClassIcon,
+  School as SchoolIcon,
+  People as PeopleIcon,
+  CheckCircle as CheckCircleIcon,
+} from '@mui/icons-material';
+import * as XLSX from 'xlsx';
 import ClassFilterBar from '../../../component/Admin/ClassesPage/ClassFilterBar';
 import ClassTable from '../../../component/Admin/ClassesPage/ClassTable';
 import ClassDetailDialog from '../../../component/Admin/ClassesPage/ClassDetailDialog';
+import { StatCardAntd } from '../../../component/Shared/StatCard';
 
 const Classes = () => {
+  const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -100,6 +112,19 @@ const Classes = () => {
     return matchesSearch && matchesDepartment && matchesStatus && matchesYear;
   });
 
+  // Statistics
+  const stats = useMemo(() => {
+    const totalStudents = classes.reduce((sum, c) => sum + c.studentCount, 0);
+    const activeClasses = classes.filter((c) => c.status === 'active').length;
+    const uniqueDepartments = new Set(classes.map((c) => c.department));
+    return {
+      total: classes.length,
+      active: activeClasses,
+      totalStudents: totalStudents,
+      departments: uniqueDepartments.size,
+    };
+  }, [classes]);
+
   const handleViewClass = (classInfo) => {
     setSelectedClass(classInfo);
     setViewDialogOpen(true);
@@ -117,21 +142,108 @@ const Classes = () => {
     setPage(0);
   };
 
+  // Export to Excel
+  const handleExportExcel = () => {
+    const exportData = filteredClasses.map((classInfo, index) => ({
+      STT: index + 1,
+      'Mã lớp': classInfo.classCode,
+      'Tên lớp': classInfo.className,
+      Khoa: classInfo.department,
+      'Chuyên ngành': classInfo.major,
+      Năm: classInfo.year,
+      'Học kỳ': classInfo.semester,
+      'Giảng viên': classInfo.instructor,
+      'Sĩ số': `${classInfo.studentCount}/${classInfo.maxStudents}`,
+      'Lịch học': classInfo.schedule,
+      Phòng: classInfo.room,
+      'Trạng thái':
+        classInfo.status === 'active' ? 'Đang hoạt động' : 'Đã kết thúc',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách lớp học');
+
+    // Auto-size columns
+    const maxWidth = exportData.reduce((acc, row) => {
+      Object.keys(row).forEach((key, index) => {
+        const cellLength = String(row[key]).length;
+        acc[index] = Math.max(acc[index] || 10, cellLength);
+      });
+      return acc;
+    }, []);
+
+    worksheet['!cols'] = maxWidth.map((w) => ({ width: Math.min(w + 2, 50) }));
+
+    XLSX.writeFile(
+      workbook,
+      `Danh_sach_lop_hoc_${new Date().toISOString().split('T')[0]}.xlsx`
+    );
+  };
+
   return (
-    <Box sx={{ p: 3, maxWidth: '100%', overflow: 'hidden' }}>
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
-        <Box display="flex" alignItems="center" gap={2}>
-          <Avatar sx={{ bgcolor: 'primary.main' }}>
-            <ClassIcon />
-          </Avatar>
-          <Typography variant="h4" component="h1">
-            Quản lý lớp học
-          </Typography>
-        </Box>
-        <Fab color="primary" aria-label="add" size="medium">
-          <AddIcon />
-        </Fab>
-      </Box>
+    <div style={{ padding: 24, minHeight: '100vh' }}>
+      {/* Header */}
+      <div
+        style={{
+          marginBottom: 24,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+        }}
+      >
+        <div>
+          <h2 style={{ fontWeight: 700, marginBottom: 8, fontSize: 24 }}>
+            Quản lý lớp học phần
+          </h2>
+          <div style={{ color: '#888', fontSize: 14 }}>
+            Quản lý thông tin các lớp học phần và sinh viên
+          </div>
+        </div>
+        <AntButton type="primary" icon={<PlusOutlined />} size="large">
+          Thêm lớp học
+        </AntButton>
+      </div>
+
+      {/* Stats Cards - Ant Design */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Tổng lớp học"
+            value={stats.total}
+            icon={ClassIcon}
+            color="#1677ff"
+            bgColor="#e6f4ff"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Lớp đang hoạt động"
+            value={stats.active}
+            icon={CheckCircleIcon}
+            color="#52c41a"
+            bgColor="#f6ffed"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Tổng sinh viên"
+            value={stats.totalStudents}
+            icon={PeopleIcon}
+            color="#1890ff"
+            bgColor="#e6f7ff"
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <StatCardAntd
+            label="Khoa/Phòng ban"
+            value={stats.departments}
+            icon={SchoolIcon}
+            color="#fa8c16"
+            bgColor="#fff7e6"
+          />
+        </Col>
+      </Row>
 
       <ClassFilterBar
         searchTerm={searchTerm}
@@ -143,6 +255,7 @@ const Classes = () => {
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         onClearFilters={handleClearFilters}
+        onExportExcel={handleExportExcel}
       />
 
       <ClassTable
@@ -159,7 +272,7 @@ const Classes = () => {
         onClose={() => setViewDialogOpen(false)}
         classData={selectedClass}
       />
-    </Box>
+    </div>
   );
 };
 
