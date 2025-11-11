@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using StudentManagement.Enum;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
@@ -192,6 +193,27 @@ namespace StudentManagement.Controllers
         //        return BadRequest(ex.Message);
         //    }
         //}
+
+        [HttpGet("GetEnrollments")]
+        public async Task<IActionResult> GetEnrollmentsWithPagination(
+            [FromQuery] PaginationParams pagination,
+            [FromQuery] string? search = null,
+            [FromQuery] EnrollmentStatus? enrollmentStatus = null,
+            [FromQuery] int? semesterId = null)
+        {
+            try
+            {
+                var result = await enrollmentService.GetEnrollmentsWithPaginationAsync(
+                    pagination, search, enrollmentStatus, semesterId);
+                
+                return Ok(ApiResponse.SuccessResponse(result, "Enrollments retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, 
+                    "An error occurred while retrieving enrollments", new List<string> { ex.Message }));
+            }
+        }
 
         private string GetDayOfWeekInVietnamese(DayOfWeek dayOfWeek)
         {

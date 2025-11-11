@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
@@ -139,6 +139,95 @@ namespace StudentManagement.Services
                     DepartmentName = c.Program.Department.DepartmentName
                 })
                 .ToListAsync();
+        }
+
+        public async Task<PagedResult<ClassResponse>> GetClassesWithPaginationAsync(
+            PaginationParams pagination,
+            string? search = null,
+            int? programId = null)
+        {
+            var query = context.Classes
+                .Include(c => c.Program)
+                    .ThenInclude(p => p.Department)
+                        .ThenInclude(d => d.Faculty)
+                .Include(c => c.AdviserAssignment)
+                    .ThenInclude(aa => aa.Lecturer)
+                        .ThenInclude(l => l.User)
+                .AsQueryable();
+
+            // Apply search filter - tìm kiếm trong tên lớp và mã lớp
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchTerm = search.Trim().ToLower();
+                query = query.Where(c => 
+                    c.ClassName.ToLower().Contains(searchTerm) ||
+                    c.ClassCode.ToLower().Contains(searchTerm));
+            }
+
+            // Apply program filter
+            if (programId.HasValue)
+            {
+                query = query.Where(c => c.Program.AcademicProgramId == programId.Value);
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply sorting and pagination
+            var classes = await query
+                .OrderBy(c => c.Program.ProgramName)
+                .ThenBy(c => c.ClassName)
+                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+
+            // Map to response DTOs
+            var classResponses = new List<ClassResponse>();
+
+            foreach (var cls in classes)
+            {
+                // Get student count for this class
+                var studentCount = await context.Students
+                    .CountAsync(s => s.Class.ClassId == cls.ClassId);
+
+                var classResponse = new ClassResponse
+                {
+                    ClassId = cls.ClassId,
+                    ClassName = cls.ClassName,
+                    ClassCode = cls.ClassCode,
+                    
+                    // Program information
+                    ProgramId = cls.Program.AcademicProgramId,
+                    ProgramName = cls.Program.ProgramName,
+                    DegreeLevel = cls.Program.DegreeLevel,
+                    
+                    // Department information
+                    DepartmentId = cls.Program.Department.DepartmentId,
+                    DepartmentName = cls.Program.Department.DepartmentName,
+                    FacultyName = cls.Program.Department.Faculty.FacultyName,
+                    
+                    // Adviser information
+                    AdviserId = cls.AdviserAssignment?.Lecturer?.Id,
+                    AdviserName = cls.AdviserAssignment?.Lecturer?.User?.FullName ?? "Chưa phân công",
+                    AdviserCode = cls.AdviserAssignment?.Lecturer?.LecturerCode ?? "",
+                    
+                    // Statistics
+                    StudentCount = studentCount,
+                    
+                    // Additional info
+                    RequiredCredits = cls.Program.CreditsRequired
+                };
+
+                classResponses.Add(classResponse);
+            }
+
+            return new PagedResult<ClassResponse>
+            {
+                Items = classResponses,
+                TotalCount = totalCount,
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize
+            };
         }
 
         // Helper method to generate class code

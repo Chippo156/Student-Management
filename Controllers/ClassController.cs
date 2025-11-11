@@ -11,12 +11,7 @@ namespace StudentManagement.Controllers
     [ApiController]
     public class ClassController(IClassService classService) : ControllerBase
     {
-        [HttpGet("GetAllClasses")]
-        public async Task<ActionResult<IEnumerable<Class>>> GetAllClasses()
-        {
-            var classes = await classService.GetAllClassesAsync();
-            return Ok(ApiResponse.SuccessResponse(classes, "Classes retrieved successfully"));
-        }
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Class>> GetClassById(int id)
@@ -101,6 +96,24 @@ namespace StudentManagement.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, "An error occurred while retrieving classes by department dropdown", new List<string> { ex.Message }));
+            }
+        }
+
+        [HttpGet("GetAllClasses")]
+        public async Task<IActionResult> GetClassesWithPagination(
+            [FromQuery] PaginationParams pagination,
+            [FromQuery] string? search = null,
+            [FromQuery] int? programId = null)
+        {
+            try
+            {
+                var result = await classService.GetClassesWithPaginationAsync(pagination, search, programId);
+                return Ok(ApiResponse.SuccessResponse(result, "Classes retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, 
+                    "An error occurred while retrieving classes", new List<string> { ex.Message }));
             }
         }
     }

@@ -868,5 +868,120 @@ namespace StudentManagement.Services
         {
             return start1 < end2 && start2 < end1;
         }
+
+        public async Task<PagedResult<EnrollmentListResponse>> GetEnrollmentsWithPaginationAsync(
+            PaginationParams pagination,
+            string? search = null,
+            EnrollmentStatus? enrollmentStatus = null,
+            int? semesterId = null)
+        {
+            var query = context.Enrollments
+                .Include(e => e.Student)
+                    .ThenInclude(s => s.User)
+                .Include(e => e.Student)
+                    .ThenInclude(s => s.Class)
+                        .ThenInclude(c => c.Program)
+                .Include(e => e.Section)
+                    .ThenInclude(s => s.CurriculumCourse)
+                        .ThenInclude(cc => cc.Course)
+                .Include(e => e.Section)
+                    .ThenInclude(s => s.Lecturer)
+                        .ThenInclude(l => l.User)
+                .Include(e => e.Section)
+                    .ThenInclude(s => s.Semester)
+                .AsQueryable();
+
+            // Apply search filter - tìm kiếm trong MSSV, tên sinh viên, mã lớp học phần, tên môn học
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchTerm = search.Trim().ToLower();
+                query = query.Where(e =>
+                    e.Student.MSSV.ToLower().Contains(searchTerm) ||
+                    e.Student.User.FullName.ToLower().Contains(searchTerm) ||
+                    (e.Section.SectionCode != null && e.Section.SectionCode.ToLower().Contains(searchTerm)) ||
+                    e.Section.CurriculumCourse.Course.CourseCode.ToLower().Contains(searchTerm) ||
+                    e.Section.CurriculumCourse.Course.CourseName.ToLower().Contains(searchTerm));
+
+            }
+
+            // Apply enrollment status filter
+            if (enrollmentStatus.HasValue)
+            {
+                query = query.Where(e => e.enrollmentStatus == enrollmentStatus.Value);
+            }
+
+  
+            // Apply semester filter
+            if (semesterId.HasValue)
+            {
+                query = query.Where(e => e.Section.Semester.SemesterId == semesterId.Value);
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply sorting and pagination
+            var enrollments = await query
+                .OrderByDescending(e => e.RegisteredAt)
+                .ThenBy(e => e.Student.MSSV)
+                .ThenBy(e => e.Section.CurriculumCourse.Course.CourseCode)
+                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+
+            // Map to response DTOs
+            var enrollmentResponses = enrollments.Select(enrollment => new EnrollmentListResponse
+            {
+                EnrollmentId = enrollment.EnrollmentId,
+                
+                // Student information
+                StudentId = enrollment.Student.Id,
+                MSSV = enrollment.Student.MSSV,
+                StudentName = enrollment.Student.User.FullName,
+                ClassName = enrollment.Student.Class.ClassName,
+                ProgramName = enrollment.Student.Class.Program.ProgramName,
+                
+                // Section information
+                SectionId = enrollment.Section.SectionId,
+                SectionCode = enrollment.Section.SectionCode ?? $"LHP{enrollment.Section.SectionId}",
+                
+                // Course information
+                CourseId = enrollment.Section.CurriculumCourse.Course.CourseId,
+                CourseCode = enrollment.Section.CurriculumCourse.Course.CourseCode,
+                CourseName = enrollment.Section.CurriculumCourse.Course.CourseName,
+                CreditsTheory = enrollment.Section.CurriculumCourse.Course.CreditsTheory,
+                CreditsLab = enrollment.Section.CurriculumCourse.Course.CreditsLab,
+                TotalCredits = enrollment.Section.CurriculumCourse.Course.CreditsTheory + 
+                            enrollment.Section.CurriculumCourse.Course.CreditsLab,
+                
+                // Lecturer information
+                LecturerName = enrollment.Section.Lecturer?.User?.FullName ?? "Not Assigned",
+                LecturerCode = enrollment.Section.Lecturer?.LecturerCode ?? "",
+                
+                // Semester information
+                SemesterId = enrollment.Section.Semester.SemesterId,
+                SemesterName = $"{enrollment.Section.Semester.Year} - {enrollment.Section.Semester.Term}",
+                
+                // Enrollment information
+                EnrollmentStatus = enrollment.enrollmentStatus.ToString(),
+                EnrollmentStatusVietnamese = GetEnrollmentStatusInVietnamese(enrollment.enrollmentStatus),
+                RegisteredAt = enrollment.RegisteredAt,
+                
+                // Additional section information
+                SectionCapacity = enrollment.Section.Capacity,
+                SectionEnrolledCount = enrollment.Section.EnrolledCount,
+                SectionStartDate = enrollment.Section.StartDate,
+                SectionEndDate = enrollment.Section.EndDate
+                
+            }).ToList();
+
+            return new PagedResult<EnrollmentListResponse>
+            {
+                Items = enrollmentResponses,
+                TotalCount = totalCount,
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize
+            };
+        }
     }
 }

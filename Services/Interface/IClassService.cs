@@ -16,5 +16,10 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<ClassDropdownResponse>> GetClassesDropdownAsync();
         Task<IEnumerable<ClassDropdownResponse>> GetClassesByProgramDropdownAsync(int programId);
         Task<IEnumerable<ClassDropdownResponse>> GetClassesByDepartmentDropdownAsync(int departmentId);
+
+        Task<PagedResult<ClassResponse>> GetClassesWithPaginationAsync(
+            PaginationParams pagination,
+            string? search = null,
+            int? programId = null);
     }
 }

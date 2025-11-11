@@ -1,3 +1,4 @@
+using StudentManagement.Enum;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
@@ -16,5 +17,10 @@ namespace StudentManagement.Services.Interface
         Task<EnrollmentResultResponse> EnrollInCourseAsync(string mssv, CourseEnrollmentRequest request);
         Task<IEnumerable<EnrolledSectionResponse>> GetEnrolledSectionsBySemesterAsync(string mssv, int semesterId);
         Task<EnrollmentResultResponse> DropEnrollmentAsync(string mssv, int sectionId);
+        Task<PagedResult<EnrollmentListResponse>> GetEnrollmentsWithPaginationAsync(
+            PaginationParams pagination,
+            string? search = null,
+            EnrollmentStatus? enrollmentStatus = null,
+            int? semesterId = null);
     }
 }
