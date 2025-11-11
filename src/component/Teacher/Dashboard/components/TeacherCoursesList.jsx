@@ -3,7 +3,7 @@ import { Card, List, Tag, Button } from 'antd';
 import { BookOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTheme, alpha } from '@mui/material/styles';
-import { teacherService } from '../../../../service';
+import sectionService from '../../../../service/sectionService';
 
 const TeacherCoursesList = ({ lecturerId }) => {
   const [courses, setCourses] = useState([]);
@@ -30,10 +30,12 @@ const TeacherCoursesList = ({ lecturerId }) => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await teacherService.getTeacherCourses(lecturerId);
-        const coursesData = response.data || [];
-        // Chỉ lấy 5 môn học gần nhất
-        setCourses(coursesData.slice(0, 5));
+        const response = await sectionService.getSectionsByLecturer({
+          pageNumber: 1,
+          pageSize: 5, // Only get 5 recent courses
+        });
+        const sectionsData = response?.items || [];
+        setCourses(sectionsData);
       } catch (error) {
         console.error('Error fetching courses:', error);
       } finally {
@@ -60,16 +62,17 @@ const TeacherCoursesList = ({ lecturerId }) => {
       {courses.length > 0 ? (
         <>
           <List
-            dataSource={courses.slice(0, 5)}
-            renderItem={(course) => (
+            dataSource={courses}
+            renderItem={(section) => (
               <List.Item style={{ padding: '12px 0', borderBottom: `1px solid ${colors.border}` }}>
                 <div style={{ width: '100%' }}>
                   <div style={{ fontWeight: 600, color: colors.fg, marginBottom: 8 }}>
-                    {course.name}
+                    {section.courseName}
                   </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <Tag color="blue">{course.code}</Tag>
-                    <Tag>{course.credits || 3} tín chỉ</Tag>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <Tag color="blue">{section.courseCode}</Tag>
+                    <Tag color="green">{section.sectionCode}</Tag>
+                    <Tag>{section.enrolledCount}/{section.capacity} SV</Tag>
                   </div>
                 </div>
               </List.Item>

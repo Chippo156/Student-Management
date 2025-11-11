@@ -71,4 +71,56 @@ export const studentServices = {
       return null;
     }
   },
+    // New: get students with section (paged, searchable)
+  getStudentsWithSection: async (
+    sectionId,
+    pageNumber = 1,
+    pageSize = 10,
+    searchTerm = ''
+  ) => {
+    try {
+      const response = await customizeAxios.get(
+        `/api/Student/GetStudentsWithSection/${sectionId}`,
+        {
+          params: {
+            PageNumber: pageNumber,
+            PageSize: pageSize,
+            searchTerm,
+          },
+        }
+      );
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            response?.message ||
+              'Lấy danh sách sinh viên theo lớp học phần thất bại'
+          );
+        }
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message ||
+              'Lấy danh sách sinh viên theo lớp học phần thất bại'
+          );
+        }
+      } else {
+        message.error(
+          error.message || 'Lấy danh sách sinh viên theo lớp học phần thất bại'
+        );
+      }
+      return null;
+    }
+  },
 };

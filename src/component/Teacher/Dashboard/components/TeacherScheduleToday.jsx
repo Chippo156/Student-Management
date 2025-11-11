@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { Schedule, ArrowForward, AccessTime } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { teacherService } from '../../../../service';
+import scheduleService from '../../../../service/scheduleService';
 import dayjs from 'dayjs';
 
 const TeacherScheduleToday = ({ lecturerId }) => {
@@ -23,33 +23,20 @@ const TeacherScheduleToday = ({ lecturerId }) => {
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
-        const response = await teacherService.getTeacherSchedule(lecturerId);
-        const scheduleData = response.data || [];
-
-        // Lọc lịch hôm nay
         const today = dayjs().format('YYYY-MM-DD');
+        // Schedule type 1 = lịch lý thuyết (theory schedule)
+        const scheduleData = await scheduleService.getSchedulesOfLecturer(today, 1);
+
+        // Filter today's schedules (API might return multiple days based on dayOfWeek)
+        const todayDayOfWeek = dayjs().day();
         const todayClasses = scheduleData.filter(
-          (item) => dayjs(item.date).format('YYYY-MM-DD') === today
+          (item) => item.dayOfWeek === todayDayOfWeek
         );
 
         setTodaySchedule(todayClasses);
       } catch (error) {
         console.error('Error fetching schedule:', error);
-        // Mock data if API fails
-        setTodaySchedule([
-          {
-            courseName: 'Lập trình Web',
-            time: '07:00 - 09:00',
-            room: 'A101',
-            class: 'CNTT-K17',
-          },
-          {
-            courseName: 'Cơ sở dữ liệu',
-            time: '13:00 - 15:00',
-            room: 'B203',
-            class: 'CNTT-K18',
-          },
-        ]);
+        setTodaySchedule([]);
       } finally {
         setLoading(false);
       }
@@ -98,7 +85,9 @@ const TeacherScheduleToday = ({ lecturerId }) => {
                       <Box sx={{ mt: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                           <AccessTime sx={{ fontSize: 16, mr: 0.5 }} />
-                          <Typography variant="body2">{item.time}</Typography>
+                          <Typography variant="body2">
+                            {item.startTime?.substring(0, 5)} - {item.endTime?.substring(0, 5)}
+                          </Typography>
                         </Box>
                         <Box sx={{ display: 'flex', gap: 1 }}>
                           <Chip
@@ -107,7 +96,7 @@ const TeacherScheduleToday = ({ lecturerId }) => {
                             color="warning"
                           />
                           <Chip
-                            label={item.class}
+                            label={item.courseCode}
                             size="small"
                             variant="outlined"
                           />

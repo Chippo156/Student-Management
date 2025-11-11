@@ -1,108 +1,132 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  Button,
-} from '@mui/material';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, Typography, Card, CardContent, Grid } from '@mui/material';
 import { Schedule, CalendarToday, AccessTime } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
-import { teacherService } from '../../../service';
+import dayjs from 'dayjs';
+import isBetween from 'dayjs/plugin/isBetween';
+dayjs.extend(isBetween);
+
+import scheduleService from '../../../service/scheduleService';
+import {
+  periods,
+  scheduleTypeMap,
+  typeToIdMap,
+} from '../../Teacher/Schedule/constants';
+import { getPeriodFromTime } from '../../Teacher/Schedule/utils';
+import ScheduleTable from '../../Teacher/Schedule/ScheduleTable';
+import ScheduleFilterBar from '../../Teacher/Schedule/ScheduleFilterBar';
 
 const SchedulePage = () => {
-  const [schedule, setSchedule] = useState([]);
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const [scheduleItems, setScheduleItems] = useState([]);
+  const [baseDate, setBaseDate] = useState(dayjs());
+  const [filterType, setFilterType] = useState('all');
   const [loading, setLoading] = useState(true);
 
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
 
-  useEffect(() => {
-    const fetchSchedule = async () => {
-      try {
-        const response = await teacherService.getTeacherSchedule(lecturerId);
-        setSchedule(response.data || []);
-      } catch (error) {
-        console.error('Error fetching schedule:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchSchedule = async (date, scheduleTypeId = 0) => {
+    if (!lecturerId) return;
 
-    if (lecturerId) {
-      fetchSchedule();
+    setLoading(true);
+    try {
+      const data = await scheduleService.getSchedulesOfLecturer(date, scheduleTypeId);
+      const startOfWeek = baseDate.startOf('week').add(1, 'day');
+      const mapped = data.map((item) => {
+        let eventDate = item.date;
+        if (!eventDate) {
+          eventDate = startOfWeek
+            .add(item.dayOfWeek - 1, 'day')
+            .format('YYYY-MM-DD');
+        }
+        return {
+          id: item.scheduleId?.toString() || Math.random().toString(),
+          title: item.courseName,
+          type: scheduleTypeMap[item.scheduleTypeId] || 'other',
+          date: eventDate,
+          time:
+            item.startTime && item.endTime
+              ? `${item.startTime.slice(0, 5)} - ${item.endTime.slice(0, 5)}`
+              : '',
+          location: item.room || 'Online',
+          status: 'upcoming',
+          subject: item.courseCode || '',
+          sectionCode: item.sectionCode || '',
+        };
+      });
+      setScheduleItems(mapped);
+    } catch (error) {
+      console.error('Error fetching schedule:', error);
+      setScheduleItems([]);
+    } finally {
+      setLoading(false);
     }
-  }, [lecturerId]);
-
-  const getDayOfWeek = (date) => {
-    const days = [
-      'Chủ nhật',
-      'Thứ hai',
-      'Thứ ba',
-      'Thứ tư',
-      'Thứ năm',
-      'Thứ sáu',
-      'Thứ bảy',
-    ];
-    return days[new Date(date).getDay()];
   };
 
-  const formatTime = (time) => {
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit',
+  useEffect(() => {
+    const dateStr = baseDate.format('YYYY-MM-DD');
+    const typeId = typeToIdMap[filterType] || 0;
+    fetchSchedule(dateStr, typeId);
+  }, [baseDate, filterType, lecturerId]);
+
+  const weekDays = useMemo(() => {
+    const start = baseDate.startOf('week');
+    const days = [];
+    for (let i = 1; i <= 7; i++) {
+      days.push(start.add(i, 'day'));
+    }
+    return days;
+  }, [baseDate]);
+
+  const eventsByCell = useMemo(() => {
+    const map = {};
+    scheduleItems.forEach((ev) => {
+      const period = getPeriodFromTime(ev.time);
+      const key = `${ev.date}#${period}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(ev);
     });
-  };
+    return map;
+  }, [scheduleItems]);
 
-  const getStatusChip = (status) => {
-    const statusConfig = {
-      upcoming: { label: 'Sắp tới', color: 'warning' },
-      ongoing: { label: 'Đang diễn ra', color: 'success' },
-      completed: { label: 'Đã kết thúc', color: 'default' },
-      cancelled: { label: 'Đã hủy', color: 'error' },
-    };
+  const startOfWeek = baseDate.startOf('week').add(1, 'day');
+  const endOfWeek = startOfWeek.add(6, 'day');
 
-    const config = statusConfig[status] || statusConfig.upcoming;
-    return <Chip label={config.label} color={config.color} size="small" />;
-  };
-
-  // Nhóm lịch theo ngày
-  const groupScheduleByDate = (scheduleData) => {
-    const grouped = scheduleData.reduce((acc, item) => {
-      const date = item.date;
-      if (!acc[date]) {
-        acc[date] = [];
-      }
-      acc[date].push(item);
-      return acc;
-    }, {});
-
-    // Sắp xếp theo ngày
-    return Object.keys(grouped)
-      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
-      .reduce((acc, date) => {
-        acc[date] = grouped[date].sort((a, b) =>
-          a.startTime.localeCompare(b.startTime)
-        );
-        return acc;
-      }, {});
-  };
-
-  const groupedSchedule = groupScheduleByDate(schedule);
-  const todaySchedule = schedule.filter(
-    (item) => new Date(item.date).toDateString() === new Date().toDateString()
+  const weekScheduleItems = scheduleItems.filter((item) =>
+    dayjs(item.date).isBetween(startOfWeek, endOfWeek, 'day', '[]')
+  );
+  const today = dayjs();
+  const todayItems = weekScheduleItems.filter((item) =>
+    dayjs(item.date).isSame(today, 'day')
+  );
+  const upcomingItems = weekScheduleItems.filter(
+    (item) => dayjs(item.date).isAfter(today, 'day')
   );
 
-  if (loading) {
+  const goPrevWeek = () => setBaseDate(baseDate.subtract(1, 'week'));
+  const goNextWeek = () => setBaseDate(baseDate.add(1, 'week'));
+  const handleFilterChange = (type) => setFilterType(type);
+  const handleToday = () => setBaseDate(dayjs());
+  const handlePrint = () => window.print();
+
+  const dataSource = periods.map((p) => {
+    const row = { key: p.key, period: p.label };
+    weekDays.forEach((d) => {
+      const dateKey = d.format('YYYY-MM-DD');
+      const cellKey = `${dateKey}#${p.key}`;
+      row[dateKey] = eventsByCell[cellKey] || [];
+    });
+    return row;
+  });
+
+  // Calculate statistics
+  const totalLessons = weekScheduleItems.length;
+  const uniqueCourses = new Set(scheduleItems.map((s) => s.subject)).size;
+
+  if (loading && scheduleItems.length === 0) {
     return (
       <Box
         sx={{
@@ -118,183 +142,113 @@ const SchedulePage = () => {
   }
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: 'bold' }}>
-        Lịch giảng dạy
-      </Typography>
+    <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <div>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a237e' }}>
+            Lịch giảng dạy theo tuần
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Tuần ngày {startOfWeek.format('DD/MM')} - {endOfWeek.format('DD/MM/YYYY')}
+          </Typography>
+        </div>
+      </Box>
 
-      {/* Today's Schedule Summary */}
+      {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
-          <Card sx={{ backgroundColor: '#e3f2fd', height: '100%' }}>
-            <CardContent>
-              <Typography
-                variant="h6"
-                sx={{ display: 'flex', alignItems: 'center', mb: 2 }}
-              >
-                <CalendarToday sx={{ mr: 1 }} />
-                Lịch hôm nay
-              </Typography>
-              {todaySchedule.length > 0 ? (
-                todaySchedule.map((item, index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      mb: 1,
-                      p: 1,
-                      backgroundColor: 'white',
-                      borderRadius: 1,
-                    }}
-                  >
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                      {item.courseName}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {formatTime(item.startTime)} - {formatTime(item.endTime)}{' '}
-                      | {item.room}
-                    </Typography>
-                  </Box>
-                ))
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  Không có lịch dạy hôm nay
+        <Grid item xs={12} md={4}>
+          <Card
+            sx={{
+              bgcolor: '#e3f2fd',
+              boxShadow: 2,
+              transition: 'transform 0.3s',
+              '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
+            }}
+          >
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <Schedule sx={{ fontSize: 50, mr: 2, color: '#1976d2' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#1976d2' }}>
+                  {totalLessons}
                 </Typography>
-              )}
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Tổng tiết tuần này
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Card sx={{ backgroundColor: '#e8f5e8', height: '100%' }}>
-            <CardContent>
-              <Typography
-                variant="h6"
-                sx={{ display: 'flex', alignItems: 'center', mb: 2 }}
-              >
-                <Schedule sx={{ mr: 1 }} />
-                Thống kê tuần này
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography
-                    variant="h4"
-                    component="div"
-                    sx={{ fontWeight: 'bold' }}
-                  >
-                    {schedule.length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Tổng tiết học
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography
-                    variant="h4"
-                    component="div"
-                    sx={{ fontWeight: 'bold' }}
-                  >
-                    {new Set(schedule.map((item) => item.courseId)).size}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Môn học
-                  </Typography>
-                </Grid>
-              </Grid>
+        <Grid item xs={12} md={4}>
+          <Card
+            sx={{
+              bgcolor: '#f3e5f5',
+              boxShadow: 2,
+              transition: 'transform 0.3s',
+              '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
+            }}
+          >
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <CalendarToday sx={{ fontSize: 50, mr: 2, color: '#7b1fa2' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#7b1fa2' }}>
+                  {uniqueCourses}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Môn học
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <Card
+            sx={{
+              bgcolor: '#e8f5e9',
+              boxShadow: 2,
+              transition: 'transform 0.3s',
+              '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
+            }}
+          >
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <AccessTime sx={{ fontSize: 50, mr: 2, color: '#388e3c' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#388e3c' }}>
+                  {todayItems.length}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Lịch hôm nay
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Detailed Schedule */}
-      <Paper sx={{ mt: 3 }}>
-        <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0' }}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            Lịch chi tiết
-          </Typography>
-        </Box>
+      {/* Filter Bar */}
+      <ScheduleFilterBar
+        filterType={filterType}
+        handleFilterChange={handleFilterChange}
+        baseDate={baseDate}
+        handleToday={handleToday}
+        handlePrint={handlePrint}
+        goPrevWeek={goPrevWeek}
+        goNextWeek={goNextWeek}
+        theme={theme}
+      />
 
-        {Object.keys(groupedSchedule).length > 0 ? (
-          Object.entries(groupedSchedule).map(([date, daySchedule]) => (
-            <Box key={date} sx={{ mb: 3 }}>
-              <Box
-                sx={{
-                  p: 2,
-                  backgroundColor: '#f5f5f5',
-                  borderBottom: '1px solid #e0e0e0',
-                }}
-              >
-                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                  {getDayOfWeek(date)} -{' '}
-                  {new Date(date).toLocaleDateString('vi-VN')}
-                </Typography>
-              </Box>
-
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Thời gian</TableCell>
-                      <TableCell>Môn học</TableCell>
-                      <TableCell>Phòng học</TableCell>
-                      <TableCell>Trạng thái</TableCell>
-                      <TableCell>Thao tác</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {daySchedule.map((item, index) => (
-                      <TableRow key={index} hover>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <AccessTime
-                              sx={{
-                                fontSize: 16,
-                                mr: 1,
-                                color: 'text.secondary',
-                              }}
-                            />
-                            {formatTime(item.startTime)} -{' '}
-                            {formatTime(item.endTime)}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Typography
-                            variant="body2"
-                            sx={{ fontWeight: 'bold' }}
-                          >
-                            {item.courseName}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {item.courseCode}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>{item.room}</TableCell>
-                        <TableCell>{getStatusChip(item.status)}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => {
-                              /* Navigate to class detail */
-                            }}
-                          >
-                            Chi tiết
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
-          ))
-        ) : (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              Không có lịch giảng dạy nào
-            </Typography>
-          </Box>
-        )}
-      </Paper>
+      {/* Schedule Table */}
+      <ScheduleTable
+        dataSource={dataSource}
+        weekDays={weekDays}
+        today={today}
+        theme={theme}
+        isDark={isDark}
+        startOfWeek={startOfWeek}
+        endOfWeek={endOfWeek}
+      />
     </Box>
   );
 };

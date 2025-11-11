@@ -113,6 +113,158 @@ const sectionService = {
       return null;
     }
   },
+  getSectionsByLecturer: async (params = {}) => {
+    try {
+      const {
+        sectionCode = '',
+        courseName = '',
+        lecturerName = '',
+        semesterId = null,
+        departmentId = null,
+        courseId = null,
+        status = null,
+        sortBy = '',
+        sortDirection = 'asc',
+        pageNumber = 1,
+        pageSize = 10,
+      } = params;
+
+      const response = await axios.get('/api/Section/GetSectionsByLecturer', {
+        params: {
+          SectionCode: sectionCode,
+          CourseName: courseName,
+          LecturerName: lecturerName,
+          SemesterId: semesterId,
+          DepartmentId: departmentId,
+          CourseId: courseId,
+          Status: status,
+          SortBy: sortBy,
+          SortDirection: sortDirection,
+          PageNumber: pageNumber,
+          PageSize: pageSize,
+        },
+      });
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Lấy danh sách lớp học phần thất bại');
+        }
+        return null;
+      }
+
+      // trả về data (object với items, totalCount, ...)
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(error.response.data.message || 'Get sections by lecturer failed');
+        }
+      } else {
+        message.error(error.message || 'Get sections by lecturer failed');
+      }
+      return null;
+    }
+  },
+  getSectionDropdownForLecturer: async (semesterId = null) => {
+    try {
+      const response = await axios.get('/api/Section/GetSectionDropdownForLecturer', {
+        params: { semesterId },
+      });
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Lấy danh sách dropdown lớp học phần thất bại');
+        }
+        return null;
+      }
+
+      // API returns array in data
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(error.response.data.message || 'Get section dropdown failed');
+        }
+      } else {
+        message.error(error.message || 'Get section dropdown failed');
+      }
+      return null;
+    }
+  },
+
+  // Update section (Admin only)
+  updateSection: async (sectionId, sectionData) => {
+    try {
+      const response = await axios.put(`/api/Section/UpdateSection/${sectionId}`, sectionData);
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Cập nhật lớp học phần thất bại');
+        }
+        return null;
+      }
+      message.success('Cập nhật lớp học phần thành công!');
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(error.response.data.message || 'Update section failed');
+        }
+      } else {
+        message.error(error.message || 'Update section failed');
+      }
+      return null;
+    }
+  },
+
+  // Delete section (Admin only)
+  deleteSection: async (sectionId) => {
+    try {
+      const response = await axios.delete(`/api/Section/DeleteSection/${sectionId}`);
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Xóa lớp học phần thất bại');
+        }
+        return null;
+      }
+      message.success('Xóa lớp học phần thành công!');
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(error.response.data.message || 'Delete section failed');
+        }
+      } else {
+        message.error(error.message || 'Delete section failed');
+      }
+      return null;
+    }
+  },
 };
 
 export default sectionService;

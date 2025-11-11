@@ -13,7 +13,8 @@ import {
 import { useTheme, alpha } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { teacherService, courseService } from '../../../service';
+import sectionService from '../../../service/sectionService';
+import scheduleService from '../../../service/scheduleService';
 
 // Import components
 import TeacherCoursesList from './components/TeacherCoursesList';
@@ -115,26 +116,34 @@ const TeacherDashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const coursesResponse = await teacherService.getTeacherCourses(lecturerId);
-        const courses = coursesResponse.data || [];
+        // Fetch sections (courses) for lecturer
+        const sectionsResponse = await sectionService.getSectionsByLecturer({
+          pageNumber: 1,
+          pageSize: 100, // Get all sections
+        });
 
+        const sections = sectionsResponse?.items || [];
+
+        // Calculate total students from all sections
         let totalStudents = 0;
-        for (const course of courses) {
-          try {
-            const studentsResponse = await courseService.getCourseStudents(course.id);
-            totalStudents += studentsResponse.data?.length || 0;
-          } catch (error) {
-            console.log('Error fetching students for course:', course.id);
-          }
+        sections.forEach((section) => {
+          totalStudents += section.enrolledCount || 0;
+        });
+
+        // Fetch schedule count for the week
+        let upcomingClasses = 0;
+        try {
+          const scheduleCount = await scheduleService.countSchedulesOfLecturer();
+          upcomingClasses = scheduleCount?.countScheduleOfWeek || 0;
+        } catch (error) {
+          console.log('Error fetching schedule count:', error);
         }
 
         setDashboardData({
-          totalCourses: courses.length,
+          totalCourses: sections.length,
           totalStudents,
-          upcomingClasses: courses.filter(
-            (course) => new Date(course.nextClass) > new Date()
-          ).length,
-          pendingGrades: 0,
+          upcomingClasses,
+          pendingGrades: 0, // TODO: Implement when grades API is available
         });
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
