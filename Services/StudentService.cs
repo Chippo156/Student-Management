@@ -41,7 +41,7 @@ namespace StudentManagement.Services
             return Task.FromResult(context.SaveChanges() > 0);
         }
 
-        public async Task<PagedResult<Student>> GetAllStudentsAsync(PaginationParams pagination)
+        public async Task<PagedResult<Student>> GetAllStudentsAsync(PaginationParams pagination, string? search = null)
         {
 
             var query = context.Students
@@ -50,7 +50,14 @@ namespace StudentManagement.Services
                     .ThenInclude(c => c.Program)
                         .ThenInclude(p => p.Department)
                 .AsQueryable();
-
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchTerm = search.Trim().ToLower();
+                query = query.Where(u =>
+                    u.User.FullName.ToLower().Contains(searchTerm) ||
+                    (u.User.Email != null && u.User.Email.ToLower().Contains(searchTerm)) ||
+                    u.MSSV.ToLower().Contains(searchTerm) || u.Class.ClassName.ToLower().Contains(searchTerm));
+            }
             // Tổng số bản ghi
             var totalCount = await query.CountAsync();
 
@@ -60,6 +67,7 @@ namespace StudentManagement.Services
                 .Take(pagination.PageSize)
                 .ToListAsync();
 
+            
 
             // Gói kết quả vào PagedResult
             return new PagedResult<Student>
