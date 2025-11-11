@@ -7,7 +7,7 @@ namespace StudentManagement.Services.Interface
     public interface ILecturerService
     {
         Task<Lecturer?> GetLecturerByIdAsync(int lecturerId);
-        Task<PagedResult<Lecturer>> GetAllLecturersAsync(PaginationParams pagination);
+        Task<PagedResult<Lecturer>> GetAllLecturersAsync(PaginationParams pagination, string? search = null);
 
         Task<Lecturer> CreateLecturerAsync(LecturerRequest lecturer);
         Task<bool> DeleteLecturerAsync(int lecturerId);

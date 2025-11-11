@@ -46,12 +46,22 @@ namespace StudentManagement.Services
                 ToListAsync();
         }
 
-        public async Task<PagedResult<Lecturer>> GetAllLecturersAsync(PaginationParams pagination)
+        public async Task<PagedResult<Lecturer>> GetAllLecturersAsync(PaginationParams pagination, string? search)
         {
             var query = context.Lecturers
                .Include(s => s.User)
                .Include(s => s.Department)
                 .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchTerm = search.Trim().ToLower();
+                query = query.Where(u =>
+                    u.User.FullName.ToLower().Contains(searchTerm) ||
+                    (u.User.Email != null && u.User.Email.ToLower().Contains(searchTerm)) ||
+                    u.LecturerCode.ToLower().Contains(searchTerm) || u.User.Phone.ToLower().Contains(searchTerm)
+                    || u.Department.DepartmentName.ToLower().Contains(searchTerm));
+            }
 
             // Tổng số bản ghi
             var totalCount = await query.CountAsync();

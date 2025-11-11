@@ -10,13 +10,13 @@ namespace StudentManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class LecturerController(ILecturerService lecturerService) : ControllerBase  
+    public class LecturerController(ILecturerService lecturerService) : ControllerBase
     {
         [HttpGet("GetAllLecturers")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IEnumerable<Lecturer>>> GetAllLecturers([FromQuery] PaginationParams pagination)
+        public async Task<ActionResult<IEnumerable<Lecturer>>> GetAllLecturers([FromQuery] PaginationParams pagination, [FromQuery] string? search)
         {
-            var lecturers = await lecturerService.GetAllLecturersAsync(pagination);
+            var lecturers = await lecturerService.GetAllLecturersAsync(pagination, search);
             return Ok(ApiResponse.SuccessResponse(lecturers, "Lecturers retrieved successfully"));
         }
         [HttpGet("{id}")]
