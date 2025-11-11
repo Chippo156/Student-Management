@@ -61,5 +61,23 @@ namespace StudentManagement.Controllers
             }
             return Ok(ApiResponse.SuccessResponse(null, "Course deleted successfully"));
         }
+
+        [HttpGet("GetCoursesWithPrograms")]
+        public async Task<IActionResult> GetCoursesWithPrograms(
+            [FromQuery] PaginationParams pagination,
+            [FromQuery] string? search = null,
+            [FromQuery] int? courseType = null)
+        {
+            try
+            {
+                var result = await courseService.GetCoursesWithProgramsAsync(pagination, search, courseType);
+                return Ok(ApiResponse.SuccessResponse(result, "Courses with programs retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, 
+                    "An error occurred while retrieving courses", new List<string> { ex.Message }));
+            }
+        }
     }
 }

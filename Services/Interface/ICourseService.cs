@@ -1,5 +1,6 @@
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 
 namespace StudentManagement.Services.Interface
 {
@@ -10,5 +11,9 @@ namespace StudentManagement.Services.Interface
         Task<Course> CreateCourseAsync(CourseRequest courseRequest);
         Task<Course?> UpdateCourseAsync(int courseId, CourseRequest courseRequest);
         Task<bool> DeleteCourseAsync(int courseId);
+        Task<PagedResult<CourseWithProgramListResponse>> GetCoursesWithProgramsAsync(
+            PaginationParams pagination, 
+            string? search = null, 
+            int? courseType = null);
     }
 }
