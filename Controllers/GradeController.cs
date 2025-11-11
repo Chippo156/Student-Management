@@ -35,6 +35,20 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(grades, "Section-student grades retrieved successfully"));
         }
 
+        [HttpGet("GetAllGradesByStudent/student/{studentId}/section/{sectionId}")]
+        public async Task<IActionResult> GetAllGradesByStudentAndSection(int studentId, int sectionId)
+        {
+            try
+            {
+                var grades = await gradeService.GetAllGradesByStudentAndSectionAsync(studentId, sectionId);
+                return Ok(ApiResponse.SuccessResponse(grades, "Student section grades retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+
         [HttpPost("CreateGrade")]
         public async Task<ActionResult<Grade>> CreateGrade(GradeRequest request)
         {
