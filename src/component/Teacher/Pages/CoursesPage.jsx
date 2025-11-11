@@ -24,11 +24,12 @@ const CoursesPage = () => {
   const [loading, setLoading] = useState(true);
 
   const user = useSelector((state) => state.user.account);
+  const lecturerId = user?.lecturerId;
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await teacherService.getTeacherCourses(user.userId);
+        const response = await teacherService.getTeacherCourses(lecturerId);
         const coursesData = response.data || [];
 
         // Lấy thêm thông tin số lượng sinh viên cho mỗi môn học
@@ -59,10 +60,10 @@ const CoursesPage = () => {
       }
     };
 
-    if (user.userId) {
+    if (lecturerId) {
       fetchCourses();
     }
-  }, [user.userId]);
+  }, [lecturerId]);
 
   const getStatusChip = (status) => {
     const statusConfig = {

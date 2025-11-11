@@ -11,7 +11,10 @@ import {
   IconButton,
   Chip,
   LinearProgress,
+  Fade,
+  Grow,
 } from '@mui/material';
+import PageTransition from '../../../component/PageTransition';
 import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
@@ -136,25 +139,32 @@ const AdminDashboard = () => {
   };
 
   return (
-    <Box sx={{ p: 3, backgroundColor: colors.background, minHeight: '100vh' }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text, mb: 1 }}>
-          Admin Dashboard
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Chào mừng trở lại! Đây là tổng quan hệ thống quản lý sinh viên.
-        </Typography>
-      </Box>
+    <PageTransition>
+      <Box sx={{ p: 3, backgroundColor: colors.background, minHeight: '100vh' }}>
+        {/* Header */}
+        <Fade in={true} timeout={400}>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text, mb: 1 }}>
+              Admin Dashboard
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Chào mừng trở lại! Đây là tổng quan hệ thống quản lý sinh viên.
+            </Typography>
+          </Box>
+        </Fade>
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {statsData.map((stat, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <StatCard stat={stat} />
-          </Grid>
-        ))}
-      </Grid>
+        {/* Stats Cards */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {statsData.map((stat, index) => (
+            <Grid item xs={12} sm={6} md={3} key={index}>
+              <Grow in={true} timeout={600 + index * 200}>
+                <Box>
+                  <StatCard stat={stat} />
+                </Box>
+              </Grow>
+            </Grid>
+          ))}
+        </Grid>
 
       {/* Charts Row */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -323,6 +333,7 @@ const AdminDashboard = () => {
         </Grid>
       </Grid>
     </Box>
+    </PageTransition>
   );
 };
 

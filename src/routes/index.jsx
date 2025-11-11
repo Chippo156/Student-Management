@@ -43,6 +43,12 @@ import CurriculumPage from '../page/Student/Registration/CurriculumPage';
 import TeacherDashboard from '../component/Teacher/Dashboard';
 import TeacherCourses from '../component/Teacher/Pages/CoursesPage';
 import TeacherSchedule from '../component/Teacher/Pages/SchedulePage';
+import TeacherStudents from '../component/Teacher/Pages/StudentsPage';
+import TeacherGrades from '../component/Teacher/Pages/GradesPage';
+import TeacherAttendance from '../component/Teacher/Pages/AttendancePage';
+import TeacherAssignments from '../component/Teacher/Pages/AssignmentsPage';
+import TeacherMaterials from '../component/Teacher/Pages/MaterialsPage';
+import TeacherSettings from '../component/Teacher/Pages/SettingsPage';
 
 // Layout components
 import LayoutUser from '../component/LayoutUser/LayoutUser';
@@ -239,6 +245,12 @@ const AppRoutes = () => {
           <Route index element={<TeacherDashboard />} />
           <Route path="courses" element={<TeacherCourses />} />
           <Route path="schedule" element={<TeacherSchedule />} />
+          <Route path="students" element={<TeacherStudents />} />
+          <Route path="grades" element={<TeacherGrades />} />
+          <Route path="attendance" element={<TeacherAttendance />} />
+          <Route path="assignments" element={<TeacherAssignments />} />
+          <Route path="materials" element={<TeacherMaterials />} />
+          <Route path="settings" element={<TeacherSettings />} />
         </Route>
 
         {/* Student routes - Role ID 3 */}

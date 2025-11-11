@@ -1,16 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Grid, Card, CardContent, Typography, Paper } from '@mui/material';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Row, Col, Card, Statistic, Spin } from 'antd';
 import {
-  School,
-  Person,
-  Assignment,
-  Schedule,
-  TrendingUp,
-} from '@mui/icons-material';
+  BookOutlined,
+  UserOutlined,
+  ClockCircleOutlined,
+  FileTextOutlined,
+  BarChartOutlined,
+  CheckCircleOutlined,
+  CalendarOutlined,
+  FolderOutlined,
+} from '@ant-design/icons';
+import { useTheme, alpha } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { teacherService, courseService } from '../../../service';
 
+// Import components
+import TeacherCoursesList from './components/TeacherCoursesList';
+import TeacherScheduleToday from './components/TeacherScheduleToday';
+import TeacherQuickActions from './components/TeacherQuickActions';
+import TeacherProfileCard from './components/TeacherProfileCard';
+import TeacherRecentActivity from './components/TeacherRecentActivity';
+
 const TeacherDashboard = () => {
+  const muiTheme = useTheme();
+  const navigate = useNavigate();
+
   const [dashboardData, setDashboardData] = useState({
     totalCourses: 0,
     totalStudents: 0,
@@ -21,22 +36,96 @@ const TeacherDashboard = () => {
 
   const user = useSelector((state) => state.user.account);
 
+  const lecturerId = user?.lecturerId;
+  const fullName = user?.user?.fullName || user?.fullName || user?.username;
+  const position = user?.position;
+  const academicTitle = user?.academicTitle;
+  const departmentName = user?.departmentName;
+  const facultyName = user?.facultyName;
+
+  const colors = useMemo(() => {
+    const p = muiTheme.palette;
+    return {
+      bgPage: p.background.default,
+      bgCard: p.background.paper,
+      bgSoftSuccess: alpha(p.success.main, 0.12),
+      bgSoftWarning: alpha(p.warning.main, 0.12),
+      bgSoftInfo: alpha(p.primary.main, 0.12),
+      bgSoftError: alpha(p.error.main, 0.12),
+      fg: p.text.primary,
+      sub: p.text.secondary,
+      border: p.divider,
+      primary: p.primary.main,
+      primaryContrast: p.primary.contrastText,
+      secondary: p.secondary.main,
+      success: p.success.main,
+      warning: p.warning.main,
+      error: p.error.main,
+      info: p.primary.main,
+    };
+  }, [muiTheme]);
+
+  const cardStyle = {
+    background: colors.bgCard,
+    color: colors.fg,
+    border: `1px solid ${colors.border}`,
+    borderRadius: 12,
+  };
+
+  // Menu quick actions
+  const menuItems = [
+    {
+      icon: <BarChartOutlined />,
+      text: 'Chấm điểm',
+      path: '/teacher/grades',
+      color: colors.primary,
+    },
+    {
+      icon: <CheckCircleOutlined />,
+      text: 'Điểm danh',
+      path: '/teacher/attendance',
+      color: colors.success,
+    },
+    {
+      icon: <FileTextOutlined />,
+      text: 'Bài tập',
+      path: '/teacher/assignments',
+      color: colors.warning,
+    },
+    {
+      icon: <FolderOutlined />,
+      text: 'Tài liệu',
+      path: '/teacher/materials',
+      color: colors.info,
+    },
+    {
+      icon: <UserOutlined />,
+      text: 'Sinh viên',
+      path: '/teacher/students',
+      color: colors.error,
+    },
+    {
+      icon: <CalendarOutlined />,
+      text: 'Lịch dạy',
+      path: '/teacher/schedule',
+      color: colors.secondary,
+    },
+  ];
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Lấy thông tin courses của giảng viên
-        const coursesResponse = await teacherService.getTeacherCourses(
-          user.userId
-        );
+        const coursesResponse = await teacherService.getTeacherCourses(lecturerId);
         const courses = coursesResponse.data || [];
 
-        // Tính toán số liệu dashboard
         let totalStudents = 0;
         for (const course of courses) {
-          const studentsResponse = await courseService.getCourseStudents(
-            course.id
-          );
-          totalStudents += studentsResponse.data?.length || 0;
+          try {
+            const studentsResponse = await courseService.getCourseStudents(course.id);
+            totalStudents += studentsResponse.data?.length || 0;
+          } catch (error) {
+            console.log('Error fetching students for course:', course.id);
+          }
         }
 
         setDashboardData({
@@ -45,7 +134,7 @@ const TeacherDashboard = () => {
           upcomingClasses: courses.filter(
             (course) => new Date(course.nextClass) > new Date()
           ).length,
-          pendingGrades: 0, // Có thể tính sau
+          pendingGrades: 0,
         });
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -54,142 +143,264 @@ const TeacherDashboard = () => {
       }
     };
 
-    if (user.userId) {
+    if (lecturerId) {
       fetchDashboardData();
+    } else {
+      setLoading(false);
     }
-  }, [user.userId]);
+  }, [lecturerId]);
 
-  const statCards = [
-    {
-      title: 'Tổng số môn học',
-      value: dashboardData.totalCourses,
-      icon: <School sx={{ fontSize: 40, color: '#1976d2' }} />,
-      color: '#e3f2fd',
-    },
-    {
-      title: 'Tổng số sinh viên',
-      value: dashboardData.totalStudents,
-      icon: <Person sx={{ fontSize: 40, color: '#388e3c' }} />,
-      color: '#e8f5e8',
-    },
-    {
-      title: 'Lớp sắp tới',
-      value: dashboardData.upcomingClasses,
-      icon: <Schedule sx={{ fontSize: 40, color: '#f57c00' }} />,
-      color: '#fff3e0',
-    },
-    {
-      title: 'Điểm chưa chấm',
-      value: dashboardData.pendingGrades,
-      icon: <Assignment sx={{ fontSize: 40, color: '#d32f2f' }} />,
-      color: '#ffebee',
-    },
-  ];
-
-  if (loading) {
+  if (!user) {
     return (
-      <Box
-        sx={{
+      <div
+        style={{
           display: 'flex',
-          justifyContent: 'center',
           alignItems: 'center',
-          height: '400px',
+          justifyContent: 'center',
+          minHeight: 400,
         }}
       >
-        <Typography>Đang tải...</Typography>
-      </Box>
+        <Spin size="large" tip="Đang tải..." />
+      </div>
     );
   }
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: 'bold' }}>
-        Dashboard Giảng viên
-      </Typography>
-
-      <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
-        Chào mừng, {user.username}!
-      </Typography>
-
-      {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {statCards.map((card, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card
-              sx={{
-                height: 140,
-                background: `linear-gradient(135deg, ${card.color} 0%, white 100%)`,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                transition: 'transform 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-5px)',
-                  boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
-                },
-              }}
-            >
-              <CardContent
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  height: '100%',
-                  p: 2,
+    <div style={{ minHeight: '100vh', padding: 24, background: colors.bgPage }}>
+      {/* Welcome Banner */}
+      <div
+        style={{
+          background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+          borderRadius: 16,
+          padding: '32px 40px',
+          marginBottom: 24,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: -50,
+            right: -50,
+            width: 200,
+            height: 200,
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.1)',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            bottom: -30,
+            left: -30,
+            width: 150,
+            height: 150,
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.08)',
+          }}
+        />
+        <Row justify="space-between" align="middle" style={{ position: 'relative' }}>
+          <Col xs={24} md={16}>
+            <div style={{ marginBottom: 8 }}>
+              <span
+                style={{
+                  fontSize: 14,
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  fontWeight: 500,
+                  letterSpacing: '0.5px',
                 }}
               >
-                <Box>
-                  <Typography
-                    variant="h4"
-                    component="div"
-                    sx={{ fontWeight: 'bold', mb: 1 }}
-                  >
-                    {card.value}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {card.title}
-                  </Typography>
-                </Box>
-                {card.icon}
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Quick Actions */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: 300 }}>
-            <Typography
-              variant="h6"
-              gutterBottom
-              sx={{ display: 'flex', alignItems: 'center' }}
+                {new Date().toLocaleDateString('vi-VN', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </span>
+            </div>
+            <h1
+              style={{
+                fontSize: 32,
+                fontWeight: 700,
+                color: '#fff',
+                margin: '8px 0',
+                lineHeight: 1.2,
+              }}
             >
-              <TrendingUp sx={{ mr: 1 }} />
-              Hoạt động gần đây
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Chức năng này sẽ hiển thị các hoạt động gần đây của bạn
-            </Typography>
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: 300 }}>
-            <Typography
-              variant="h6"
-              gutterBottom
-              sx={{ display: 'flex', alignItems: 'center' }}
+              Chào mừng trở lại, {academicTitle} {fullName}!
+            </h1>
+            <p
+              style={{
+                fontSize: 15,
+                color: 'rgba(255, 255, 255, 0.85)',
+                margin: 0,
+              }}
             >
-              <Schedule sx={{ mr: 1 }} />
-              Lịch dạy hôm nay
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Chức năng này sẽ hiển thị lịch dạy của bạn hôm nay
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-    </Box>
+              {position} - {departmentName}, {facultyName}
+            </p>
+          </Col>
+          <Col xs={24} md={8} style={{ textAlign: 'right' }}>
+            <div
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: 12,
+                padding: '16px 24px',
+                display: 'inline-block',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 13,
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  marginBottom: 4,
+                }}
+              >
+                Học kỳ hiện tại
+              </div>
+              <div
+                style={{
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: '#fff',
+                }}
+              >
+                Học kỳ 1 - 2024
+              </div>
+            </div>
+          </Col>
+        </Row>
+      </div>
+
+      {/* Statistics Cards */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card style={{ ...cardStyle, borderLeft: `4px solid ${colors.primary}` }}>
+            <Statistic
+              title={<span style={{ color: colors.sub }}>Tổng số môn học</span>}
+              value={dashboardData.totalCourses}
+              prefix={<BookOutlined style={{ color: colors.primary }} />}
+              valueStyle={{ color: colors.fg, fontWeight: 600 }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card style={{ ...cardStyle, borderLeft: `4px solid ${colors.success}` }}>
+            <Statistic
+              title={<span style={{ color: colors.sub }}>Tổng số sinh viên</span>}
+              value={dashboardData.totalStudents}
+              prefix={<UserOutlined style={{ color: colors.success }} />}
+              valueStyle={{ color: colors.fg, fontWeight: 600 }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card style={{ ...cardStyle, borderLeft: `4px solid ${colors.warning}` }}>
+            <Statistic
+              title={<span style={{ color: colors.sub }}>Lớp sắp tới</span>}
+              value={dashboardData.upcomingClasses}
+              prefix={<ClockCircleOutlined style={{ color: colors.warning }} />}
+              valueStyle={{ color: colors.fg, fontWeight: 600 }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card style={{ ...cardStyle, borderLeft: `4px solid ${colors.error}` }}>
+            <Statistic
+              title={<span style={{ color: colors.sub }}>Điểm chưa chấm</span>}
+              value={dashboardData.pendingGrades}
+              prefix={<FileTextOutlined style={{ color: colors.error }} />}
+              valueStyle={{ color: colors.fg, fontWeight: 600 }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Quick Menu */}
+      <Card
+        style={{
+          ...cardStyle,
+          marginBottom: 24,
+        }}
+        title={
+          <span style={{ color: colors.fg, fontSize: 18, fontWeight: 600 }}>
+            Thao tác nhanh
+          </span>
+        }
+      >
+        <Row gutter={[16, 16]}>
+          {menuItems.map((item, idx) => (
+            <Col xs={12} sm={8} md={4} key={idx}>
+              <div
+                onClick={() => navigate(item.path)}
+                style={{
+                  textAlign: 'center',
+                  padding: '20px 12px',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  background: colors.bgPage,
+                  border: `1px solid ${colors.border}`,
+                  transition: 'all 0.3s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.1)';
+                  e.currentTarget.style.borderColor = item.color;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.borderColor = colors.border;
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 28,
+                    color: item.color,
+                    marginBottom: 8,
+                  }}
+                >
+                  {item.icon}
+                </div>
+                <div style={{ fontSize: 13, color: colors.fg, fontWeight: 500 }}>
+                  {item.text}
+                </div>
+              </div>
+            </Col>
+          ))}
+        </Row>
+      </Card>
+
+      {/* Main Content */}
+      <Row gutter={[16, 16]}>
+        {/* Left Column */}
+        <Col xs={24} lg={16}>
+          <Row gutter={[16, 16]}>
+            {/* Courses List */}
+            <Col xs={24} md={12}>
+              <TeacherCoursesList lecturerId={lecturerId} />
+            </Col>
+
+            {/* Schedule Today */}
+            <Col xs={24} md={12}>
+              <TeacherScheduleToday lecturerId={lecturerId} />
+            </Col>
+
+            {/* Recent Activity */}
+            <Col xs={24}>
+              <TeacherRecentActivity />
+            </Col>
+          </Row>
+        </Col>
+
+        {/* Right Column - Profile Card */}
+        <Col xs={24} lg={8}>
+          <TeacherProfileCard user={user} />
+        </Col>
+      </Row>
+    </div>
   );
 };
 

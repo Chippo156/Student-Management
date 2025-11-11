@@ -24,11 +24,12 @@ const SchedulePage = () => {
   const [loading, setLoading] = useState(true);
 
   const user = useSelector((state) => state.user.account);
+  const lecturerId = user?.lecturerId;
 
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
-        const response = await teacherService.getTeacherSchedule(user.userId);
+        const response = await teacherService.getTeacherSchedule(lecturerId);
         setSchedule(response.data || []);
       } catch (error) {
         console.error('Error fetching schedule:', error);
@@ -37,10 +38,10 @@ const SchedulePage = () => {
       }
     };
 
-    if (user.userId) {
+    if (lecturerId) {
       fetchSchedule();
     }
-  }, [user.userId]);
+  }, [lecturerId]);
 
   const getDayOfWeek = (date) => {
     const days = [

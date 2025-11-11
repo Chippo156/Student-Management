@@ -22,6 +22,8 @@ import {
   Settings as SettingsIcon,
   Menu as MenuIcon,
   MenuOpen as MenuOpenIcon,
+  EventAvailable as AttendanceIcon,
+  Folder as FolderIcon,
 } from '@mui/icons-material';
 import HeaderPage from '../Header';
 
@@ -55,6 +57,24 @@ const menuData = [
     icon: <GradeIcon />,
     key: 'grades',
     path: '/teacher/grades',
+  },
+  {
+    label: 'Điểm danh',
+    icon: <AttendanceIcon />,
+    key: 'attendance',
+    path: '/teacher/attendance',
+  },
+  {
+    label: 'Bài tập',
+    icon: <AssignmentIcon />,
+    key: 'assignments',
+    path: '/teacher/assignments',
+  },
+  {
+    label: 'Tài liệu',
+    icon: <FolderIcon />,
+    key: 'materials',
+    path: '/teacher/materials',
   },
   {
     label: 'Cài đặt',
