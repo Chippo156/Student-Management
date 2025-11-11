@@ -429,22 +429,72 @@ namespace StudentManagement.Services
 
         public async Task<PagedResult<SectionListResponse>> GetAllSectionsWithPaginationAsync(
             PaginationParams pagination,
-            string? sectionCode = null,
-            string? courseName = null,
+            string? search = null,
             SectionStatus? status = null,
             int? semesterId = null)
         {
-            var searchRequest = new SectionSearchRequest
-            {
-                PageNumber = pagination.PageNumber,
-                PageSize = pagination.PageSize,
-                SectionCode = sectionCode,
-                CourseName = courseName,
-                Status = status,
-                SemesterId = semesterId
-            };
+            var query = context.Sections
+                .Include(s => s.CurriculumCourse)
+                    .ThenInclude(cc => cc.Course)
+                .Include(s => s.CurriculumCourse)
+                    .ThenInclude(cc => cc.Program)
+                        .ThenInclude(p => p.Department)
+                            .ThenInclude(d => d.Faculty)
+                .Include(s => s.Lecturer)
+                    .ThenInclude(l => l.User)
+                .Include(s => s.Semester)
+                .Include(s => s.Class)
+                .AsQueryable();
 
-            return await GetSectionsWithPaginationAsync(searchRequest);
+            // Apply search filter - tìm kiếm trong mã lớp học phần, tên môn học, tên giảng viên
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchTerm = search.Trim().ToLower();
+                query = query.Where(s => 
+                    (s.SectionCode != null && s.SectionCode.ToLower().Contains(searchTerm)) ||
+                    s.CurriculumCourse.Course.CourseName.ToLower().Contains(searchTerm) ||
+                    s.CurriculumCourse.Course.CourseCode.ToLower().Contains(searchTerm) ||
+                    (s.Lecturer != null && s.Lecturer.User.FullName.ToLower().Contains(searchTerm)));
+            }
+
+            // Apply status filter
+            if (status.HasValue)
+            {
+                query = query.Where(s => s.Status == status.Value);
+            }
+
+            // Apply semester filter
+            if (semesterId.HasValue)
+            {
+                query = query.Where(s => s.Semester.SemesterId == semesterId.Value);
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply sorting (default sort by semester, then course name)
+            query = query
+                .OrderByDescending(s => s.Semester.Year)
+                .ThenByDescending(s => s.Semester.Term)
+                .ThenBy(s => s.CurriculumCourse.Course.CourseName)
+                .ThenBy(s => s.SectionCode ?? "");
+
+            // Apply pagination
+            var sections = await query
+                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+
+            // Map to response DTOs
+            var responses = await MapToSectionListResponsesAsync(sections);
+
+            return new PagedResult<SectionListResponse>
+            {
+                Items = responses,
+                TotalCount = totalCount,
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize
+            };
         }
 
         private async Task<List<SectionListResponse>> MapToSectionListResponsesAsync(List<Section> sections)

@@ -11,8 +11,7 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<Section>> GetAllSectionsAsync();
         Task<PagedResult<SectionListResponse>> GetAllSectionsWithPaginationAsync(
             PaginationParams pagination,
-            string? sectionCode = null,
-            string? courseName = null,
+            string? search = null,
             SectionStatus? status = null,
             int? semesterId = null);
         Task<PagedResult<SectionListResponse>> GetSectionsWithPaginationAsync(SectionSearchRequest searchRequest);

@@ -112,15 +112,14 @@ namespace StudentManagement.Controllers
         [HttpGet("GetAllSection")]
         public async Task<IActionResult> GetSectionsWithPagination(
             [FromQuery] PaginationParams pagination,
-            [FromQuery] string? sectionCode = null,
-            [FromQuery] string? courseName = null,
+            [FromQuery] string? search = null,
             [FromQuery] SectionStatus? status = null,
             [FromQuery] int? semesterId = null)
         {
             try
             {
                 var result = await sectionService.GetAllSectionsWithPaginationAsync(
-                    pagination, sectionCode, courseName, status, semesterId);
+                    pagination, search, status, semesterId);
                 
                 return Ok(ApiResponse.SuccessResponse(result, "Sections retrieved successfully"));
             }
@@ -159,14 +158,13 @@ namespace StudentManagement.Controllers
         public async Task<IActionResult> GetSectionsBySemester(
             int semesterId,
             [FromQuery] PaginationParams pagination,
-            [FromQuery] string? sectionCode = null,
-            [FromQuery] string? courseName = null,
+            [FromQuery] string? search = null,
             [FromQuery] SectionStatus? status = null)
         {
             try
             {
                 var result = await sectionService.GetAllSectionsWithPaginationAsync(
-                    pagination, sectionCode, courseName, status, semesterId);
+                    pagination, search, status, semesterId);
                 
                 return Ok(ApiResponse.SuccessResponse(result, "Sections by semester retrieved successfully"));
             }
