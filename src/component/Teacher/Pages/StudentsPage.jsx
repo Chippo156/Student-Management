@@ -214,14 +214,9 @@ const StudentsPage = () => {
       dataIndex: 'mssv',
       key: 'mssv',
       width: 120,
-      fixed: 'left',
+      // removed fixed: 'left' to avoid sticky stacking issues
       render: (text) => <span style={{ fontWeight: 600 }}>{text}</span>,
-      onHeaderCell: () => ({
-        style: { background: '#fafafa', zIndex: 3 },
-      }),
-      onCell: () => ({
-        style: { background: '#fff', zIndex: 2 },
-      }),
+      // removed onHeaderCell/onCell zIndex tweaks
     },
     {
       title: 'Họ và tên',
@@ -280,7 +275,7 @@ const StudentsPage = () => {
     {
       title: 'Thao tác',
       key: 'action',
-      fixed: 'right',
+      // removed fixed: 'right'
       width: 150,
       render: (_, record) => (
         <Space size="small">
@@ -293,12 +288,6 @@ const StudentsPage = () => {
           </Button>
         </Space>
       ),
-      onHeaderCell: () => ({
-        style: { background: '#fafafa', zIndex: 3 },
-      }),
-      onCell: () => ({
-        style: { background: '#fff', zIndex: 2 },
-      }),
     },
   ];
 
@@ -493,25 +482,30 @@ const StudentsPage = () => {
       {/* Students Table */}
       <Fade in={true} timeout={1200}>
         <Card>
-          <Table
-            columns={columns}
-            dataSource={students}
-            loading={loading}
-            rowKey={(record) => `${record.studentId}-${record.sectionId}`}
-            pagination={{
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: pagination.total,
-              showSizeChanger: true,
-              showTotal: (total) => `Tổng số ${total} sinh viên`,
-              onChange: (page, pageSize) => {
-                setPagination(prev => ({ ...prev, current: page, pageSize }));
-              },
-            }}
-            scroll={{ x: 1500 }}
-            sticky
-            style={{maxWidth:1200}}
-          />
+          <div style={{ overflowX: 'auto', width: '100%' }}>
+            <div style={{ maxWidth: 1200, padding: 12 }}>
+              <Table
+                columns={columns}
+                dataSource={students}
+                loading={loading}
+                rowKey={(record) => `${record.studentId}-${record.sectionId}`}
+                pagination={{
+                  current: pagination.current,
+                  pageSize: pagination.pageSize,
+                  total: pagination.total,
+                  showSizeChanger: true,
+                  showTotal: (total) => `Tổng số ${total} sinh viên`,
+                  onChange: (page, pageSize) => {
+                    setPagination(prev => ({ ...prev, current: page, pageSize }));
+                  },
+                }}
+                scroll={{ x: 'max-content' }}
+                // ensure rows render below header/controls
+                onRow={(record) => ({ style: { position: 'relative', zIndex: 1 } })}
+                style={{ borderCollapse: 'separate' }}
+              />
+            </div>
+          </div>
         </Card>
       </Fade>
 
