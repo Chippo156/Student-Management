@@ -18,9 +18,9 @@ namespace StudentManagement.Controllers
 
         [HttpGet("GetAllUsers")]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers([FromQuery] PaginationParams pagination)
+        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers([FromQuery] PaginationParams pagination, [FromQuery] int? roleId, [FromQuery] string? search)
         {
-            var result = await userService.GetAllUsersAsync(pagination);
+            var result = await userService.GetAllUsersAsync(pagination, roleId, search);
             return Ok(ApiResponse.SuccessResponse(result, "Danh sách người dùng"));
         }
 

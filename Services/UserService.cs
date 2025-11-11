@@ -13,27 +13,47 @@ namespace StudentManagement.Services
     public class UserService(AppDbContext context, IFileService fileService) : IUserService
     {
 
-        public async Task<PagedResult<UserResponse>> GetAllUsersAsync(PaginationParams pagination)
+        public async Task<PagedResult<UserResponse>> GetAllUsersAsync(
+    PaginationParams pagination,
+    int? roleId = null,
+    string? search = null)
         {
             var query = context.Users
                 .Include(u => u.Role)
                 .Include(u => u.BankAccounts.Where(ba => ba.IsDefault))
-                .OrderBy(u => u.FullName) // Sắp xếp cho ổn định, có thể đổi thành CreatedDate
                 .AsQueryable();
 
-            // Tổng số bản ghi
+            // Apply role filter
+            if (roleId.HasValue && roleId.Value > 0)
+            {
+                query = query.Where(u => u.Role.RoleId == roleId.Value);
+            }
+
+            // Apply search filter for name and email
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchTerm = search.Trim().ToLower();
+                query = query.Where(u =>
+                    u.FullName.ToLower().Contains(searchTerm) ||
+                    (u.Email != null && u.Email.ToLower().Contains(searchTerm)) ||
+                    u.Username.ToLower().Contains(searchTerm));
+            }
+
+            // Order by full name for stable sorting
+            query = query.OrderBy(u => u.FullName);
+
+            // Get total count after applying filters
             var totalCount = await query.CountAsync();
 
-            // Lấy trang hiện tại
+            // Apply pagination
             var users = await query
                 .Skip((pagination.PageNumber - 1) * pagination.PageSize)
                 .Take(pagination.PageSize)
                 .ToListAsync();
 
-            // Map sang DTO
+            // Map to response DTOs
             var userResponses = users.Select(ToUserResponse).ToList();
 
-            // Gói kết quả vào PagedResult
             return new PagedResult<UserResponse>
             {
                 Items = userResponses,
