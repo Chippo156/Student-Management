@@ -176,7 +176,7 @@ namespace StudentManagement.Services
             return await context.SaveChangesAsync() > 0;
         }
 
-        public async Task<PagedResult<ScheduleListResponse>> GetAllSchedulesWithFiltersAsync(ScheduleFilterRequest filterRequest)
+        public async Task<PagedResult<ScheduleListResponse>> GetAllSchedulesWithFiltersAsync(int sectionId)
         {
             var query = context.Schedules
                 .Include(s => s.Section)
@@ -191,159 +191,18 @@ namespace StudentManagement.Services
                     .ThenInclude(s => s.Class)
                 .Include(s => s.ScheduleType)
                 .Include(s => s.PracticeGroup)
+                .Where(s => s.Section.SectionId == sectionId)
                 .AsQueryable();
 
-            // Apply filters
-            if (!string.IsNullOrWhiteSpace(filterRequest.CourseCode))
-            {
-                query = query.Where(s => s.Section.CurriculumCourse.Course.CourseCode.Contains(filterRequest.CourseCode.Trim()));
-            }
-
-            if (!string.IsNullOrWhiteSpace(filterRequest.CourseName))
-            {
-                query = query.Where(s => s.Section.CurriculumCourse.Course.CourseName.Contains(filterRequest.CourseName.Trim()));
-            }
-
-            if (!string.IsNullOrWhiteSpace(filterRequest.LecturerName))
-            {
-                query = query.Where(s => s.Section.Lecturer != null &&
-                                       s.Section.Lecturer.User.FullName.Contains(filterRequest.LecturerName.Trim()));
-            }
-
-            if (!string.IsNullOrWhiteSpace(filterRequest.Room))
-            {
-                query = query.Where(s => !string.IsNullOrEmpty(s.Room) && s.Room.Contains(filterRequest.Room.Trim()));
-            }
-
-            if (filterRequest.SectionId.HasValue)
-            {
-                query = query.Where(s => s.Section.SectionId == filterRequest.SectionId.Value);
-            }
-
-            if (filterRequest.SemesterId.HasValue)
-            {
-                query = query.Where(s => s.Section.Semester.SemesterId == filterRequest.SemesterId.Value);
-            }
-
-            if (filterRequest.DepartmentId.HasValue)
-            {
-                query = query.Where(s => s.Section.CurriculumCourse.Program.Department.DepartmentId == filterRequest.DepartmentId.Value);
-            }
-
-            if (filterRequest.ScheduleTypeId.HasValue)
-            {
-                query = query.Where(s => s.ScheduleType.ScheduleTypeId == filterRequest.ScheduleTypeId.Value);
-            }
-
-            if (filterRequest.DayOfWeek.HasValue)
-            {
-                query = query.Where(s => s.DayOfWeek == filterRequest.DayOfWeek.Value);
-            }
-
-            if (filterRequest.Date.HasValue)
-            {
-                query = query.Where(s => s.Date == filterRequest.Date.Value);
-            }
-
-            if (filterRequest.StartDateFrom.HasValue)
-            {
-                query = query.Where(s => s.Date >= filterRequest.StartDateFrom.Value ||
-                                       (s.Date == null && s.Section.StartDate >= filterRequest.StartDateFrom.Value));
-            }
-
-            if (filterRequest.StartDateTo.HasValue)
-            {
-                query = query.Where(s => s.Date <= filterRequest.StartDateTo.Value ||
-                                       (s.Date == null && s.Section.StartDate <= filterRequest.StartDateTo.Value));
-            }
-
-            if (filterRequest.StartTimeFrom.HasValue)
-            {
-                query = query.Where(s => s.StartTime >= filterRequest.StartTimeFrom.Value);
-            }
-
-            if (filterRequest.StartTimeTo.HasValue)
-            {
-                query = query.Where(s => s.StartTime <= filterRequest.StartTimeTo.Value);
-            }
-
-            if (filterRequest.ClassId.HasValue)
-            {
-                query = query.Where(s => s.Section.Class.ClassId == filterRequest.ClassId.Value);
-            }
-
-            if (filterRequest.IsPracticeGroup.HasValue)
-            {
-                if (filterRequest.IsPracticeGroup.Value)
-                {
-                    query = query.Where(s => s.PracticeGroupId.HasValue);
-                }
-                else
-                {
-                    query = query.Where(s => !s.PracticeGroupId.HasValue);
-                }
-            }
-
-            if (filterRequest.PracticeGroupId.HasValue)
-            {
-                query = query.Where(s => s.PracticeGroupId == filterRequest.PracticeGroupId.Value);
-            }
-
-            if (!string.IsNullOrWhiteSpace(filterRequest.SectionCode))
-            {
-                query = query.Where(s => !string.IsNullOrEmpty(s.Section.SectionCode) &&
-                                       s.Section.SectionCode.Contains(filterRequest.SectionCode.Trim()));
-            }
-
+           
             // Get total count
             var totalCount = await query.CountAsync();
 
-            // Apply sorting
-            query = filterRequest.SortBy?.ToLower() switch
-            {
-                "coursecode" => filterRequest.SortDirection?.ToLower() == "desc"
-                    ? query.OrderByDescending(s => s.Section.CurriculumCourse.Course.CourseCode)
-                    : query.OrderBy(s => s.Section.CurriculumCourse.Course.CourseCode),
-                "coursename" => filterRequest.SortDirection?.ToLower() == "desc"
-                    ? query.OrderByDescending(s => s.Section.CurriculumCourse.Course.CourseName)
-                    : query.OrderBy(s => s.Section.CurriculumCourse.Course.CourseName),
-                "lecturer" => filterRequest.SortDirection?.ToLower() == "desc"
-                    ? query.OrderByDescending(s => s.Section.Lecturer.User.FullName)
-                    : query.OrderBy(s => s.Section.Lecturer.User.FullName),
-                "dayofweek" => filterRequest.SortDirection?.ToLower() == "desc"
-                    ? query.OrderByDescending(s => s.DayOfWeek)
-                    : query.OrderBy(s => s.DayOfWeek),
-                "starttime" => filterRequest.SortDirection?.ToLower() == "desc"
-                    ? query.OrderByDescending(s => s.StartTime)
-                    : query.OrderBy(s => s.StartTime),
-                "room" => filterRequest.SortDirection?.ToLower() == "desc"
-                    ? query.OrderByDescending(s => s.Room)
-                    : query.OrderBy(s => s.Room),
-                "semester" => filterRequest.SortDirection?.ToLower() == "desc"
-                    ? query.OrderByDescending(s => s.Section.Semester.Year).ThenByDescending(s => s.Section.Semester.Term)
-                    : query.OrderBy(s => s.Section.Semester.Year).ThenBy(s => s.Section.Semester.Term),
-                "date" => filterRequest.SortDirection?.ToLower() == "desc"
-                    ? query.OrderByDescending(s => s.Date)
-                    : query.OrderBy(s => s.Date),
-                _ => query.OrderBy(s => s.Section.Semester.Year)
-                    .ThenBy(s => s.Section.Semester.Term)
-                    .ThenBy(s => s.Section.CurriculumCourse.Course.CourseCode)
-                    .ThenBy(s => s.DayOfWeek)
-                    .ThenBy(s => s.StartTime)
-            };
-
-            // Apply pagination
-            var schedules = await query
-                .Skip((filterRequest.PageNumber - 1) * filterRequest.PageSize)
-                .Take(filterRequest.PageSize)
-                .ToListAsync();
-
             // Map to response DTOs
-            var responses = schedules.Select(schedule => new ScheduleListResponse
+            var responses = query.Select(schedule => new ScheduleListResponse
             {
                 ScheduleId = schedule.ScheduleId,
-                ScheduleType = schedule.ScheduleType?.Name ?? "Unknown",
-                ScheduleTypeId = schedule.ScheduleType?.ScheduleTypeId ?? 0,
+                ScheduleType = schedule.ScheduleType.Name ?? "Unknown",
 
                 // Section information
                 SectionId = schedule.Section.SectionId,
@@ -351,21 +210,15 @@ namespace StudentManagement.Services
 
                 // Course information
                 CourseId = schedule.Section.CurriculumCourse.Course.CourseId,
-                CourseCode = schedule.Section.CurriculumCourse.Course.CourseCode,
                 CourseName = schedule.Section.CurriculumCourse.Course.CourseName,
-                Credits = schedule.Section.CurriculumCourse.Course.CreditsTheory + schedule.Section.CurriculumCourse.Course.CreditsLab,
 
-                LecturerId = schedule.Section.Lecturer?.Id,
-                LecturerName = schedule.Section.Lecturer?.User?.FullName ?? "Not Assigned",
-                LecturerCode = schedule.Section.Lecturer?.LecturerCode ?? "",
+                LecturerName = schedule.Section.Lecturer.User.FullName ?? "Not Assigned",
 
                 // Class information
                 ClassId = schedule.Section.Class.ClassId,
                 ClassName = schedule.Section.Class.ClassName,
-                ClassCode = schedule.Section.Class.ClassCode,
 
                 //// Semester information
-                SemesterId = schedule.Section.Semester.SemesterId,
                 SemesterName = $"{schedule.Section.Semester.Year} - {schedule.Section.Semester.Term}",
                 Year = schedule.Section.Semester.Year,
                 Term = schedule.Section.Semester.Term,
@@ -383,13 +236,11 @@ namespace StudentManagement.Services
                 //// Practice Group information
                 IsPracticeGroup = schedule.PracticeGroupId.HasValue,
                 PracticeGroupId = schedule.PracticeGroupId,
-                PracticeGroupName = schedule.PracticeGroup?.GroupName ?? "",
+                PracticeGroupName = schedule.PracticeGroup.GroupName ?? "",
+                PracticeGroupCapacity = schedule.PracticeGroup != null ? schedule.PracticeGroup.CurrentCount : null,
 
                 // Section details
-                SectionCapacity = schedule.Section.Capacity,
-                SectionEnrolledCount = schedule.Section.EnrolledCount,
-                SectionAvailableSlots = Math.Max(0, schedule.Section.Capacity - schedule.Section.EnrolledCount),
-                IsExam = schedule.ScheduleType?.ScheduleTypeId == 3
+                IsExam = schedule.ScheduleType.ScheduleTypeId == 3
 
             }).ToList();
 
@@ -397,12 +248,10 @@ namespace StudentManagement.Services
             {
                 Items = responses,
                 TotalCount = totalCount,
-                PageNumber = filterRequest.PageNumber,
-                PageSize = filterRequest.PageSize
             };
         }
 
-        private string GetDayOfWeekInVietnamese(DayOfWeek dayOfWeek)
+        private static string GetDayOfWeekInVietnamese(DayOfWeek dayOfWeek)
         {
             return dayOfWeek switch
             {

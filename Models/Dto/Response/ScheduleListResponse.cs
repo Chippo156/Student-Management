@@ -12,22 +12,17 @@ namespace StudentManagement.Models.Dto.Response
         
         // Course information
         public int CourseId { get; set; }
-        public string CourseCode { get; set; } = string.Empty;
         public string CourseName { get; set; } = string.Empty;
-        public int Credits { get; set; }
         
         // Lecturer information
         public int? LecturerId { get; set; }
         public string LecturerName { get; set; } = string.Empty;
-        public string LecturerCode { get; set; } = string.Empty;
         
         // Class information
         public int ClassId { get; set; }
         public string ClassName { get; set; } = string.Empty;
-        public string ClassCode { get; set; } = string.Empty;
         
         // Semester information
-        public int SemesterId { get; set; }
         public string SemesterName { get; set; } = string.Empty;
         public int Year { get; set; }
         public string Term { get; set; } = string.Empty;
@@ -46,13 +41,7 @@ namespace StudentManagement.Models.Dto.Response
         public bool IsPracticeGroup { get; set; }
         public int? PracticeGroupId { get; set; }
         public string PracticeGroupName { get; set; } = string.Empty;
-        
-        // Section details
-        public int SectionCapacity { get; set; }
-        public int SectionEnrolledCount { get; set; }
-        public int SectionAvailableSlots { get; set; }
-
-        
+        public int ? PracticeGroupCapacity { get; set; }
         // Additional info
         public bool IsRecurring { get; set; }
         public bool IsExam { get; set; }

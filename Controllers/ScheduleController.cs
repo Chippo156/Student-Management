@@ -16,8 +16,8 @@ namespace StudentManagement.Controllers
     {
 
 
-        [HttpPost("GetAllSchedules")]
-        public async Task<IActionResult> GetAllSchedulesWithFilters([FromQuery] ScheduleFilterRequest filterRequest)
+        [HttpPost("GetAllSchedulesBySectionId")]
+        public async Task<IActionResult> GetAllSchedulesWithFilters([FromQuery] int sectionId)
         {
             try
             {
@@ -30,7 +30,7 @@ namespace StudentManagement.Controllers
                     return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid filter parameters", errors));
                 }
 
-                var result = await scheduleService.GetAllSchedulesWithFiltersAsync(filterRequest);
+                var result = await scheduleService.GetAllSchedulesWithFiltersAsync(sectionId);
                 return Ok(ApiResponse.SuccessResponse(result, "Schedules retrieved successfully"));
             }
             catch (Exception ex)
