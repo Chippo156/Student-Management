@@ -35,14 +35,18 @@ export const studentServices = {
     }
   },
 
-  getAllStudents: async (pageNumber, pageSize) => {
+  getAllStudents: async (pageNumber, pageSize, search = '') => {
     try {
-      const response = await customizeAxios.get('/api/Student/GetAllStudents', {
-        params: {
-          PageNumber: pageNumber,
-          PageSize: pageSize,
-        },
-      });
+      const params = {
+        PageNumber: pageNumber,
+        PageSize: pageSize,
+      };
+
+      if (search && search.trim() !== '') {
+        params.search = search.trim();
+      }
+
+      const response = await customizeAxios.get('/api/Student/GetAllStudents', { params });
       if (response?.success === false) {
         const errData = response?.data;
         if (Array.isArray(errData) && errData.length > 0) {

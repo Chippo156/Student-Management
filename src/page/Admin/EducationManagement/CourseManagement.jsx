@@ -1,173 +1,133 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { message } from 'antd';
 import {
-  Table,
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Grid,
   Button,
-  Modal,
-  Form,
-  Input,
-  Select,
-  InputNumber,
-  Space,
-  Popconfirm,
-  message,
-  Tag,
-  DatePicker,
-} from 'antd';
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  TextField,
+  InputAdornment,
+  Chip,
+  TablePagination,
+  IconButton,
+  Tooltip,
+  CircularProgress,
+} from '@mui/material';
 import {
-  EditOutlined,
-  DeleteOutlined,
-  PlusOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
-// TypeScript ColumnsType import removed
-import dayjs from 'dayjs';
+  School,
+  CheckCircle,
+  Cancel,
+  MenuBook,
+  Search as SearchIcon,
+  FilterList,
+  Refresh,
+  FileDownload,
+  Visibility as VisibilityIcon,
+  Edit as EditIcon,
+  Add as AddIcon,
+} from '@mui/icons-material';
+import { courseService } from '../../../service/courseService';
+import * as XLSX from 'xlsx';
 
-const { Option } = Select;
-const { TextArea } = Input;
+const CourseManagement = () => {
+  const [courses, setCourses] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
-// Course interface removed for JS/JSX conversion
+  useEffect(() => {
+    fetchCourses();
+  }, [page, rowsPerPage, searchTerm]);
 
-function CourseManagement() {
-  const [courses, setCourses] = useState([
-    {
-      id: '1',
-      courseCode: 'IT101',
-      courseName: 'Lập trình cơ bản',
-      instructor: 'TS. Nguyễn Văn A',
-      credits: 3,
-      department: 'Công nghệ thông tin',
-      semester: 'HK1',
-      year: 2025,
-      currentStudents: 45,
-      // Removed type annotations and interfaces
-      startDate: '2025-09-01',
-      endDate: '2025-12-15',
-      description: 'Khóa học về cấu trúc dữ liệu và các thuật toán cơ bản',
-    },
-    {
-      id: '3',
-      courseCode: 'EC101',
-      courseName: 'Kinh tế vi mô',
-      instructor: 'ThS. Lê Minh C',
-      credits: 3,
-      department: 'Kinh tế',
-      semester: 'HK2',
-      year: 2024,
-      maxStudents: 60,
-      currentStudents: 60,
-      status: 'completed',
-      startDate: '2024-02-01',
-      endDate: '2024-05-15',
-      description: 'Khóa học về các nguyên lý cơ bản của kinh tế vi mô',
-    },
-    {
-      id: '4',
-      courseCode: 'EN101',
-      courseName: 'Tiếng Anh giao tiếp',
-      instructor: 'Cô. Phạm Thu D',
-      credits: 2,
-      department: 'Ngôn ngữ Anh',
-      semester: 'HK1',
-      year: 2025,
-      maxStudents: 30,
-      currentStudents: 25,
-      status: 'active',
-      startDate: '2025-09-01',
-      endDate: '2025-12-15',
-      description: 'Khóa học phát triển kỹ năng giao tiếp tiếng Anh',
-    },
-    {
-      id: '5',
-      courseCode: 'MA201',
-      courseName: 'Giải tích 2',
-      instructor: 'PGS. Hoàng Văn E',
-      credits: 4,
-      department: 'Toán học',
-      semester: 'HK2',
-      year: 2025,
-      maxStudents: 45,
-      currentStudents: 0,
-      status: 'inactive',
-      startDate: '2025-02-01',
-      endDate: '2025-05-15',
-      description: 'Khóa học nâng cao về giải tích toán học',
-    },
-  ]);
-
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingCourse, setEditingCourse] = useState(null);
-  const [form] = Form.useForm();
-  const [searchText, setSearchText] = useState('');
-
-  const handleAdd = () => {
-    setEditingCourse(null);
-    form.resetFields();
-    setIsModalVisible(true);
-  };
-
-  const handleEdit = (course) => {
-    setEditingCourse(course);
-    form.setFieldsValue({
-      ...course,
-      startDate: dayjs(course.startDate),
-      endDate: dayjs(course.endDate),
-    });
-    setIsModalVisible(true);
-  };
-
-  const handleDelete = (id) => {
-    setCourses(courses.filter((course) => course.id !== id));
-    message.success('Xóa khóa học thành công!');
-  };
-
-  const handleOk = async () => {
+  const fetchCourses = async () => {
+    setLoading(true);
     try {
-      const values = await form.validateFields();
-      const newCourse = {
-        id: editingCourse ? editingCourse.id : Date.now().toString(),
-        ...values,
-        startDate: values.startDate.format('YYYY-MM-DD'),
-        endDate: values.endDate.format('YYYY-MM-DD'),
-        currentStudents: editingCourse ? editingCourse.currentStudents : 0,
-      };
-
-      if (editingCourse) {
-        setCourses(
-          courses.map((course) =>
-            course.id === editingCourse.id ? newCourse : course
-          )
-        );
-        message.success('Cập nhật khóa học thành công!');
-      } else {
-        setCourses([...courses, newCourse]);
-        message.success('Thêm khóa học thành công!');
+      const result = await courseService.getAllCourses(page + 1, rowsPerPage, searchTerm);
+      if (result) {
+        setCourses(result.items || []);
+        setTotalCount(result.totalCount || 0);
       }
-
-      setIsModalVisible(false);
-      form.resetFields();
-      setEditingCourse(null);
     } catch (error) {
-      console.error('Validation failed:', error);
+      console.error('Failed to fetch courses:', error);
+      message.error('Không thể tải danh sách môn học');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
-    form.resetFields();
-    setEditingCourse(null);
+  const stats = useMemo(() => {
+    const activeCourses = courses.filter((c) => c.status === 'active' || c.isActive).length;
+    const completedCourses = courses.filter((c) => c.status === 'completed').length;
+    const uniqueDepartments = new Set(
+      courses.map((c) => c.departmentName || c.department).filter(Boolean)
+    ).size;
+    return {
+      total: totalCount,
+      active: activeCourses,
+      completed: completedCourses,
+      departments: uniqueDepartments,
+    };
+  }, [courses, totalCount]);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'green';
-      case 'inactive':
-        return 'orange';
-      case 'completed':
-        return 'blue';
-      default:
-        return 'default';
-    }
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = courses.map((course, index) => ({
+      'STT': index + 1,
+      'Mã MH': course.courseCode,
+      'Tên môn học': course.courseName,
+      'Giảng viên': course.lecturerName || course.instructor || 'N/A',
+      'Tín chỉ': course.credits || course.totalCredits,
+      'Khoa': course.departmentName || course.department || 'N/A',
+      'Học kỳ': course.semester || 'N/A',
+      'Năm': course.year || 'N/A',
+      'SV đăng ký': course.currentStudents && course.maxStudents
+        ? `${course.currentStudents}/${course.maxStudents}`
+        : 'N/A',
+      'Trạng thái': getStatusText(course.status || (course.isActive ? 'active' : 'inactive')),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Môn học');
+
+    const colWidths = [
+      { wch: 5 },
+      { wch: 10 },
+      { wch: 25 },
+      { wch: 20 },
+      { wch: 8 },
+      { wch: 25 },
+      { wch: 10 },
+      { wch: 8 },
+      { wch: 15 },
+      { wch: 15 },
+    ];
+    worksheet['!cols'] = colWidths;
+
+    XLSX.writeFile(workbook, `Danh_sach_mon_hoc_${new Date().getTime()}.xlsx`);
   };
 
   const getStatusText = (status) => {
@@ -179,350 +139,305 @@ function CourseManagement() {
       case 'completed':
         return 'Đã kết thúc';
       default:
-        return status;
+        return status || 'N/A';
     }
   };
 
-  const filteredCourses = courses.filter(
-    (course) =>
-      course.courseName.toLowerCase().includes(searchText.toLowerCase()) ||
-      course.courseCode.toLowerCase().includes(searchText.toLowerCase()) ||
-      course.instructor.toLowerCase().includes(searchText.toLowerCase()) ||
-      course.department.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const getStatusChip = (status) => {
+    switch (status) {
+      case 'active':
+        return <Chip label="Đang diễn ra" color="success" size="small" />;
+      case 'inactive':
+        return <Chip label="Chưa bắt đầu" color="warning" size="small" />;
+      case 'completed':
+        return <Chip label="Đã kết thúc" color="default" size="small" />;
+      default:
+        return <Chip label={status || 'N/A'} size="small" />;
+    }
+  };
 
-  const columns = [
-    {
-      title: 'Mã MH',
-      dataIndex: 'courseCode',
-      key: 'courseCode',
-      width: 100,
-    },
-    {
-      title: 'Tên môn học',
-      dataIndex: 'courseName',
-      key: 'courseName',
-      width: 200,
-    },
-    {
-      title: 'Giảng viên',
-      dataIndex: 'instructor',
-      key: 'instructor',
-      width: 150,
-    },
-    {
-      title: 'Tín chỉ',
-      dataIndex: 'credits',
-      key: 'credits',
-      width: 80,
-      align: 'center',
-    },
-    {
-      title: 'Khoa',
-      dataIndex: 'department',
-      key: 'department',
-      width: 150,
-    },
-    {
-      title: 'Học kỳ',
-      dataIndex: 'semester',
-      key: 'semester',
-      width: 80,
-      align: 'center',
-    },
-    {
-      title: 'Năm',
-      dataIndex: 'year',
-      key: 'year',
-      width: 80,
-      align: 'center',
-    },
-    {
-      title: 'SV đăng ký',
-      key: 'enrollment',
-      width: 120,
-      align: 'center',
-      render: (_, record) => (
-        <span
-          style={{
-            color:
-              record.currentStudents >= record.maxStudents
-                ? '#ff4d4f'
-                : '#52c41a',
-          }}
-        >
-          {record.currentStudents}/{record.maxStudents}
-        </span>
-      ),
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      width: 120,
-      render: (status) => (
-        <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>
-      ),
-    },
-    {
-      title: 'Thời gian',
-      key: 'duration',
-      width: 180,
-      render: (_, record) => (
-        <div>
-          <div>{dayjs(record.startDate).format('DD/MM/YYYY')}</div>
-          <div style={{ fontSize: '12px', color: '#666' }}>
-            đến {dayjs(record.endDate).format('DD/MM/YYYY')}
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: 'Thao tác',
-      key: 'action',
-      width: 120,
-      render: (_, record) => (
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          />
-          <Popconfirm
-            title="Xác nhận xóa"
-            description="Bạn có chắc chắn muốn xóa khóa học này?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
-            <Button
-              type="primary"
-              danger
-              size="small"
-              icon={<DeleteOutlined />}
-            />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+  if (loading && courses.length === 0) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <div>
-      <div
-        style={{
-          marginBottom: 16,
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Space>
-          <Input
-            placeholder="Tìm kiếm khóa học..."
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 300 }}
-          />
-        </Space>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          Thêm khóa học
-        </Button>
-      </div>
-
-      <Table
-        columns={columns}
-        dataSource={filteredCourses}
-        rowKey="id"
-        pagination={{
-          total: filteredCourses.length,
-          pageSize: 10,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total, range) =>
-            `${range[0]}-${range[1]} của ${total} khóa học`,
-        }}
-        scroll={{ x: 1600 }}
-      />
-
-      <Modal
-        title={editingCourse ? 'Chỉnh sửa khóa học' : 'Thêm khóa học mới'}
-        open={isModalVisible}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        width={700}
-        okText={editingCourse ? 'Cập nhật' : 'Thêm'}
-        cancelText="Hủy"
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{
-            status: 'inactive',
-            year: new Date().getFullYear(),
-            credits: 3,
-            maxStudents: 50,
-          }}
-        >
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Form.Item
-              name="courseCode"
-              label="Mã môn học"
-              rules={[{ required: true, message: 'Vui lòng nhập mã môn học!' }]}
-              style={{ flex: 1 }}
+    <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a237e' }}>
+          Quản lý Môn học
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Tooltip title="Làm mới">
+            <IconButton
+              onClick={fetchCourses}
+              sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#e3f2fd' }, boxShadow: 1 }}
             >
-              <Input placeholder="Nhập mã môn học" />
-            </Form.Item>
-
-            <Form.Item
-              name="credits"
-              label="Số tín chỉ"
-              rules={[{ required: true, message: 'Vui lòng nhập số tín chỉ!' }]}
-              style={{ flex: 1 }}
-            >
-              <InputNumber
-                min={1}
-                max={6}
-                placeholder="Số tín chỉ"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </div>
-
-          <Form.Item
-            name="courseName"
-            label="Tên môn học"
-            rules={[{ required: true, message: 'Vui lòng nhập tên môn học!' }]}
+              <Refresh />
+            </IconButton>
+          </Tooltip>
+          <Button
+            variant="contained"
+            startIcon={<FileDownload />}
+            onClick={handleExportExcel}
+            disabled={courses.length === 0}
+            sx={{
+              bgcolor: '#4caf50',
+              '&:hover': { bgcolor: '#45a049' },
+              textTransform: 'none',
+              px: 3,
+              boxShadow: 2,
+            }}
           >
-            <Input placeholder="Nhập tên môn học" />
-          </Form.Item>
+            Xuất Excel
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            sx={{
+              bgcolor: '#1976d2',
+              '&:hover': { bgcolor: '#1565c0' },
+              textTransform: 'none',
+              px: 3,
+              boxShadow: 2,
+            }}
+          >
+            Thêm môn học
+          </Button>
+        </Box>
+      </Box>
 
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Form.Item
-              name="instructor"
-              label="Giảng viên"
-              rules={[
-                { required: true, message: 'Vui lòng nhập tên giảng viên!' },
-              ]}
-              style={{ flex: 1 }}
-            >
-              <Input placeholder="Nhập tên giảng viên" />
-            </Form.Item>
+      {/* Summary Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: '#e3f2fd', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <MenuBook sx={{ fontSize: 50, mr: 2, color: '#1976d2' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#1976d2' }}>
+                  {stats.total}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Tổng môn học
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-            <Form.Item
-              name="department"
-              label="Khoa"
-              rules={[{ required: true, message: 'Vui lòng nhập tên khoa!' }]}
-              style={{ flex: 1 }}
-            >
-              <Input placeholder="Nhập tên khoa" />
-            </Form.Item>
-          </div>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: '#e8f5e9', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <CheckCircle sx={{ fontSize: 50, mr: 2, color: '#388e3c' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#388e3c' }}>
+                  {stats.active}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Đang diễn ra
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Form.Item
-              name="semester"
-              label="Học kỳ"
-              rules={[{ required: true, message: 'Vui lòng chọn học kỳ!' }]}
-              style={{ flex: 1 }}
-            >
-              <Select placeholder="Chọn học kỳ">
-                <Option value="HK1">Học kỳ 1</Option>
-                <Option value="HK2">Học kỳ 2</Option>
-                <Option value="HK3">Học kỳ hè</Option>
-              </Select>
-            </Form.Item>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: '#f3e5f5', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <Cancel sx={{ fontSize: 50, mr: 2, color: '#7b1fa2' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#7b1fa2' }}>
+                  {stats.completed}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Đã kết thúc
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-            <Form.Item
-              name="year"
-              label="Năm học"
-              rules={[{ required: true, message: 'Vui lòng chọn năm học!' }]}
-              style={{ flex: 1 }}
-            >
-              <Select placeholder="Chọn năm học">
-                {[2023, 2024, 2025, 2026, 2027].map((year) => (
-                  <Option key={year} value={year}>
-                    {year}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </div>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: '#fff3e0', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <School sx={{ fontSize: 50, mr: 2, color: '#f57c00' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#f57c00' }}>
+                  {stats.departments}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Khoa
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Form.Item
-              name="maxStudents"
-              label="Số lượng sinh viên tối đa"
-              rules={[
-                {
-                  required: true,
-                  message: 'Vui lòng nhập số lượng sinh viên tối đa!',
-                },
-              ]}
-              style={{ flex: 1 }}
-            >
-              <InputNumber
-                min={1}
-                max={200}
-                placeholder="Số lượng tối đa"
-                style={{ width: '100%' }}
+      {/* Filter Section */}
+      <Card sx={{ mb: 3, boxShadow: 2 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <FilterList sx={{ mr: 1, color: '#1976d2' }} />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Bộ lọc tìm kiếm
+            </Typography>
+          </Box>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={10}>
+              <TextField
+                fullWidth
+                placeholder="Tìm kiếm theo mã môn học, tên, giảng viên, khoa..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+                size="small"
               />
-            </Form.Item>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
+                Đặt lại
+              </Button>
+            </Grid>
+          </Grid>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              Tìm thấy: <strong>{courses.length}</strong> môn học
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
 
-            <Form.Item
-              name="status"
-              label="Trạng thái"
-              rules={[{ required: true, message: 'Vui lòng chọn trạng thái!' }]}
-              style={{ flex: 1 }}
-            >
-              <Select placeholder="Chọn trạng thái">
-                <Option value="active">Đang diễn ra</Option>
-                <Option value="inactive">Chưa bắt đầu</Option>
-                <Option value="completed">Đã kết thúc</Option>
-              </Select>
-            </Form.Item>
-          </div>
+      {/* Courses Table */}
+      <Paper sx={{ boxShadow: 2, borderRadius: 2, overflow: 'hidden' }}>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: '#1a237e' }}>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Mã MH</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Tên môn học</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Giảng viên</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Tín chỉ</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Khoa</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Học kỳ</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>SV đăng ký</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Trạng thái</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white', textAlign: 'center' }}>
+                  Thao tác
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {courses.map((course) => (
+                <TableRow key={course.courseId || course.id} hover sx={{ '&:hover': { bgcolor: '#f5f5f5' }, transition: 'background-color 0.2s' }}>
+                  <TableCell>
+                    <Typography sx={{ fontWeight: 600, color: '#1976d2' }}>
+                      {course.courseCode}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {course.courseName}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {course.lecturerName || course.instructor || <span style={{ color: '#aaa' }}>Chưa phân công</span>}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {course.credits || course.totalCredits || 0}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={course.departmentName || course.department || 'N/A'}
+                      size="small"
+                      sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {course.semester ? `${course.semester} ${course.year || ''}` : <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 600,
+                        color:
+                          course.currentStudents >= course.maxStudents
+                            ? '#d32f2f'
+                            : '#388e3c',
+                      }}
+                    >
+                      {course.currentStudents !== undefined && course.maxStudents !== undefined
+                        ? `${course.currentStudents}/${course.maxStudents}`
+                        : <span style={{ color: '#aaa' }}>N/A</span>
+                      }
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    {getStatusChip(course.status || (course.isActive ? 'active' : 'inactive'))}
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                      <Tooltip title="Xem chi tiết">
+                        <IconButton size="small">
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Chỉnh sửa">
+                        <IconButton size="small" color="primary">
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Form.Item
-              name="startDate"
-              label="Ngày bắt đầu"
-              rules={[
-                { required: true, message: 'Vui lòng chọn ngày bắt đầu!' },
-              ]}
-              style={{ flex: 1 }}
-            >
-              <DatePicker
-                style={{ width: '100%' }}
-                placeholder="Chọn ngày bắt đầu"
-                format="DD/MM/YYYY"
-              />
-            </Form.Item>
+        {courses.length === 0 && (
+          <Box sx={{ p: 6, textAlign: 'center' }}>
+            <School sx={{ fontSize: 80, color: '#e0e0e0', mb: 2 }} />
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              Không tìm thấy môn học nào
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {searchTerm ? 'Thử thay đổi từ khóa tìm kiếm' : 'Chưa có môn học nào trong hệ thống'}
+            </Typography>
+          </Box>
+        )}
 
-            <Form.Item
-              name="endDate"
-              label="Ngày kết thúc"
-              rules={[
-                { required: true, message: 'Vui lòng chọn ngày kết thúc!' },
-              ]}
-              style={{ flex: 1 }}
-            >
-              <DatePicker
-                style={{ width: '100%' }}
-                placeholder="Chọn ngày kết thúc"
-                format="DD/MM/YYYY"
-              />
-            </Form.Item>
-          </div>
-
-          <Form.Item name="description" label="Mô tả">
-            <TextArea rows={3} placeholder="Nhập mô tả khóa học" />
-          </Form.Item>
-        </Form>
-      </Modal>
-    </div>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 20, 50]}
+          component="div"
+          count={totalCount}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage="Số dòng mỗi trang:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
+        />
+      </Paper>
+    </Box>
   );
-}
+};
 
 export default CourseManagement;

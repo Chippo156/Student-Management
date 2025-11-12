@@ -1,52 +1,58 @@
 import React, { useState, useMemo, useEffect } from 'react';
-// Ant Design - Layout & Container
-import { Card, Row, Col, message, Popconfirm } from 'antd';
+import { message, Popconfirm } from 'antd';
 import {
-  TeamOutlined,
-  CheckCircleOutlined,
-  SafetyCertificateOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
-// Material-UI - Table & Animations
-import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Grid,
+  Button,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Chip,
+  Paper,
+  TextField,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
   IconButton,
   Tooltip,
+  InputAdornment,
+  Chip,
   Avatar,
   TablePagination,
   CircularProgress,
-  Paper,
-  useTheme,
-  alpha,
-  Box,
-  Typography,
 } from '@mui/material';
 import {
-  Edit as EditIcon,
+  People,
+  CheckCircle,
+  AdminPanelSettings,
+  School as SchoolIcon,
+  Search as SearchIcon,
+  FilterList,
+  Refresh,
+  FileDownload,
   Visibility as VisibilityIcon,
+  Edit as EditIcon,
   Lock as LockIcon,
   LockOpen as LockOpenIcon,
+  PersonAdd,
 } from '@mui/icons-material';
-import { userService } from '../../../service/userService';
 import { useNavigate } from 'react-router-dom';
-import { accountStatusMap } from '../../../component/Admin/UserManagementPage/constants';
-import UserFilterBar from '../../../component/Admin/UserManagementPage/UserFilterBar';
+import { userService } from '../../../service/userService';
 import UserDetailModal from '../../../component/Admin/UserManagementPage/UserDetailModal';
 import UserEditModal from '../../../component/Admin/UserManagementPage/UserEditModal';
-import { StatCardAntd } from '../../../component/Shared/StatCard';
+import * as XLSX from 'xlsx';
 
 const UserManagement = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [page, setPage] = useState(0); // MUI uses 0-indexed
+  const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,10 +62,10 @@ const UserManagement = () => {
   const [openEdit, setOpenEdit] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
 
-  // Fetch users
   const fetchUsers = async () => {
     setLoading(true);
-    const res = await userService.getAllUsers(page + 1, rowsPerPage); // +1 for API
+    const roleId = filterRole !== 'all' ? getRoleIdFromName(filterRole) : null;
+    const res = await userService.getAllUsers(page + 1, rowsPerPage, roleId, searchTerm);
     if (res) {
       setUsers(res.items || []);
       setTotalCount(res.totalCount || 0);
@@ -67,38 +73,24 @@ const UserManagement = () => {
     setLoading(false);
   };
 
+  const getRoleIdFromName = (roleName) => {
+    const roleMap = {
+      'admin': 1,
+      'giảng viên': 2,
+      'sinh viên': 3,
+    };
+    return roleMap[roleName.toLowerCase()] || null;
+  };
+
   useEffect(() => {
     fetchUsers();
     // eslint-disable-next-line
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, searchTerm, filterRole]);
 
-  // Filtered users
-  const filteredUsers = useMemo(() => {
-    let filtered = users;
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (user) =>
-          (user.fullName || '')
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    if (filterRole !== 'all') {
-      filtered = filtered.filter(
-        (user) => user.role?.roleName?.toLowerCase() === filterRole
-      );
-    }
-    return filtered;
-  }, [users, searchTerm, filterRole]);
-
-  // Statistics
   const stats = useMemo(() => {
     const activeUsers = users.filter((u) => u.accountStatus === 1).length;
     const adminUsers = users.filter((u) => u.role?.roleName === 'Admin').length;
-    const teacherUsers = users.filter(
-      (u) => u.role?.roleName === 'Giảng viên'
-    ).length;
+    const teacherUsers = users.filter((u) => u.role?.roleName === 'Giảng viên').length;
     return {
       total: totalCount,
       active: activeUsers,
@@ -116,13 +108,9 @@ const UserManagement = () => {
     setPage(0);
   };
 
-  // Handle edit save
   const handleEditSave = async (payload) => {
     setEditLoading(true);
-    const res = await userService.updateUserWithRole(
-      selectedUser.userId,
-      payload
-    );
+    const res = await userService.updateUserWithRole(selectedUser.userId, payload);
     setEditLoading(false);
     if (res) {
       message.success('Cập nhật người dùng thành công!');
@@ -131,344 +119,382 @@ const UserManagement = () => {
     }
   };
 
-  // Role color helper
-  const getRoleColor = (roleName) => {
-    switch (roleName) {
-      case 'Admin':
-        return {
-          bg: alpha(theme.palette.error.main, 0.1),
-          color: theme.palette.error.main,
-        };
-      case 'Giảng viên':
-        return {
-          bg: alpha(theme.palette.primary.main, 0.1),
-          color: theme.palette.primary.main,
-        };
-      default:
-        return {
-          bg: alpha(theme.palette.success.main, 0.1),
-          color: theme.palette.success.main,
-        };
-    }
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setFilterRole('all');
   };
 
-  // Status color helper
-  const getStatusColor = (status) => {
-    return status === 1
-      ? {
-          bg: alpha(theme.palette.success.main, 0.1),
-          color: theme.palette.success.main,
-          label: 'Hoạt động',
-        }
-      : {
-          bg: alpha(theme.palette.error.main, 0.1),
-          color: theme.palette.error.main,
-          label: 'Bị khóa',
-        };
+  const handleExportExcel = () => {
+    const dataToExport = users.map((user, index) => ({
+      'STT': index + 1,
+      'Tên người dùng': user.username,
+      'Họ và tên': user.fullName || '',
+      'Email': user.email || '',
+      'Số điện thoại': user.phone || '',
+      'Vai trò': user.role?.roleName || '',
+      'Trạng thái': user.accountStatus === 1 ? 'Hoạt động' : 'Bị khóa',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Người dùng');
+
+    const colWidths = [
+      { wch: 5 },
+      { wch: 20 },
+      { wch: 25 },
+      { wch: 30 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 12 },
+    ];
+    worksheet['!cols'] = colWidths;
+
+    XLSX.writeFile(workbook, `Danh_sach_nguoi_dung_${new Date().getTime()}.xlsx`);
   };
+
+  const getRoleChip = (roleName) => {
+    const roleConfig = {
+      'Admin': { color: 'error', label: 'Admin' },
+      'Giảng viên': { color: 'primary', label: 'Giảng viên' },
+      'Sinh viên': { color: 'success', label: 'Sinh viên' },
+    };
+    const config = roleConfig[roleName] || { color: 'default', label: roleName };
+    return <Chip label={config.label} color={config.color} size="small" />;
+  };
+
+  const getStatusChip = (status) => {
+    return status === 1 ? (
+      <Chip label="Hoạt động" color="success" size="small" />
+    ) : (
+      <Chip label="Bị khóa" color="error" size="small" />
+    );
+  };
+
+  if (loading && users.length === 0) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <div style={{ padding: 24, minHeight: '100vh' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ fontWeight: 700, marginBottom: 8 }}>Quản lý người dùng</h2>
-        <div style={{ color: '#888' }}>
-          Quản lý thông tin người dùng, phân quyền và trạng thái hoạt động.
-        </div>
-      </div>
+    <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a237e' }}>
+          Quản lý người dùng
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Tooltip title="Làm mới">
+            <IconButton
+              onClick={fetchUsers}
+              sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#e3f2fd' }, boxShadow: 1 }}
+            >
+              <Refresh />
+            </IconButton>
+          </Tooltip>
+          <Button
+            variant="contained"
+            startIcon={<PersonAdd />}
+            onClick={() => navigate('/admin/create-user')}
+            sx={{
+              bgcolor: '#1976d2',
+              '&:hover': { bgcolor: '#1565c0' },
+              textTransform: 'none',
+              px: 3,
+              boxShadow: 2,
+            }}
+          >
+            Thêm người dùng
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<FileDownload />}
+            onClick={handleExportExcel}
+            disabled={users.length === 0}
+            sx={{
+              bgcolor: '#4caf50',
+              '&:hover': { bgcolor: '#45a049' },
+              textTransform: 'none',
+              px: 3,
+              boxShadow: 2,
+            }}
+          >
+            Xuất Excel
+          </Button>
+        </Box>
+      </Box>
 
-      {/* Stats Cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={6}>
-          <StatCardAntd
-            label="Tổng người dùng"
-            value={stats.total}
-            icon={UserOutlined}
-            color="#1677ff"
-            bgColor="#e6f4ff"
-          />
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <StatCardAntd
-            label="Đang hoạt động"
-            value={stats.active}
-            icon={CheckCircleOutlined}
-            color="#52c41a"
-            bgColor="#f6ffed"
-          />
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <StatCardAntd
-            label="Quản trị viên"
-            value={stats.admins}
-            icon={SafetyCertificateOutlined}
-            color="#fa8c16"
-            bgColor="#fff7e6"
-          />
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <StatCardAntd
-            label="Giảng viên"
-            value={stats.teachers}
-            icon={TeamOutlined}
-            color="#13c2c2"
-            bgColor="#e6fffb"
-          />
-        </Col>
-      </Row>
+      {/* Summary Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: '#e3f2fd', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <People sx={{ fontSize: 50, mr: 2, color: '#1976d2' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#1976d2' }}>
+                  {stats.total}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Tổng người dùng
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-      <UserFilterBar
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filterRole={filterRole}
-        setFilterRole={setFilterRole}
-        onAddUser={() => navigate('/admin/create-user')}
-      />
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: '#e8f5e9', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <CheckCircle sx={{ fontSize: 50, mr: 2, color: '#388e3c' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#388e3c' }}>
+                  {stats.active}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Đang hoạt động
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-      <Card
-        style={{
-          borderRadius: 12,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        }}
-        styles={{
-          body: { padding: 0 },
-        }}
-      >
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
-            <CircularProgress />
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: '#ffebee', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <AdminPanelSettings sx={{ fontSize: 50, mr: 2, color: '#d32f2f' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#d32f2f' }}>
+                  {stats.admins}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Quản trị viên
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: '#f3e5f5', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <SchoolIcon sx={{ fontSize: 50, mr: 2, color: '#7b1fa2' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#7b1fa2' }}>
+                  {stats.teachers}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Giảng viên
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Filter Section */}
+      <Card sx={{ mb: 3, boxShadow: 2 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <FilterList sx={{ mr: 1, color: '#1976d2' }} />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Bộ lọc tìm kiếm
+            </Typography>
           </Box>
-        ) : (
-          <>
-            <TableContainer component={Paper} elevation={0}>
-              <Table>
-                <TableHead>
-                  <TableRow
-                    sx={{
-                      backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                    }}
-                  >
-                    <TableCell sx={{ fontWeight: 600 }}>Người dùng</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Vai trò</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>
-                      Số điện thoại
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="center">
-                      Thao tác
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredUsers.map((user) => {
-                    const roleColors = getRoleColor(user.role?.roleName);
-                    const statusInfo = getStatusColor(user.accountStatus);
-                    return (
-                      <TableRow
-                        key={user.userId}
-                        sx={{
-                          '&:hover': {
-                            backgroundColor: alpha(
-                              theme.palette.primary.main,
-                              0.05
-                            ),
-                            transition: 'all 0.3s ease',
-                          },
-                        }}
-                      >
-                        <TableCell>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
-                            }}
-                          >
-                            <Avatar
-                              src={user.avatarUrl}
-                              sx={{
-                                width: 40,
-                                height: 40,
-                                bgcolor: '#e6f4ff',
-                                color: '#1677ff',
-                              }}
-                            >
-                              {user.fullName?.[0] || user.username?.[0]}
-                            </Avatar>
-                            <Box>
-                              <Typography
-                                variant="body2"
-                                sx={{ fontWeight: 600 }}
-                              >
-                                {user.fullName || user.username}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                {user.username}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={user.role?.roleName}
-                            size="small"
-                            sx={{
-                              backgroundColor: roleColors.bg,
-                              color: roleColors.color,
-                              fontWeight: 600,
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {user.email || (
-                              <span style={{ color: '#aaa' }}>
-                                Chưa cập nhật
-                              </span>
-                            )}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {user.phone || (
-                              <span style={{ color: '#aaa' }}>
-                                Chưa cập nhật
-                              </span>
-                            )}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={statusInfo.label}
-                            size="small"
-                            sx={{
-                              backgroundColor: statusInfo.bg,
-                              color: statusInfo.color,
-                              fontWeight: 600,
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              gap: 0.5,
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <Tooltip title="Xem chi tiết">
-                              <IconButton
-                                size="small"
-                                sx={{ color: '#13c2c2' }}
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setOpenDetail(true);
-                                }}
-                              >
-                                <VisibilityIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Chỉnh sửa">
-                              <IconButton
-                                size="small"
-                                sx={{ color: '#fa8c16' }}
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setOpenEdit(true);
-                                }}
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            {user.accountStatus === 1 ? (
-                              <Popconfirm
-                                title="Vô hiệu hóa tài khoản này?"
-                                okText="Đồng ý"
-                                cancelText="Hủy"
-                                onConfirm={async () => {
-                                  const res = await userService.deactivateUser(
-                                    user.userId
-                                  );
-                                  if (res) {
-                                    message.success(
-                                      'Đã vô hiệu hóa tài khoản!'
-                                    );
-                                    await fetchUsers();
-                                  } else {
-                                    message.error('Vô hiệu hóa thất bại!');
-                                  }
-                                }}
-                              >
-                                <Tooltip title="Khóa tài khoản">
-                                  <IconButton
-                                    size="small"
-                                    sx={{ color: theme.palette.error.main }}
-                                  >
-                                    <LockIcon fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
-                              </Popconfirm>
-                            ) : (
-                              <Popconfirm
-                                title="Mở lại tài khoản này?"
-                                okText="Đồng ý"
-                                cancelText="Hủy"
-                                onConfirm={async () => {
-                                  const res = await userService.reactivateUser(
-                                    user.userId
-                                  );
-                                  if (res) {
-                                    message.success('Đã mở lại tài khoản!');
-                                    await fetchUsers();
-                                  } else {
-                                    message.error('Mở lại tài khoản thất bại!');
-                                  }
-                                }}
-                              >
-                                <Tooltip title="Mở khóa tài khoản">
-                                  <IconButton
-                                    size="small"
-                                    sx={{ color: theme.palette.success.main }}
-                                  >
-                                    <LockOpenIcon fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
-                              </Popconfirm>
-                            )}
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 20, 50]}
-              component="div"
-              count={totalCount}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              labelRowsPerPage="Số dòng mỗi trang:"
-              labelDisplayedRows={({ from, to, count }) =>
-                `${from}-${to} của ${count}`
-              }
-            />
-          </>
-        )}
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                placeholder="Tìm kiếm theo tên, email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Vai trò</InputLabel>
+                <Select
+                  value={filterRole}
+                  label="Vai trò"
+                  onChange={(e) => setFilterRole(e.target.value)}
+                >
+                  <MenuItem value="all">Tất cả vai trò</MenuItem>
+                  <MenuItem value="admin">Admin</MenuItem>
+                  <MenuItem value="giảng viên">Giảng viên</MenuItem>
+                  <MenuItem value="sinh viên">Sinh viên</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
+                Đặt lại
+              </Button>
+            </Grid>
+          </Grid>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              Tìm thấy: <strong>{users.length}</strong> người dùng
+            </Typography>
+          </Box>
+        </CardContent>
       </Card>
 
-      <UserDetailModal
-        open={openDetail}
-        onCancel={() => setOpenDetail(false)}
-        user={selectedUser}
-      />
+      {/* Users Table */}
+      <Paper sx={{ boxShadow: 2, borderRadius: 2, overflow: 'hidden' }}>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: '#1a237e' }}>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Người dùng</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Vai trò</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Email</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Số điện thoại</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Trạng thái</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white', textAlign: 'center' }}>
+                  Thao tác
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.userId} hover sx={{ '&:hover': { bgcolor: '#f5f5f5' }, transition: 'background-color 0.2s' }}>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Avatar src={user.avatarUrl} sx={{ width: 40, height: 40, bgcolor: '#e6f4ff', color: '#1677ff' }}>
+                        {user.fullName?.[0] || user.username?.[0]}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {user.fullName || user.username}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {user.username}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </TableCell>
+                  <TableCell>{getRoleChip(user.role?.roleName)}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {user.email || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {user.phone || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>{getStatusChip(user.accountStatus)}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                      <Tooltip title="Xem chi tiết">
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setOpenDetail(true);
+                          }}
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Chỉnh sửa">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setOpenEdit(true);
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      {user.accountStatus === 1 ? (
+                        <Popconfirm
+                          title="Vô hiệu hóa tài khoản này?"
+                          okText="Đồng ý"
+                          cancelText="Hủy"
+                          onConfirm={async () => {
+                            const res = await userService.deactivateUser(user.userId);
+                            if (res) {
+                              message.success('Đã vô hiệu hóa tài khoản!');
+                              await fetchUsers();
+                            }
+                          }}
+                        >
+                          <Tooltip title="Khóa tài khoản">
+                            <IconButton size="small" color="error">
+                              <LockIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Popconfirm>
+                      ) : (
+                        <Popconfirm
+                          title="Mở lại tài khoản này?"
+                          okText="Đồng ý"
+                          cancelText="Hủy"
+                          onConfirm={async () => {
+                            const res = await userService.reactivateUser(user.userId);
+                            if (res) {
+                              message.success('Đã mở lại tài khoản!');
+                              await fetchUsers();
+                            }
+                          }}
+                        >
+                          <Tooltip title="Mở khóa tài khoản">
+                            <IconButton size="small" color="success">
+                              <LockOpenIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Popconfirm>
+                      )}
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
+        {users.length === 0 && (
+          <Box sx={{ p: 6, textAlign: 'center' }}>
+            <People sx={{ fontSize: 80, color: '#e0e0e0', mb: 2 }} />
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              Không tìm thấy người dùng nào
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {searchTerm || filterRole !== 'all'
+                ? 'Thử thay đổi bộ lọc để tìm kiếm'
+                : 'Chưa có người dùng nào trong hệ thống'}
+            </Typography>
+          </Box>
+        )}
+
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 20, 50]}
+          component="div"
+          count={totalCount}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage="Số dòng mỗi trang:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
+        />
+      </Paper>
+
+      <UserDetailModal open={openDetail} onCancel={() => setOpenDetail(false)} user={selectedUser} />
       <UserEditModal
         open={openEdit}
         onCancel={() => setOpenEdit(false)}
@@ -476,7 +502,7 @@ const UserManagement = () => {
         onSave={handleEditSave}
         loading={editLoading}
       />
-    </div>
+    </Box>
   );
 };
 

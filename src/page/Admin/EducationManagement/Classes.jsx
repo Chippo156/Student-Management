@@ -1,34 +1,43 @@
 import React, { useState, useMemo } from 'react';
-// Ant Design - Layout & Container
-import { Row, Col, Button as AntButton } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
-// Material-UI - Kept for existing components
-import { useTheme } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Grid,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  TextField,
+  InputAdornment,
+  Chip,
+  TablePagination,
+  IconButton,
+  Tooltip,
+  CircularProgress,
+} from '@mui/material';
 import {
   Class as ClassIcon,
-  School as SchoolIcon,
-  People as PeopleIcon,
-  CheckCircle as CheckCircleIcon,
+  School,
+  People,
+  CheckCircle,
+  Search as SearchIcon,
+  FilterList,
+  Refresh,
+  FileDownload,
+  Visibility as VisibilityIcon,
+  Edit as EditIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
-import ClassFilterBar from '../../../component/Admin/ClassesPage/ClassFilterBar';
-import ClassTable from '../../../component/Admin/ClassesPage/ClassTable';
-import ClassDetailDialog from '../../../component/Admin/ClassesPage/ClassDetailDialog';
-import { StatCardAntd } from '../../../component/Shared/StatCard';
 
 const Classes = () => {
-  const theme = useTheme();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [departmentFilter, setDepartmentFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [yearFilter, setYearFilter] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [selectedClass, setSelectedClass] = useState(null);
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
-
-  // Sample data
-  const classes = [
+  const [classes] = useState([
     {
       id: '1',
       classCode: 'IT101',
@@ -43,8 +52,6 @@ const Classes = () => {
       schedule: 'Thứ 2, 4, 6 - 7:30-9:30',
       room: 'A101',
       status: 'active',
-      startDate: '2024-09-01',
-      endDate: '2024-12-20',
     },
     {
       id: '2',
@@ -60,8 +67,6 @@ const Classes = () => {
       schedule: 'Thứ 3, 5, 7 - 9:30-11:30',
       room: 'B203',
       status: 'active',
-      startDate: '2024-09-01',
-      endDate: '2024-12-20',
     },
     {
       id: '3',
@@ -77,8 +82,6 @@ const Classes = () => {
       schedule: 'Thứ 2, 4 - 13:30-16:30',
       room: 'C105',
       status: 'active',
-      startDate: '2024-09-01',
-      endDate: '2024-12-20',
     },
     {
       id: '4',
@@ -94,55 +97,48 @@ const Classes = () => {
       schedule: 'Thứ 3, 6 - 7:30-10:30',
       room: 'D201',
       status: 'completed',
-      startDate: '2024-02-01',
-      endDate: '2024-05-30',
     },
-  ];
+  ]);
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [loading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const filteredClasses = classes.filter((classInfo) => {
     const matchesSearch =
       classInfo.className.toLowerCase().includes(searchTerm.toLowerCase()) ||
       classInfo.classCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
       classInfo.instructor.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDepartment =
-      !departmentFilter || classInfo.department === departmentFilter;
-    const matchesStatus = !statusFilter || classInfo.status === statusFilter;
-    const matchesYear = !yearFilter || classInfo.year.toString() === yearFilter;
 
-    return matchesSearch && matchesDepartment && matchesStatus && matchesYear;
+    return matchesSearch;
   });
 
-  // Statistics
   const stats = useMemo(() => {
     const totalStudents = classes.reduce((sum, c) => sum + c.studentCount, 0);
     const activeClasses = classes.filter((c) => c.status === 'active').length;
-    const uniqueDepartments = new Set(classes.map((c) => c.department));
+    const uniqueDepartments = new Set(classes.map((c) => c.department)).size;
     return {
       total: classes.length,
       active: activeClasses,
       totalStudents: totalStudents,
-      departments: uniqueDepartments.size,
+      departments: uniqueDepartments,
     };
   }, [classes]);
 
-  const handleViewClass = (classInfo) => {
-    setSelectedClass(classInfo);
-    setViewDialogOpen(true);
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
   };
 
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setDepartmentFilter('');
-    setStatusFilter('');
-    setYearFilter('');
-  };
-
-  const handleRowsPerPageChange = (value) => {
-    setRowsPerPage(value);
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
-  // Export to Excel
+  const handleResetFilters = () => {
+    setSearchTerm('');
+  };
+
   const handleExportExcel = () => {
     const exportData = filteredClasses.map((classInfo, index) => ({
       STT: index + 1,
@@ -164,115 +160,311 @@ const Classes = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách lớp học');
 
-    // Auto-size columns
-    const maxWidth = exportData.reduce((acc, row) => {
-      Object.keys(row).forEach((key, index) => {
-        const cellLength = String(row[key]).length;
-        acc[index] = Math.max(acc[index] || 10, cellLength);
-      });
-      return acc;
-    }, []);
+    const colWidths = [
+      { wch: 5 },
+      { wch: 12 },
+      { wch: 25 },
+      { wch: 25 },
+      { wch: 20 },
+      { wch: 8 },
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 25 },
+      { wch: 15 },
+      { wch: 15 },
+    ];
+    worksheet['!cols'] = colWidths;
 
-    worksheet['!cols'] = maxWidth.map((w) => ({ width: Math.min(w + 2, 50) }));
-
-    XLSX.writeFile(
-      workbook,
-      `Danh_sach_lop_hoc_${new Date().toISOString().split('T')[0]}.xlsx`
-    );
+    XLSX.writeFile(workbook, `Danh_sach_lop_hoc_${new Date().getTime()}.xlsx`);
   };
 
+  if (loading && filteredClasses.length === 0) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
-    <div style={{ padding: 24, minHeight: '100vh' }}>
+    <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
       {/* Header */}
-      <div
-        style={{
-          marginBottom: 24,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-        }}
-      >
-        <div>
-          <h2 style={{ fontWeight: 700, marginBottom: 8, fontSize: 24 }}>
-            Quản lý lớp học phần
-          </h2>
-          <div style={{ color: '#888', fontSize: 14 }}>
-            Quản lý thông tin các lớp học phần và sinh viên
-          </div>
-        </div>
-        <AntButton type="primary" icon={<PlusOutlined />} size="large">
-          Thêm lớp học
-        </AntButton>
-      </div>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a237e' }}>
+          Quản lý Lớp học
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Tooltip title="Làm mới">
+            <IconButton
+              sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#e3f2fd' }, boxShadow: 1 }}
+            >
+              <Refresh />
+            </IconButton>
+          </Tooltip>
+          <Button
+            variant="contained"
+            startIcon={<FileDownload />}
+            onClick={handleExportExcel}
+            disabled={filteredClasses.length === 0}
+            sx={{
+              bgcolor: '#4caf50',
+              '&:hover': { bgcolor: '#45a049' },
+              textTransform: 'none',
+              px: 3,
+              boxShadow: 2,
+            }}
+          >
+            Xuất Excel
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            sx={{
+              bgcolor: '#1976d2',
+              '&:hover': { bgcolor: '#1565c0' },
+              textTransform: 'none',
+              px: 3,
+              boxShadow: 2,
+            }}
+          >
+            Thêm lớp học
+          </Button>
+        </Box>
+      </Box>
 
-      {/* Stats Cards - Ant Design */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={6}>
-          <StatCardAntd
-            label="Tổng lớp học"
-            value={stats.total}
-            icon={ClassIcon}
-            color="#1677ff"
-            bgColor="#e6f4ff"
-          />
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <StatCardAntd
-            label="Lớp đang hoạt động"
-            value={stats.active}
-            icon={CheckCircleIcon}
-            color="#52c41a"
-            bgColor="#f6ffed"
-          />
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <StatCardAntd
-            label="Tổng sinh viên"
-            value={stats.totalStudents}
-            icon={PeopleIcon}
-            color="#1890ff"
-            bgColor="#e6f7ff"
-          />
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <StatCardAntd
-            label="Khoa/Phòng ban"
-            value={stats.departments}
-            icon={SchoolIcon}
-            color="#fa8c16"
-            bgColor="#fff7e6"
-          />
-        </Col>
-      </Row>
+      {/* Summary Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: '#e3f2fd', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <ClassIcon sx={{ fontSize: 50, mr: 2, color: '#1976d2' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#1976d2' }}>
+                  {stats.total}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Tổng lớp học
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-      <ClassFilterBar
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        departmentFilter={departmentFilter}
-        setDepartmentFilter={setDepartmentFilter}
-        yearFilter={yearFilter}
-        setYearFilter={setYearFilter}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        onClearFilters={handleClearFilters}
-        onExportExcel={handleExportExcel}
-      />
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: '#e8f5e9', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <CheckCircle sx={{ fontSize: 50, mr: 2, color: '#388e3c' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#388e3c' }}>
+                  {stats.active}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Đang hoạt động
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-      <ClassTable
-        classes={filteredClasses}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onPageChange={setPage}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        onViewClass={handleViewClass}
-      />
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: '#f3e5f5', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <People sx={{ fontSize: 50, mr: 2, color: '#7b1fa2' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#7b1fa2' }}>
+                  {stats.totalStudents}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Tổng sinh viên
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-      <ClassDetailDialog
-        open={viewDialogOpen}
-        onClose={() => setViewDialogOpen(false)}
-        classData={selectedClass}
-      />
-    </div>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: '#fff3e0', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <School sx={{ fontSize: 50, mr: 2, color: '#f57c00' }} />
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#f57c00' }}>
+                  {stats.departments}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#424242' }}>
+                  Khoa/Phòng ban
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Filter Section */}
+      <Card sx={{ mb: 3, boxShadow: 2 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <FilterList sx={{ mr: 1, color: '#1976d2' }} />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Bộ lọc tìm kiếm
+            </Typography>
+          </Box>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={10}>
+              <TextField
+                fullWidth
+                placeholder="Tìm kiếm theo mã lớp, tên, giảng viên..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
+                Đặt lại
+              </Button>
+            </Grid>
+          </Grid>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              Tìm thấy: <strong>{filteredClasses.length}</strong> lớp học
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
+
+      {/* Classes Table */}
+      <Paper sx={{ boxShadow: 2, borderRadius: 2, overflow: 'hidden' }}>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: '#1a237e' }}>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Mã lớp</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Tên lớp</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Khoa</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Chuyên ngành</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Năm</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Giảng viên</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Sĩ số</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Trạng thái</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white', textAlign: 'center' }}>
+                  Thao tác
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredClasses
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((classInfo) => (
+                  <TableRow key={classInfo.id} hover sx={{ '&:hover': { bgcolor: '#f5f5f5' }, transition: 'background-color 0.2s' }}>
+                    <TableCell>
+                      <Typography sx={{ fontWeight: 600, color: '#1976d2' }}>
+                        {classInfo.classCode}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {classInfo.className}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {classInfo.semester}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={classInfo.department}
+                        size="small"
+                        sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {classInfo.major}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {classInfo.year}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {classInfo.instructor}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 600,
+                          color:
+                            classInfo.studentCount >= classInfo.maxStudents
+                              ? '#d32f2f'
+                              : '#388e3c',
+                        }}
+                      >
+                        {classInfo.studentCount}/{classInfo.maxStudents}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {classInfo.status === 'active' ? (
+                        <Chip label="Đang hoạt động" color="success" size="small" />
+                      ) : (
+                        <Chip label="Đã kết thúc" color="default" size="small" />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                        <Tooltip title="Xem chi tiết">
+                          <IconButton size="small">
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Chỉnh sửa">
+                          <IconButton size="small" color="primary">
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {filteredClasses.length === 0 && (
+          <Box sx={{ p: 6, textAlign: 'center' }}>
+            <ClassIcon sx={{ fontSize: 80, color: '#e0e0e0', mb: 2 }} />
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              Không tìm thấy lớp học nào
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {searchTerm ? 'Thử thay đổi từ khóa tìm kiếm' : 'Chưa có lớp học nào trong hệ thống'}
+            </Typography>
+          </Box>
+        )}
+
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 20, 50]}
+          component="div"
+          count={filteredClasses.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage="Số dòng mỗi trang:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
+        />
+      </Paper>
+    </Box>
   );
 };
 

@@ -122,14 +122,22 @@ export const userService = {
     }
   },
 
-  getAllUsers: async (pageNumber = 1, pageSize = 10) => {
+  getAllUsers: async (pageNumber = 1, pageSize = 10, roleId = null, search = '') => {
     try {
-      const response = await axios.get('/api/User/GetAllUsers', {
-        params: {
-          PageNumber: pageNumber,
-          PageSize: pageSize,
-        },
-      });
+      const params = {
+        PageNumber: pageNumber,
+        PageSize: pageSize,
+      };
+
+      if (roleId !== null && roleId !== undefined && roleId !== '') {
+        params.roleId = roleId;
+      }
+
+      if (search && search.trim() !== '') {
+        params.search = search.trim();
+      }
+
+      const response = await axios.get('/api/User/GetAllUsers', { params });
       if (response?.success === false) {
         const errData = response?.data;
         if (Array.isArray(errData) && errData.length > 0) {
