@@ -41,5 +41,7 @@ namespace StudentManagement.Data
         public DbSet<FamilyRelationship> FamilyRelationships { get; set; } = null!;
         public DbSet<PracticeGroup> PracticeGroups { get; set; } = null!;
         public DbSet<PracticeGroupEnrollment> PracticeGroupEnrollments { get; set; } = null!;
+        public DbSet<Attendance> Attendances { get; set; }
+        public DbSet<AttendanceSession> AttendanceSessions { get; set; }
     }
 }

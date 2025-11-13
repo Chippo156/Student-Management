@@ -64,6 +64,7 @@ builder.Services.AddScoped<ISemesterService, SemesterService>();
 builder.Services.AddScoped<IBankAccountService, BankAccountService>();
 builder.Services.AddScoped<IFamilyRelationshipService, FamilyRelationshipService>();
 builder.Services.AddScoped<IPracticeGroupService, PracticeGroupService>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 
 
 builder.Services.AddHttpContextAccessor();
