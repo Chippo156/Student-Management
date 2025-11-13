@@ -16,10 +16,10 @@ import {
 import { PlusOutlined } from '@ant-design/icons';
 import { useTheme } from '@mui/material/styles';
 import { alpha } from '@mui/material/styles';
-import { Box } from '@mui/material';
 import curriculumCourseService from '../../../service/curriculumCourseService';
 import academicProgramService from '../../../service/academicProgramService';
 import facultyService from '../../../service/facultyService';
+import { departmentService } from '../../../service/departmentService';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -37,8 +37,12 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
   const theme = useTheme();
   const [form] = Form.useForm();
   const [programs, setPrograms] = useState([]);
+  const [faculties, setFaculties] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [availablePrerequisites, setAvailablePrerequisites] = useState([]);
+
+  // Selected for cascading dropdown
+  const [selectedFaculty, setSelectedFaculty] = useState(undefined);
 
   const colors = {
     primary: theme.palette.primary.main,
@@ -62,22 +66,47 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
     fetchPrograms();
   }, []);
 
-  // Load departments
+  // Load faculties (Khoa)
   useEffect(() => {
-    const fetchDepartments = async () => {
+    const fetchFaculties = async () => {
       try {
-        const result = await facultyService.getAllFaculties({
-          pageSize: 100,
-        });
-        if (result) {
-          setDepartments(result.items || []);
+        const res = await facultyService.getFacultiesDropdown();
+        if (res && Array.isArray(res)) {
+          setFaculties(res);
         }
       } catch (error) {
-        console.error('Failed to fetch departments:', error);
+        console.error('Failed to fetch faculties:', error);
       }
     };
-    fetchDepartments();
+    fetchFaculties();
   }, []);
+
+  // Load departments (Chuyên ngành) when faculty changes
+  useEffect(() => {
+    if (selectedFaculty) {
+      const fetchDepartments = async () => {
+        try {
+          const res =
+            await departmentService.getDepartmentsDropdownByFaculty(
+              selectedFaculty
+            );
+          if (res && Array.isArray(res)) {
+            setDepartments(res);
+          } else {
+            setDepartments([]);
+          }
+        } catch (error) {
+          console.error('Failed to fetch departments:', error);
+          setDepartments([]);
+        }
+      };
+      fetchDepartments();
+    } else {
+      setDepartments([]);
+    }
+    // Reset departmentId khi faculty thay đổi
+    form.setFieldsValue({ departmentId: undefined });
+  }, [selectedFaculty, form]);
 
   // Load available prerequisites
   useEffect(() => {
@@ -101,16 +130,23 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
   const handleFinish = async (values) => {
     try {
       const payload = {
-        ...values,
-        isRequired: values.isRequired || false,
-        prerequisiteIds: values.prerequisites || [],
+        courseName: values.courseName,
+        courseCode: values.courseCode,
+        totalCredits: values.totalCredits,
+        creditsTheory: values.creditsTheory,
+        creditsLab: values.creditsLab,
+        isRequired: values.isRequired,
+        semesterSuggested: values.semesterSuggested,
+        programId: values.academicProgramId,
+        departmentId: values.departmentId,
       };
 
-      const result =
-        await curriculumCourseService.createCurriculumCourse(payload);
+      const result = await curriculumCourseService.createCourse(payload);
       if (result) {
         message.success('Tạo môn học mới thành công!');
         form.resetFields();
+        setSelectedFaculty(undefined);
+        setDepartments([]);
         onSave(result);
       }
     } catch (error) {
@@ -121,6 +157,8 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
 
   const handleReset = () => {
     form.resetFields();
+    setSelectedFaculty(undefined);
+    setDepartments([]);
   };
 
   const handleProgramChange = (programId) => {
@@ -128,6 +166,10 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
       degreeLevel: programs.find((p) => p.academicProgramId === programId)
         ?.degreeLevel,
     });
+  };
+
+  const handleFacultyChange = (facultyId) => {
+    setSelectedFaculty(facultyId);
   };
 
   if (!open) return null;
@@ -197,36 +239,22 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
                   <Input placeholder="VD: Lập trình cơ bản" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} md={12}>
                 <Form.Item
                   label="Loại môn học"
-                  name="courseType"
+                  name="isRequired"
                   rules={[
                     { required: true, message: 'Bắt buộc chọn loại môn học' },
                   ]}
+                  initialValue={false}
                 >
                   <Select placeholder="Chọn loại môn học">
-                    {courseTypeOptions.map((type) => (
-                      <Option key={type.value} value={type.value}>
-                        {type.label}
-                      </Option>
-                    ))}
+                    <Option value={true}>Bắt buộc</Option>
+                    <Option value={false}>Tự chọn</Option>
                   </Select>
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
-                <Form.Item
-                  label="Loại hình"
-                  name="isRequired"
-                  valuePropName="checked"
-                >
-                  <Switch
-                    checkedChildren="Bắt buộc"
-                    unCheckedChildren="Tự chọn"
-                  />
-                </Form.Item>
-              </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} md={12}>
                 <Form.Item
                   label="Học kỳ đề xuất"
                   name="semesterSuggested"
@@ -250,7 +278,7 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
           </Title>
           <Card size="small" style={{ marginBottom: 24 }}>
             <Row gutter={[24, 16]}>
-              <Col xs={24} md={6}>
+              <Col xs={24} md={8}>
                 <Form.Item
                   label="Tổng tín chỉ"
                   name="totalCredits"
@@ -272,7 +300,7 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
                   />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={6}>
+              <Col xs={24} md={8}>
                 <Form.Item
                   label="Tín chỉ lý thuyết"
                   name="creditsTheory"
@@ -297,7 +325,7 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
                   />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={6}>
+              <Col xs={24} md={8}>
                 <Form.Item
                   label="Tín chỉ thực hành"
                   name="creditsLab"
@@ -322,27 +350,6 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
                   />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={6}>
-                <Form.Item
-                  label="Tín chỉ bài tập"
-                  name="creditsExercise"
-                  rules={[
-                    {
-                      type: 'number',
-                      min: 0,
-                      max: 10,
-                      message: 'Tín chỉ bài tập từ 0-10',
-                    },
-                  ]}
-                >
-                  <InputNumber
-                    min={0}
-                    max={10}
-                    placeholder="0"
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
-              </Col>
             </Row>
           </Card>
 
@@ -352,19 +359,16 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
           </Title>
           <Card size="small" style={{ marginBottom: 24 }}>
             <Row gutter={[24, 16]}>
-              <Col xs={24} md={12}>
+              <Col xs={24} md={8}>
                 <Form.Item
                   label="Chương trình đào tạo"
                   name="academicProgramId"
                   rules={[
-                    {
-                      required: true,
-                      message: 'Bắt buộc chọn chương trình đào tạo',
-                    },
+                    { required: true, message: 'Bắt buộc chọn chương trình!' },
                   ]}
                 >
                   <Select
-                    placeholder="Chọn chương trình đào tạo"
+                    placeholder="Chọn chương trình"
                     onChange={handleProgramChange}
                     showSearch
                     filterOption={(input, option) =>
@@ -373,40 +377,65 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
                         .indexOf(input.toLowerCase()) >= 0
                     }
                   >
-                    {programs.map((program) => (
+                    {programs.map((prog) => (
                       <Option
-                        key={program.academicProgramId}
-                        value={program.academicProgramId}
+                        key={prog.academicProgramId}
+                        value={prog.academicProgramId}
                       >
-                        {program.programName} ({program.degreeLevel})
+                        {prog.programName} ({prog.degreeLevel})
                       </Option>
                     ))}
                   </Select>
                 </Form.Item>
               </Col>
-              <Col xs={24} md={12}>
+              <Col xs={24} md={8}>
                 <Form.Item
-                  label="Khoa/Chuyên ngành"
-                  name="departmentId"
-                  rules={[
-                    {
-                      required: true,
-                      message: 'Bắt buộc chọn khoa/chuyên ngành',
-                    },
-                  ]}
+                  label="Khoa"
+                  name="facultyId"
+                  rules={[{ required: true, message: 'Bắt buộc chọn khoa!' }]}
                 >
                   <Select
-                    placeholder="Chọn khoa/chuyên ngành"
+                    placeholder="Chọn khoa"
+                    onChange={handleFacultyChange}
+                    value={selectedFaculty}
                     showSearch
                     filterOption={(input, option) =>
                       option.children
                         .toLowerCase()
                         .indexOf(input.toLowerCase()) >= 0
                     }
+                    allowClear
+                  >
+                    {faculties.map((f) => (
+                      <Option key={f.facultyId} value={f.facultyId}>
+                        {f.facultyName}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item
+                  label="Chuyên ngành"
+                  name="departmentId"
+                  rules={[
+                    { required: true, message: 'Bắt buộc chọn chuyên ngành!' },
+                  ]}
+                >
+                  <Select
+                    placeholder="Chọn chuyên ngành"
+                    showSearch
+                    filterOption={(input, option) =>
+                      option.children
+                        .toLowerCase()
+                        .indexOf(input.toLowerCase()) >= 0
+                    }
+                    disabled={!selectedFaculty}
+                    allowClear
                   >
                     {departments.map((dept) => (
-                      <Option key={dept.facultyId} value={dept.facultyId}>
-                        {dept.facultyName}
+                      <Option key={dept.departmentId} value={dept.departmentId}>
+                        {dept.departmentName}
                       </Option>
                     ))}
                   </Select>

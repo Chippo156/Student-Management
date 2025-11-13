@@ -67,9 +67,7 @@ const curriculumCourseService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(
-            response?.message || 'Lấy danh sách môn học thất bại'
-          );
+          message.error(response?.message || 'Lấy danh sách môn học thất bại');
         }
         return null;
       }
@@ -86,6 +84,33 @@ const curriculumCourseService = {
         }
       } else {
         message.error(error.message || 'Get curriculum courses failed');
+      }
+      return null;
+    }
+  },
+  createCourse: async (courseData) => {
+    try {
+      const response = await api.post('/api/Course/CreateCourse', courseData);
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Tạo môn học thất bại');
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(error.response.data.message || 'Tạo môn học thất bại');
+        }
+      } else {
+        message.error(error.message || 'Tạo môn học thất bại');
       }
       return null;
     }
