@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, List, Tag, Button } from 'antd';
 import { BookOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -9,15 +9,15 @@ const TeacherCoursesList = ({ lecturerId }) => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const muiTheme = useTheme();
+  const theme = useTheme();
 
-  const colors = {
-    bgCard: muiTheme.palette.background.paper,
-    fg: muiTheme.palette.text.primary,
-    sub: muiTheme.palette.text.secondary,
-    border: muiTheme.palette.divider,
-    primary: muiTheme.palette.primary.main,
-  };
+  const colors = useMemo(() => ({
+    bgCard: theme.palette.background.paper,
+    fg: theme.palette.text.primary,
+    sub: theme.palette.text.secondary,
+    border: theme.palette.divider,
+    primary: theme.palette.primary.main,
+  }), [theme]);
 
   const cardStyle = {
     background: colors.bgCard,

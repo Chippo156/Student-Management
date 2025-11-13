@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   Typography,
-  useTheme,
   Paper,
   Avatar,
   List,
@@ -16,6 +15,7 @@ import {
   IconButton,
   Chip,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import {
   BarChart,
   Bar,
@@ -171,13 +171,7 @@ const AdminDashboard = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {statsData.map((stat, index) => (
           <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card
-              sx={{
-                height: '100%',
-                background: `linear-gradient(135deg, ${stat.color}20 0%, ${stat.color}05 100%)`,
-                border: `1px solid ${stat.color}30`,
-              }}
-            >
+            <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box
                   display="flex"
@@ -331,7 +325,6 @@ const AdminDashboard = () => {
             </Typography>
             <ResponsiveContainer width="100%" height="90%">
               <LineChart data={enrollmentData}>
-                ''
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />

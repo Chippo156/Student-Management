@@ -1,198 +1,247 @@
 import React from 'react';
-import { Modal, Avatar, Tag, Divider, Row, Col } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
+import {
+  Dialog,
+  DialogContent,
+  Avatar,
+  Box,
+  Typography,
+  Chip,
+  Grid,
+  Card,
+  CardContent,
+  IconButton,
+} from '@mui/material';
+import { Close as CloseIcon, Person as PersonIcon } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 import dayjs from 'dayjs';
 import { genderOptions, accountStatusMap } from './constants';
 
 /**
- * UserDetailModal - Modal hiển thị chi tiết thông tin user
+ * UserDetailModal - Modal hiển thị chi tiết thông tin user với Material-UI
  */
 const UserDetailModal = ({ open, onCancel, user }) => {
+  const theme = useTheme();
+
   if (!user) return null;
 
+  const InfoRow = ({ label, value }) => (
+    <Box sx={{ mb: 2 }}>
+      <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 0.5, fontWeight: 500 }}>
+        {label}
+      </Typography>
+      <Typography variant="body1" sx={{ color: theme.palette.text.primary }}>
+        {value || <span style={{ color: theme.palette.text.disabled }}>Chưa cập nhật</span>}
+      </Typography>
+    </Box>
+  );
+
   return (
-    <Modal
+    <Dialog
       open={open}
-      onCancel={onCancel}
-      footer={null}
-      width={720}
-      centered
-      title={null}
-      bodyStyle={{
-        padding: 0,
-        borderRadius: 16,
-        overflow: 'hidden',
-        maxHeight: '80vh',
-        overflowY: 'auto',
+      onClose={onCancel}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          bgcolor: theme.palette.background.paper,
+          backgroundImage: 'none',
+        }
       }}
     >
-      <div style={{ background: '#f4f8ff', borderRadius: 16 }}>
-        {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: 32,
-            background: '#1677ff',
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
-            color: '#fff',
-            gap: 24,
+      {/* Header với gradient */}
+      <Box
+        sx={{
+          background: theme.palette.mode === 'light'
+            ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
+            : `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.background.paper} 100%)`,
+          px: 4,
+          py: 3,
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 3,
+        }}
+      >
+        <Avatar
+          src={user.avatarUrl}
+          sx={{
+            width: 90,
+            height: 90,
+            bgcolor: theme.palette.background.paper,
+            color: theme.palette.primary.main,
+            fontSize: 40,
+            fontWeight: 700,
+            border: `4px solid ${theme.palette.background.paper}`,
+            boxShadow: theme.shadows[4],
           }}
         >
-          <Avatar
-            src={user.avatarUrl}
-            size={80}
-            icon={<UserOutlined />}
-            style={{
-              background: '#fff',
-              color: '#1677ff',
+          {!user.avatarUrl && <PersonIcon sx={{ fontSize: 50 }} />}
+        </Avatar>
+        <Box sx={{ flex: 1 }}>
+          <Typography
+            variant="h5"
+            sx={{
               fontWeight: 700,
-              fontSize: 36,
-              border: '3px solid #fff',
-              boxShadow: '0 2px 8px #1677ff33',
+              color: 'white',
+              mb: 1,
+            }}
+          >
+            {user.fullName || user.username}
+          </Typography>
+          <Chip
+            label={user.role?.roleName}
+            sx={{
+              bgcolor: theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.25)' : theme.palette.background.paper,
+              color: theme.palette.mode === 'light' ? 'white' : theme.palette.text.primary,
+              fontWeight: 600,
+              fontSize: 14,
+              backdropFilter: 'blur(10px)',
+              border: `1px solid ${theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.3)' : theme.palette.divider}`,
             }}
           />
-          <div>
-            <div
-              style={{
-                fontWeight: 700,
-                fontSize: 26,
-                wordBreak: 'break-word',
-              }}
-            >
-              {user.fullName || user.username}
-            </div>
-            <Tag
-              color={
-                user.role?.roleName === 'Admin'
-                  ? 'volcano'
-                  : user.role?.roleName === 'Giảng viên'
-                    ? 'geekblue'
-                    : 'green'
-              }
-              style={{
+        </Box>
+        <IconButton
+          onClick={onCancel}
+          sx={{
+            position: 'absolute',
+            right: 16,
+            top: 16,
+            color: 'white',
+            bgcolor: 'rgba(255, 255, 255, 0.1)',
+            '&:hover': {
+              bgcolor: 'rgba(255, 255, 255, 0.2)',
+            },
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </Box>
+
+      <DialogContent sx={{ p: 4, bgcolor: theme.palette.background.default }}>
+        {/* Thông tin cá nhân */}
+        <Card sx={{ mb: 3, boxShadow: 1 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 3,
                 fontWeight: 600,
-                fontSize: 16,
-                borderRadius: 8,
-                marginTop: 8,
-                padding: '2px 16px',
+                color: theme.palette.primary.main,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
               }}
             >
-              {user.role?.roleName}
-            </Tag>
-          </div>
-        </div>
+              <Box component="span" sx={{ fontSize: 24 }}>👤</Box>
+              Thông tin cá nhân
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <InfoRow label="Tên đăng nhập" value={user.username} />
+                <InfoRow label="Họ và tên" value={user.fullName} />
+                <InfoRow
+                  label="Giới tính"
+                  value={genderOptions.find((g) => g.value === user.gender)?.label}
+                />
+                <InfoRow
+                  label="Ngày sinh"
+                  value={user.dateOfBirth ? dayjs(user.dateOfBirth).format('DD/MM/YYYY') : null}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <InfoRow label="Email" value={user.email} />
+                <InfoRow label="Số điện thoại" value={user.phone} />
+                <InfoRow label="Nơi sinh" value={user.placeOfBirth} />
+                <InfoRow label="Quốc tịch" value={user.nationality} />
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
 
-        <Divider style={{ margin: 0 }} />
+        {/* Địa chỉ */}
+        <Card sx={{ mb: 3, boxShadow: 1 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 3,
+                fontWeight: 600,
+                color: theme.palette.primary.main,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <Box component="span" sx={{ fontSize: 24 }}>🏠</Box>
+              Thông tin địa chỉ
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <InfoRow label="Địa chỉ thường trú" value={user.address} />
+                <InfoRow label="Dân tộc" value={user.ethnicity} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <InfoRow label="Địa chỉ tạm trú" value={user.temporaryAddress} />
+                <InfoRow label="Tôn giáo" value={user.religion} />
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
 
-        {/* Content */}
-        <div style={{ padding: 32, maxHeight: '60vh', overflowY: 'auto' }}>
-          {/* Thông tin cá nhân */}
-          <Divider orientation="left" style={{ color: '#1677ff' }}>
-            🧍 Thông tin cá nhân
-          </Divider>
-          <Row gutter={32}>
-            <Col span={12}>
-              <div style={{ marginBottom: 10 }}>
-                <b>Tên đăng nhập:</b>{' '}
-                {user.username || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <b>Họ và tên:</b>{' '}
-                {user.fullName || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <b>Giới tính:</b>{' '}
-                {genderOptions.find((g) => g.value === user.gender)?.label || (
-                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
-                )}
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <b>Ngày sinh:</b>{' '}
-                {user.dateOfBirth ? (
-                  dayjs(user.dateOfBirth).format('DD/MM/YYYY')
-                ) : (
-                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
-                )}
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <b>Email:</b>{' '}
-                {user.email || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <b>Số điện thoại:</b>{' '}
-                {user.phone || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-              </div>
-            </Col>
-            <Col span={12}>
-              <div style={{ marginBottom: 10 }}>
-                <b>Địa chỉ:</b>{' '}
-                {user.address || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <b>Địa chỉ tạm trú:</b>{' '}
-                {user.temporaryAddress || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <b>Nơi sinh:</b>{' '}
-                {user.placeOfBirth || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <b>Dân tộc:</b>{' '}
-                {user.ethnicity || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <b>Tôn giáo:</b>{' '}
-                {user.religion || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <b>Quốc tịch:</b>{' '}
-                {user.nationality || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-              </div>
-            </Col>
-          </Row>
-
-          {/* Giấy tờ cá nhân */}
-          <Divider orientation="left" style={{ color: '#1677ff' }}>
-            🪪 Giấy tờ cá nhân
-          </Divider>
-          <Row gutter={32}>
-            <Col span={12}>
-              <div style={{ marginBottom: 10 }}>
-                <b>CCCD:</b>{' '}
-                {user.citizenIdCard || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <b>Ngày cấp:</b>{' '}
-                {user.issuedDate ? (
-                  dayjs(user.issuedDate).format('DD/MM/YYYY')
-                ) : (
-                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
-                )}
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <b>Nơi cấp:</b>{' '}
-                {user.issuedPlace || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
-              </div>
-            </Col>
-            <Col span={12}>
-              <div style={{ marginBottom: 10 }}>
-                <b>Trạng thái tài khoản:</b>{' '}
-                {(() => {
-                  const info = accountStatusMap[user.accountStatus];
-                  return info ? (
-                    <Tag color={info.color}>{info.label}</Tag>
-                  ) : (
-                    <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
-                  );
-                })()}
-              </div>
-            </Col>
-          </Row>
-        </div>
-      </div>
-    </Modal>
+        {/* Giấy tờ cá nhân */}
+        <Card sx={{ mb: 3, boxShadow: 1 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 3,
+                fontWeight: 600,
+                color: theme.palette.primary.main,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <Box component="span" sx={{ fontSize: 24 }}>🪪</Box>
+              Giấy tờ cá nhân
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <InfoRow label="Số CCCD" value={user.citizenIdCard} />
+                <InfoRow
+                  label="Ngày cấp"
+                  value={user.issuedDate ? dayjs(user.issuedDate).format('DD/MM/YYYY') : null}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <InfoRow label="Nơi cấp" value={user.issuedPlace} />
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 0.5, fontWeight: 500 }}>
+                    Trạng thái tài khoản
+                  </Typography>
+                  {(() => {
+                    const info = accountStatusMap[user.accountStatus];
+                    return info ? (
+                      <Chip
+                        label={info.label}
+                        color={info.color === 'success' ? 'success' : 'error'}
+                        size="small"
+                        sx={{ mt: 0.5 }}
+                      />
+                    ) : (
+                      <Typography variant="body1" sx={{ color: theme.palette.text.disabled }}>
+                        Chưa cập nhật
+                      </Typography>
+                    );
+                  })()}
+                </Box>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      </DialogContent>
+    </Dialog>
   );
 };
 

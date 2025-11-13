@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Typography, Card, CardContent, Grid } from '@mui/material';
 import { Schedule, CalendarToday, AccessTime } from '@mui/icons-material';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, alpha } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
@@ -27,6 +27,20 @@ const SchedulePage = () => {
 
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
+
+  const colors = useMemo(() => ({
+    primary: theme.palette.primary.main,
+    secondary: theme.palette.secondary.main,
+    success: theme.palette.success.main,
+    textPrimary: theme.palette.text.primary,
+    textSecondary: theme.palette.text.secondary,
+    bgLightBlue: alpha(theme.palette.primary.main, 0.1),
+    bgLightPurple: alpha(theme.palette.secondary.main, 0.1),
+    bgLightGreen: alpha(theme.palette.success.main, 0.1),
+    iconBlue: theme.palette.primary.main,
+    iconPurple: theme.palette.secondary.main,
+    iconGreen: theme.palette.success.main,
+  }), [theme]);
 
   const fetchSchedule = async (date, scheduleTypeId = 0) => {
     if (!lecturerId) return;
@@ -146,7 +160,7 @@ const SchedulePage = () => {
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <div>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a237e' }}>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: colors.primary }}>
             Lịch giảng dạy theo tuần
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -160,19 +174,19 @@ const SchedulePage = () => {
         <Grid item xs={12} md={4}>
           <Card
             sx={{
-              bgcolor: '#e3f2fd',
+              bgcolor: colors.bgLightBlue,
               boxShadow: 2,
               transition: 'transform 0.3s',
               '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <Schedule sx={{ fontSize: 50, mr: 2, color: '#1976d2' }} />
+              <Schedule sx={{ fontSize: 50, mr: 2, color: colors.iconBlue }} />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#1976d2' }}>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconBlue }}>
                   {totalLessons}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
+                <Typography variant="body2" sx={{ color: colors.textSecondary }}>
                   Tổng tiết tuần này
                 </Typography>
               </Box>
@@ -183,19 +197,19 @@ const SchedulePage = () => {
         <Grid item xs={12} md={4}>
           <Card
             sx={{
-              bgcolor: '#f3e5f5',
+              bgcolor: colors.bgLightPurple,
               boxShadow: 2,
               transition: 'transform 0.3s',
               '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <CalendarToday sx={{ fontSize: 50, mr: 2, color: '#7b1fa2' }} />
+              <CalendarToday sx={{ fontSize: 50, mr: 2, color: colors.iconPurple }} />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#7b1fa2' }}>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconPurple }}>
                   {uniqueCourses}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
+                <Typography variant="body2" sx={{ color: colors.textSecondary }}>
                   Môn học
                 </Typography>
               </Box>
@@ -206,19 +220,19 @@ const SchedulePage = () => {
         <Grid item xs={12} md={4}>
           <Card
             sx={{
-              bgcolor: '#e8f5e9',
+              bgcolor: colors.bgLightGreen,
               boxShadow: 2,
               transition: 'transform 0.3s',
               '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <AccessTime sx={{ fontSize: 50, mr: 2, color: '#388e3c' }} />
+              <AccessTime sx={{ fontSize: 50, mr: 2, color: colors.iconGreen }} />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#388e3c' }}>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconGreen }}>
                   {todayItems.length}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
+                <Typography variant="body2" sx={{ color: colors.textSecondary }}>
                   Lịch hôm nay
                 </Typography>
               </Box>

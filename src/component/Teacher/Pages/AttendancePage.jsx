@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -21,6 +21,7 @@ import {
   Alert,
   Avatar,
 } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import { Table, Tag, Space, DatePicker } from 'antd';
 import {
   EventAvailable,
@@ -33,6 +34,7 @@ import { teacherService, courseService } from '../../../service';
 import dayjs from 'dayjs';
 
 const AttendancePage = () => {
+  const theme = useTheme();
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedDate, setSelectedDate] = useState(dayjs());
@@ -48,6 +50,23 @@ const AttendancePage = () => {
 
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
+
+  // Theme-aware colors
+  const colors = useMemo(() => ({
+    bgCard: theme.palette.background.paper,
+    bgPage: theme.palette.background.default,
+    primary: theme.palette.primary.main,
+    success: theme.palette.success.main,
+    warning: theme.palette.warning.main,
+    error: theme.palette.error.main,
+    text: theme.palette.text.primary,
+    textSecondary: theme.palette.text.secondary,
+    border: theme.palette.divider,
+    bgSuccessSoft: alpha(theme.palette.success.main, 0.12),
+    bgWarningSoft: alpha(theme.palette.warning.main, 0.12),
+    bgErrorSoft: alpha(theme.palette.error.main, 0.12),
+    bgPrimarySoft: alpha(theme.palette.primary.main, 0.12),
+  }), [theme]);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -280,7 +299,7 @@ const AttendancePage = () => {
         <Typography
           variant="h4"
           gutterBottom
-          sx={{ mb: 4, fontWeight: 'bold' }}
+          sx={{ mb: 4, fontWeight: 'bold', color: colors.text }}
         >
           Điểm danh
         </Typography>
@@ -292,20 +311,20 @@ const AttendancePage = () => {
           <Grow in={true} timeout={800}>
             <Card
               sx={{
-                backgroundColor: '#e8f5e9',
+                backgroundColor: colors.bgSuccessSoft,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
                 <EventAvailable
-                  sx={{ fontSize: 40, color: '#388e3c', mr: 2 }}
+                  sx={{ fontSize: 40, color: colors.success, mr: 2 }}
                 />
                 <Box>
                   <Typography
                     variant="h5"
                     component="div"
-                    sx={{ fontWeight: 'bold' }}
+                    sx={{ fontWeight: 'bold', color: colors.text }}
                   >
                     {presentCount}
                   </Typography>
@@ -322,18 +341,18 @@ const AttendancePage = () => {
           <Grow in={true} timeout={1000}>
             <Card
               sx={{
-                backgroundColor: '#ffebee',
+                backgroundColor: colors.bgErrorSoft,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <EventBusy sx={{ fontSize: 40, color: '#d32f2f', mr: 2 }} />
+                <EventBusy sx={{ fontSize: 40, color: colors.error, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
                     component="div"
-                    sx={{ fontWeight: 'bold' }}
+                    sx={{ fontWeight: 'bold', color: colors.text }}
                   >
                     {absentCount}
                   </Typography>
@@ -350,18 +369,18 @@ const AttendancePage = () => {
           <Grow in={true} timeout={1200}>
             <Card
               sx={{
-                backgroundColor: '#fff3e0',
+                backgroundColor: colors.bgWarningSoft,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <CalendarToday sx={{ fontSize: 40, color: '#f57c00', mr: 2 }} />
+                <CalendarToday sx={{ fontSize: 40, color: colors.warning, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
                     component="div"
-                    sx={{ fontWeight: 'bold' }}
+                    sx={{ fontWeight: 'bold', color: colors.text }}
                   >
                     {lateCount}
                   </Typography>
@@ -378,18 +397,18 @@ const AttendancePage = () => {
           <Grow in={true} timeout={1400}>
             <Card
               sx={{
-                backgroundColor: '#e3f2fd',
+                backgroundColor: colors.bgPrimarySoft,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <TrendingUp sx={{ fontSize: 40, color: '#1976d2', mr: 2 }} />
+                <TrendingUp sx={{ fontSize: 40, color: colors.primary, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
                     component="div"
-                    sx={{ fontWeight: 'bold' }}
+                    sx={{ fontWeight: 'bold', color: colors.text }}
                   >
                     {attendanceRate}%
                   </Typography>

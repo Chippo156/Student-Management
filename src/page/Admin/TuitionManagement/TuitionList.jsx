@@ -1,19 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
-  Paper,
   Typography,
   Button,
   Grid,
   Card,
   CardContent,
   Avatar,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   IconButton,
   Chip,
   Dialog,
@@ -24,21 +17,22 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Fab,
+  Tooltip,
+  TextField,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import {
   Payment as PaymentIcon,
   Add as AddIcon,
   Edit as EditIcon,
   Visibility as VisibilityIcon,
   Receipt as ReceiptIcon,
-  CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
+import { PageHeader, StatsCard, DataTable, FilterSection } from '../../../component/Common';
 
 const TuitionList = () => {
+  const theme = useTheme();
   const [statusFilter, setStatusFilter] = useState('');
   const [semesterFilter, setSemesterFilter] = useState('');
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -94,19 +88,6 @@ const TuitionList = () => {
     return matchesStatus && matchesSemester;
   });
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'paid':
-        return <CheckCircleIcon color="success" />;
-      case 'pending':
-        return <WarningIcon color="warning" />;
-      case 'overdue':
-        return <ErrorIcon color="error" />;
-      default:
-        return <WarningIcon />;
-    }
-  };
-
   const getStatusColor = (status) => {
     const statusObj = statuses.find((s) => s.value === status);
     return statusObj ? statusObj.color : 'default';
@@ -124,151 +105,205 @@ const TuitionList = () => {
     }).format(amount);
   };
 
-  return (
-    <Box sx={{ p: 3, maxWidth: '100%', overflow: 'hidden' }}>
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        mb={3}
-      >
-        <Box display="flex" alignItems="center" gap={2}>
-          <Avatar sx={{ bgcolor: 'primary.main' }}>
-            <PaymentIcon />
-          </Avatar>
-          <Typography variant="h4" component="h1">
-            Danh sách học phí
-          </Typography>
-        </Box>
-        <Fab color="primary" aria-label="add" size="medium">
-          <AddIcon />
-        </Fab>
-      </Box>
+  // Statistics
+  const stats = useMemo(() => {
+    const paidCount = tuitionRecords.filter((r) => r.status === 'paid').length;
+    const pendingCount = tuitionRecords.filter((r) => r.status === 'pending').length;
+    const overdueCount = tuitionRecords.filter((r) => r.status === 'overdue').length;
+    const totalAmount = tuitionRecords.reduce((sum, r) => sum + r.amount, 0);
 
-      {/* Filters */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>Học kỳ</InputLabel>
-              <Select
-                value={semesterFilter}
-                onChange={(e) => setSemesterFilter(e.target.value)}
-                label="Học kỳ"
-              >
-                <MenuItem value="">Tất cả</MenuItem>
-                {semesters.map((semester) => (
-                  <MenuItem key={semester} value={semester}>
-                    {semester}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>Trạng thái</InputLabel>
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                label="Trạng thái"
-              >
-                <MenuItem value="">Tất cả</MenuItem>
-                {statuses.map((status) => (
-                  <MenuItem key={status.value} value={status.value}>
-                    {status.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+    return {
+      total: tuitionRecords.length,
+      paid: paidCount,
+      pending: pendingCount,
+      overdue: overdueCount,
+      totalAmount,
+    };
+  }, [tuitionRecords]);
+
+  return (
+    <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
+      {/* Header */}
+      <PageHeader
+        title="Quản lý Học phí"
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            sx={{ textTransform: 'none', px: 3 }}
+          >
+            Thêm học phí
+          </Button>
+        }
+      />
+
+      {/* Summary Cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatsCard icon={<PaymentIcon />} value={stats.total} label="Tổng bản ghi" color="primary" />
         </Grid>
-      </Paper>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatsCard icon={<PaymentIcon />} value={stats.paid} label="Đã thanh toán" color="success" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatsCard icon={<PaymentIcon />} value={stats.pending} label="Chờ thanh toán" color="warning" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatsCard icon={<PaymentIcon />} value={stats.overdue} label="Quá hạn" color="error" />
+        </Grid>
+      </Grid>
+
+      {/* Filter Section */}
+      <FilterSection resultCount={filteredRecords.length}>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Học kỳ</InputLabel>
+            <Select
+              value={semesterFilter}
+              onChange={(e) => setSemesterFilter(e.target.value)}
+              label="Học kỳ"
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              {semesters.map((semester) => (
+                <MenuItem key={semester} value={semester}>
+                  {semester}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Trạng thái</InputLabel>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              label="Trạng thái"
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              {statuses.map((status) => (
+                <MenuItem key={status.value} value={status.value}>
+                  {status.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+      </FilterSection>
 
       {/* Tuition Records Table */}
-      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-        <TableContainer sx={{ maxHeight: 'calc(100vh - 400px)' }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell>Sinh viên</TableCell>
-                <TableCell>Học kỳ</TableCell>
-                <TableCell>Số tiền</TableCell>
-                <TableCell>Hạn thanh toán</TableCell>
-                <TableCell>Trạng thái</TableCell>
-                <TableCell align="center">Thao tác</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredRecords.map((record) => (
-                <TableRow key={record.id} hover>
-                  <TableCell>
-                    <Box display="flex" alignItems="center" gap={2}>
-                      <Avatar sx={{ bgcolor: 'primary.main' }}>
-                        <PersonIcon />
-                      </Avatar>
-                      <Box>
-                        <Typography variant="body2" fontWeight="bold">
-                          {record.studentName}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {record.studentId}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{record.semester}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="bold">
-                      {formatCurrency(record.amount)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {new Date(record.dueDate).toLocaleDateString('vi-VN')}
-                    </Typography>
-                    {record.paymentDate && (
-                      <Typography variant="caption" color="text.secondary">
-                        Đã thanh toán:{' '}
-                        {new Date(record.paymentDate).toLocaleDateString(
-                          'vi-VN'
-                        )}
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      {getStatusIcon(record.status)}
-                      <Chip
-                        label={getStatusLabel(record.status)}
-                        color={getStatusColor(record.status)}
-                        size="small"
-                      />
-                    </Box>
-                  </TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setSelectedRecord(record);
-                        setViewDialogOpen(true);
-                      }}
-                      color="primary"
-                    >
-                      <VisibilityIcon />
-                    </IconButton>
-                    <IconButton size="small" color="primary">
-                      <EditIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+      <DataTable
+        columns={[
+          {
+            field: 'studentName',
+            headerName: 'Sinh viên',
+            width: 200,
+            renderCell: (record) => (
+              <Box display="flex" alignItems="center" gap={1}>
+                <Avatar sx={{ bgcolor: theme.palette.primary.main, width: 32, height: 32 }}>
+                  <PersonIcon fontSize="small" />
+                </Avatar>
+                <Box>
+                  <Typography variant="body2" fontWeight="bold">
+                    {record.studentName}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {record.studentId}
+                  </Typography>
+                </Box>
+              </Box>
+            ),
+          },
+          {
+            field: 'semester',
+            headerName: 'Học kỳ',
+            width: 150,
+          },
+          {
+            field: 'amount',
+            headerName: 'Số tiền',
+            width: 150,
+            renderCell: (record) => (
+              <Typography variant="body2" fontWeight="bold">
+                {formatCurrency(record.amount)}
+              </Typography>
+            ),
+          },
+          {
+            field: 'dueDate',
+            headerName: 'Hạn thanh toán',
+            width: 180,
+            renderCell: (record) => (
+              <Box>
+                <Typography variant="body2">
+                  {new Date(record.dueDate).toLocaleDateString('vi-VN')}
+                </Typography>
+                {record.paymentDate && (
+                  <Typography variant="caption" color="text.secondary">
+                    Đã thanh toán: {new Date(record.paymentDate).toLocaleDateString('vi-VN')}
+                  </Typography>
+                )}
+              </Box>
+            ),
+          },
+          {
+            field: 'status',
+            headerName: 'Trạng thái',
+            width: 140,
+            renderCell: (record) => (
+              <Chip
+                label={getStatusLabel(record.status)}
+                color={getStatusColor(record.status)}
+                size="small"
+              />
+            ),
+          },
+          {
+            field: 'actions',
+            headerName: 'Thao tác',
+            width: 120,
+            align: 'center',
+            renderCell: (record) => (
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                <Tooltip title="Xem chi tiết">
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      setSelectedRecord(record);
+                      setViewDialogOpen(true);
+                    }}
+                    color="primary"
+                  >
+                    <VisibilityIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Chỉnh sửa">
+                  <IconButton size="small" color="primary">
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            ),
+          },
+        ]}
+        rows={filteredRecords}
+        page={0}
+        rowsPerPage={10}
+        totalCount={filteredRecords.length}
+        onPageChange={() => {}}
+        onRowsPerPageChange={() => {}}
+        emptyState={
+          <>
+            <PaymentIcon sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }} />
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              Không tìm thấy bản ghi học phí nào
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Chưa có dữ liệu học phí trong hệ thống
+            </Typography>
+          </>
+        }
+      />
 
       {/* View Record Dialog */}
       <Dialog

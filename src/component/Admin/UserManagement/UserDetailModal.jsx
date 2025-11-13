@@ -26,7 +26,7 @@ const UserDetailModal = ({ open, onCancel, user }) => {
         overflowY: 'auto',
       }}
     >
-      <div style={{ background: '#f4f8ff', borderRadius: 16 }}>
+      <div style={{ borderRadius: 16 }}>
         {/* Header */}
         <div
           style={{
@@ -96,11 +96,15 @@ const UserDetailModal = ({ open, onCancel, user }) => {
             <Col span={12}>
               <div style={{ marginBottom: 10 }}>
                 <b>Tên đăng nhập:</b>{' '}
-                {user.username || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                {user.username || (
+                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                )}
               </div>
               <div style={{ marginBottom: 10 }}>
                 <b>Họ và tên:</b>{' '}
-                {user.fullName || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                {user.fullName || (
+                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                )}
               </div>
               <div style={{ marginBottom: 10 }}>
                 <b>Giới tính:</b>{' '}
@@ -118,37 +122,53 @@ const UserDetailModal = ({ open, onCancel, user }) => {
               </div>
               <div style={{ marginBottom: 10 }}>
                 <b>Email:</b>{' '}
-                {user.email || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                {user.email || (
+                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                )}
               </div>
               <div style={{ marginBottom: 10 }}>
                 <b>Số điện thoại:</b>{' '}
-                {user.phone || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                {user.phone || (
+                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                )}
               </div>
             </Col>
             <Col span={12}>
               <div style={{ marginBottom: 10 }}>
                 <b>Địa chỉ:</b>{' '}
-                {user.address || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                {user.address || (
+                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                )}
               </div>
               <div style={{ marginBottom: 10 }}>
                 <b>Địa chỉ tạm trú:</b>{' '}
-                {user.temporaryAddress || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                {user.temporaryAddress || (
+                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                )}
               </div>
               <div style={{ marginBottom: 10 }}>
                 <b>Nơi sinh:</b>{' '}
-                {user.placeOfBirth || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                {user.placeOfBirth || (
+                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                )}
               </div>
               <div style={{ marginBottom: 10 }}>
                 <b>Dân tộc:</b>{' '}
-                {user.ethnicity || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                {user.ethnicity || (
+                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                )}
               </div>
               <div style={{ marginBottom: 10 }}>
                 <b>Tôn giáo:</b>{' '}
-                {user.religion || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                {user.religion || (
+                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                )}
               </div>
               <div style={{ marginBottom: 10 }}>
                 <b>Quốc tịch:</b>{' '}
-                {user.nationality || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                {user.nationality || (
+                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                )}
               </div>
             </Col>
           </Row>
@@ -161,7 +181,9 @@ const UserDetailModal = ({ open, onCancel, user }) => {
             <Col span={12}>
               <div style={{ marginBottom: 10 }}>
                 <b>CCCD:</b>{' '}
-                {user.citizenIdCard || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                {user.citizenIdCard || (
+                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                )}
               </div>
               <div style={{ marginBottom: 10 }}>
                 <b>Ngày cấp:</b>{' '}
@@ -173,7 +195,9 @@ const UserDetailModal = ({ open, onCancel, user }) => {
               </div>
               <div style={{ marginBottom: 10 }}>
                 <b>Nơi cấp:</b>{' '}
-                {user.issuedPlace || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                {user.issuedPlace || (
+                  <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                )}
               </div>
             </Col>
             <Col span={12}>

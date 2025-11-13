@@ -2,24 +2,15 @@ import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
   Grid,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   TextField,
   InputAdornment,
   Chip,
-  TablePagination,
   IconButton,
   Tooltip,
   CircularProgress,
+  Avatar,
 } from '@mui/material';
 import {
   Class as ClassIcon,
@@ -27,16 +18,17 @@ import {
   People,
   CheckCircle,
   Search as SearchIcon,
-  FilterList,
-  Refresh,
   FileDownload,
   Visibility as VisibilityIcon,
   Edit as EditIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
+import { PageHeader, StatsCard, DataTable, FilterSection } from '../../../component/Common';
 import * as XLSX from 'xlsx';
 
 const Classes = () => {
+  const theme = useTheme();
   const [classes] = useState([
     {
       id: '1',
@@ -187,283 +179,208 @@ const Classes = () => {
     );
   }
 
+  const columns = [
+    {
+      field: 'classCode',
+      headerName: 'Mã lớp',
+      width: 120,
+      renderCell: (classInfo) => (
+        <Typography sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
+          {classInfo.classCode}
+        </Typography>
+      ),
+    },
+    {
+      field: 'className',
+      headerName: 'Tên lớp',
+      width: 220,
+      renderCell: (classInfo) => (
+        <Box>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {classInfo.className}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {classInfo.semester}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      field: 'department',
+      headerName: 'Khoa',
+      width: 150,
+      renderCell: (classInfo) => (
+        <Chip
+          label={classInfo.department}
+          size="small"
+          sx={{
+            bgcolor: theme.palette.mode === 'light'
+              ? theme.palette.primary.light + '30'
+              : theme.palette.primary.dark + '40',
+            color: theme.palette.primary.main,
+          }}
+        />
+      ),
+    },
+    {
+      field: 'major',
+      headerName: 'Chuyên ngành',
+      width: 150,
+    },
+    {
+      field: 'year',
+      headerName: 'Năm',
+      width: 80,
+      align: 'center',
+    },
+    {
+      field: 'instructor',
+      headerName: 'Giảng viên',
+      width: 180,
+    },
+    {
+      field: 'studentCount',
+      headerName: 'Sĩ số',
+      width: 100,
+      renderCell: (classInfo) => (
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 600,
+            color:
+              classInfo.studentCount >= classInfo.maxStudents
+                ? theme.palette.error.main
+                : theme.palette.success.main,
+          }}
+        >
+          {classInfo.studentCount}/{classInfo.maxStudents}
+        </Typography>
+      ),
+    },
+    {
+      field: 'status',
+      headerName: 'Trạng thái',
+      width: 140,
+      renderCell: (classInfo) =>
+        classInfo.status === 'active' ? (
+          <Chip label="Đang hoạt động" color="success" size="small" />
+        ) : (
+          <Chip label="Đã kết thúc" color="default" size="small" />
+        ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Thao tác',
+      width: 120,
+      align: 'center',
+      renderCell: () => (
+        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+          <Tooltip title="Xem chi tiết">
+            <IconButton size="small">
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Chỉnh sửa">
+            <IconButton size="small" color="primary">
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
+    },
+  ];
+
   return (
     <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a237e' }}>
-          Quản lý Lớp học
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Tooltip title="Làm mới">
-            <IconButton
-              sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#e3f2fd' }, boxShadow: 1 }}
+      <PageHeader
+        title="Quản lý Lớp học"
+        onRefresh={() => {}}
+        actions={
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="contained"
+              startIcon={<FileDownload />}
+              onClick={handleExportExcel}
+              disabled={filteredClasses.length === 0}
+              color="success"
+              sx={{ textTransform: 'none', px: 3 }}
             >
-              <Refresh />
-            </IconButton>
-          </Tooltip>
-          <Button
-            variant="contained"
-            startIcon={<FileDownload />}
-            onClick={handleExportExcel}
-            disabled={filteredClasses.length === 0}
-            sx={{
-              bgcolor: '#4caf50',
-              '&:hover': { bgcolor: '#45a049' },
-              textTransform: 'none',
-              px: 3,
-              boxShadow: 2,
-            }}
-          >
-            Xuất Excel
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            sx={{
-              bgcolor: '#1976d2',
-              '&:hover': { bgcolor: '#1565c0' },
-              textTransform: 'none',
-              px: 3,
-              boxShadow: 2,
-            }}
-          >
-            Thêm lớp học
-          </Button>
-        </Box>
-      </Box>
+              Xuất Excel
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              sx={{ textTransform: 'none', px: 3 }}
+            >
+              Thêm lớp học
+            </Button>
+          </Box>
+        }
+      />
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: '#e3f2fd', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <ClassIcon sx={{ fontSize: 50, mr: 2, color: '#1976d2' }} />
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#1976d2' }}>
-                  {stats.total}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
-                  Tổng lớp học
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatsCard icon={<ClassIcon />} value={stats.total} label="Tổng lớp học" color="primary" />
         </Grid>
-
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: '#e8f5e9', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <CheckCircle sx={{ fontSize: 50, mr: 2, color: '#388e3c' }} />
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#388e3c' }}>
-                  {stats.active}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
-                  Đang hoạt động
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatsCard icon={<CheckCircle />} value={stats.active} label="Đang hoạt động" color="success" />
         </Grid>
-
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: '#f3e5f5', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <People sx={{ fontSize: 50, mr: 2, color: '#7b1fa2' }} />
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#7b1fa2' }}>
-                  {stats.totalStudents}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
-                  Tổng sinh viên
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatsCard icon={<People />} value={stats.totalStudents} label="Tổng sinh viên" color="info" />
         </Grid>
-
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: '#fff3e0', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <School sx={{ fontSize: 50, mr: 2, color: '#f57c00' }} />
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#f57c00' }}>
-                  {stats.departments}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
-                  Khoa/Phòng ban
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatsCard icon={<School />} value={stats.departments} label="Khoa/Phòng ban" color="warning" />
         </Grid>
       </Grid>
 
       {/* Filter Section */}
-      <Card sx={{ mb: 3, boxShadow: 2 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <FilterList sx={{ mr: 1, color: '#1976d2' }} />
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Bộ lọc tìm kiếm
-            </Typography>
-          </Box>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={10}>
-              <TextField
-                fullWidth
-                placeholder="Tìm kiếm theo mã lớp, tên, giảng viên..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon color="action" />
-                    </InputAdornment>
-                  ),
-                }}
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
-                Đặt lại
-              </Button>
-            </Grid>
-          </Grid>
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Tìm thấy: <strong>{filteredClasses.length}</strong> lớp học
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
+      <FilterSection resultCount={filteredClasses.length}>
+        <Grid item xs={12} md={10}>
+          <TextField
+            fullWidth
+            placeholder="Tìm kiếm theo mã lớp, tên, giảng viên..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+            size="small"
+          />
+        </Grid>
+        <Grid item xs={12} md={2}>
+          <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
+            Đặt lại
+          </Button>
+        </Grid>
+      </FilterSection>
 
       {/* Classes Table */}
-      <Paper sx={{ boxShadow: 2, borderRadius: 2, overflow: 'hidden' }}>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: '#1a237e' }}>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Mã lớp</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Tên lớp</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Khoa</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Chuyên ngành</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Năm</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Giảng viên</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Sĩ số</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Trạng thái</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white', textAlign: 'center' }}>
-                  Thao tác
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredClasses
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((classInfo) => (
-                  <TableRow key={classInfo.id} hover sx={{ '&:hover': { bgcolor: '#f5f5f5' }, transition: 'background-color 0.2s' }}>
-                    <TableCell>
-                      <Typography sx={{ fontWeight: 600, color: '#1976d2' }}>
-                        {classInfo.classCode}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {classInfo.className}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {classInfo.semester}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={classInfo.department}
-                        size="small"
-                        sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {classInfo.major}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {classInfo.year}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {classInfo.instructor}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: 600,
-                          color:
-                            classInfo.studentCount >= classInfo.maxStudents
-                              ? '#d32f2f'
-                              : '#388e3c',
-                        }}
-                      >
-                        {classInfo.studentCount}/{classInfo.maxStudents}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {classInfo.status === 'active' ? (
-                        <Chip label="Đang hoạt động" color="success" size="small" />
-                      ) : (
-                        <Chip label="Đã kết thúc" color="default" size="small" />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                        <Tooltip title="Xem chi tiết">
-                          <IconButton size="small">
-                            <VisibilityIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Chỉnh sửa">
-                          <IconButton size="small" color="primary">
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {filteredClasses.length === 0 && (
-          <Box sx={{ p: 6, textAlign: 'center' }}>
-            <ClassIcon sx={{ fontSize: 80, color: '#e0e0e0', mb: 2 }} />
+      <DataTable
+        columns={columns}
+        rows={filteredClasses}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        totalCount={filteredClasses.length}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        emptyState={
+          <>
+            <ClassIcon sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }} />
             <Typography variant="h6" color="text.secondary" gutterBottom>
               Không tìm thấy lớp học nào
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {searchTerm ? 'Thử thay đổi từ khóa tìm kiếm' : 'Chưa có lớp học nào trong hệ thống'}
             </Typography>
-          </Box>
-        )}
-
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 20, 50]}
-          component="div"
-          count={filteredClasses.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage="Số dòng mỗi trang:"
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
-        />
-      </Paper>
+          </>
+        }
+      />
     </Box>
   );
 };

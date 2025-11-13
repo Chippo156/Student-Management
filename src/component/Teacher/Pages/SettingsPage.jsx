@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -18,6 +18,7 @@ import {
   Switch,
   FormControlLabel,
 } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import {
   Person,
   Lock,
@@ -44,6 +45,7 @@ const TabPanel = ({ children, value, index, ...other }) => {
 };
 
 const SettingsPage = () => {
+  const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -74,6 +76,11 @@ const SettingsPage = () => {
   const user = useSelector((state) => state.user.account);
   const dispatch = useDispatch();
   const lecturerId = user?.lecturerId;
+
+  const colors = useMemo(() => ({
+    primary: theme.palette.primary.main,
+    bgPrimary: alpha(theme.palette.primary.main, 0.1),
+  }), [theme]);
 
   useEffect(() => {
     const fetchTeacherInfo = async () => {
@@ -243,7 +250,7 @@ const SettingsPage = () => {
                   width: 120,
                   height: 120,
                   mb: 2,
-                  bgcolor: '#1976d2',
+                  bgcolor: colors.primary,
                   fontSize: 48,
                 }}
               >

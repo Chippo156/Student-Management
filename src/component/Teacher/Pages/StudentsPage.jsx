@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -23,6 +23,7 @@ import {
   Tooltip,
   InputAdornment,
 } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import { Table, Space, Tag, Input } from 'antd';
 import {
   People,
@@ -38,6 +39,7 @@ import sectionService from '../../../service/sectionService';
 import { studentServices } from '../../../service/studentServices';
 import * as XLSX from 'xlsx';
 const StudentsPage = () => {
+  const theme = useTheme();
   const [students, setStudents] = useState([]);
   const [sections, setSections] = useState([]);
   const [selectedSection, setSelectedSection] = useState('all');
@@ -53,6 +55,22 @@ const StudentsPage = () => {
 
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
+
+  const colors = useMemo(() => ({
+    primary: theme.palette.primary.main,
+    secondary: theme.palette.secondary.main,
+    success: theme.palette.success.main,
+    textPrimary: theme.palette.text.primary,
+    textSecondary: theme.palette.text.secondary,
+    bgWhite: theme.palette.background.paper,
+    bgLightBlue: alpha(theme.palette.primary.main, 0.1),
+    bgLightPurple: alpha(theme.palette.secondary.main, 0.1),
+    bgLightGreen: alpha(theme.palette.success.main, 0.1),
+    iconBlue: theme.palette.primary.main,
+    iconPurple: theme.palette.secondary.main,
+    iconGreen: theme.palette.success.main,
+    hoverBgBlue: alpha(theme.palette.primary.main, 0.04),
+  }), [theme]);
 
   useEffect(() => {
     const fetchSections = async () => {
@@ -296,7 +314,7 @@ const StudentsPage = () => {
       {/* Header */}
       <Fade in={true} timeout={600}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a237e' }}>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: colors.primary }}>
             Quản lý Sinh viên
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
@@ -304,8 +322,8 @@ const StudentsPage = () => {
               <IconButton
                 onClick={handleRefresh}
                 sx={{
-                  bgcolor: 'white',
-                  '&:hover': { bgcolor: '#e3f2fd' },
+                  bgcolor: colors.bgWhite,
+                  '&:hover': { bgcolor: colors.hoverBgBlue },
                   boxShadow: 1,
                 }}
               >
@@ -318,8 +336,8 @@ const StudentsPage = () => {
               onClick={handleExportExcel}
               disabled={students.length === 0}
               sx={{
-                bgcolor: '#4caf50',
-                '&:hover': { bgcolor: '#45a049' },
+                bgcolor: colors.success,
+                '&:hover': { bgcolor: colors.iconGreen },
                 textTransform: 'none',
                 px: 3,
                 boxShadow: 2,
@@ -337,19 +355,19 @@ const StudentsPage = () => {
           <Grow in={true} timeout={800}>
             <Card
               sx={{
-                bgcolor: '#e3f2fd',
+                bgcolor: colors.bgLightBlue,
                 boxShadow: 2,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-                <People sx={{ fontSize: 50, mr: 2, color: '#1976d2' }} />
+                <People sx={{ fontSize: 50, mr: 2, color: colors.iconBlue }} />
                 <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#1976d2' }}>
+                  <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconBlue }}>
                     {uniqueStudents}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#424242' }}>
+                  <Typography variant="body2" sx={{ color: colors.textSecondary }}>
                     Tổng sinh viên
                   </Typography>
                 </Box>
@@ -362,19 +380,19 @@ const StudentsPage = () => {
           <Grow in={true} timeout={1000}>
             <Card
               sx={{
-                bgcolor: '#f3e5f5',
+                bgcolor: colors.bgLightPurple,
                 boxShadow: 2,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-                <School sx={{ fontSize: 50, mr: 2, color: '#7b1fa2' }} />
+                <School sx={{ fontSize: 50, mr: 2, color: colors.iconPurple }} />
                 <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#7b1fa2' }}>
+                  <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconPurple }}>
                     {totalStudents}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#424242' }}>
+                  <Typography variant="body2" sx={{ color: colors.textSecondary }}>
                     Lượt đăng ký
                   </Typography>
                 </Box>
@@ -387,19 +405,19 @@ const StudentsPage = () => {
           <Grow in={true} timeout={1200}>
             <Card
               sx={{
-                bgcolor: '#e8f5e9',
+                bgcolor: colors.bgLightGreen,
                 boxShadow: 2,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-                <CheckCircle sx={{ fontSize: 50, mr: 2, color: '#388e3c' }} />
+                <CheckCircle sx={{ fontSize: 50, mr: 2, color: colors.iconGreen }} />
                 <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#388e3c' }}>
+                  <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconGreen }}>
                     {activeSections}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#424242' }}>
+                  <Typography variant="body2" sx={{ color: colors.textSecondary }}>
                     Lớp đang dạy
                   </Typography>
                 </Box>
@@ -414,7 +432,7 @@ const StudentsPage = () => {
         <Card sx={{ mb: 3, boxShadow: 2 }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <FilterList sx={{ mr: 1, color: '#1976d2' }} />
+              <FilterList sx={{ mr: 1, color: colors.primary }} />
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Bộ lọc tìm kiếm
               </Typography>

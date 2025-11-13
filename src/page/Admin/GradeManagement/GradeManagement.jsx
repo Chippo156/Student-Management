@@ -1,35 +1,37 @@
 import React, { useState } from "react";
+import { message } from "antd";
 import {
-  Table,
+  Box,
   Button,
-  Modal,
-  Form,
-  Input,
+  TextField,
+  InputAdornment,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Typography,
+  CircularProgress,
+  IconButton,
+  Tooltip,
+  FormControl,
+  InputLabel,
   Select,
-  InputNumber,
-  Space,
-  Popconfirm,
-  message,
-  Tag,
-  Statistic,
-  Card,
-  Row,
-  Col,
-} from "antd";
+  MenuItem,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
-  EditOutlined,
-  DeleteOutlined,
-  PlusOutlined,
-  SearchOutlined,
-  TrophyOutlined,
-} from "@ant-design/icons";
-// TypeScript ColumnsType import removed
-
-const { Option } = Select;
-
-// Grade interface removed for JS/JSX conversion
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Add as AddIcon,
+  Search as SearchIcon,
+  Trophy as TrophyIcon,
+} from "@mui/icons-material";
+import { PageHeader, StatsCard, DataTable, FilterSection } from "../../../component/Common";
 
 function GradeManagement() {
+  const theme = useTheme();
   const [grades, setGrades] = useState([
     {
       id: "1",
@@ -149,17 +151,11 @@ function GradeManagement() {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingGrade, setEditingGrade] = useState(null);
-  const [form] = Form.useForm();
   const [searchText, setSearchText] = useState("");
+  const [formData, setFormData] = useState({});
 
-  const calculateTotalScore = (
-    midterm,
-    final,
-    assignment
-  ) => {
-    return (
-      Math.round((midterm * 0.3 + final * 0.5 + assignment * 0.2) * 10) / 10
-    );
+  const calculateTotalScore = (midterm, final, assignment) => {
+    return Math.round((midterm * 0.3 + final * 0.5 + assignment * 0.2) * 10) / 10;
   };
 
   const getLetterGrade = (score) => {
@@ -175,29 +171,34 @@ function GradeManagement() {
   };
 
   const getGPA = (letterGrade) => {
-    const gradePoints: { [key] } = {
+    const gradePoints = {
       "A+": 4.0,
-      A: 4.0,
+      "A": 4.0,
       "B+": 3.5,
-      B: 3.0,
+      "B": 3.0,
       "C+": 2.5,
-      C: 2.0,
+      "C": 2.0,
       "D+": 1.5,
-      D: 1.0,
-      F: 0.0,
+      "D": 1.0,
+      "F": 0.0,
     };
     return gradePoints[letterGrade] || 0.0;
   };
 
   const handleAdd = () => {
     setEditingGrade(null);
-    form.resetFields();
+    setFormData({
+      midtermScore: 0,
+      finalScore: 0,
+      assignmentScore: 0,
+      year: new Date().getFullYear(),
+    });
     setIsModalVisible(true);
   };
 
   const handleEdit = (grade) => {
     setEditingGrade(grade);
-    form.setFieldsValue(grade);
+    setFormData(grade);
     setIsModalVisible(true);
   };
 
@@ -206,85 +207,59 @@ function GradeManagement() {
     message.success("Xóa điểm số thành công!");
   };
 
-  const handleOk = async () => {
-    try {
-      const values = await form.validateFields();
-      const totalScore = calculateTotalScore(
-        values.midtermScore || 0,
-        values.finalScore || 0,
-        values.assignmentScore || 0
-      );
-      const letterGrade = getLetterGrade(totalScore);
-      const gpa = getGPA(letterGrade);
+  const handleSave = () => {
+    const totalScore = calculateTotalScore(
+      formData.midtermScore || 0,
+      formData.finalScore || 0,
+      formData.assignmentScore || 0
+    );
+    const letterGrade = getLetterGrade(totalScore);
+    const gpa = getGPA(letterGrade);
 
-      const newGrade = {
-        id: editingGrade ? editingGrade.id : Date.now().toString(),
-        ...values,
-        totalScore,
-        letterGrade,
-        gpa,
-        status:
-          totalScore >= 5.0 ? "passed" : totalScore > 0 ? "failed" : "pending",
-      };
+    const newGrade = {
+      id: editingGrade ? editingGrade.id : Date.now().toString(),
+      ...formData,
+      totalScore,
+      letterGrade,
+      gpa,
+      status: totalScore >= 5.0 ? "passed" : totalScore > 0 ? "failed" : "pending",
+    };
 
-      if (editingGrade) {
-        setGrades(
-          grades.map((grade) =>
-            grade.id === editingGrade.id ? newGrade 
-          )
-        );
-        message.success("Cập nhật điểm số thành công!");
-      } else {
-        setGrades([...grades, newGrade]);
-        message.success("Thêm điểm số thành công!");
-      }
-
-      setIsModalVisible(false);
-      form.resetFields();
-      setEditingGrade(null);
-    } catch (error) {
-      console.error("Validation failed:", error);
+    if (editingGrade) {
+      setGrades(grades.map((grade) => (grade.id === editingGrade.id ? newGrade : grade)));
+      message.success("Cập nhật điểm số thành công!");
+    } else {
+      setGrades([...grades, newGrade]);
+      message.success("Thêm điểm số thành công!");
     }
+
+    setIsModalVisible(false);
+    setFormData({});
+    setEditingGrade(null);
   };
 
   const handleCancel = () => {
     setIsModalVisible(false);
-    form.resetFields();
+    setFormData({});
     setEditingGrade(null);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "passed":
-        return "green";
-      case "failed":
-        return "red";
-      case "pending":
-        return "orange";
-      default:
-        return "default";
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case "passed":
-        return "Đậu";
-      case "failed":
-        return "Rớt";
-      case "pending":
-        return "Chưa cập nhật điểm";
-      default:
-        return status;
-    }
-  };
-
   const getGradeColor = (letterGrade) => {
-    if (letterGrade === "A+" || letterGrade === "A") return "#52c41a";
-    if (letterGrade === "B+" || letterGrade === "B") return "#1890ff";
-    if (letterGrade === "C+" || letterGrade === "C") return "#faad14";
-    if (letterGrade === "D+" || letterGrade === "D") return "#fa8c16";
-    return "#ff4d4f";
+    if (letterGrade === "A+" || letterGrade === "A") return theme.palette.success.main;
+    if (letterGrade === "B+" || letterGrade === "B") return theme.palette.primary.main;
+    if (letterGrade === "C+" || letterGrade === "C") return theme.palette.warning.main;
+    if (letterGrade === "D+" || letterGrade === "D") return theme.palette.info.main;
+    return theme.palette.error.main;
+  };
+
+  const getStatusChip = (status) => {
+    const statusConfig = {
+      passed: { label: "Đậu", color: "success" },
+      failed: { label: "Rớt", color: "error" },
+      pending: { label: "Chưa cập nhật điểm", color: "warning" },
+    };
+    const config = statusConfig[status] || { label: status, color: "default" };
+    return <Chip label={config.label} color={config.color} size="small" />;
   };
 
   const filteredGrades = grades.filter(
@@ -301,413 +276,329 @@ function GradeManagement() {
   const failedGrades = grades.filter((g) => g.status === "failed").length;
   const averageGPA =
     grades.length > 0
-      ? Math.round(
-          (grades.reduce((sum, g) => sum + g.gpa, 0) / grades.length) * 100
-        ) / 100
+      ? Math.round((grades.reduce((sum, g) => sum + g.gpa, 0) / grades.length) * 100) / 100
       : 0;
 
   const columns = [
     {
-      title: "Mã SV",
-      dataIndex: "studentCode",
-      key: "studentCode",
+      field: "studentCode",
+      headerName: "Mã SV",
       width: 100,
     },
     {
-      title: "Tên sinh viên",
-      dataIndex: "studentName",
-      key: "studentName",
+      field: "studentName",
+      headerName: "Tên sinh viên",
       width: 150,
     },
     {
-      title: "Mã MH",
-      dataIndex: "courseCode",
-      key: "courseCode",
+      field: "courseCode",
+      headerName: "Mã MH",
       width: 100,
     },
     {
-      title: "Tên môn học",
-      dataIndex: "courseName",
-      key: "courseName",
+      field: "courseName",
+      headerName: "Tên môn học",
       width: 180,
     },
     {
-      title: "Tín chỉ",
-      dataIndex: "credits",
-      key: "credits",
+      field: "credits",
+      headerName: "Tín chỉ",
       width: 80,
       align: "center",
+      renderCell: (grade) => (grade.credits > 0 ? grade.credits.toFixed(1) : "-"),
     },
     {
-      title: "Điểm GK",
-      dataIndex: "midtermScore",
-      key: "midtermScore",
+      field: "midtermScore",
+      headerName: "Điểm GK",
       width: 90,
       align: "center",
-  render: (score) => (score > 0 ? score.toFixed(1) : "-"),
+      renderCell: (grade) => (grade.midtermScore > 0 ? grade.midtermScore.toFixed(1) : "-"),
     },
     {
-      title: "Điểm CK",
-      dataIndex: "finalScore",
-      key: "finalScore",
+      field: "finalScore",
+      headerName: "Điểm CK",
       width: 90,
       align: "center",
-  render: (score) => (score > 0 ? score.toFixed(1) : "-"),
+      renderCell: (grade) => (grade.finalScore > 0 ? grade.finalScore.toFixed(1) : "-"),
     },
     {
-      title: "Điểm BT",
-      dataIndex: "assignmentScore",
-      key: "assignmentScore",
+      field: "assignmentScore",
+      headerName: "Điểm BT",
       width: 90,
       align: "center",
-  render: (score) => (score > 0 ? score.toFixed(1) : "-"),
+      renderCell: (grade) => (grade.assignmentScore > 0 ? grade.assignmentScore.toFixed(1) : "-"),
     },
     {
-      title: "Điểm TB",
-      dataIndex: "totalScore",
-      key: "totalScore",
+      field: "totalScore",
+      headerName: "Điểm TB",
       width: 90,
       align: "center",
-  render: (score) => (
-        <span
-          style={{
+      renderCell: (grade) => (
+        <Typography
+          sx={{
             fontWeight: "bold",
-            color: score >= 5.0 ? "#52c41a" : "#ff4d4f",
+            color: grade.totalScore >= 5.0 ? theme.palette.success.main : theme.palette.error.main,
           }}
         >
-          {score > 0 ? score.toFixed(1) : "-"}
-        </span>
+          {grade.totalScore > 0 ? grade.totalScore.toFixed(1) : "-"}
+        </Typography>
       ),
     },
     {
-      title: "Điểm chữ",
-      dataIndex: "letterGrade",
-      key: "letterGrade",
+      field: "letterGrade",
+      headerName: "Điểm chữ",
       width: 90,
       align: "center",
-  render: (grade) => (
-        <Tag color={getGradeColor(grade)} style={{ fontWeight: "bold" }}>
-          {grade}
-        </Tag>
+      renderCell: (grade) => (
+        <Chip
+          label={grade.letterGrade}
+          sx={{ fontWeight: "bold", bgcolor: getGradeColor(grade.letterGrade), color: "white" }}
+        />
       ),
     },
     {
-      title: "GPA",
-      dataIndex: "gpa",
-      key: "gpa",
+      field: "gpa",
+      headerName: "GPA",
       width: 80,
       align: "center",
-  render: (gpa) => gpa.toFixed(1),
+      renderCell: (grade) => grade.gpa.toFixed(1),
     },
     {
-      title: "Học kỳ",
-      key: "semester_year",
+      field: "semester_year",
+      headerName: "Học kỳ",
       width: 100,
       align: "center",
-  render: (_, record) => `${record.semester}/${record.year}`,
+      renderCell: (grade) => `${grade.semester}/${grade.year}`,
     },
     {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
+      field: "status",
+      headerName: "Trạng thái",
       width: 110,
-  render: (status) => (
-        <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>
-      ),
+      renderCell: (grade) => getStatusChip(grade.status),
     },
     {
-      title: "Thao tác",
-      key: "action",
+      field: "actions",
+      headerName: "Thao tác",
       width: 120,
-      render: (_, record) => (
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          />
-          <Popconfirm
-            title="Xác nhận xóa"
-            description="Bạn có chắc chắn muốn xóa điểm số này?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
-            <Button
-              type="primary"
-              danger
-              size="small"
-              icon={<DeleteOutlined />}
-            />
-          </Popconfirm>
-        </Space>
+      align: "center",
+      renderCell: (grade) => (
+        <Box sx={{ display: "flex", gap: 0.5 }}>
+          <Tooltip title="Chỉnh sửa">
+            <IconButton size="small" color="primary" onClick={() => handleEdit(grade)}>
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Xóa">
+            <IconButton size="small" color="error" onClick={() => handleDelete(grade.id)}>
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
       ),
     },
   ];
 
   return (
-    <div>
-      {/* Statistics Cards */}
-      <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="Tổng số điểm"
-              value={totalGrades}
-              prefix={<TrophyOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="Số điểm đậu"
-              value={passedGrades}
-              valueStyle={{ color: "#3f8600" }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="Số điểm rớt"
-              value={failedGrades}
-              valueStyle={{ color: "#cf1322" }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="GPA trung bình"
-              value={averageGPA}
-              precision={2}
-              valueStyle={{ color: averageGPA >= 3.0 ? "#3f8600" : "#cf1322" }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      <div
-        style={{
-          marginBottom: 16,
-          display: "flex",
-          justifyContent: "space-between",
-        }}
-      >
-        <Space>
-          <Input
-            placeholder="Tìm kiếm điểm số..."
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 300 }}
-          />
-        </Space>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          Thêm điểm số
-        </Button>
-      </div>
-
-      <Table
-        columns={columns}
-        dataSource={filteredGrades}
-        rowKey="id"
-        pagination={{
-          total: filteredGrades.length,
-          pageSize: 10,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total, range) =>
-            `${range[0]}-${range[1]} của ${total} điểm số`,
-        }}
-        scroll={{ x: 1800 }}
+    <Box sx={{ flexGrow: 1, p: 3, minHeight: "100vh" }}>
+      {/* Header */}
+      <PageHeader
+        title="Quản lý Điểm số"
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAdd}
+            sx={{ textTransform: "none", px: 3 }}
+          >
+            Thêm điểm số
+          </Button>
+        }
       />
 
-      <Modal
-        title={editingGrade ? "Chỉnh sửa điểm số" : "Thêm điểm số mới"}
-        open={isModalVisible}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        width={700}
-        okText={editingGrade ? "Cập nhật" : "Thêm"}
-        cancelText="Hủy"
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{
-            midtermScore: 0,
-            finalScore: 0,
-            assignmentScore: 0,
-            year: new Date().getFullYear(),
-          }}
-        >
-          <div style={{ display: "flex", gap: "16px" }}>
-            <Form.Item
-              name="studentCode"
-              label="Mã sinh viên"
-              rules={[
-                { required: true, message: "Vui lòng nhập mã sinh viên!" },
-              ]}
-              style={{ flex: 1 }}
-            >
-              <Input placeholder="Nhập mã sinh viên" />
-            </Form.Item>
+      {/* Summary Cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatsCard icon={<TrophyIcon />} value={totalGrades} label="Tổng số điểm" color="primary" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatsCard icon={<TrophyIcon />} value={passedGrades} label="Số điểm đậu" color="success" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatsCard icon={<TrophyIcon />} value={failedGrades} label="Số điểm rớt" color="error" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatsCard
+            icon={<TrophyIcon />}
+            value={averageGPA.toFixed(2)}
+            label="GPA trung bình"
+            color={averageGPA >= 3.0 ? "success" : "error"}
+          />
+        </Grid>
+      </Grid>
 
-            <Form.Item
-              name="studentName"
-              label="Tên sinh viên"
-              rules={[
-                { required: true, message: "Vui lòng nhập tên sinh viên!" },
-              ]}
-              style={{ flex: 1 }}
-            >
-              <Input placeholder="Nhập tên sinh viên" />
-            </Form.Item>
-          </div>
+      {/* Filter Section */}
+      <FilterSection resultCount={filteredGrades.length}>
+        <Grid item xs={12} md={8}>
+          <TextField
+            fullWidth
+            placeholder="Tìm kiếm theo tên sinh viên, mã môn học..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+            size="small"
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={() => setSearchText("")}
+            sx={{ height: "40px" }}
+          >
+            Đặt lại
+          </Button>
+        </Grid>
+      </FilterSection>
 
-          <div style={{ display: "flex", gap: "16px" }}>
-            <Form.Item
-              name="courseCode"
-              label="Mã môn học"
-              rules={[{ required: true, message: "Vui lòng nhập mã môn học!" }]}
-              style={{ flex: 1 }}
-            >
-              <Input placeholder="Nhập mã môn học" />
-            </Form.Item>
+      {/* Grades Table */}
+      <DataTable
+        columns={columns}
+        rows={filteredGrades}
+        page={0}
+        rowsPerPage={10}
+        totalCount={filteredGrades.length}
+        onPageChange={() => {}}
+        onRowsPerPageChange={() => {}}
+        emptyState={
+          <>
+            <TrophyIcon sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }} />
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              Không tìm thấy điểm số nào
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {searchText ? "Thử thay đổi từ khóa tìm kiếm" : "Chưa có điểm số nào trong hệ thống"}
+            </Typography>
+          </>
+        }
+      />
 
-            <Form.Item
-              name="courseName"
-              label="Tên môn học"
-              rules={[
-                { required: true, message: "Vui lòng nhập tên môn học!" },
-              ]}
-              style={{ flex: 1 }}
-            >
-              <Input placeholder="Nhập tên môn học" />
-            </Form.Item>
-          </div>
-
-          <div style={{ display: "flex", gap: "16px" }}>
-            <Form.Item
-              name="credits"
-              label="Số tín chỉ"
-              rules={[{ required: true, message: "Vui lòng nhập số tín chỉ!" }]}
-              style={{ flex: 1 }}
-            >
-              <InputNumber
-                min={1}
-                max={6}
-                placeholder="Số tín chỉ"
-                style={{ width: "100%" }}
+      {/* Add/Edit Dialog */}
+      <Dialog open={isModalVisible} onClose={handleCancel} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {editingGrade ? "Chỉnh sửa điểm số" : "Thêm điểm số mới"}
+        </DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Mã sinh viên"
+                value={formData.studentCode || ""}
+                onChange={(e) => setFormData({ ...formData, studentCode: e.target.value })}
+                size="small"
               />
-            </Form.Item>
-
-            <Form.Item
-              name="semester"
-              label="Học kỳ"
-              rules={[{ required: true, message: "Vui lòng chọn học kỳ!" }]}
-              style={{ flex: 1 }}
-            >
-              <Select placeholder="Chọn học kỳ">
-                <Option value="HK1">Học kỳ 1</Option>
-                <Option value="HK2">Học kỳ 2</Option>
-                <Option value="HK3">Học kỳ hè</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="year"
-              label="Năm học"
-              rules={[{ required: true, message: "Vui lòng chọn năm học!" }]}
-              style={{ flex: 1 }}
-            >
-              <Select placeholder="Chọn năm học">
-                {[2023, 2024, 2025, 2026, 2027].map((year) => (
-                  <Option key={year} value={year}>
-                    {year}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </div>
-
-          <div style={{ display: "flex", gap: "16px" }}>
-            <Form.Item
-              name="midtermScore"
-              label="Điểm giữa kỳ (30%)"
-              rules={[
-                { required: true, message: "Vui lòng nhập điểm giữa kỳ!" },
-                {
-                  type: "number",
-                  min: 0,
-                  max: 10,
-                  message: "Điểm phải từ 0 đến 10!",
-                },
-              ]}
-              style={{ flex: 1 }}
-            >
-              <InputNumber
-                min={0}
-                max={10}
-                step={0.1}
-                placeholder="Điểm giữa kỳ"
-                style={{ width: "100%" }}
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Tên sinh viên"
+                value={formData.studentName || ""}
+                onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
+                size="small"
               />
-            </Form.Item>
-
-            <Form.Item
-              name="finalScore"
-              label="Điểm cuối kỳ (50%)"
-              rules={[
-                { required: true, message: "Vui lòng nhập điểm cuối kỳ!" },
-                {
-                  type: "number",
-                  min: 0,
-                  max: 10,
-                  message: "Điểm phải từ 0 đến 10!",
-                },
-              ]}
-              style={{ flex: 1 }}
-            >
-              <InputNumber
-                min={0}
-                max={10}
-                step={0.1}
-                placeholder="Điểm cuối kỳ"
-                style={{ width: "100%" }}
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Mã môn học"
+                value={formData.courseCode || ""}
+                onChange={(e) => setFormData({ ...formData, courseCode: e.target.value })}
+                size="small"
               />
-            </Form.Item>
-
-            <Form.Item
-              name="assignmentScore"
-              label="Điểm bài tập (20%)"
-              rules={[
-                { required: true, message: "Vui lòng nhập điểm bài tập!" },
-                {
-                  type: "number",
-                  min: 0,
-                  max: 10,
-                  message: "Điểm phải từ 0 đến 10!",
-                },
-              ]}
-              style={{ flex: 1 }}
-            >
-              <InputNumber
-                min={0}
-                max={10}
-                step={0.1}
-                placeholder="Điểm bài tập"
-                style={{ width: "100%" }}
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Tên môn học"
+                value={formData.courseName || ""}
+                onChange={(e) => setFormData({ ...formData, courseName: e.target.value })}
+                size="small"
               />
-            </Form.Item>
-          </div>
-        </Form>
-      </Modal>
-    </div>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Tín chỉ"
+                value={formData.credits || 0}
+                onChange={(e) => setFormData({ ...formData, credits: parseFloat(e.target.value) })}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Học kỳ</InputLabel>
+                <Select
+                  value={formData.semester || "HK1"}
+                  label="Học kỳ"
+                  onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
+                >
+                  <MenuItem value="HK1">Học kỳ 1</MenuItem>
+                  <MenuItem value="HK2">Học kỳ 2</MenuItem>
+                  <MenuItem value="HK3">Học kỳ hè</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Điểm giữa kỳ"
+                value={formData.midtermScore || 0}
+                onChange={(e) => setFormData({ ...formData, midtermScore: parseFloat(e.target.value) })}
+                inputProps={{ min: 0, max: 10, step: 0.1 }}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Điểm cuối kỳ"
+                value={formData.finalScore || 0}
+                onChange={(e) => setFormData({ ...formData, finalScore: parseFloat(e.target.value) })}
+                inputProps={{ min: 0, max: 10, step: 0.1 }}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Điểm bài tập"
+                value={formData.assignmentScore || 0}
+                onChange={(e) => setFormData({ ...formData, assignmentScore: parseFloat(e.target.value) })}
+                inputProps={{ min: 0, max: 10, step: 0.1 }}
+                size="small"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancel}>Hủy</Button>
+          <Button onClick={handleSave} variant="contained">
+            {editingGrade ? "Cập nhật" : "Thêm"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
-};
+}
 
 export default GradeManagement;

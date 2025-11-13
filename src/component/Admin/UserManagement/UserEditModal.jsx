@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, DatePicker, Row, Col, Divider, Button } from 'antd';
+import {
+  Modal,
+  Form,
+  Input,
+  Select,
+  DatePicker,
+  Row,
+  Col,
+  Divider,
+  Button,
+} from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { genderOptions, roleOptions } from './constants';
-import { facultyService } from '../../../service/facultyService';
+import facultyService from '../../../service/facultyService';
 import { departmentService } from '../../../service/departmentService';
 import { classService } from '../../../service/classService';
 
@@ -19,7 +29,8 @@ const UserEditModal = ({ open, onCancel, onSave, user, loading }) => {
   const [editDepartments, setEditDepartments] = useState([]);
   const [editClasses, setEditClasses] = useState([]);
   const [editSelectedFaculty, setEditSelectedFaculty] = useState(undefined);
-  const [editSelectedDepartment, setEditSelectedDepartment] = useState(undefined);
+  const [editSelectedDepartment, setEditSelectedDepartment] =
+    useState(undefined);
 
   // Load faculties khi mở modal
   useEffect(() => {
@@ -56,9 +67,10 @@ const UserEditModal = ({ open, onCancel, onSave, user, loading }) => {
   useEffect(() => {
     if (editSelectedFaculty) {
       const fetchDepartments = async () => {
-        const res = await departmentService.getDepartmentsDropdownByFaculty(
-          editSelectedFaculty
-        );
+        const res =
+          await departmentService.getDepartmentsDropdownByFaculty(
+            editSelectedFaculty
+          );
         if (res && Array.isArray(res)) setEditDepartments(res);
         else setEditDepartments([]);
       };
@@ -105,8 +117,12 @@ const UserEditModal = ({ open, onCancel, onSave, user, loading }) => {
     const payload = {
       ...values,
       roleId: editRoleId,
-      dateOfBirth: values.dateOfBirth ? values.dateOfBirth.format('YYYY-MM-DD') : null,
-      issuedDate: values.issuedDate ? values.issuedDate.format('YYYY-MM-DD') : null,
+      dateOfBirth: values.dateOfBirth
+        ? values.dateOfBirth.format('YYYY-MM-DD')
+        : null,
+      issuedDate: values.issuedDate
+        ? values.issuedDate.format('YYYY-MM-DD')
+        : null,
     };
     onSave(payload);
   };
@@ -132,8 +148,13 @@ const UserEditModal = ({ open, onCancel, onSave, user, loading }) => {
       }}
       destroyOnClose
     >
-      <div style={{ background: '#f4f8ff', borderRadius: 16, padding: 32 }}>
-        <Form form={form} layout="vertical" onFinish={handleFinish} initialValues={{ gender: 1 }}>
+      <div style={{ borderRadius: 16, padding: 32 }}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleFinish}
+          initialValues={{ gender: 1 }}
+        >
           {/* Thông tin cá nhân */}
           <Divider orientation="left" style={{ color: '#1677ff' }}>
             🧍 Thông tin cá nhân
@@ -143,7 +164,9 @@ const UserEditModal = ({ open, onCancel, onSave, user, loading }) => {
               <Form.Item
                 label="Tên đăng nhập"
                 name="username"
-                rules={[{ required: true, message: 'Bắt buộc nhập tên đăng nhập' }]}
+                rules={[
+                  { required: true, message: 'Bắt buộc nhập tên đăng nhập' },
+                ]}
               >
                 <Input disabled />
               </Form.Item>

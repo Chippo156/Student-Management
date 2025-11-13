@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -27,10 +27,28 @@ import {
   CheckCircle,
   Warning,
 } from '@mui/icons-material';
+import { useTheme, alpha } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
 import { teacherService, courseService } from '../../../service';
 
 const GradesPage = () => {
+  const theme = useTheme();
+  const colors = useMemo(() => ({
+    bgCard: theme.palette.background.paper,
+    bgPage: theme.palette.background.default,
+    primary: theme.palette.primary.main,
+    success: theme.palette.success.main,
+    warning: theme.palette.warning.main,
+    error: theme.palette.error.main,
+    text: theme.palette.text.primary,
+    textSecondary: theme.palette.text.secondary,
+    border: theme.palette.divider,
+    bgPrimarySoft: alpha(theme.palette.primary.main, 0.12),
+    bgSuccessSoft: alpha(theme.palette.success.main, 0.12),
+    bgWarningSoft: alpha(theme.palette.warning.main, 0.12),
+    bgErrorSoft: alpha(theme.palette.error.main, 0.12),
+  }), [theme]);
+
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [students, setStudents] = useState([]);
@@ -68,20 +86,17 @@ const GradesPage = () => {
 
       setLoading(true);
       try {
-        // Fetch students
         const studentsResponse = await courseService.getCourseStudents(
           selectedCourse
         );
         const studentsData = studentsResponse.data || [];
 
-        // Fetch grades
         try {
           const gradesResponse = await teacherService.getStudentGrades(
             selectedCourse
           );
           const gradesData = gradesResponse.data || [];
 
-          // Merge students with grades
           const mergedData = studentsData.map((student) => {
             const gradeData = gradesData.find(
               (g) => g.studentId === student.studentId
@@ -99,7 +114,6 @@ const GradesPage = () => {
 
           setStudents(mergedData);
         } catch (error) {
-          // If no grades exist yet, just show students
           const mergedData = studentsData.map((student) => ({
             ...student,
             midtermScore: null,
@@ -132,7 +146,6 @@ const GradesPage = () => {
     const lab = record.labScore || 0;
     const attendance = record.attendanceScore || 0;
 
-    // Weighted average: 20% midterm, 40% final, 30% lab, 10% attendance
     return (midterm * 0.2 + final * 0.4 + lab * 0.3 + attendance * 0.1).toFixed(
       2
     );
@@ -167,7 +180,6 @@ const GradesPage = () => {
     try {
       setLoading(true);
 
-      // Prepare grades data
       const gradesData = students.map((student) => ({
         studentId: student.studentId,
         courseId: selectedCourse,
@@ -178,7 +190,6 @@ const GradesPage = () => {
         totalScore: student.totalScore || 0,
       }));
 
-      // Save grades
       await teacherService.updateStudentGrades(selectedCourse, gradesData);
 
       setSnackbar({
@@ -203,7 +214,6 @@ const GradesPage = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  // Calculate statistics
   const passedStudents = students.filter(
     (s) => s.totalScore && s.totalScore >= 5
   ).length;
@@ -336,7 +346,7 @@ const GradesPage = () => {
         <Typography
           variant="h4"
           gutterBottom
-          sx={{ mb: 4, fontWeight: 'bold' }}
+          sx={{ mb: 4, fontWeight: 'bold', color: colors.text }}
         >
           Quản lý Điểm số
         </Typography>
@@ -348,13 +358,13 @@ const GradesPage = () => {
           <Grow in={true} timeout={800}>
             <Card
               sx={{
-                backgroundColor: '#e3f2fd',
+                backgroundColor: colors.bgPrimarySoft,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <Grade sx={{ fontSize: 40, color: '#1976d2', mr: 2 }} />
+                <Grade sx={{ fontSize: 40, color: colors.primary, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
@@ -376,13 +386,13 @@ const GradesPage = () => {
           <Grow in={true} timeout={1000}>
             <Card
               sx={{
-                backgroundColor: '#e8f5e9',
+                backgroundColor: colors.bgSuccessSoft,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <CheckCircle sx={{ fontSize: 40, color: '#388e3c', mr: 2 }} />
+                <CheckCircle sx={{ fontSize: 40, color: colors.success, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
@@ -404,13 +414,13 @@ const GradesPage = () => {
           <Grow in={true} timeout={1200}>
             <Card
               sx={{
-                backgroundColor: '#ffebee',
+                backgroundColor: colors.bgErrorSoft,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <Warning sx={{ fontSize: 40, color: '#d32f2f', mr: 2 }} />
+                <Warning sx={{ fontSize: 40, color: colors.error, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
@@ -432,13 +442,13 @@ const GradesPage = () => {
           <Grow in={true} timeout={1400}>
             <Card
               sx={{
-                backgroundColor: '#fff3e0',
+                backgroundColor: colors.bgWarningSoft,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <TrendingUp sx={{ fontSize: 40, color: '#f57c00', mr: 2 }} />
+                <TrendingUp sx={{ fontSize: 40, color: colors.warning, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"

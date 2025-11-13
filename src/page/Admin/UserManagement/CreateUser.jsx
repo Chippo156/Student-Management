@@ -15,7 +15,7 @@ import {
 import { UserAddOutlined } from '@ant-design/icons';
 import { Box } from '@mui/material';
 import { userService } from '../../../service/userService';
-import { facultyService } from '../../../service/facultyService';
+import facultyService from '../../../service/facultyService';
 import { departmentService } from '../../../service/departmentService';
 import { classService } from '../../../service/classService';
 
@@ -223,10 +223,7 @@ const CreateUser = () => {
           <Title level={4} style={{ marginBottom: 16, color: '#1677ff' }}>
             🧍 Thông tin cá nhân
           </Title>
-          <Card
-            size="small"
-            style={{ background: '#f9fafc', marginBottom: 24 }}
-          >
+          <Card size="small" style={{ marginBottom: 24 }}>
             <Row gutter={[24, 16]}>
               <Col xs={24} md={8}>
                 <Form.Item
@@ -325,10 +322,7 @@ const CreateUser = () => {
           <Title level={4} style={{ marginBottom: 16, color: '#1677ff' }}>
             🏠 Thông tin thêm
           </Title>
-          <Card
-            size="small"
-            style={{ background: '#f9fafc', marginBottom: 24 }}
-          >
+          <Card size="small" style={{ marginBottom: 24 }}>
             <Row gutter={[24, 16]}>
               <Col xs={24} md={8}>
                 <Form.Item label="Địa chỉ" name="address">
@@ -366,10 +360,7 @@ const CreateUser = () => {
           <Title level={4} style={{ marginBottom: 16, color: '#1677ff' }}>
             🪪 Giấy tờ cá nhân
           </Title>
-          <Card
-            size="small"
-            style={{ background: '#f9fafc', marginBottom: 24 }}
-          >
+          <Card size="small" style={{ marginBottom: 24 }}>
             <Row gutter={[24, 16]}>
               <Col xs={24} md={8}>
                 <Form.Item
@@ -398,10 +389,7 @@ const CreateUser = () => {
           <Title level={4} style={{ marginBottom: 16, color: '#1677ff' }}>
             ⚙️ Vai trò người dùng
           </Title>
-          <Card
-            size="small"
-            style={{ background: '#f9fafc', marginBottom: 24 }}
-          >
+          <Card size="small" style={{ marginBottom: 24 }}>
             <Row gutter={24}>
               <Col xs={24} md={8}>
                 <Form.Item

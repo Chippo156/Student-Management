@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Paper,
   Typography,
@@ -10,15 +10,24 @@ import {
   Button,
   Fade,
 } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import { Schedule, ArrowForward, AccessTime } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import scheduleService from '../../../../service/scheduleService';
 import dayjs from 'dayjs';
 
 const TeacherScheduleToday = ({ lecturerId }) => {
+  const theme = useTheme();
   const [todaySchedule, setTodaySchedule] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  const colors = useMemo(() => ({
+    warning: theme.palette.warning.main,
+    warningLight: alpha(theme.palette.warning.main, 0.08),
+    warningHover: alpha(theme.palette.warning.main, 0.12),
+    disabled: theme.palette.action.disabled,
+  }), [theme]);
 
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -51,7 +60,7 @@ const TeacherScheduleToday = ({ lecturerId }) => {
     <Fade in={!loading} timeout={1200}>
       <Paper sx={{ p: 3, height: '100%' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Schedule sx={{ mr: 1, color: '#f57c00' }} />
+          <Schedule sx={{ mr: 1, color: colors.warning }} />
           <Typography variant="h6" fontWeight="bold">
             Lịch dạy hôm nay
           </Typography>
@@ -64,12 +73,12 @@ const TeacherScheduleToday = ({ lecturerId }) => {
                 <ListItem
                   key={index}
                   sx={{
-                    borderLeft: '3px solid #f57c00',
+                    borderLeft: `3px solid ${colors.warning}`,
                     mb: 1,
-                    bgcolor: '#fff3e0',
+                    bgcolor: colors.warningLight,
                     borderRadius: 1,
                     '&:hover': {
-                      bgcolor: '#ffe0b2',
+                      bgcolor: colors.warningHover,
                       transform: 'translateX(5px)',
                       transition: 'all 0.2s',
                     },
@@ -120,7 +129,7 @@ const TeacherScheduleToday = ({ lecturerId }) => {
           </>
         ) : (
           <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Schedule sx={{ fontSize: 60, color: '#e0e0e0', mb: 2 }} />
+            <Schedule sx={{ fontSize: 60, color: colors.disabled, mb: 2 }} />
             <Typography variant="body2" color="text.secondary">
               Không có lịch dạy hôm nay
             </Typography>

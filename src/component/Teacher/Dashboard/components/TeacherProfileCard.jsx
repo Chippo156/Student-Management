@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Paper,
   Typography,
@@ -9,6 +9,7 @@ import {
   Button,
   Grow,
 } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import {
   School,
   Business,
@@ -19,7 +20,16 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 const TeacherProfileCard = ({ user }) => {
+  const theme = useTheme();
   const navigate = useNavigate();
+
+  const colors = useMemo(() => ({
+    white: theme.palette.common.white,
+    bgGradientStart: theme.palette.primary.main,
+    bgGradientEnd: theme.palette.secondary.main,
+    bgWhiteAlpha: alpha(theme.palette.common.white, 0.2),
+    bgDividerAlpha: alpha(theme.palette.common.white, 0.3),
+  }), [theme]);
 
   const fullName = user?.user?.fullName || user?.fullName || user?.username;
   const academicTitle = user?.academicTitle;
@@ -35,8 +45,8 @@ const TeacherProfileCard = ({ user }) => {
         sx={{
           p: 3,
           height: '100%',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
+          background: `linear-gradient(135deg, ${colors.bgGradientStart} 0%, ${colors.bgGradientEnd} 100%)`,
+          color: colors.white,
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -45,8 +55,8 @@ const TeacherProfileCard = ({ user }) => {
               width: 100,
               height: 100,
               mb: 2,
-              bgcolor: 'white',
-              color: '#667eea',
+              bgcolor: colors.white,
+              color: colors.bgGradientStart,
               fontSize: 40,
               fontWeight: 'bold',
               boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
@@ -64,12 +74,12 @@ const TeacherProfileCard = ({ user }) => {
             size="small"
             sx={{
               mt: 1,
-              bgcolor: 'rgba(255,255,255,0.2)',
-              color: 'white',
+              bgcolor: colors.bgWhiteAlpha,
+              color: colors.white,
             }}
           />
 
-          <Divider sx={{ width: '100%', my: 2, bgcolor: 'rgba(255,255,255,0.3)' }} />
+          <Divider sx={{ width: '100%', my: 2, bgcolor: colors.bgDividerAlpha }} />
 
           <Box sx={{ width: '100%' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
@@ -132,10 +142,10 @@ const TeacherProfileCard = ({ user }) => {
             onClick={() => navigate('/teacher/settings')}
             sx={{
               mt: 2,
-              bgcolor: 'white',
-              color: '#667eea',
+              bgcolor: colors.white,
+              color: colors.bgGradientStart,
               '&:hover': {
-                bgcolor: 'rgba(255,255,255,0.9)',
+                bgcolor: alpha(colors.white, 0.9),
               },
             }}
           >

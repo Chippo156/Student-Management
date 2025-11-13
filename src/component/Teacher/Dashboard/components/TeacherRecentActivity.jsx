@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Paper,
   Typography,
@@ -10,6 +10,7 @@ import {
   Avatar,
   Fade,
 } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import {
   TrendingUp,
   Grade,
@@ -25,6 +26,18 @@ dayjs.extend(relativeTime);
 dayjs.locale('vi');
 
 const TeacherRecentActivity = () => {
+  const theme = useTheme();
+
+  const colors = useMemo(() => ({
+    primary: theme.palette.primary.main,
+    success: theme.palette.success.main,
+    warning: theme.palette.warning.main,
+    secondary: theme.palette.secondary.main,
+    error: theme.palette.error.main,
+    info: theme.palette.info.main,
+    hover: alpha(theme.palette.action.hover, 0.04),
+  }), [theme]);
+
   // Mock data - sẽ thay bằng API sau
   const activities = [
     {
@@ -33,7 +46,7 @@ const TeacherRecentActivity = () => {
       title: 'Đã chấm điểm',
       description: 'Bài kiểm tra giữa kỳ - Lập trình Web',
       time: dayjs().subtract(2, 'hour'),
-      color: '#1976d2',
+      color: colors.primary,
     },
     {
       type: 'attendance',
@@ -41,7 +54,7 @@ const TeacherRecentActivity = () => {
       title: 'Điểm danh lớp học',
       description: 'Cơ sở dữ liệu - Lớp CNTT-K17',
       time: dayjs().subtract(4, 'hour'),
-      color: '#388e3c',
+      color: colors.success,
     },
     {
       type: 'assignment',
@@ -49,7 +62,7 @@ const TeacherRecentActivity = () => {
       title: 'Giao bài tập mới',
       description: 'Bài tập tuần 5 - Lập trình Web',
       time: dayjs().subtract(1, 'day'),
-      color: '#f57c00',
+      color: colors.warning,
     },
     {
       type: 'material',
@@ -57,7 +70,7 @@ const TeacherRecentActivity = () => {
       title: 'Tải lên tài liệu',
       description: 'Slide bài giảng tuần 6',
       time: dayjs().subtract(2, 'day'),
-      color: '#7b1fa2',
+      color: colors.secondary,
     },
   ];
 
@@ -65,7 +78,7 @@ const TeacherRecentActivity = () => {
     <Fade in={true} timeout={1600}>
       <Paper sx={{ p: 3, height: '100%' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <TrendingUp sx={{ mr: 1, color: '#1976d2' }} />
+          <TrendingUp sx={{ mr: 1, color: colors.primary }} />
           <Typography variant="h6" fontWeight="bold">
             Hoạt động gần đây
           </Typography>
@@ -79,7 +92,7 @@ const TeacherRecentActivity = () => {
                 borderRadius: 1,
                 mb: 1,
                 '&:hover': {
-                  bgcolor: '#f5f5f5',
+                  bgcolor: colors.hover,
                   transition: 'all 0.2s',
                 },
               }}
@@ -87,7 +100,7 @@ const TeacherRecentActivity = () => {
               <ListItemAvatar>
                 <Avatar
                   sx={{
-                    bgcolor: `${activity.color}15`,
+                    bgcolor: alpha(activity.color, 0.15),
                     color: activity.color,
                   }}
                 >

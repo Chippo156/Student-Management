@@ -1,73 +1,105 @@
 import React, { useState } from 'react';
+import { message } from 'antd';
 import {
+  Box,
   Card,
-  Form,
-  Input,
+  CardContent,
   Button,
+  TextField,
   Switch,
-  Select,
-  InputNumber,
-  Upload,
-  message,
+  FormControlLabel,
   Divider,
-  Space,
+  Grid,
   Typography,
-  Row,
-  Col,
-  Avatar,
   Tabs,
-} from 'antd';
+  Tab,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress,
+  Paper,
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import {
-  SettingOutlined,
-  SaveOutlined,
-  UploadOutlined,
-  UserOutlined,
-  LockOutlined,
-  NotificationOutlined,
-  DatabaseOutlined,
-  SecurityScanOutlined,
-} from '@ant-design/icons';
+  Settings as SettingsIcon,
+  Save as SaveIcon,
+  School as SchoolIcon,
+  Notifications as NotificationsIcon,
+  Security as SecurityIcon,
+  Info as InfoIcon,
+} from '@mui/icons-material';
+import { PageHeader } from '../../../component/Common';
 
-const { Title, Text } = Typography;
-const { Option } = Select;
-const { TabPane } = Tabs;
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`tabpanel-${index}`}
+      aria-labelledby={`tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
+function a11yProps(index) {
+  return {
+    id: `tab-${index}`,
+    'aria-controls': `tabpanel-${index}`,
+  };
+}
 
 const SystemSettings = () => {
+  const theme = useTheme();
+  const [loading, setLoading] = useState(false);
+  const [tabValue, setTabValue] = useState(0);
+
   const [config, setConfig] = useState({
     systemName: 'Hệ thống quản lý sinh viên',
     systemLogo: '',
-    mainColor: '#1890ff',
+    mainColor: '#1976d2',
     language: 'vi',
     timezone: 'Asia/Ho_Chi_Minh',
-
     academicYear: '2024-2025',
     semesterSystem: '2-semester',
     gradeScale: '10-point',
     minPassingGrade: 5.0,
     maxCreditsPerSemester: 24,
-
     emailNotifications: true,
     smsNotifications: false,
     systemAnnouncements: true,
     gradeNotifications: true,
-
     passwordPolicy: 'medium',
     sessionTimeout: 30,
     twoFactorAuth: false,
-
     maintenanceMode: false,
     backupFrequency: 'daily',
     logRetention: 30,
   });
 
-  const [loading, setLoading] = useState(false);
-  const [form] = Form.useForm();
+  const [formData, setFormData] = useState(config);
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value,
+    });
+  };
 
   const handleSave = async () => {
     try {
       setLoading(true);
-      const values = await form.validateFields();
-      setConfig({ ...config, ...values });
+      setConfig(formData);
       message.success('Cài đặt hệ thống đã được lưu thành công!');
     } catch (error) {
       message.error('Có lỗi xảy ra khi lưu cài đặt!');
@@ -77,443 +109,438 @@ const SystemSettings = () => {
   };
 
   const handleReset = () => {
-    form.resetFields();
+    setFormData(config);
     message.info('Đã khôi phục về cài đặt gốc');
   };
 
-  const uploadProps = {
-    name: 'file',
-    action: '/api/upload',
-    headers: {
-      authorization: 'authorization-text',
-    },
-    onChange(info) {
-      if (info.file.status !== 'uploading') {
-        console.log(info.file, info.fileList);
-      }
-      if (info.file.status === 'done') {
-        message.success(`${info.file.name} tải lên thành công`);
-      } else if (info.file.status === 'error') {
-        message.error(`${info.file.name} tải lên thất bại.`);
-      }
-    },
-  };
-
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
-      <Card>
-        <div style={{ marginBottom: 24 }}>
-          <Title level={2}>
-            <SettingOutlined style={{ marginRight: 8 }} />
-            Cài đặt hệ thống
-          </Title>
-          <Text type="secondary">
-            Quản lý các cài đặt chung của hệ thống quản lý sinh viên
-          </Text>
-        </div>
-
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={config}
-          onFinish={handleSave}
-        >
-          <Tabs defaultActiveKey="general" type="card">
-            {/* Tab 1 - Cài đặt chung */}
-            <TabPane
-              tab={
-                <span>
-                  <UserOutlined /> Cài đặt chung
-                </span>
-              }
-              key="general"
+    <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
+      {/* Header */}
+      <PageHeader
+        title="Cài đặt hệ thống"
+        actions={
+          <>
+            <Button
+              variant="outlined"
+              onClick={handleReset}
+              disabled={loading}
+              sx={{ textTransform: 'none', px: 3 }}
             >
-              <Row gutter={24}>
-                <Col span={12}>
-                  <Form.Item
-                    name="systemName"
-                    label="Tên hệ thống"
-                    rules={[
-                      {
-                        required: true,
-                        message: 'Vui lòng nhập tên hệ thống!',
-                      },
-                    ]}
-                  >
-                    <Input placeholder="Nhập tên hệ thống" />
-                  </Form.Item>
-
-                  <Form.Item
-                    name="language"
-                    label="Ngôn ngữ"
-                    rules={[
-                      { required: true, message: 'Vui lòng chọn ngôn ngữ!' },
-                    ]}
-                  >
-                    <Select placeholder="Chọn ngôn ngữ">
-                      <Option value="vi">Tiếng Việt</Option>
-                      <Option value="en">English</Option>
-                    </Select>
-                  </Form.Item>
-
-                  <Form.Item
-                    name="timezone"
-                    label="Múi giờ"
-                    rules={[
-                      { required: true, message: 'Vui lòng chọn múi giờ!' },
-                    ]}
-                  >
-                    <Select placeholder="Chọn múi giờ">
-                      <Option value="Asia/Ho_Chi_Minh">Việt Nam (UTC+7)</Option>
-                      <Option value="Asia/Bangkok">Bangkok (UTC+7)</Option>
-                      <Option value="Asia/Shanghai">Shanghai (UTC+8)</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-
-                <Col span={12}>
-                  <Form.Item name="mainColor" label="Màu chủ đạo">
-                    <Input type="color" />
-                  </Form.Item>
-
-                  <Form.Item name="systemLogo" label="Logo hệ thống">
-                    <Upload {...uploadProps}>
-                      <Button icon={<UploadOutlined />}>Tải lên logo</Button>
-                    </Upload>
-                  </Form.Item>
-
-                  <div style={{ textAlign: 'center', marginTop: 20 }}>
-                    <Avatar size={64} icon={<UserOutlined />} />
-                    <div style={{ marginTop: 8 }}>
-                      <Text>Logo hiện tại</Text>
-                    </div>
-                  </div>
-                </Col>
-              </Row>
-            </TabPane>
-
-            {/* Tab 2 - Học vụ */}
-            <TabPane
-              tab={
-                <span>
-                  <DatabaseOutlined /> Cài đặt học vụ
-                </span>
-              }
-              key="academic"
+              Khôi phục mặc định
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<SaveIcon />}
+              onClick={handleSave}
+              disabled={loading}
+              sx={{ textTransform: 'none', px: 3 }}
             >
-              <Row gutter={24}>
-                <Col span={12}>
-                  <Form.Item
-                    name="academicYear"
-                    label="Năm học"
-                    rules={[
-                      { required: true, message: 'Vui lòng nhập năm học!' },
-                    ]}
-                  >
-                    <Input placeholder="Ví dụ: 2024-2025" />
-                  </Form.Item>
+              {loading ? <CircularProgress size={24} /> : 'Lưu cài đặt'}
+            </Button>
+          </>
+        }
+      />
 
-                  <Form.Item
-                    name="semesterSystem"
-                    label="Hệ thống học kỳ"
-                    rules={[
-                      {
-                        required: true,
-                        message: 'Vui lòng chọn hệ thống học kỳ!',
-                      },
-                    ]}
-                  >
-                    <Select placeholder="Chọn hệ thống học kỳ">
-                      <Option value="2-semester">2 học kỳ chính + hè</Option>
-                      <Option value="3-semester">3 học kỳ</Option>
-                      <Option value="4-quarter">4 quý</Option>
-                    </Select>
-                  </Form.Item>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Quản lý các cài đặt chung của hệ thống quản lý sinh viên
+      </Typography>
 
-                  <Form.Item
-                    name="gradeScale"
-                    label="Thang điểm"
-                    rules={[
-                      { required: true, message: 'Vui lòng chọn thang điểm!' },
-                    ]}
-                  >
-                    <Select placeholder="Chọn thang điểm">
-                      <Option value="10-point">Thang điểm 10</Option>
-                      <Option value="4-point">Thang điểm 4</Option>
-                      <Option value="100-point">Thang điểm 100</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
+      {/* Tabs */}
+      <Paper>
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="system settings tabs">
+          <Tab label="Cài đặt chung" icon={<SettingsIcon />} {...a11yProps(0)} />
+          <Tab label="Học vụ" icon={<SchoolIcon />} {...a11yProps(1)} />
+          <Tab label="Thông báo" icon={<NotificationsIcon />} {...a11yProps(2)} />
+          <Tab label="Bảo mật" icon={<SecurityIcon />} {...a11yProps(3)} />
+          <Tab label="Thông tin" icon={<InfoIcon />} {...a11yProps(4)} />
+        </Tabs>
 
-                <Col span={12}>
-                  <Form.Item
-                    name="minPassingGrade"
-                    label="Điểm đậu tối thiểu"
-                    rules={[
-                      {
-                        required: true,
-                        message: 'Vui lòng nhập điểm đậu tối thiểu!',
-                      },
-                    ]}
-                  >
-                    <InputNumber
-                      min={0}
-                      max={10}
-                      step={0.1}
-                      style={{ width: '100%' }}
-                    />
-                  </Form.Item>
+        {/* Tab 1 - Cài đặt chung */}
+        <TabPanel value={tabValue} index={0}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Tên hệ thống"
+                name="systemName"
+                value={formData.systemName}
+                onChange={handleInputChange}
+                variant="outlined"
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Ngôn ngữ</InputLabel>
+                <Select
+                  name="language"
+                  value={formData.language}
+                  onChange={handleInputChange}
+                  label="Ngôn ngữ"
+                >
+                  <MenuItem value="vi">Tiếng Việt</MenuItem>
+                  <MenuItem value="en">English</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Múi giờ</InputLabel>
+                <Select
+                  name="timezone"
+                  value={formData.timezone}
+                  onChange={handleInputChange}
+                  label="Múi giờ"
+                >
+                  <MenuItem value="Asia/Ho_Chi_Minh">Việt Nam (UTC+7)</MenuItem>
+                  <MenuItem value="Asia/Bangkok">Bangkok (UTC+7)</MenuItem>
+                  <MenuItem value="Asia/Shanghai">Shanghai (UTC+8)</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Màu chủ đạo"
+                name="mainColor"
+                value={formData.mainColor}
+                onChange={handleInputChange}
+                type="color"
+                variant="outlined"
+                size="small"
+              />
+            </Grid>
+          </Grid>
+        </TabPanel>
 
-                  <Form.Item
-                    name="maxCreditsPerSemester"
-                    label="Tín chỉ tối đa mỗi học kỳ"
-                    rules={[
-                      {
-                        required: true,
-                        message: 'Vui lòng nhập số tín chỉ tối đa!',
-                      },
-                    ]}
-                  >
-                    <InputNumber min={10} max={50} style={{ width: '100%' }} />
-                  </Form.Item>
-                </Col>
-              </Row>
-            </TabPane>
+        {/* Tab 2 - Học vụ */}
+        <TabPanel value={tabValue} index={1}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Năm học"
+                name="academicYear"
+                value={formData.academicYear}
+                onChange={handleInputChange}
+                placeholder="Ví dụ: 2024-2025"
+                variant="outlined"
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Hệ thống học kỳ</InputLabel>
+                <Select
+                  name="semesterSystem"
+                  value={formData.semesterSystem}
+                  onChange={handleInputChange}
+                  label="Hệ thống học kỳ"
+                >
+                  <MenuItem value="2-semester">2 học kỳ chính + hè</MenuItem>
+                  <MenuItem value="3-semester">3 học kỳ</MenuItem>
+                  <MenuItem value="4-quarter">4 quý</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Thang điểm</InputLabel>
+                <Select
+                  name="gradeScale"
+                  value={formData.gradeScale}
+                  onChange={handleInputChange}
+                  label="Thang điểm"
+                >
+                  <MenuItem value="10-point">Thang điểm 10</MenuItem>
+                  <MenuItem value="4-point">Thang điểm 4</MenuItem>
+                  <MenuItem value="100-point">Thang điểm 100</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Điểm đậu tối thiểu"
+                name="minPassingGrade"
+                type="number"
+                value={formData.minPassingGrade}
+                onChange={handleInputChange}
+                inputProps={{ min: 0, max: 10, step: 0.1 }}
+                variant="outlined"
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Tín chỉ tối đa mỗi học kỳ"
+                name="maxCreditsPerSemester"
+                type="number"
+                value={formData.maxCreditsPerSemester}
+                onChange={handleInputChange}
+                inputProps={{ min: 10, max: 50 }}
+                variant="outlined"
+                size="small"
+              />
+            </Grid>
+          </Grid>
+        </TabPanel>
 
-            {/* Tab 3 - Thông báo */}
-            <TabPane
-              tab={
-                <span>
-                  <NotificationOutlined /> Thông báo
-                </span>
-              }
-              key="notifications"
-            >
-              <Row gutter={24}>
-                <Col span={12}>
-                  <Card title="Cài đặt thông báo" size="small">
-                    <Form.Item
-                      name="emailNotifications"
-                      label="Thông báo qua Email"
-                      valuePropName="checked"
-                    >
-                      <Switch />
-                    </Form.Item>
-                    <Form.Item
-                      name="smsNotifications"
-                      label="Thông báo qua SMS"
-                      valuePropName="checked"
-                    >
-                      <Switch />
-                    </Form.Item>
-                    <Form.Item
-                      name="systemAnnouncements"
-                      label="Thông báo hệ thống"
-                      valuePropName="checked"
-                    >
-                      <Switch />
-                    </Form.Item>
-                    <Form.Item
-                      name="gradeNotifications"
-                      label="Thông báo điểm số"
-                      valuePropName="checked"
-                    >
-                      <Switch />
-                    </Form.Item>
-                  </Card>
-                </Col>
-                <Col span={12}>
-                  <Card title="Cấu hình email" size="small">
-                    <Form.Item name="smtpServer" label="SMTP Server">
-                      <Input placeholder="smtp.gmail.com" />
-                    </Form.Item>
-                    <Form.Item name="smtpPort" label="SMTP Port">
-                      <InputNumber
-                        style={{ width: '100%' }}
-                        placeholder="587"
-                      />
-                    </Form.Item>
-                    <Form.Item name="emailUsername" label="Email Username">
-                      <Input placeholder="admin@school.edu.vn" />
-                    </Form.Item>
-                    <Form.Item name="emailPassword" label="Email Password">
-                      <Input.Password placeholder="Mật khẩu email" />
-                    </Form.Item>
-                  </Card>
-                </Col>
-              </Row>
-            </TabPane>
-
-            {/* Tab 4 - Bảo mật */}
-            <TabPane
-              tab={
-                <span>
-                  <SecurityScanOutlined /> Bảo mật
-                </span>
-              }
-              key="security"
-            >
-              <Row gutter={24}>
-                <Col span={12}>
-                  <Card title="Chính sách mật khẩu" size="small">
-                    <Form.Item
-                      name="passwordPolicy"
-                      label="Độ mạnh mật khẩu"
-                      rules={[
-                        {
-                          required: true,
-                          message: 'Vui lòng chọn độ mạnh mật khẩu!',
-                        },
-                      ]}
-                    >
-                      <Select placeholder="Chọn độ mạnh mật khẩu">
-                        <Option value="weak">Yếu (6+ ký tự)</Option>
-                        <Option value="medium">
-                          Trung bình (8+ ký tự, chữ và số)
-                        </Option>
-                        <Option value="strong">
-                          Mạnh (12+ ký tự, chữ, số, ký tự đặc biệt)
-                        </Option>
-                      </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                      name="sessionTimeout"
-                      label="Thời gian hết phiên (phút)"
-                      rules={[
-                        {
-                          required: true,
-                          message: 'Vui lòng nhập thời gian hết phiên!',
-                        },
-                      ]}
-                    >
-                      <InputNumber
-                        min={5}
-                        max={1440}
-                        style={{ width: '100%' }}
-                      />
-                    </Form.Item>
-
-                    <Form.Item
-                      name="twoFactorAuth"
-                      label="Xác thực 2 bước"
-                      valuePropName="checked"
-                    >
-                      <Switch />
-                    </Form.Item>
-                  </Card>
-                </Col>
-
-                <Col span={12}>
-                  <Card title="Cài đặt bảo trì" size="small">
-                    <Form.Item
-                      name="maintenanceMode"
-                      label="Chế độ bảo trì"
-                      valuePropName="checked"
-                    >
-                      <Switch />
-                    </Form.Item>
-
-                    <Form.Item
-                      name="backupFrequency"
-                      label="Tần suất sao lưu"
-                      rules={[
-                        {
-                          required: true,
-                          message: 'Vui lòng chọn tần suất sao lưu!',
-                        },
-                      ]}
-                    >
-                      <Select placeholder="Chọn tần suất sao lưu">
-                        <Option value="hourly">Mỗi giờ</Option>
-                        <Option value="daily">Hàng ngày</Option>
-                        <Option value="weekly">Hàng tuần</Option>
-                        <Option value="monthly">Hàng tháng</Option>
-                      </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                      name="logRetention"
-                      label="Thời gian lưu log (ngày)"
-                      rules={[
-                        {
-                          required: true,
-                          message: 'Vui lòng nhập thời gian lưu log!',
-                        },
-                      ]}
-                    >
-                      <InputNumber
-                        min={1}
-                        max={365}
-                        style={{ width: '100%' }}
-                      />
-                    </Form.Item>
-                  </Card>
-                </Col>
-              </Row>
-            </TabPane>
-
-            {/* Tab 5 - Thông tin hệ thống */}
-            <TabPane
-              tab={
-                <span>
-                  <LockOutlined /> Thông tin hệ thống
-                </span>
-              }
-              key="about"
-            >
+        {/* Tab 3 - Thông báo */}
+        <TabPanel value={tabValue} index={2}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
               <Card>
-                <Row gutter={24}>
-                  <Col span={12}>
-                    <Text strong>Tên hệ thống:</Text>
-                    <div>{config.systemName}</div>
-                    <Text strong>Phiên bản:</Text>
-                    <div>v1.0.0</div>
-                    <Text strong>Ngày phát hành:</Text>
-                    <div>27/09/2025</div>
-                    <Text strong>Nhà phát triển:</Text>
-                    <div>Đại học XYZ</div>
-                  </Col>
-                  <Col span={12}>
-                    <Text strong>Số lượng sinh viên:</Text>
-                    <div>1,250 sinh viên</div>
-                    <Text strong>Số lượng môn học:</Text>
-                    <div>325 môn học</div>
-                    <Text strong>Dung lượng database:</Text>
-                    <div>2.5 GB</div>
-                    <Text strong>Lần sao lưu cuối:</Text>
-                    <div>27/09/2025 02:00 AM</div>
-                  </Col>
-                </Row>
-
-                <Divider />
-                <div style={{ textAlign: 'center' }}>
-                  <Text type="secondary">
-                    © 2025 Hệ thống quản lý sinh viên. Tất cả quyền được bảo
-                    lưu.
-                  </Text>
-                </div>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Cài đặt thông báo
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="emailNotifications"
+                          checked={formData.emailNotifications}
+                          onChange={handleInputChange}
+                        />
+                      }
+                      label="Thông báo qua Email"
+                    />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="smsNotifications"
+                          checked={formData.smsNotifications}
+                          onChange={handleInputChange}
+                        />
+                      }
+                      label="Thông báo qua SMS"
+                    />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="systemAnnouncements"
+                          checked={formData.systemAnnouncements}
+                          onChange={handleInputChange}
+                        />
+                      }
+                      label="Thông báo hệ thống"
+                    />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="gradeNotifications"
+                          checked={formData.gradeNotifications}
+                          onChange={handleInputChange}
+                        />
+                      }
+                      label="Thông báo điểm số"
+                    />
+                  </Box>
+                </CardContent>
               </Card>
-            </TabPane>
-          </Tabs>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Cấu hình email
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <TextField
+                      fullWidth
+                      label="SMTP Server"
+                      placeholder="smtp.gmail.com"
+                      variant="outlined"
+                      size="small"
+                    />
+                    <TextField
+                      fullWidth
+                      label="SMTP Port"
+                      type="number"
+                      placeholder="587"
+                      variant="outlined"
+                      size="small"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Email Username"
+                      placeholder="admin@school.edu.vn"
+                      variant="outlined"
+                      size="small"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Email Password"
+                      type="password"
+                      placeholder="Mật khẩu email"
+                      variant="outlined"
+                      size="small"
+                    />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </TabPanel>
 
-          <Divider />
-          <div style={{ textAlign: 'center' }}>
-            <Space>
-              <Button onClick={handleReset}>Khôi phục mặc định</Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                icon={<SaveOutlined />}
-                loading={loading}
-              >
-                Lưu cài đặt
-              </Button>
-            </Space>
-          </div>
-        </Form>
-      </Card>
-    </div>
+        {/* Tab 4 - Bảo mật */}
+        <TabPanel value={tabValue} index={3}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Chính sách mật khẩu
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Độ mạnh mật khẩu</InputLabel>
+                      <Select
+                        name="passwordPolicy"
+                        value={formData.passwordPolicy}
+                        onChange={handleInputChange}
+                        label="Độ mạnh mật khẩu"
+                      >
+                        <MenuItem value="weak">Yếu (6+ ký tự)</MenuItem>
+                        <MenuItem value="medium">Trung bình (8+ ký tự, chữ và số)</MenuItem>
+                        <MenuItem value="strong">Mạnh (12+ ký tự, chữ, số, ký tự đặc biệt)</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <TextField
+                      fullWidth
+                      label="Thời gian hết phiên (phút)"
+                      name="sessionTimeout"
+                      type="number"
+                      value={formData.sessionTimeout}
+                      onChange={handleInputChange}
+                      inputProps={{ min: 5, max: 1440 }}
+                      variant="outlined"
+                      size="small"
+                    />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="twoFactorAuth"
+                          checked={formData.twoFactorAuth}
+                          onChange={handleInputChange}
+                        />
+                      }
+                      label="Xác thực 2 bước"
+                    />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Cài đặt bảo trì
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="maintenanceMode"
+                          checked={formData.maintenanceMode}
+                          onChange={handleInputChange}
+                        />
+                      }
+                      label="Chế độ bảo trì"
+                    />
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Tần suất sao lưu</InputLabel>
+                      <Select
+                        name="backupFrequency"
+                        value={formData.backupFrequency}
+                        onChange={handleInputChange}
+                        label="Tần suất sao lưu"
+                      >
+                        <MenuItem value="hourly">Mỗi giờ</MenuItem>
+                        <MenuItem value="daily">Hàng ngày</MenuItem>
+                        <MenuItem value="weekly">Hàng tuần</MenuItem>
+                        <MenuItem value="monthly">Hàng tháng</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <TextField
+                      fullWidth
+                      label="Thời gian lưu log (ngày)"
+                      name="logRetention"
+                      type="number"
+                      value={formData.logRetention}
+                      onChange={handleInputChange}
+                      inputProps={{ min: 1, max: 365 }}
+                      variant="outlined"
+                      size="small"
+                    />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </TabPanel>
+
+        {/* Tab 5 - Thông tin hệ thống */}
+        <TabPanel value={tabValue} index={4}>
+          <Card>
+            <CardContent>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Tên hệ thống
+                  </Typography>
+                  <Typography variant="body2">{config.systemName}</Typography>
+
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }} gutterBottom>
+                    Phiên bản
+                  </Typography>
+                  <Typography variant="body2">v1.0.0</Typography>
+
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }} gutterBottom>
+                    Ngày phát hành
+                  </Typography>
+                  <Typography variant="body2">27/09/2025</Typography>
+
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }} gutterBottom>
+                    Nhà phát triển
+                  </Typography>
+                  <Typography variant="body2">Đại học XYZ</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Số lượng sinh viên
+                  </Typography>
+                  <Typography variant="body2">1,250 sinh viên</Typography>
+
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }} gutterBottom>
+                    Số lượng môn học
+                  </Typography>
+                  <Typography variant="body2">325 môn học</Typography>
+
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }} gutterBottom>
+                    Dung lượng database
+                  </Typography>
+                  <Typography variant="body2">2.5 GB</Typography>
+
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }} gutterBottom>
+                    Lần sao lưu cuối
+                  </Typography>
+                  <Typography variant="body2">27/09/2025 02:00 AM</Typography>
+                </Grid>
+              </Grid>
+
+              <Divider sx={{ my: 3 }} />
+              <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block' }}>
+                © 2025 Hệ thống quản lý sinh viên. Tất cả quyền được bảo lưu.
+              </Typography>
+            </CardContent>
+          </Card>
+        </TabPanel>
+      </Paper>
+    </Box>
   );
 };
 

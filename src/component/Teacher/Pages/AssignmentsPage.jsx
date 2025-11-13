@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -21,6 +21,7 @@ import {
   Alert,
   Chip,
 } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import { Table, Tag, Space, Progress } from 'antd';
 import {
   Assignment,
@@ -34,6 +35,7 @@ import { teacherService } from '../../../service';
 import dayjs from 'dayjs';
 
 const AssignmentsPage = () => {
+  const theme = useTheme();
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [assignments, setAssignments] = useState([]);
@@ -54,6 +56,23 @@ const AssignmentsPage = () => {
 
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
+
+  // Theme-aware colors
+  const colors = useMemo(() => ({
+    bgCard: theme.palette.background.paper,
+    bgPage: theme.palette.background.default,
+    primary: theme.palette.primary.main,
+    success: theme.palette.success.main,
+    warning: theme.palette.warning.main,
+    error: theme.palette.error.main,
+    text: theme.palette.text.primary,
+    textSecondary: theme.palette.text.secondary,
+    border: theme.palette.divider,
+    bgPrimarySoft: alpha(theme.palette.primary.main, 0.12),
+    bgSuccessSoft: alpha(theme.palette.success.main, 0.12),
+    bgWarningSoft: alpha(theme.palette.warning.main, 0.12),
+    bgErrorSoft: alpha(theme.palette.error.main, 0.12),
+  }), [theme]);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -351,18 +370,18 @@ const AssignmentsPage = () => {
           <Grow in={true} timeout={800}>
             <Card
               sx={{
-                backgroundColor: '#e3f2fd',
+                backgroundColor: colors.bgPrimarySoft,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <Assignment sx={{ fontSize: 40, color: '#1976d2', mr: 2 }} />
+                <Assignment sx={{ fontSize: 40, color: colors.primary, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
                     component="div"
-                    sx={{ fontWeight: 'bold' }}
+                    sx={{ fontWeight: 'bold', color: colors.text }}
                   >
                     {totalAssignments}
                   </Typography>
@@ -379,18 +398,18 @@ const AssignmentsPage = () => {
           <Grow in={true} timeout={1000}>
             <Card
               sx={{
-                backgroundColor: '#e8f5e9',
+                backgroundColor: colors.bgSuccessSoft,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <CheckCircle sx={{ fontSize: 40, color: '#388e3c', mr: 2 }} />
+                <CheckCircle sx={{ fontSize: 40, color: colors.success, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
                     component="div"
-                    sx={{ fontWeight: 'bold' }}
+                    sx={{ fontWeight: 'bold', color: colors.text }}
                   >
                     {activeAssignments}
                   </Typography>
@@ -407,18 +426,18 @@ const AssignmentsPage = () => {
           <Grow in={true} timeout={1200}>
             <Card
               sx={{
-                backgroundColor: '#fff3e0',
+                backgroundColor: colors.bgWarningSoft,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <Assignment sx={{ fontSize: 40, color: '#f57c00', mr: 2 }} />
+                <Assignment sx={{ fontSize: 40, color: colors.warning, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
                     component="div"
-                    sx={{ fontWeight: 'bold' }}
+                    sx={{ fontWeight: 'bold', color: colors.text }}
                   >
                     {totalSubmissions}
                   </Typography>
@@ -435,18 +454,18 @@ const AssignmentsPage = () => {
           <Grow in={true} timeout={1400}>
             <Card
               sx={{
-                backgroundColor: '#f3e5f5',
+                backgroundColor: alpha(theme.palette.secondary.main, 0.12),
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <CheckCircle sx={{ fontSize: 40, color: '#7b1fa2', mr: 2 }} />
+                <CheckCircle sx={{ fontSize: 40, color: theme.palette.secondary.main, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
                     component="div"
-                    sx={{ fontWeight: 'bold' }}
+                    sx={{ fontWeight: 'bold', color: colors.text }}
                   >
                     {avgSubmissionRate}%
                   </Typography>

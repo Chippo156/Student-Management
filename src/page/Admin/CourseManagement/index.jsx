@@ -2,21 +2,11 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
   Grid,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   TextField,
   InputAdornment,
   Chip,
-  TablePagination,
   IconButton,
   Tooltip,
   CircularProgress,
@@ -25,24 +15,33 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import {
   MenuBook,
   Assignment,
   Category,
   School,
   Search as SearchIcon,
-  FilterList,
-  Refresh,
   FileDownload,
   Visibility as VisibilityIcon,
   Edit as EditIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
+import {
+  PageHeader,
+  StatsCard,
+  DataTable,
+  FilterSection,
+} from '../../../component/Common';
 import curriculumCourseService from '../../../service/curriculumCourseService';
 import academicProgramService from '../../../service/academicProgramService';
 import * as XLSX from 'xlsx';
+import CourseDetailModal from '../../../component/Admin/CourseManagement/CourseDetailModal';
+import CourseEditModal from '../../../component/Admin/CourseManagement/CourseEditModal';
+import CourseCreateModal from '../../../component/Admin/CourseManagement/CourseCreateModal';
 
 const CourseManagement = () => {
+  const theme = useTheme();
   const [courses, setCourses] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -53,6 +52,13 @@ const CourseManagement = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
+
+  // Modal states
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
 
   // Fetch programs for filter
   useEffect(() => {
@@ -123,7 +129,7 @@ const CourseManagement = () => {
 
   const handleExportExcel = () => {
     const exportData = filteredCourses.map((course, index) => ({
-      'STT': index + 1,
+      STT: index + 1,
       'Mã môn học': course.courseCode,
       'Tên môn học': course.courseName,
       'Chương trình': course.programName,
@@ -167,6 +173,33 @@ const CourseManagement = () => {
     return Array.from(depts);
   }, [courses]);
 
+  // Modal handlers
+  const handleViewCourse = (course) => {
+    setSelectedCourse(course);
+    setDetailModalOpen(true);
+  };
+
+  const handleEditCourse = (course) => {
+    setSelectedCourse(course);
+    setEditModalOpen(true);
+  };
+
+  const handleCreateCourse = () => {
+    setCreateModalOpen(true);
+  };
+
+  const handleCloseModals = () => {
+    setDetailModalOpen(false);
+    setEditModalOpen(false);
+    setCreateModalOpen(false);
+    setSelectedCourse(null);
+  };
+
+  const handleSaveCourse = (savedCourse) => {
+    fetchCourses();
+    handleCloseModals();
+  };
+
   const stats = useMemo(() => {
     return {
       total: totalCount,
@@ -178,7 +211,14 @@ const CourseManagement = () => {
 
   if (loading && courses.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -187,328 +227,320 @@ const CourseManagement = () => {
   return (
     <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a237e' }}>
-          Quản lý Môn học
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Tooltip title="Làm mới">
-            <IconButton
-              onClick={fetchCourses}
-              sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#e3f2fd' }, boxShadow: 1 }}
+      <PageHeader
+        title="Quản lý Môn học"
+        onRefresh={fetchCourses}
+        actions={
+          <>
+            <Button
+              variant="contained"
+              startIcon={<FileDownload />}
+              onClick={handleExportExcel}
+              disabled={filteredCourses.length === 0}
+              color="success"
+              sx={{ textTransform: 'none', px: 3 }}
             >
-              <Refresh />
-            </IconButton>
-          </Tooltip>
-          <Button
-            variant="contained"
-            startIcon={<FileDownload />}
-            onClick={handleExportExcel}
-            disabled={filteredCourses.length === 0}
-            sx={{
-              bgcolor: '#4caf50',
-              '&:hover': { bgcolor: '#45a049' },
-              textTransform: 'none',
-              px: 3,
-              boxShadow: 2,
-            }}
-          >
-            Xuất Excel
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            sx={{
-              bgcolor: '#1976d2',
-              '&:hover': { bgcolor: '#1565c0' },
-              textTransform: 'none',
-              px: 3,
-              boxShadow: 2,
-            }}
-          >
-            Thêm môn học
-          </Button>
-        </Box>
-      </Box>
+              Xuất Excel
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateCourse}
+              sx={{ textTransform: 'none', px: 3 }}
+            >
+              Thêm môn học
+            </Button>
+          </>
+        }
+      />
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: '#e3f2fd', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <MenuBook sx={{ fontSize: 50, mr: 2, color: '#1976d2' }} />
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#1976d2' }}>
-                  {stats.total}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
-                  Tổng môn học
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatsCard
+            icon={<MenuBook />}
+            value={stats.total}
+            label="Tổng môn học"
+            color="primary"
+          />
         </Grid>
-
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: '#e8f5e9', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <Assignment sx={{ fontSize: 50, mr: 2, color: '#388e3c' }} />
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#388e3c' }}>
-                  {stats.required}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
-                  Môn bắt buộc
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatsCard
+            icon={<Assignment />}
+            value={stats.required}
+            label="Môn bắt buộc"
+            color="success"
+          />
         </Grid>
-
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: '#f3e5f5', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <Category sx={{ fontSize: 50, mr: 2, color: '#7b1fa2' }} />
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#7b1fa2' }}>
-                  {stats.elective}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
-                  Môn tự chọn
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatsCard
+            icon={<Category />}
+            value={stats.elective}
+            label="Môn tự chọn"
+            color="warning"
+          />
         </Grid>
-
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: '#fff3e0', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <School sx={{ fontSize: 50, mr: 2, color: '#f57c00' }} />
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#f57c00' }}>
-                  {stats.departments}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
-                  Chuyên ngành
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatsCard
+            icon={<School />}
+            value={stats.departments}
+            label="Chuyên ngành"
+            color="info"
+          />
         </Grid>
       </Grid>
 
       {/* Filter Section */}
-      <Card sx={{ mb: 3, boxShadow: 2 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <FilterList sx={{ mr: 1, color: '#1976d2' }} />
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Bộ lọc tìm kiếm
-            </Typography>
-          </Box>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                placeholder="Tìm theo mã môn học, tên môn học..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon color="action" />
-                    </InputAdornment>
-                  ),
-                }}
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Chương trình</InputLabel>
-                <Select
-                  value={filterProgram || ''}
-                  label="Chương trình"
-                  onChange={(e) => setFilterProgram(e.target.value)}
+      <FilterSection resultCount={filteredCourses.length}>
+        <Grid item xs={12} md={4}>
+          <TextField
+            fullWidth
+            placeholder="Tìm theo mã môn học, tên môn học..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+            size="small"
+          />
+        </Grid>
+        <Grid item xs={12} md={2}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Chương trình</InputLabel>
+            <Select
+              value={filterProgram || ''}
+              label="Chương trình"
+              onChange={(e) => setFilterProgram(e.target.value)}
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              {programs.map((prog) => (
+                <MenuItem
+                  key={prog.academicProgramId}
+                  value={prog.academicProgramId}
                 >
-                  <MenuItem value="">Tất cả</MenuItem>
-                  {programs.map((prog) => (
-                    <MenuItem
-                      key={prog.academicProgramId}
-                      value={prog.academicProgramId}
-                    >
-                      {prog.programName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Chuyên ngành</InputLabel>
-                <Select
-                  value={filterDepartment || ''}
-                  label="Chuyên ngành"
-                  onChange={(e) => setFilterDepartment(e.target.value)}
-                >
-                  <MenuItem value="">Tất cả</MenuItem>
-                  {uniqueDepartments.map((dept) => (
-                    <MenuItem key={dept} value={dept}>
-                      {dept}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Loại môn học</InputLabel>
-                <Select
-                  value={filterCourseType || ''}
-                  label="Loại môn học"
-                  onChange={(e) => setFilterCourseType(e.target.value)}
-                >
-                  <MenuItem value="">Tất cả</MenuItem>
-                  <MenuItem value="required">Bắt buộc</MenuItem>
-                  <MenuItem value="elective">Tự chọn</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
-                Đặt lại
-              </Button>
-            </Grid>
-          </Grid>
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Tìm thấy: <strong>{filteredCourses.length}</strong> môn học
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
+                  {prog.programName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={2}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Chuyên ngành</InputLabel>
+            <Select
+              value={filterDepartment || ''}
+              label="Chuyên ngành"
+              onChange={(e) => setFilterDepartment(e.target.value)}
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              {uniqueDepartments.map((dept) => (
+                <MenuItem key={dept} value={dept}>
+                  {dept}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={2}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Loại môn học</InputLabel>
+            <Select
+              value={filterCourseType || ''}
+              label="Loại môn học"
+              onChange={(e) => setFilterCourseType(e.target.value)}
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              <MenuItem value="required">Bắt buộc</MenuItem>
+              <MenuItem value="elective">Tự chọn</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={2}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={handleResetFilters}
+            sx={{ height: '40px' }}
+          >
+            Đặt lại
+          </Button>
+        </Grid>
+      </FilterSection>
 
       {/* Courses Table */}
-      <Paper sx={{ boxShadow: 2, borderRadius: 2, overflow: 'hidden' }}>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: '#1a237e' }}>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Mã môn học</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Tên môn học</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Chương trình</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Chuyên ngành</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Tín chỉ</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Học kỳ</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Loại</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white', textAlign: 'center' }}>
-                  Thao tác
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredCourses.map((course) => (
-                <TableRow
-                  key={course.curriculumCourseId}
-                  hover
-                  sx={{ '&:hover': { bgcolor: '#f5f5f5' }, transition: 'background-color 0.2s' }}
-                >
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 600, color: '#1976d2' }}>
-                      {course.courseCode}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {course.courseName}
-                    </Typography>
-                    {course.prerequisites && course.prerequisites.length > 0 && (
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                        Tiên quyết: {course.prerequisites.map((p) => p.courseCode).join(', ')}
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {course.programName}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {course.degreeLevel}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={course.departmentName}
-                      size="small"
-                      sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {course.totalCredits}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      LT: {course.creditsTheory} | TH: {course.creditsLab}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      HK {course.semesterSuggested}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={course.courseType}
-                      size="small"
-                      color={course.isRequired ? 'success' : 'warning'}
-                      sx={{ fontWeight: 600 }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                      <Tooltip title="Xem chi tiết">
-                        <IconButton size="small">
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Chỉnh sửa">
-                        <IconButton size="small" color="primary">
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {filteredCourses.length === 0 && (
-          <Box sx={{ p: 6, textAlign: 'center' }}>
-            <MenuBook sx={{ fontSize: 80, color: '#e0e0e0', mb: 2 }} />
+      <DataTable
+        columns={[
+          {
+            field: 'courseCode',
+            headerName: 'Mã môn học',
+            width: 120,
+            renderCell: (course) => (
+              <Typography
+                sx={{ fontWeight: 600, color: theme.palette.primary.main }}
+              >
+                {course.courseCode}
+              </Typography>
+            ),
+          },
+          {
+            field: 'courseName',
+            headerName: 'Tên môn học',
+            width: 220,
+            renderCell: (course) => (
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {course.courseName}
+                </Typography>
+                {course.prerequisites && course.prerequisites.length > 0 && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block' }}
+                  >
+                    Tiên quyết:{' '}
+                    {course.prerequisites.map((p) => p.courseCode).join(', ')}
+                  </Typography>
+                )}
+              </Box>
+            ),
+          },
+          {
+            field: 'programName',
+            headerName: 'Chương trình',
+            width: 180,
+            renderCell: (course) => (
+              <Box>
+                <Typography variant="body2">{course.programName}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {course.degreeLevel}
+                </Typography>
+              </Box>
+            ),
+          },
+          {
+            field: 'departmentName',
+            headerName: 'Chuyên ngành',
+            width: 160,
+            renderCell: (course) => (
+              <Chip
+                label={course.departmentName}
+                size="small"
+                sx={{
+                  bgcolor: theme.palette.primary.light + '30',
+                  color: theme.palette.primary.main,
+                }}
+              />
+            ),
+          },
+          {
+            field: 'totalCredits',
+            headerName: 'Tín chỉ',
+            width: 140,
+            renderCell: (course) => (
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {course.totalCredits}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  LT: {course.creditsTheory} | TH: {course.creditsLab}
+                </Typography>
+              </Box>
+            ),
+          },
+          {
+            field: 'semesterSuggested',
+            headerName: 'Học kỳ',
+            width: 100,
+            align: 'center',
+            renderCell: (course) => (
+              <Typography variant="body2">
+                HK {course.semesterSuggested}
+              </Typography>
+            ),
+          },
+          {
+            field: 'courseType',
+            headerName: 'Loại',
+            width: 130,
+            align: 'center',
+            renderCell: (course) => (
+              <Chip
+                label={course.courseType}
+                size="small"
+                color={course.isRequired ? 'success' : 'warning'}
+                sx={{ fontWeight: 600 }}
+              />
+            ),
+          },
+          {
+            field: 'actions',
+            headerName: 'Thao tác',
+            width: 120,
+            align: 'center',
+            renderCell: (course) => (
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                <Tooltip title="Xem chi tiết">
+                  <IconButton size="small" onClick={() => handleViewCourse(course)}>
+                    <VisibilityIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Chỉnh sửa">
+                  <IconButton size="small" color="primary" onClick={() => handleEditCourse(course)}>
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            ),
+          },
+        ]}
+        rows={filteredCourses}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        emptyState={
+          <>
+            <MenuBook
+              sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }}
+            />
             <Typography variant="h6" color="text.secondary" gutterBottom>
               Không tìm thấy môn học nào
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {searchTerm ? 'Thử thay đổi từ khóa tìm kiếm' : 'Chưa có môn học nào trong hệ thống'}
+              {searchTerm
+                ? 'Thử thay đổi từ khóa tìm kiếm'
+                : 'Chưa có môn học nào trong hệ thống'}
             </Typography>
-          </Box>
-        )}
+          </>
+        }
+      />
 
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 20, 50]}
-          component="div"
-          count={totalCount}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage="Số dòng mỗi trang:"
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
-        />
-      </Paper>
+      {/* Modals */}
+      <CourseDetailModal
+        open={detailModalOpen}
+        onCancel={handleCloseModals}
+        course={selectedCourse}
+      />
+
+      <CourseEditModal
+        open={editModalOpen}
+        onCancel={handleCloseModals}
+        onSave={handleSaveCourse}
+        course={selectedCourse}
+        loading={modalLoading}
+      />
+
+      <CourseCreateModal
+        open={createModalOpen}
+        onCancel={handleCloseModals}
+        onSave={handleSaveCourse}
+        loading={modalLoading}
+      />
     </Box>
   );
 };

@@ -1,7 +1,7 @@
 import axios from '../until/customize-axios';
 import { message } from 'antd';
 
-export const facultyService = {
+const facultyService = {
   getFacultiesDropdown: async () => {
     try {
       const response = await axios.get('/api/Faculty/dropdown/Faculties');
@@ -34,3 +34,5 @@ export const facultyService = {
     }
   },
 };
+
+export default facultyService;

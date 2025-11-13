@@ -65,7 +65,12 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     const roleId = filterRole !== 'all' ? getRoleIdFromName(filterRole) : null;
-    const res = await userService.getAllUsers(page + 1, rowsPerPage, roleId, searchTerm);
+    const res = await userService.getAllUsers(
+      page + 1,
+      rowsPerPage,
+      roleId,
+      searchTerm
+    );
     if (res) {
       setUsers(res.items || []);
       setTotalCount(res.totalCount || 0);
@@ -75,7 +80,7 @@ const UserManagement = () => {
 
   const getRoleIdFromName = (roleName) => {
     const roleMap = {
-      'admin': 1,
+      admin: 1,
       'giảng viên': 2,
       'sinh viên': 3,
     };
@@ -90,7 +95,9 @@ const UserManagement = () => {
   const stats = useMemo(() => {
     const activeUsers = users.filter((u) => u.accountStatus === 1).length;
     const adminUsers = users.filter((u) => u.role?.roleName === 'Admin').length;
-    const teacherUsers = users.filter((u) => u.role?.roleName === 'Giảng viên').length;
+    const teacherUsers = users.filter(
+      (u) => u.role?.roleName === 'Giảng viên'
+    ).length;
     return {
       total: totalCount,
       active: activeUsers,
@@ -110,7 +117,10 @@ const UserManagement = () => {
 
   const handleEditSave = async (payload) => {
     setEditLoading(true);
-    const res = await userService.updateUserWithRole(selectedUser.userId, payload);
+    const res = await userService.updateUserWithRole(
+      selectedUser.userId,
+      payload
+    );
     setEditLoading(false);
     if (res) {
       message.success('Cập nhật người dùng thành công!');
@@ -126,10 +136,10 @@ const UserManagement = () => {
 
   const handleExportExcel = () => {
     const dataToExport = users.map((user, index) => ({
-      'STT': index + 1,
+      STT: index + 1,
       'Tên người dùng': user.username,
       'Họ và tên': user.fullName || '',
-      'Email': user.email || '',
+      Email: user.email || '',
       'Số điện thoại': user.phone || '',
       'Vai trò': user.role?.roleName || '',
       'Trạng thái': user.accountStatus === 1 ? 'Hoạt động' : 'Bị khóa',
@@ -150,16 +160,22 @@ const UserManagement = () => {
     ];
     worksheet['!cols'] = colWidths;
 
-    XLSX.writeFile(workbook, `Danh_sach_nguoi_dung_${new Date().getTime()}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `Danh_sach_nguoi_dung_${new Date().getTime()}.xlsx`
+    );
   };
 
   const getRoleChip = (roleName) => {
     const roleConfig = {
-      'Admin': { color: 'error', label: 'Admin' },
+      Admin: { color: 'error', label: 'Admin' },
       'Giảng viên': { color: 'primary', label: 'Giảng viên' },
       'Sinh viên': { color: 'success', label: 'Sinh viên' },
     };
-    const config = roleConfig[roleName] || { color: 'default', label: roleName };
+    const config = roleConfig[roleName] || {
+      color: 'default',
+      label: roleName,
+    };
     return <Chip label={config.label} color={config.color} size="small" />;
   };
 
@@ -173,7 +189,14 @@ const UserManagement = () => {
 
   if (loading && users.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -182,7 +205,14 @@ const UserManagement = () => {
   return (
     <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 4,
+        }}
+      >
         <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a237e' }}>
           Quản lý người dùng
         </Typography>
@@ -190,7 +220,11 @@ const UserManagement = () => {
           <Tooltip title="Làm mới">
             <IconButton
               onClick={fetchUsers}
-              sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#e3f2fd' }, boxShadow: 1 }}
+              sx={{
+                bgcolor: 'white',
+                '&:hover': { bgcolor: '#e3f2fd' },
+                boxShadow: 1,
+              }}
             >
               <Refresh />
             </IconButton>
@@ -230,11 +264,21 @@ const UserManagement = () => {
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: '#e3f2fd', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+          <Card
+            sx={{
+              bgcolor: '#e3f2fd',
+              boxShadow: 2,
+              transition: 'transform 0.3s',
+              '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
+            }}
+          >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
               <People sx={{ fontSize: 50, mr: 2, color: '#1976d2' }} />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#1976d2' }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 'bold', mb: 0.5, color: '#1976d2' }}
+                >
                   {stats.total}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#424242' }}>
@@ -246,11 +290,21 @@ const UserManagement = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: '#e8f5e9', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+          <Card
+            sx={{
+              bgcolor: '#e8f5e9',
+              boxShadow: 2,
+              transition: 'transform 0.3s',
+              '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
+            }}
+          >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
               <CheckCircle sx={{ fontSize: 50, mr: 2, color: '#388e3c' }} />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#388e3c' }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 'bold', mb: 0.5, color: '#388e3c' }}
+                >
                   {stats.active}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#424242' }}>
@@ -262,11 +316,23 @@ const UserManagement = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: '#ffebee', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+          <Card
+            sx={{
+              bgcolor: '#ffebee',
+              boxShadow: 2,
+              transition: 'transform 0.3s',
+              '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
+            }}
+          >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <AdminPanelSettings sx={{ fontSize: 50, mr: 2, color: '#d32f2f' }} />
+              <AdminPanelSettings
+                sx={{ fontSize: 50, mr: 2, color: '#d32f2f' }}
+              />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#d32f2f' }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 'bold', mb: 0.5, color: '#d32f2f' }}
+                >
                   {stats.admins}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#424242' }}>
@@ -278,11 +344,21 @@ const UserManagement = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: '#f3e5f5', boxShadow: 2, transition: 'transform 0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 } }}>
+          <Card
+            sx={{
+              bgcolor: '#f3e5f5',
+              boxShadow: 2,
+              transition: 'transform 0.3s',
+              '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
+            }}
+          >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
               <SchoolIcon sx={{ fontSize: 50, mr: 2, color: '#7b1fa2' }} />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#7b1fa2' }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 'bold', mb: 0.5, color: '#7b1fa2' }}
+                >
                   {stats.teachers}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#424242' }}>
@@ -336,7 +412,12 @@ const UserManagement = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} md={2}>
-              <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={handleResetFilters}
+                sx={{ height: '40px' }}
+              >
                 Đặt lại
               </Button>
             </Grid>
@@ -355,22 +436,53 @@ const UserManagement = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: '#1a237e' }}>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Người dùng</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Vai trò</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Email</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Số điện thoại</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Trạng thái</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white', textAlign: 'center' }}>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
+                  Người dùng
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
+                  Vai trò
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
+                  Email
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
+                  Số điện thoại
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
+                  Trạng thái
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 'bold',
+                    color: 'white',
+                    textAlign: 'center',
+                  }}
+                >
                   Thao tác
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {users.map((user) => (
-                <TableRow key={user.userId} hover sx={{ '&:hover': { bgcolor: '#f5f5f5' }, transition: 'background-color 0.2s' }}>
+                <TableRow
+                  key={user.userId}
+                  hover
+                  sx={{
+                    '&:hover': { bgcolor: '#f5f5f5' },
+                    transition: 'background-color 0.2s',
+                  }}
+                >
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Avatar src={user.avatarUrl} sx={{ width: 40, height: 40, bgcolor: '#e6f4ff', color: '#1677ff' }}>
+                      <Avatar
+                        src={user.avatarUrl}
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          bgcolor: '#e6f4ff',
+                          color: '#1677ff',
+                        }}
+                      >
                         {user.fullName?.[0] || user.username?.[0]}
                       </Avatar>
                       <Box>
@@ -386,17 +498,23 @@ const UserManagement = () => {
                   <TableCell>{getRoleChip(user.role?.roleName)}</TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {user.email || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                      {user.email || (
+                        <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                      )}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {user.phone || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+                      {user.phone || (
+                        <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
+                      )}
                     </Typography>
                   </TableCell>
                   <TableCell>{getStatusChip(user.accountStatus)}</TableCell>
                   <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                    <Box
+                      sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}
+                    >
                       <Tooltip title="Xem chi tiết">
                         <IconButton
                           size="small"
@@ -426,7 +544,9 @@ const UserManagement = () => {
                           okText="Đồng ý"
                           cancelText="Hủy"
                           onConfirm={async () => {
-                            const res = await userService.deactivateUser(user.userId);
+                            const res = await userService.deactivateUser(
+                              user.userId
+                            );
                             if (res) {
                               message.success('Đã vô hiệu hóa tài khoản!');
                               await fetchUsers();
@@ -445,7 +565,9 @@ const UserManagement = () => {
                           okText="Đồng ý"
                           cancelText="Hủy"
                           onConfirm={async () => {
-                            const res = await userService.reactivateUser(user.userId);
+                            const res = await userService.reactivateUser(
+                              user.userId
+                            );
                             if (res) {
                               message.success('Đã mở lại tài khoản!');
                               await fetchUsers();
@@ -490,11 +612,17 @@ const UserManagement = () => {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
           labelRowsPerPage="Số dòng mỗi trang:"
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
+          labelDisplayedRows={({ from, to, count }) =>
+            `${from}-${to} của ${count}`
+          }
         />
       </Paper>
 
-      <UserDetailModal open={openDetail} onCancel={() => setOpenDetail(false)} user={selectedUser} />
+      <UserDetailModal
+        open={openDetail}
+        onCancel={() => setOpenDetail(false)}
+        user={selectedUser}
+      />
       <UserEditModal
         open={openEdit}
         onCancel={() => setOpenEdit(false)}

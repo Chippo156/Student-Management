@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -32,11 +32,28 @@ import {
   FilterList,
   Refresh,
 } from '@mui/icons-material';
+import { useTheme, alpha } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
 import sectionService from '../../../service/sectionService';
 import * as XLSX from 'xlsx';
 
 const CoursesPage = () => {
+  const theme = useTheme();
+  const colors = useMemo(() => ({
+    bgCard: theme.palette.background.paper,
+    bgPage: theme.palette.background.default,
+    primary: theme.palette.primary.main,
+    success: theme.palette.success.main,
+    warning: theme.palette.warning.main,
+    error: theme.palette.error.main,
+    text: theme.palette.text.primary,
+    textSecondary: theme.palette.text.secondary,
+    border: theme.palette.divider,
+    bgPrimarySoft: alpha(theme.palette.primary.main, 0.12),
+    bgSuccessSoft: alpha(theme.palette.success.main, 0.12),
+    bgWarningSoft: alpha(theme.palette.warning.main, 0.12),
+    bgErrorSoft: alpha(theme.palette.error.main, 0.12),
+  }), [theme]);
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -182,7 +199,7 @@ const CoursesPage = () => {
     <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a237e' }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text }}>
           Môn học của tôi
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -190,8 +207,8 @@ const CoursesPage = () => {
             <IconButton
               onClick={fetchCourses}
               sx={{
-                bgcolor: 'white',
-                '&:hover': { bgcolor: '#e3f2fd' },
+                bgcolor: colors.bgCard,
+                '&:hover': { bgcolor: colors.bgPrimarySoft },
                 boxShadow: 1,
               }}
             >
@@ -200,12 +217,11 @@ const CoursesPage = () => {
           </Tooltip>
           <Button
             variant="contained"
+            color="success"
             startIcon={<FileDownload />}
             onClick={handleExportExcel}
             disabled={filteredCourses.length === 0}
             sx={{
-              bgcolor: '#4caf50',
-              '&:hover': { bgcolor: '#45a049' },
               textTransform: 'none',
               px: 3,
               boxShadow: 2,
@@ -221,19 +237,19 @@ const CoursesPage = () => {
         <Grid item xs={12} sm={4}>
           <Card
             sx={{
-              bgcolor: '#e3f2fd',
+              bgcolor: colors.bgPrimarySoft,
               boxShadow: 2,
               transition: 'transform 0.3s',
               '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <School sx={{ fontSize: 50, mr: 2, color: '#1976d2' }} />
+              <School sx={{ fontSize: 50, mr: 2, color: colors.primary }} />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#1976d2' }}>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.primary }}>
                   {courses.length}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
+                <Typography variant="body2" color="text.secondary">
                   Tổng lớp học phần
                 </Typography>
               </Box>
@@ -244,22 +260,22 @@ const CoursesPage = () => {
         <Grid item xs={12} sm={4}>
           <Card
             sx={{
-              bgcolor: '#f3e5f5',
+              bgcolor: alpha(theme.palette.secondary.main, 0.12),
               boxShadow: 2,
               transition: 'transform 0.3s',
               '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <People sx={{ fontSize: 50, mr: 2, color: '#7b1fa2' }} />
+              <People sx={{ fontSize: 50, mr: 2, color: theme.palette.secondary.main }} />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#7b1fa2' }}>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: theme.palette.secondary.main }}>
                   {courses.reduce(
                     (total, section) => total + (section.enrolledCount || 0),
                     0
                   )}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
+                <Typography variant="body2" color="text.secondary">
                   Tổng sinh viên
                 </Typography>
               </Box>
@@ -270,19 +286,19 @@ const CoursesPage = () => {
         <Grid item xs={12} sm={4}>
           <Card
             sx={{
-              bgcolor: '#e8f5e9',
+              bgcolor: colors.bgSuccessSoft,
               boxShadow: 2,
               transition: 'transform 0.3s',
               '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <Schedule sx={{ fontSize: 50, mr: 2, color: '#388e3c' }} />
+              <Schedule sx={{ fontSize: 50, mr: 2, color: colors.success }} />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: '#388e3c' }}>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.success }}>
                   {courses.filter((section) => section.status === 1).length}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
+                <Typography variant="body2" color="text.secondary">
                   Đang diễn ra
                 </Typography>
               </Box>
@@ -295,7 +311,7 @@ const CoursesPage = () => {
       <Card sx={{ mb: 3, boxShadow: 2 }}>
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <FilterList sx={{ mr: 1, color: '#1976d2' }} />
+            <FilterList sx={{ mr: 1, color: colors.primary }} />
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               Bộ lọc tìm kiếm
             </Typography>
@@ -374,15 +390,15 @@ const CoursesPage = () => {
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: '#1a237e' }}>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>STT</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Mã lớp HP</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Mã môn học</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Tên môn học</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Số sinh viên</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Học kỳ</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Trạng thái</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white', textAlign: 'center' }}>
+              <TableRow sx={{ bgcolor: colors.primary }}>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>STT</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>Mã lớp HP</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>Mã môn học</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>Tên môn học</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>Số sinh viên</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>Học kỳ</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>Trạng thái</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard, textAlign: 'center' }}>
                   Thao tác
                 </TableCell>
               </TableRow>
@@ -393,13 +409,13 @@ const CoursesPage = () => {
                   key={section.sectionId}
                   hover
                   sx={{
-                    '&:hover': { bgcolor: '#f5f5f5' },
+                    '&:hover': { bgcolor: alpha(colors.primary, 0.04) },
                     transition: 'background-color 0.2s',
                   }}
                 >
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>
-                    <Typography sx={{ fontWeight: 600, color: '#1976d2' }}>
+                    <Typography sx={{ fontWeight: 600, color: colors.primary }}>
                       {section.sectionCode}
                     </Typography>
                   </TableCell>
@@ -411,7 +427,7 @@ const CoursesPage = () => {
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography sx={{ fontWeight: 600, color: '#4caf50' }}>
+                      <Typography sx={{ fontWeight: 600, color: colors.success }}>
                         {section.enrolledCount}
                       </Typography>
                       <Typography color="text.secondary">/</Typography>
@@ -422,7 +438,7 @@ const CoursesPage = () => {
                     <Chip
                       label={section.semesterName}
                       size="small"
-                      sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }}
+                      sx={{ bgcolor: colors.bgPrimarySoft, color: colors.primary }}
                     />
                   </TableCell>
                   <TableCell>{getStatusChip(section.status)}</TableCell>
@@ -443,12 +459,11 @@ const CoursesPage = () => {
                       </Button>
                       <Button
                         variant="contained"
+                        color="success"
                         size="small"
                         sx={{
                           textTransform: 'none',
                           minWidth: '90px',
-                          bgcolor: '#4caf50',
-                          '&:hover': { bgcolor: '#45a049' },
                         }}
                         onClick={() => {
                           /* Navigate to gradebook */
@@ -466,7 +481,7 @@ const CoursesPage = () => {
 
         {filteredCourses.length === 0 && (
           <Box sx={{ p: 6, textAlign: 'center' }}>
-            <School sx={{ fontSize: 80, color: '#e0e0e0', mb: 2 }} />
+            <School sx={{ fontSize: 80, color: alpha(colors.text, 0.2), mb: 2 }} />
             <Typography variant="h6" color="text.secondary" gutterBottom>
               Không tìm thấy lớp học phần nào
             </Typography>

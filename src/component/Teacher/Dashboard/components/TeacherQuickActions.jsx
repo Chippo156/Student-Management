@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Paper,
   Typography,
@@ -7,6 +7,7 @@ import {
   Button,
   Fade,
 } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import {
   Grade,
   EventAvailable,
@@ -18,43 +19,53 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 const TeacherQuickActions = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
+
+  const colors = useMemo(() => ({
+    primary: theme.palette.primary.main,
+    success: theme.palette.success.main,
+    warning: theme.palette.warning.main,
+    secondary: theme.palette.secondary.main,
+    error: theme.palette.error.main,
+    info: theme.palette.info.main,
+  }), [theme]);
 
   const actions = [
     {
       title: 'Chấm điểm',
       icon: <Grade sx={{ fontSize: 40 }} />,
-      color: '#1976d2',
+      color: colors.primary,
       path: '/teacher/grades',
     },
     {
       title: 'Điểm danh',
       icon: <EventAvailable sx={{ fontSize: 40 }} />,
-      color: '#388e3c',
+      color: colors.success,
       path: '/teacher/attendance',
     },
     {
       title: 'Bài tập',
       icon: <Assignment sx={{ fontSize: 40 }} />,
-      color: '#f57c00',
+      color: colors.warning,
       path: '/teacher/assignments',
     },
     {
       title: 'Tài liệu',
       icon: <Folder sx={{ fontSize: 40 }} />,
-      color: '#7b1fa2',
+      color: colors.secondary,
       path: '/teacher/materials',
     },
     {
       title: 'Sinh viên',
       icon: <People sx={{ fontSize: 40 }} />,
-      color: '#d32f2f',
+      color: colors.error,
       path: '/teacher/students',
     },
     {
       title: 'Lịch dạy',
       icon: <CalendarMonth sx={{ fontSize: 40 }} />,
-      color: '#0288d1',
+      color: colors.info,
       path: '/teacher/schedule',
     },
   ];

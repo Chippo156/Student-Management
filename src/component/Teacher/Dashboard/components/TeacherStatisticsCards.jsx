@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Grid, Card, CardContent, Box, Typography, Grow } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import {
   School,
   Person,
@@ -8,34 +9,49 @@ import {
 } from '@mui/icons-material';
 
 const TeacherStatisticsCards = ({ dashboardData, loading }) => {
+  const theme = useTheme();
+
+  const colors = useMemo(() => ({
+    primary: theme.palette.primary.main,
+    success: theme.palette.success.main,
+    warning: theme.palette.warning.main,
+    error: theme.palette.error.main,
+    primaryLight: alpha(theme.palette.primary.main, 0.08),
+    successLight: alpha(theme.palette.success.main, 0.08),
+    warningLight: alpha(theme.palette.warning.main, 0.08),
+    errorLight: alpha(theme.palette.error.main, 0.08),
+    shadow: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)',
+    shadowHover: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.15)',
+  }), [theme]);
+
   const statCards = [
     {
       title: 'Tổng số môn học',
       value: dashboardData.totalCourses,
-      icon: <School sx={{ fontSize: 40, color: '#1976d2' }} />,
-      color: '#e3f2fd',
-      gradient: 'linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%)',
+      icon: <School sx={{ fontSize: 40, color: colors.primary }} />,
+      color: colors.primaryLight,
+      gradient: `linear-gradient(135deg, ${colors.primaryLight} 0%, transparent 100%)`,
     },
     {
       title: 'Tổng số sinh viên',
       value: dashboardData.totalStudents,
-      icon: <Person sx={{ fontSize: 40, color: '#388e3c' }} />,
-      color: '#e8f5e8',
-      gradient: 'linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%)',
+      icon: <Person sx={{ fontSize: 40, color: colors.success }} />,
+      color: colors.successLight,
+      gradient: `linear-gradient(135deg, ${colors.successLight} 0%, transparent 100%)`,
     },
     {
       title: 'Lớp sắp tới',
       value: dashboardData.upcomingClasses,
-      icon: <Schedule sx={{ fontSize: 40, color: '#f57c00' }} />,
-      color: '#fff3e0',
-      gradient: 'linear-gradient(135deg, #fff3e0 0%, #ffffff 100%)',
+      icon: <Schedule sx={{ fontSize: 40, color: colors.warning }} />,
+      color: colors.warningLight,
+      gradient: `linear-gradient(135deg, ${colors.warningLight} 0%, transparent 100%)`,
     },
     {
       title: 'Điểm chưa chấm',
       value: dashboardData.pendingGrades,
-      icon: <Assignment sx={{ fontSize: 40, color: '#d32f2f' }} />,
-      color: '#ffebee',
-      gradient: 'linear-gradient(135deg, #ffebee 0%, #ffffff 100%)',
+      icon: <Assignment sx={{ fontSize: 40, color: colors.error }} />,
+      color: colors.errorLight,
+      gradient: `linear-gradient(135deg, ${colors.errorLight} 0%, transparent 100%)`,
     },
   ];
 
@@ -48,11 +64,12 @@ const TeacherStatisticsCards = ({ dashboardData, loading }) => {
               sx={{
                 height: 140,
                 background: card.gradient,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                bgcolor: theme.palette.background.paper,
+                boxShadow: `0 4px 20px ${colors.shadow}`,
                 transition: 'all 0.3s ease-in-out',
                 '&:hover': {
                   transform: 'translateY(-8px)',
-                  boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+                  boxShadow: `0 8px 30px ${colors.shadowHover}`,
                 },
               }}
             >

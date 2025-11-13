@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -21,6 +21,7 @@ import {
   Alert,
   IconButton,
 } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import { Table, Tag, Space, Upload } from 'antd';
 import {
   Folder,
@@ -35,6 +36,7 @@ import { teacherService } from '../../../service';
 import dayjs from 'dayjs';
 
 const MaterialsPage = () => {
+  const theme = useTheme();
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [materials, setMaterials] = useState([]);
@@ -54,6 +56,24 @@ const MaterialsPage = () => {
 
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
+
+  const colors = useMemo(() => ({
+    primary: theme.palette.primary.main,
+    success: theme.palette.success.main,
+    warning: theme.palette.warning.main,
+    error: theme.palette.error.main,
+    info: theme.palette.info.main,
+    bgLightBlue: alpha(theme.palette.primary.main, 0.1),
+    bgLightGreen: alpha(theme.palette.success.main, 0.1),
+    bgLightOrange: alpha(theme.palette.warning.main, 0.1),
+    bgLightPurple: alpha(theme.palette.secondary.main, 0.1),
+    iconBlue: theme.palette.primary.main,
+    iconGreen: theme.palette.success.main,
+    iconOrange: theme.palette.warning.main,
+    iconPurple: theme.palette.secondary.main,
+    iconGray: theme.palette.grey[600],
+    iconRed: theme.palette.error.main,
+  }), [theme]);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -233,15 +253,15 @@ const MaterialsPage = () => {
   const getTypeIcon = (type) => {
     switch (type) {
       case 'slide':
-        return { icon: <Description />, color: '#1976d2' };
+        return { icon: <Description />, color: colors.iconBlue };
       case 'document':
-        return { icon: <Folder />, color: '#388e3c' };
+        return { icon: <Folder />, color: colors.iconGreen };
       case 'code':
-        return { icon: <Description />, color: '#f57c00' };
+        return { icon: <Description />, color: colors.iconOrange };
       case 'video':
-        return { icon: <Description />, color: '#d32f2f' };
+        return { icon: <Description />, color: colors.iconRed };
       default:
-        return { icon: <Description />, color: '#757575' };
+        return { icon: <Description />, color: colors.iconGray };
     }
   };
 
@@ -339,13 +359,13 @@ const MaterialsPage = () => {
           <Grow in={true} timeout={800}>
             <Card
               sx={{
-                backgroundColor: '#e3f2fd',
+                backgroundColor: colors.bgLightBlue,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <Folder sx={{ fontSize: 40, color: '#1976d2', mr: 2 }} />
+                <Folder sx={{ fontSize: 40, color: colors.iconBlue, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
@@ -367,13 +387,13 @@ const MaterialsPage = () => {
           <Grow in={true} timeout={1000}>
             <Card
               sx={{
-                backgroundColor: '#e8f5e9',
+                backgroundColor: colors.bgLightGreen,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <Description sx={{ fontSize: 40, color: '#388e3c', mr: 2 }} />
+                <Description sx={{ fontSize: 40, color: colors.iconGreen, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
@@ -395,13 +415,13 @@ const MaterialsPage = () => {
           <Grow in={true} timeout={1200}>
             <Card
               sx={{
-                backgroundColor: '#fff3e0',
+                backgroundColor: colors.bgLightOrange,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <Folder sx={{ fontSize: 40, color: '#f57c00', mr: 2 }} />
+                <Folder sx={{ fontSize: 40, color: colors.iconOrange, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
@@ -423,13 +443,13 @@ const MaterialsPage = () => {
           <Grow in={true} timeout={1400}>
             <Card
               sx={{
-                backgroundColor: '#f3e5f5',
+                backgroundColor: colors.bgLightPurple,
                 transition: 'transform 0.3s',
                 '&:hover': { transform: 'translateY(-5px)' },
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <Download sx={{ fontSize: 40, color: '#7b1fa2', mr: 2 }} />
+                <Download sx={{ fontSize: 40, color: colors.iconPurple, mr: 2 }} />
                 <Box>
                   <Typography
                     variant="h5"
