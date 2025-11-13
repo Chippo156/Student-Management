@@ -57,8 +57,9 @@ namespace StudentManagement.Models
         // Practice group (if applicable)
         public int? PracticeGroupId { get; set; }
         public PracticeGroup? PracticeGroup { get; set; }
-        
+
         // Attendance records for this session
+        [JsonIgnore]
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
     }
 }

@@ -380,7 +380,7 @@ namespace StudentManagement.Services
                     AttendanceSessionId = attendanceSession.AttendanceSessionId,
                     StudentId = studentId,
                     SectionId = attendanceSession.SectionId,
-                    Status = AttendanceStatus.Present, // Default status
+                    Status = AttendanceStatus.Unknown, // Default status
                     RecordedByLecturerId = attendanceSession.CreatedByLecturerId
                 };
 
