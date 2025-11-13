@@ -178,10 +178,36 @@ const GraduatePage = () => {
         background: theme.palette.background.default,
       }}
     >
-      <Title level={2} style={{ color: theme.palette.primary.main, marginBottom: 24 }}>
-        <TrophyOutlined style={{ marginRight: 8 }} />
-        Tiến độ tốt nghiệp
-      </Title>
+      <style>
+        {`
+          .graduate-page .ant-card {
+            background: ${theme.palette.background.paper} !important;
+            border-color: ${theme.palette.divider} !important;
+            color: ${theme.palette.text.primary} !important;
+          }
+          .graduate-page .ant-statistic-title {
+            color: ${theme.palette.text.secondary} !important;
+          }
+          .graduate-page .ant-steps-item-title {
+            color: ${theme.palette.text.primary} !important;
+          }
+          .graduate-page .ant-steps-item-description {
+            color: ${theme.palette.text.secondary} !important;
+          }
+          .graduate-page .ant-btn {
+            color: ${theme.palette.text.primary} !important;
+            border-color: ${theme.palette.divider} !important;
+          }
+          .graduate-page .ant-form-item-label > label {
+            color: ${theme.palette.text.primary} !important;
+          }
+        `}
+      </style>
+      <div className="graduate-page">
+        <Title level={2} style={{ color: theme.palette.primary.main, marginBottom: 24 }}>
+          <TrophyOutlined style={{ marginRight: 8 }} />
+          Tiến độ tốt nghiệp
+        </Title>
 
       <GraduateStatistics
         overallProgress={overallProgress}
@@ -213,6 +239,7 @@ const GraduatePage = () => {
         form={form}
         isEditing={!!editingMilestone}
       />
+      </div>
     </div>
   );
 };

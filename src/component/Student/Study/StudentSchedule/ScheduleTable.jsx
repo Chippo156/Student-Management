@@ -156,6 +156,29 @@ const ScheduleTable = ({
         background: theme.palette.background.paper,
       }}
     >
+      <style>
+        {`
+          .schedule-table .ant-table {
+            background: ${theme.palette.background.paper} !important;
+            color: ${theme.palette.text.primary} !important;
+          }
+          .schedule-table .ant-table-thead > tr > th {
+            background: ${theme.palette.mode === 'dark'
+              ? theme.palette.background.paper
+              : theme.palette.background.secondary} !important;
+            color: ${theme.palette.text.primary} !important;
+            border-color: ${theme.palette.divider} !important;
+            font-weight: 600;
+          }
+          .schedule-table .ant-table-tbody > tr > td {
+            border-color: ${theme.palette.divider} !important;
+            color: ${theme.palette.text.primary} !important;
+          }
+          .schedule-table .ant-table-row:hover > td {
+            background: ${theme.palette.action.hover} !important;
+          }
+        `}
+      </style>
       <div className="printable-schedule">
         <div style={{ display: 'none' }} className="print-header">
           <h1
@@ -182,6 +205,7 @@ const ScheduleTable = ({
           </p>
         </div>
         <Table
+          className="schedule-table"
           columns={columns}
           dataSource={dataSource}
           pagination={false}

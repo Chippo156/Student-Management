@@ -127,25 +127,42 @@ const StudentGrades = () => {
         minHeight: '100vh',
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 24,
-        }}
-      >
-        <Title level={2} style={{ color: theme.palette.text.primary }}>
-          <BookOutlined
-            style={{ marginRight: 8, color: theme.palette.primary.main }}
-          />
-          Kết quả học tập
-        </Title>
+      <style>
+        {`
+          .student-grades .ant-card {
+            background: ${theme.palette.background.paper} !important;
+            border-color: ${theme.palette.divider} !important;
+            color: ${theme.palette.text.primary} !important;
+          }
+          .student-grades .ant-statistic-title {
+            color: ${theme.palette.text.secondary} !important;
+          }
+          .student-grades .ant-progress {
+            color: ${theme.palette.text.primary} !important;
+          }
+        `}
+      </style>
+      <div className="student-grades">
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 24,
+          }}
+        >
+          <Title level={2} style={{ color: theme.palette.text.primary }}>
+            <BookOutlined
+              style={{ marginRight: 8, color: theme.palette.primary.main }}
+            />
+            Kết quả học tập
+          </Title>
+        </div>
+
+        <GradeStatistics summary={summary} user={user} theme={theme} />
+
+        <GradeTable columns={columns} dataSource={tableData} theme={theme} />
       </div>
-
-      <GradeStatistics summary={summary} user={user} theme={theme} />
-
-      <GradeTable columns={columns} dataSource={tableData} theme={theme} />
     </div>
   );
 };

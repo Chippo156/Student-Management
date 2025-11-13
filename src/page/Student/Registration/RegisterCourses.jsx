@@ -48,29 +48,42 @@ const RegisterCourses = () => {
     >
       <style>
         {`
-        .ant-table-thead > tr > th {
+        .register-courses .ant-table {
+          background: ${theme.palette.background.paper} !important;
+          color: ${theme.palette.text.primary} !important;
+        }
+        .register-courses .ant-table-thead > tr > th {
           background: ${theme.palette.mode === 'dark' ? theme.palette.background.paper : alpha(theme.palette.primary.light, 0.15)} !important;
           color: ${theme.palette.text.primary} !important;
           font-weight: 600;
           text-align: center;
           border-color: ${theme.palette.divider} !important;
         }
-        .ant-table-tbody > tr > td {
+        .register-courses .ant-table-tbody > tr > td {
           border-color: ${theme.palette.divider} !important;
           color: ${theme.palette.text.primary} !important;
         }
-        .table-row-light { background: ${theme.palette.background.paper}; }
-        .table-row-dark { background: ${alpha(theme.palette.background.paper, 0.5)}; }
-        .table-row-selected { background: ${alpha(theme.palette.warning.main, 0.15)} !important; }
-        .schedule-row-lythuyet { background: ${alpha(theme.palette.primary.main, 0.1)} !important; }
-        .schedule-row-thuchanh-active { background: ${alpha(theme.palette.warning.main, 0.12)} !important; }
-        .schedule-row-thuchanh { background: ${theme.palette.background.paper} !important; }
-        .ant-table { background: ${theme.palette.background.paper}; color: ${theme.palette.text.primary}; }
-        .ant-select-selector { background: ${theme.palette.background.paper} !important; color: ${theme.palette.text.primary} !important; border-color: ${theme.palette.divider} !important; }
-        .ant-radio-wrapper { color: ${theme.palette.text.primary}; }
+        .register-courses .ant-table-row:hover > td {
+          background: ${theme.palette.action.hover} !important;
+        }
+        .register-courses .table-row-light { background: ${theme.palette.background.paper}; }
+        .register-courses .table-row-dark { background: ${alpha(theme.palette.background.paper, 0.5)}; }
+        .register-courses .table-row-selected { background: ${alpha(theme.palette.warning.main, 0.15)} !important; }
+        .register-courses .schedule-row-lythuyet { background: ${alpha(theme.palette.primary.main, 0.1)} !important; }
+        .register-courses .schedule-row-thuchanh-active { background: ${alpha(theme.palette.warning.main, 0.12)} !important; }
+        .register-courses .schedule-row-thuchanh { background: ${theme.palette.background.paper} !important; }
+        .register-courses .ant-select-selector { background: ${theme.palette.background.paper} !important; color: ${theme.palette.text.primary} !important; border-color: ${theme.palette.divider} !important; }
+        .register-courses .ant-radio-wrapper { color: ${theme.palette.text.primary}; }
+        .register-courses .ant-btn { border-color: ${theme.palette.divider} !important; }
+        .register-courses .ant-card {
+          background: ${theme.palette.background.paper} !important;
+          border-color: ${theme.palette.divider} !important;
+          color: ${theme.palette.text.primary} !important;
+        }
         `}
       </style>
       <Card
+        className="register-courses"
         style={{
           borderRadius: 12,
           background: theme.palette.background.paper,

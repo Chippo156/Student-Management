@@ -136,30 +136,51 @@ const StudentSchedule = () => {
         background: theme.palette.background.default,
       }}
     >
-      <div
-        style={{
-          marginBottom: 20,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div>
-          <Title
-            level={2}
-            style={{ margin: 0, color: theme.palette.text.primary }}
-          >
-            <CalendarOutlined
-              style={{ marginRight: 8, color: theme.palette.primary.main }}
-            />
-            Lịch học, lịch thi theo tuần
-          </Title>
-          <Text type="secondary" style={{ fontSize: 13 }}>
-            Tuần ngày {startOfWeek.format('DD/MM')} -{' '}
-            {endOfWeek.format('DD/MM/YYYY')}
-          </Text>
+      <style>
+        {`
+          .student-schedule .ant-card {
+            background: ${theme.palette.background.paper} !important;
+            border-color: ${theme.palette.divider} !important;
+            color: ${theme.palette.text.primary} !important;
+          }
+          .student-schedule .ant-btn {
+            color: ${theme.palette.text.primary} !important;
+            border-color: ${theme.palette.divider} !important;
+          }
+          .student-schedule .ant-radio-wrapper {
+            color: ${theme.palette.text.primary} !important;
+          }
+          .student-schedule .ant-select-selector {
+            background: ${theme.palette.background.paper} !important;
+            border-color: ${theme.palette.divider} !important;
+          }
+        `}
+      </style>
+      <div className="student-schedule">
+        <div
+          style={{
+            marginBottom: 20,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <div>
+            <Title
+              level={2}
+              style={{ margin: 0, color: theme.palette.text.primary }}
+            >
+              <CalendarOutlined
+                style={{ marginRight: 8, color: theme.palette.primary.main }}
+              />
+              Lịch học, lịch thi theo tuần
+            </Title>
+            <Text type="secondary" style={{ fontSize: 13 }}>
+              Tuần ngày {startOfWeek.format('DD/MM')} -{' '}
+              {endOfWeek.format('DD/MM/YYYY')}
+            </Text>
+          </div>
         </div>
-      </div>
 
       <ScheduleStatistics
         todayItems={todayItems}
@@ -192,6 +213,7 @@ const StudentSchedule = () => {
       />
 
       <ScheduleLegend theme={theme} />
+      </div>
     </div>
   );
 };
