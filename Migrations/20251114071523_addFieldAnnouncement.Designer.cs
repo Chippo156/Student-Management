@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StudentManagement.Data;
 
@@ -11,9 +12,11 @@ using StudentManagement.Data;
 namespace StudentManagement.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251114071523_addFieldAnnouncement")]
+    partial class addFieldAnnouncement
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -105,43 +108,15 @@ namespace StudentManagement.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("ExpiryDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Priority")
-                        .HasColumnType("int");
-
                     b.Property<string>("SourceUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("TargetDepartmentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TargetType")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("TargetYear")
-                        .HasColumnType("int");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
                     b.HasKey("AnnouncementId");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("TargetDepartmentId");
 
                     b.ToTable("Announcements");
                 });
@@ -1377,23 +1352,6 @@ namespace StudentManagement.Migrations
                         .IsRequired();
 
                     b.Navigation("Lecturer");
-                });
-
-            modelBuilder.Entity("StudentManagement.Models.Announcement", b =>
-                {
-                    b.HasOne("StudentManagement.Models.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StudentManagement.Models.Department", "TargetDepartment")
-                        .WithMany()
-                        .HasForeignKey("TargetDepartmentId");
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("TargetDepartment");
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Assessment", b =>

@@ -65,7 +65,7 @@ builder.Services.AddScoped<IBankAccountService, BankAccountService>();
 builder.Services.AddScoped<IFamilyRelationshipService, FamilyRelationshipService>();
 builder.Services.AddScoped<IPracticeGroupService, PracticeGroupService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
-
+builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 
 builder.Services.AddHttpContextAccessor();
 
