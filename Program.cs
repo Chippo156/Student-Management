@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using StudentManagement.Data;
+using StudentManagement.Hubs;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services;
@@ -67,6 +68,12 @@ builder.Services.AddScoped<IPracticeGroupService, PracticeGroupService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 
+// Add SignalR
+builder.Services.AddSignalR();
+
+// Register chat service
+builder.Services.AddScoped<IChatService, ChatService>();
+
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddCors(options =>
@@ -78,6 +85,7 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -100,5 +108,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Configure SignalR hub
+app.MapHub<ChatHub>("/chathub");
 
 app.Run();

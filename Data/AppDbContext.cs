@@ -43,5 +43,8 @@ namespace StudentManagement.Data
         public DbSet<PracticeGroupEnrollment> PracticeGroupEnrollments { get; set; } = null!;
         public DbSet<Attendance> Attendances { get; set; }
         public DbSet<AttendanceSession> AttendanceSessions { get; set; }
+        public DbSet<ChatRoom> ChatRooms { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<ChatRoomParticipant> ChatRoomParticipants { get; set; }
     }
 }
