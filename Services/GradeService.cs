@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
+using StudentManagement.Enum;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
@@ -755,8 +756,172 @@ namespace StudentManagement.Services
             return response;
         }
 
+        public async Task<BulkGradeResponse> CreateBulkGradesAsync(BulkGradeRequest request)
+        {
+            using var transaction = await context.Database.BeginTransactionAsync();
 
+            try
+            {
+                var response = new BulkGradeResponse
+                {
+                    TotalProcessed = request.StudentGrades.Count
+                };
 
+                // Validate assessment exists
+                var assessment = await context.Assessment
+                    .Include(a => a.AssessmentType)
+                    .Include(a => a.Section)
+                        .ThenInclude(s => s.Semester)
+                    .FirstOrDefaultAsync(a => a.AssessmentId == request.AssessmentId);
+
+                if (assessment == null)
+                {
+                    response.GeneralErrors.Add("Assessment not found");
+                    return response;
+                }
+
+                // Get all student IDs to validate
+                var studentIds = request.StudentGrades.Select(sg => sg.StudentId).ToList();
+                var students = await context.Students
+                    .Include(s => s.User)
+                    .Where(s => studentIds.Contains(s.Id))
+                    .ToDictionaryAsync(s => s.Id, s => s);
+
+                // Check for existing grades
+                var existingGrades = await context.Grades
+                    .Where(g => g.Assessment.AssessmentId == request.AssessmentId &&
+                               studentIds.Contains(g.Student.Id))
+                    .ToDictionaryAsync(g => g.Student.Id, g => g);
+
+                var processResults = new List<GradeProcessResult>();
+                var gradesToAdd = new List<Grade>();
+                var studentsToUpdateFinalResult = new List<int>();
+
+                foreach (var studentGrade in request.StudentGrades)
+                {
+                    var result = new GradeProcessResult
+                    {
+                        StudentId = studentGrade.StudentId
+                    };
+
+                    // Validate student exists
+                    if (!students.TryGetValue(studentGrade.StudentId, out var student))
+                    {
+                        result.IsSuccess = false;
+                        result.ErrorMessage = "Student not found";
+                        processResults.Add(result);
+                        continue;
+                    }
+
+                    result.StudentName = student.User.FullName;
+                    result.MSSV = student.MSSV;
+
+                    // Check if grade already exists
+                    if (existingGrades.ContainsKey(studentGrade.StudentId))
+                    {
+                        result.IsSuccess = false;
+                        result.ErrorMessage = "Grade already exists for this student and assessment";
+                        processResults.Add(result);
+                        continue;
+                    }
+
+                    // Validate score range (0-10)
+                    if (studentGrade.Score < 0 || studentGrade.Score > 10)
+                    {
+                        result.IsSuccess = false;
+                        result.ErrorMessage = "Score must be between 0 and 10";
+                        processResults.Add(result);
+                        continue;
+                    }
+
+                    // Verify student is enrolled in this section
+                    var isEnrolled = await context.Enrollments
+                        .AnyAsync(e => e.Student.Id == studentGrade.StudentId &&
+                                     e.Section.SectionId == assessment.Section.SectionId &&
+                                     e.enrollmentStatus == EnrollmentStatus.Enrolled);
+
+                    if (!isEnrolled)
+                    {
+                        result.IsSuccess = false;
+                        result.ErrorMessage = "Student is not enrolled in this section";
+                        processResults.Add(result);
+                        continue;
+                    }
+
+                    // Create grade object
+                    var grade = new Grade
+                    {
+                        Student = student,
+                        Assessment = assessment,
+                        Score = studentGrade.Score
+                    };
+
+                    gradesToAdd.Add(grade);
+                    studentsToUpdateFinalResult.Add(studentGrade.StudentId);
+
+                    result.IsSuccess = true;
+                    result.Score = studentGrade.Score;
+                    processResults.Add(result);
+                }
+
+                // Add all valid grades
+                if (gradesToAdd.Any())
+                {
+                    context.Grades.AddRange(gradesToAdd);
+                    await context.SaveChangesAsync();
+
+                    // Update GradeIds in results
+                    var addedGrades = gradesToAdd.ToDictionary(g => g.Student.Id, g => g.GradeId);
+                    foreach (var result in processResults.Where(r => r.IsSuccess))
+                    {
+                        if (addedGrades.TryGetValue(result.StudentId, out var gradeId))
+                        {
+                            result.GradeId = gradeId;
+                        }
+                    }
+                }
+
+                // Update final results and GPA if this is a final exam assessment
+                if (assessment.AssessmentType.AssessmentTypeId == 4 && studentsToUpdateFinalResult.Any())
+                {
+                    foreach (var studentId in studentsToUpdateFinalResult.Distinct())
+                    {
+                        try
+                        {
+                            await UpdateFinalResultAsync(studentId, assessment.Section.SectionId);
+                            await UpdateGpaSnapshotAsync(studentId, assessment.Section.Semester.SemesterId);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log but don't fail the entire operation
+                            Console.WriteLine($"Failed to update final result for student {studentId}: {ex.Message}");
+                        }
+                    }
+                }
+
+                await transaction.CommitAsync();
+
+                // Prepare response
+                response.Results = processResults;
+                response.SuccessfulCount = processResults.Count(r => r.IsSuccess);
+                response.FailedCount = processResults.Count(r => !r.IsSuccess);
+                response.IsSuccess = response.SuccessfulCount > 0;
+                response.Message = $"Processed {response.TotalProcessed} grades: {response.SuccessfulCount} successful, {response.FailedCount} failed";
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return new BulkGradeResponse
+                {
+                    IsSuccess = false,
+                    Message = "Bulk grade creation failed due to system error",
+                    GeneralErrors = { ex.Message },
+                    TotalProcessed = request.StudentGrades.Count
+                };
+            }
+        }
         private (string gradeLetter, double gradePoint) CalculateGradeLetterAndPoint(double finalScore)
         {
             // Giới hạn điểm trong khoảng 0 - 10 để tránh lỗi

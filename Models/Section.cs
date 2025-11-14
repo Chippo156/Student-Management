@@ -22,5 +22,11 @@ namespace StudentManagement.Models
         public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
         [JsonIgnore]
         public ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
+
+        public int MinEnrollment { get; set; } = 0; // Số lượng đăng ký tối thiểu
+        public double MinEnrollmentPercentage { get; set; } = 0.5; // 50% mặc định
+        public bool IsCancelled { get; set; } = false; // Trạng thái hủy
+        public DateTime? CancelledAt { get; set; } // Thời gian hủy
+        public string? CancellationReason { get; set; } // Lý do hủy
     }
 }

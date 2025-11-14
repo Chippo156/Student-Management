@@ -111,5 +111,39 @@ namespace StudentManagement.Controllers
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
+        [HttpPost("CreateBulkGrades")]
+        [Authorize(Roles = "Lecturer")]
+        public async Task<IActionResult> CreateBulkGrades([FromBody] BulkGradeRequest request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid request data", errors));
+                }
+
+                var result = await gradeService.CreateBulkGradesAsync(request);
+
+                if (result.IsSuccess)
+                {
+                    return Ok(ApiResponse.SuccessResponse(result, result.Message));
+                }
+                else
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, result.Message, result.Results));
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while creating bulk grades", new List<string> { ex.Message }));
+            }
+        }
+
+        
     }
 }

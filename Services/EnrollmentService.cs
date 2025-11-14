@@ -103,8 +103,8 @@ namespace StudentManagement.Services
                     return new EnrollmentResultResponse
                     {
                         IsSuccess = false,
-                        Message = "Student not found",
-                        Errors = { "Student with provided MSSV does not exist" }
+                        Message = "Không tìm thấy sinh viên",
+                        Errors = { "Sinh viên không được tìm thấy với mã số sinh viên" }
                     };
                 }
 
@@ -269,6 +269,13 @@ namespace StudentManagement.Services
         {
             var errors = new List<string>();
 
+            // Kiểm tra section có bị hủy không
+            if (section.IsCancelled)
+            {
+                errors.Add($"Không thể đăng ký vì lớp học phần đã bị hủy. Lý do: {section.CancellationReason}");
+                return (false, errors);
+            }
+
             // Check registration period
             var registrationPeriod = await context.RegistrationPeriods
                 .Include(rp => rp.Semester)
@@ -279,7 +286,12 @@ namespace StudentManagement.Services
 
             if (registrationPeriod == null || !registrationPeriod.IsActive)
             {
-                errors.Add("Registration period is not active for your department");
+                errors.Add("Đăng ký thất bại, khung thời gian đăng ký đã hết hiệu lực");
+            }
+
+            if (section.Semester.StartDate < DateOnly.FromDateTime(DateTime.Now))
+            {
+                errors.Add("Không thể đăng ký học phần trong học kỳ đã bắt đầu");
             }
 
             // Check prerequisites
@@ -306,74 +318,7 @@ namespace StudentManagement.Services
                 }
             }
 
-            // Check schedule conflicts
-            //await CheckScheduleConflictsForStudentAsync(student.Id, section, errors);
-
             return (errors.Count == 0, errors);
-        }
-
-        private async Task CheckScheduleConflictsForStudentAsync(int studentId, Section section, List<string> errors)
-        {
-            // Get ALL schedules of current student's enrolled sections trong cùng semester
-            var studentMainSchedules = await context.Enrollments
-                .Include(e => e.Section)
-                .Where(e => e.Student.Id == studentId &&
-                           e.Section.Semester.SemesterId == section.Semester.SemesterId) // Chỉ lấy lịch trong cùng kỳ
-                .SelectMany(e => e.Section.Schedules)
-                .Where(sch => !sch.PracticeGroupId.HasValue) // Lịch lý thuyết của sinh viên
-                .ToListAsync();
-
-            // Get practice group schedules that the student is enrolled in trong cùng semester
-            var studentPracticeGroups = await context.PracticeGroupEnrollments
-                .Include(pge => pge.PracticeGroup)
-                    .ThenInclude(pg => pg.Section) // Include Section để check Semester
-                .Where(pge => pge.StudentId == studentId &&
-                             pge.IsActive &&
-                             pge.PracticeGroup.Section.Semester.SemesterId == section.Semester.SemesterId) // Cùng kỳ
-                .Select(pge => pge.PracticeGroupId)
-                .ToListAsync();
-
-            var studentPracticeSchedules = await context.Schedules
-                .Where(s => s.PracticeGroupId.HasValue &&
-                           studentPracticeGroups.Contains(s.PracticeGroupId.Value))
-                .ToListAsync();
-
-            // Combine ALL student schedules (main + practice) trong cùng semester
-            var allStudentSchedules = studentMainSchedules.Concat(studentPracticeSchedules).ToList();
-
-            // Get schedules for the new section (chỉ lịch chính, không bao gồm lịch thực hành)
-            var sectionMainSchedules = await context.Schedules
-                .Where(s => s.Section.SectionId == section.SectionId && !s.PracticeGroupId.HasValue)
-                .ToListAsync();
-
-            // Check conflicts giữa lịch của sinh viên và lịch chính của section mới
-            foreach (var newSchedule in sectionMainSchedules)
-            {
-                foreach (var existingSchedule in allStudentSchedules)
-                {
-                    // Check for time conflicts on the same day
-                    if (newSchedule.DayOfWeek == existingSchedule.DayOfWeek &&
-                        newSchedule.DayOfWeek.HasValue &&
-                        DoTimesOverlap(newSchedule.StartTime, newSchedule.EndTime,
-                                     existingSchedule.StartTime, existingSchedule.EndTime))
-                    {
-                        var existingScheduleType = existingSchedule.PracticeGroupId.HasValue ? "lịch thực hành" : "lịch lý thuyết";
-
-                        errors.Add($"Xung đột lịch: lịch lý thuyết môn mới ({newSchedule.DayOfWeek} {newSchedule.StartTime:HH:mm}-{newSchedule.EndTime:HH:mm}) trùng với {existingScheduleType} môn đã đăng ký.");
-                    }
-
-                    // Check for conflicts on specific dates
-                    if (newSchedule.Date.HasValue && existingSchedule.Date.HasValue &&
-                        newSchedule.Date == existingSchedule.Date &&
-                        DoTimesOverlap(newSchedule.StartTime, newSchedule.EndTime,
-                                     existingSchedule.StartTime, existingSchedule.EndTime))
-                    {
-                        var existingScheduleType = existingSchedule.PracticeGroupId.HasValue ? "lịch thực hành" : "lịch lý thuyết";
-
-                        errors.Add($"Xung đột lịch: lịch lý thuyết môn mới ({newSchedule.Date:dd/MM/yyyy} {newSchedule.StartTime:HH:mm}-{newSchedule.EndTime:HH:mm}) trùng với {existingScheduleType} môn đã đăng ký.");
-                    }
-                }
-            }
         }
 
         public async Task<IEnumerable<EnrolledSectionResponse>> GetEnrolledSectionsBySemesterAsync(string mssv, int semesterId)
@@ -631,7 +576,7 @@ namespace StudentManagement.Services
 
             if (registrationPeriod == null || !registrationPeriod.IsActive)
             {
-                errors.Add("Thời gian đăng ký hiện không còn hiệu lực đối với khoa của bạn.");
+                errors.Add("Thời gian hủy đăng ký hiện không còn hiệu lực đối với khoa của bạn.");
             }
 
             // Kiểm tra đã quá thời hạn hủy đăng ký chưa (thường là trong vòng 2 tuần đầu học kỳ)
@@ -845,7 +790,7 @@ namespace StudentManagement.Services
                     {
                         var existingScheduleType = existingSchedule.PracticeGroupId.HasValue ?
                             "lịch thực hành khác" : "lịch lý thuyết";
-                        errors.Add($"Lịch thực hành bị trùng với {existingScheduleType}: {practiceSchedule.DayOfWeek} từ {practiceSchedule.StartTime:HH:mm} đến {practiceSchedule.EndTime:HH:mm}");
+                        errors.Add($"Lịch thực hành bị trùng với {existingScheduleType}: {GetDayOfWeekInVietnamese((DayOfWeek)practiceSchedule.DayOfWeek)} từ {practiceSchedule.StartTime:HH:mm} đến {practiceSchedule.EndTime:HH:mm}");
                     }
 
                     // Check for conflicts on specific dates
