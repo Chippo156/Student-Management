@@ -35,12 +35,13 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(grades, "Section-student grades retrieved successfully"));
         }
 
-        [HttpGet("GetAllGradesByStudent/student/{studentId}/section/{sectionId}")]
-        public async Task<IActionResult> GetAllGradesByStudentAndSection(int studentId, int sectionId)
+        [HttpGet("GetAllStudentGrades/section/{sectionId}")]
+        [Authorize(Roles = "Lecturer")]
+        public async Task<IActionResult> GetAllGradesByStudentAndSection(int sectionId)
         {
             try
             {
-                var grades = await gradeService.GetAllGradesByStudentAndSectionAsync(studentId, sectionId);
+                var grades = await gradeService.GetAllGradesByStudentAndSectionAsync(sectionId);
                 return Ok(ApiResponse.SuccessResponse(grades, "Student section grades retrieved successfully"));
             }
             catch (Exception ex)

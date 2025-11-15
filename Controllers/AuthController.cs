@@ -6,13 +6,14 @@ using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
+using System.Collections.Generic;
 using System.Security.Claims;
 
 namespace StudentManagement.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    public class AuthController(IAuthService authService, IStudentService studentService, ILecturerService lecturerService) : ControllerBase
+    public class AuthController(IAuthService authService, IUserService userService, IStudentService studentService, ILecturerService lecturerService) : ControllerBase
     {
         public static User user = new User();
 
@@ -131,6 +132,40 @@ namespace StudentManagement.Controllers
             }
         }
 
+        [HttpPost("forgot-password-by-mssv")]
+        public async Task<IActionResult> ForgotPasswordByMSSV([FromBody] ForgotPasswordByMSSVRequest request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid request data", errors));
+                }
 
+                var result = await userService.ForgotPasswordByMSSVAsync(request);
+                
+                if (result.IsSuccess)
+                {
+                    return Ok(ApiResponse.SuccessResponse(new { 
+                        message = result.Message,
+                        studentName = result.StudentName,
+                        email = result.Email
+                    }, result.Message));
+                }
+                else
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, result.Message, result.Errors));
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while processing forgot password request", new List<string> { ex.Message }));
+            }
+        }
     }
 }

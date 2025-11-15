@@ -612,14 +612,148 @@ namespace StudentManagement.Services
             await context.SaveChangesAsync();
         }
 
-        public async Task<StudentSectionAllGradesResponse> GetAllGradesByStudentAndSectionAsync(int studentId, int sectionId)
-        {
-            // Kiểm tra student tồn tại
-            var student = await context.Students
-                .Include(s => s.User)
-                .FirstOrDefaultAsync(s => s.Id == studentId)
-                ?? throw new Exception($"Student with ID {studentId} not found");
+        //public async Task<StudentSectionAllGradesResponse> GetAllGradesByStudentAndSectionAsync(int studentId, int sectionId)
+        //{
+        //    // Kiểm tra student tồn tại
+        //    var student = await context.Students
+        //        .Include(s => s.User)
+        //        .FirstOrDefaultAsync(s => s.Id == studentId)
+        //        ?? throw new Exception($"Student with ID {studentId} not found");
 
+        //    // Kiểm tra section tồn tại
+        //    var section = await context.Sections
+        //        .Include(s => s.CurriculumCourse)
+        //            .ThenInclude(cc => cc.Course)
+        //        .Include(s => s.Semester)
+        //        .Include(s => s.Lecturer)
+        //            .ThenInclude(l => l.User)
+        //        .FirstOrDefaultAsync(s => s.SectionId == sectionId)
+        //        ?? throw new Exception($"Section with ID {sectionId} not found");
+
+        //    // Kiểm tra student có đăng ký section này không
+        //    var enrollment = await context.Enrollments
+        //        .FirstOrDefaultAsync(e => e.Student.Id == studentId && e.Section.SectionId == sectionId);
+
+        //    if (enrollment == null)
+        //    {
+        //        throw new Exception("Student is not enrolled in this section");
+        //    }
+
+        //    // Lấy tất cả assessments của section này
+        //    var allAssessments = await context.Assessment
+        //        .Include(a => a.AssessmentType)
+        //        .Where(a => a.Section.SectionId == sectionId)
+        //        .OrderBy(a => a.AssessmentType.AssessmentTypeId)
+        //        .ThenBy(a => a.Title)
+        //        .ToListAsync();
+
+        //    // Lấy tất cả grades hiện có của student trong section này
+        //    var existingGrades = await context.Grades
+        //        .Include(g => g.Assessment)
+        //            .ThenInclude(a => a.AssessmentType)
+        //        .Where(g => g.Student.Id == studentId &&
+        //                   g.Assessment.Section.SectionId == sectionId)
+        //        .ToListAsync();
+
+        //    // Lấy final result nếu có
+        //    var finalResult = await context.FinalResults
+        //        .FirstOrDefaultAsync(fr => fr.Student.Id == studentId &&
+        //                                  fr.Section.SectionId == sectionId);
+
+        //    // Tạo response
+        //    var response = new StudentSectionAllGradesResponse
+        //    {
+        //        StudentId = student.Id,
+        //        StudentName = student.User.FullName,
+        //        MSSV = student.MSSV,
+
+        //        SectionId = section.SectionId,
+        //        SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
+        //        CourseCode = section.CurriculumCourse.Course.CourseCode,
+        //        CourseName = section.CurriculumCourse.Course.CourseName,
+        //        Credits = section.CurriculumCourse.Course.CreditsTheory + section.CurriculumCourse.Course.CreditsLab,
+
+        //        SemesterId = section.Semester.SemesterId,
+        //        SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
+
+        //        LecturerName = section.Lecturer?.User?.FullName ?? "Not Assigned",
+
+        //        FinalScore = finalResult != null ? Math.Round(finalResult.FinalScore, 2) : (double?)null,
+        //        GradeLetter = finalResult?.GradeLetter,
+
+        //    };
+
+        //    // Group assessments by assessment type
+        //    var assessmentsByType = allAssessments
+        //        .GroupBy(a => a.AssessmentType.AssessmentTypeId)
+        //        .OrderBy(g => g.Key);
+
+        //    foreach (var assessmentTypeGroup in assessmentsByType)
+        //    {
+        //        var assessmentTypeId = assessmentTypeGroup.Key;
+        //        var assessments = assessmentTypeGroup.ToList();
+
+        //        if (assessmentTypeId == 1) // Assessment Type 1 - Điểm thường kỳ
+        //        {
+        //            var type1AssessmentDetails = new List<AssessmentGradeInfo>();
+
+        //            foreach (var assessment in assessments)
+        //            {
+        //                var existingGrade = existingGrades
+        //                    .FirstOrDefault(g => g.Assessment.AssessmentId == assessment.AssessmentId);
+
+        //                type1AssessmentDetails.Add(new AssessmentGradeInfo
+        //                {
+        //                    AssessmentId = assessment.AssessmentId,
+        //                    AssessmentName = assessment.Title,
+        //                    Weight = assessment.Weight,
+        //                    GradeId = existingGrade?.GradeId,
+        //                    Score = existingGrade?.Score,
+        //                    HasGrade = existingGrade != null,
+        //                    CanInputGrade = existingGrade == null // Có thể nhập điểm nếu chưa có
+        //                });
+        //            }
+
+        //            // Tạo một entry tổng hợp cho Assessment Type 1
+        //            var firstAssessment = assessments.First();
+        //            response.AssessmentDetails = type1AssessmentDetails;
+        //                }
+        //        else // Các assessment types khác
+        //        {
+        //            foreach (var assessment in assessments)
+        //            {
+        //                var existingGrade = existingGrades
+        //                    .FirstOrDefault(g => g.Assessment.AssessmentId == assessment.AssessmentId);
+
+        //                var assessmentDetail = new AssessmentGradeInfo
+        //                {
+        //                    AssessmentId = assessment.AssessmentId,
+        //                    AssessmentName = assessment.Title,
+        //                    Weight = assessment.Weight,
+        //                    GradeId = existingGrade?.GradeId,
+        //                    Score = existingGrade?.Score,
+        //                    HasGrade = existingGrade != null,
+        //                    CanInputGrade = existingGrade == null
+        //                };
+        //                response.AssessmentDetails.Add(assessmentDetail
+        //                    );
+        //            }
+        //        }
+        //    }
+
+        //    // Tính toán thống kê
+            
+
+        //    response.TotalAssessments = allAssessments.Count;
+        //    response.PendingAssessments = response.TotalAssessments - response.CompletedAssessments;
+        //    response.CompletionPercentage = response.TotalAssessments > 0 ?
+        //        Math.Round((double)response.CompletedAssessments / response.TotalAssessments * 100, 2) : 0;
+
+        //    return response;
+        //}
+
+        public async Task<SectionAllStudentsGradesResponse> GetAllGradesByStudentAndSectionAsync(int sectionId)
+        {
             // Kiểm tra section tồn tại
             var section = await context.Sections
                 .Include(s => s.CurriculumCourse)
@@ -630,13 +764,18 @@ namespace StudentManagement.Services
                 .FirstOrDefaultAsync(s => s.SectionId == sectionId)
                 ?? throw new Exception($"Section with ID {sectionId} not found");
 
-            // Kiểm tra student có đăng ký section này không
-            var enrollment = await context.Enrollments
-                .FirstOrDefaultAsync(e => e.Student.Id == studentId && e.Section.SectionId == sectionId);
+            // Lấy tất cả sinh viên đã đăng ký section này
+            var enrolledStudents = await context.Enrollments
+                .Include(e => e.Student)
+                    .ThenInclude(s => s.User)
+                .Where(e => e.Section.SectionId == sectionId &&
+                           e.enrollmentStatus == EnrollmentStatus.Enrolled)
+                .OrderBy(e => e.Student.MSSV)
+                .ToListAsync();
 
-            if (enrollment == null)
+            if (!enrolledStudents.Any())
             {
-                throw new Exception("Student is not enrolled in this section");
+                throw new Exception("No students enrolled in this section");
             }
 
             // Lấy tất cả assessments của section này
@@ -647,26 +786,26 @@ namespace StudentManagement.Services
                 .ThenBy(a => a.Title)
                 .ToListAsync();
 
-            // Lấy tất cả grades hiện có của student trong section này
-            var existingGrades = await context.Grades
+            // Lấy tất cả grades của tất cả sinh viên trong section này
+            var studentIds = enrolledStudents.Select(e => e.Student.Id).ToList();
+            var allGrades = await context.Grades
                 .Include(g => g.Assessment)
                     .ThenInclude(a => a.AssessmentType)
-                .Where(g => g.Student.Id == studentId &&
+                .Include(g => g.Student)
+                .Where(g => studentIds.Contains(g.Student.Id) &&
                            g.Assessment.Section.SectionId == sectionId)
                 .ToListAsync();
 
-            // Lấy final result nếu có
-            var finalResult = await context.FinalResults
-                .FirstOrDefaultAsync(fr => fr.Student.Id == studentId &&
-                                          fr.Section.SectionId == sectionId);
+            // Lấy final results của tất cả sinh viên
+            var finalResults = await context.FinalResults
+                .Include(fr => fr.Student)
+                .Where(fr => studentIds.Contains(fr.Student.Id) &&
+                            fr.Section.SectionId == sectionId)
+                .ToDictionaryAsync(fr => fr.Student.Id, fr => fr);
 
             // Tạo response
-            var response = new StudentSectionAllGradesResponse
+            var response = new SectionAllStudentsGradesResponse
             {
-                StudentId = student.Id,
-                StudentName = student.User.FullName,
-                MSSV = student.MSSV,
-
                 SectionId = section.SectionId,
                 SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
                 CourseCode = section.CurriculumCourse.Course.CourseCode,
@@ -678,15 +817,16 @@ namespace StudentManagement.Services
 
                 LecturerName = section.Lecturer?.User?.FullName ?? "Not Assigned",
 
-                FinalScore = finalResult != null ? Math.Round(finalResult.FinalScore, 2) : (double?)null,
-                GradeLetter = finalResult?.GradeLetter,
-
+                TotalStudents = enrolledStudents.Count,
+                TotalAssessments = allAssessments.Count
             };
 
-            // Group assessments by assessment type
+            // Group assessments by assessment type để tạo cấu trúc dữ liệu
             var assessmentsByType = allAssessments
                 .GroupBy(a => a.AssessmentType.AssessmentTypeId)
                 .OrderBy(g => g.Key);
+
+            var assessmentHeaders = new List<AssessmentHeaderInfo>();
 
             foreach (var assessmentTypeGroup in assessmentsByType)
             {
@@ -695,67 +835,130 @@ namespace StudentManagement.Services
 
                 if (assessmentTypeId == 1) // Assessment Type 1 - Điểm thường kỳ
                 {
-                    var type1AssessmentDetails = new List<AssessmentGradeInfo>();
-
                     foreach (var assessment in assessments)
                     {
-                        var existingGrade = existingGrades
-                            .FirstOrDefault(g => g.Assessment.AssessmentId == assessment.AssessmentId);
-
-                        type1AssessmentDetails.Add(new AssessmentGradeInfo
+                        assessmentHeaders.Add(new AssessmentHeaderInfo
                         {
                             AssessmentId = assessment.AssessmentId,
                             AssessmentName = assessment.Title,
+                            AssessmentType = assessment.AssessmentType.Title,
+                            AssessmentTypeId = assessmentTypeId,
                             Weight = assessment.Weight,
-                            GradeId = existingGrade?.GradeId,
-                            Score = existingGrade?.Score,
-                            HasGrade = existingGrade != null,
-                            CanInputGrade = existingGrade == null // Có thể nhập điểm nếu chưa có
+                            IsRegularType = true
                         });
                     }
-
-                    // Tạo một entry tổng hợp cho Assessment Type 1
-                    var firstAssessment = assessments.First();
-                    response.AssessmentDetails = type1AssessmentDetails;
-                        }
+                }
                 else // Các assessment types khác
                 {
                     foreach (var assessment in assessments)
                     {
-                        var existingGrade = existingGrades
-                            .FirstOrDefault(g => g.Assessment.AssessmentId == assessment.AssessmentId);
-
-                        var assessmentDetail = new AssessmentGradeInfo
+                        assessmentHeaders.Add(new AssessmentHeaderInfo
                         {
                             AssessmentId = assessment.AssessmentId,
                             AssessmentName = assessment.Title,
+                            AssessmentType = assessment.AssessmentType.Title,
+                            AssessmentTypeId = assessmentTypeId,
                             Weight = assessment.Weight,
-                            GradeId = existingGrade?.GradeId,
-                            Score = existingGrade?.Score,
-                            HasGrade = existingGrade != null,
-                            CanInputGrade = existingGrade == null
-                        };
-                        response.AssessmentDetails.Add(assessmentDetail
-                            );
-
-
-
-
+                            IsRegularType = false
+                        });
                     }
                 }
             }
 
-            // Tính toán thống kê
-            
+            response.AssessmentHeaders = assessmentHeaders;
 
-            response.TotalAssessments = allAssessments.Count;
-            response.PendingAssessments = response.TotalAssessments - response.CompletedAssessments;
-            response.CompletionPercentage = response.TotalAssessments > 0 ?
-                Math.Round((double)response.CompletedAssessments / response.TotalAssessments * 100, 2) : 0;
+            // Tạo dữ liệu cho từng sinh viên
+            var studentGrades = new List<StudentGradesInSection>();
+
+            foreach (var enrollment in enrolledStudents)
+            {
+                var student = enrollment.Student;
+
+                // Lấy grades của sinh viên này
+                var studentGradesList = allGrades
+                    .Where(g => g.Student.Id == student.Id)
+                    .ToList();
+
+                // Lấy final result của sinh viên này
+                finalResults.TryGetValue(student.Id, out var finalResult);
+
+                var studentGradeData = new StudentGradesInSection
+                {
+                    StudentId = student.Id,
+                    StudentName = student.User.FullName,
+                    MSSV = student.MSSV,
+                    FinalScore = finalResult != null ? Math.Round(finalResult.FinalScore, 2) : (double?)null,
+                    GradeLetter = finalResult?.GradeLetter,
+                    EnrollmentStatus = GetEnrollmentStatusInVietnamese(enrollment.enrollmentStatus)
+                };
+
+                // Tạo dictionary để lưu điểm theo assessment
+                var gradesByAssessment = studentGradesList.ToDictionary(g => g.Assessment.AssessmentId, g => g);
+
+                // Điền điểm cho từng assessment
+                var assessmentGrades = new List<AssessmentGradeData>();
+                foreach (var assessmentHeader in assessmentHeaders)
+                {
+                    if (gradesByAssessment.TryGetValue(assessmentHeader.AssessmentId, out var grade))
+                    {
+                        assessmentGrades.Add(new AssessmentGradeData
+                        {
+                            AssessmentId = assessmentHeader.AssessmentId,
+                            GradeId = grade.GradeId,
+                            Score = grade.Score,
+                            HasGrade = true,
+                            CanEdit = true // Có thể chỉnh sửa điểm đã có
+                        });
+                    }
+                    else
+                    {
+                        assessmentGrades.Add(new AssessmentGradeData
+                        {
+                            AssessmentId = assessmentHeader.AssessmentId,
+                            GradeId = null,
+                            Score = null,
+                            HasGrade = false,
+                            CanEdit = true // Có thể nhập điểm mới
+                        });
+                    }
+                }
+
+                studentGradeData.AssessmentGrades = assessmentGrades;
+
+                // Tính toán thống kê cho sinh viên này
+                var completedAssessments = assessmentGrades.Count(ag => ag.HasGrade);
+                studentGradeData.CompletedAssessments = completedAssessments;
+                studentGradeData.PendingAssessments = allAssessments.Count - completedAssessments;
+                studentGradeData.CompletionPercentage = allAssessments.Count > 0 ?
+                    Math.Round((double)completedAssessments / allAssessments.Count * 100, 2) : 0;
+
+                studentGrades.Add(studentGradeData);
+            }
+
+            response.StudentGrades = studentGrades;
+
+            // Tính toán thống kê tổng quan của section
+            var totalCompletedGrades = studentGrades.Sum(sg => sg.CompletedAssessments);
+            var totalPossibleGrades = response.TotalStudents * response.TotalAssessments;
+
+            response.OverallCompletionPercentage = totalPossibleGrades > 0 ?
+                Math.Round((double)totalCompletedGrades / totalPossibleGrades * 100, 2) : 0;
+
+            response.StudentsWithFinalGrades = studentGrades.Count(sg => sg.FinalScore.HasValue);
+            response.StudentsWithoutFinalGrades = response.TotalStudents - response.StudentsWithFinalGrades;
 
             return response;
         }
-
+        private string GetEnrollmentStatusInVietnamese(EnrollmentStatus status)
+        {
+            return status switch
+            {
+                EnrollmentStatus.Enrolled => "Đã đăng ký",
+                EnrollmentStatus.Dropped => "Đã hủy",
+                EnrollmentStatus.Completed => "Đã hoàn thành",
+                _ => "Unknown"
+            };
+        }
         public async Task<BulkGradeResponse> CreateBulkGradesAsync(BulkGradeRequest request)
         {
             using var transaction = await context.Database.BeginTransactionAsync();

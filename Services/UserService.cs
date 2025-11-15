@@ -10,7 +10,7 @@ using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Services
 {
-    public class UserService(AppDbContext context, IFileService fileService) : IUserService
+    public class UserService(AppDbContext context, IFileService fileService, IEmailService emailService) : IUserService
     {
 
         public async Task<PagedResult<UserResponse>> GetAllUsersAsync(
@@ -1000,6 +1000,139 @@ namespace StudentManagement.Services
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        public async Task<ForgotPasswordByMSSVResponse> ForgotPasswordByMSSVAsync(ForgotPasswordByMSSVRequest request)
+        {
+            using var transaction = await context.Database.BeginTransactionAsync();
+            
+            try
+            {
+                // Tìm sinh viên theo MSSV
+                var student = await context.Students
+                    .Include(s => s.User)
+                    .FirstOrDefaultAsync(s => s.MSSV == request.MSSV.Trim());
+
+                if (student == null)
+                {
+                    return new ForgotPasswordByMSSVResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Không tìm thấy sinh viên với MSSV này",
+                        Errors = { "MSSV không tồn tại trong hệ thống" }
+                    };
+                }
+
+                // Kiểm tra tài khoản có hoạt động không
+                if (student.User.AccountStatus != AccountStatus.Active)
+                {
+                    return new ForgotPasswordByMSSVResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Tài khoản không hoạt động",
+                        Errors = { "Tài khoản của bạn hiện đang bị khóa. Vui lòng liên hệ quản trị viên." }
+                    };
+                }
+
+                // Kiểm tra email có tồn tại không
+                if (string.IsNullOrWhiteSpace(student.User.Email))
+                {
+                    return new ForgotPasswordByMSSVResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Không có thông tin email",
+                        Errors = { "Tài khoản của bạn chưa có email. Vui lòng liên hệ quản trị viên để cập nhật email." }
+                    };
+                }
+
+                // Tạo mật khẩu mặc định (có thể là MSSV + năm sinh hoặc format khác)
+                var defaultPassword = GenerateDefaultPassword(student.MSSV, student.User.DateOfBirth);
+
+                // Hash mật khẩu mặc định
+                var hashedPassword = new PasswordHasher<User>().HashPassword(student.User, defaultPassword);
+
+                // Cập nhật mật khẩu
+                student.User.PasswordHash = hashedPassword;
+                
+                // Xóa refresh token để buộc đăng nhập lại
+                student.User.RefreshToken = null;
+                student.User.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(-1);
+
+                context.Users.Update(student.User);
+                await context.SaveChangesAsync();
+
+                // Gửi email với mật khẩu mặc định
+                var emailSent = await emailService.SendDefaultPasswordEmailAsync(
+                    student.User.Email,
+                    defaultPassword,
+                    student.User.FullName,
+                    student.MSSV);
+
+                if (!emailSent)
+                {
+                    await transaction.RollbackAsync();
+                    return new ForgotPasswordByMSSVResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Không thể gửi email",
+                        Errors = { "Có lỗi xảy ra khi gửi email. Vui lòng thử lại sau." }
+                    };
+                }
+
+                await transaction.CommitAsync();
+
+                return new ForgotPasswordByMSSVResponse
+                {
+                    IsSuccess = true,
+                    Message = "Mật khẩu mặc định đã được gửi đến email của bạn",
+                    StudentName = student.User.FullName,
+                    Email = MaskEmail(student.User.Email)
+                };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return new ForgotPasswordByMSSVResponse
+                {
+                    IsSuccess = false,
+                    Message = "Có lỗi xảy ra khi xử lý yêu cầu",
+                    Errors = { ex.Message }
+                };
+            }
+        }
+
+        private static string GenerateDefaultPassword(string mssv, DateOnly? dateOfBirth)
+        {
+            // Tạo mật khẩu mặc định theo format: MSSV + 4 số cuối năm sinh
+            // Ví dụ: 20210001 + 2003 = 202100012003
+            if (dateOfBirth.HasValue)
+            {
+                var birthYear = dateOfBirth.Value.Year.ToString();
+                return mssv + birthYear;
+            }
+            
+            // Nếu không có ngày sinh, dùng MSSV + "2024"
+            return mssv + "2024";
+        }
+
+        private static string MaskEmail(string email)
+        {
+            // Ẩn một phần email để bảo mật
+            // Ví dụ: john.doe@example.com -> j***@example.com
+            if (string.IsNullOrEmpty(email)) return "";
+            
+            var atIndex = email.IndexOf('@');
+            if (atIndex <= 1) return email;
+            
+            var localPart = email.Substring(0, atIndex);
+            var domainPart = email.Substring(atIndex);
+            
+            if (localPart.Length <= 3)
+            {
+                return localPart[0] + "***" + domainPart;
+            }
+            
+            return localPart[0] + "***" + localPart[^1] + domainPart;
         }
     }
 }
