@@ -73,4 +73,37 @@ export const authService = {
     }
     return response.data;
   },
+
+  forgotPasswordByMSSV: async (mssv) => {
+    try {
+      const response = await axios.post('/api/v1/Auth/ForgotPasswordByMSSV', {
+        mssv,
+      });
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Gửi yêu cầu quên mật khẩu thất bại');
+        }
+        return null;
+      }
+      message.success('Mật khẩu mới đã được gửi đến email của bạn!');
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Gửi yêu cầu quên mật khẩu thất bại'
+          );
+        }
+      } else {
+        message.error(error.message || 'Gửi yêu cầu quên mật khẩu thất bại');
+      }
+      return null;
+    }
+  },
 };

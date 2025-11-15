@@ -7,4 +7,5 @@ export { teacherService } from './teacherService';
 export { departmentService } from './departmentService';
 export { default as sectionService } from './sectionService';
 export { default as gradeService } from './gradeService';
+export { default as practiceService } from './practiceService';
 export { studentServices } from './studentServices';

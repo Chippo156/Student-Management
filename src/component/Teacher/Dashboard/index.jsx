@@ -22,6 +22,22 @@ import TeacherScheduleToday from './components/TeacherScheduleToday';
 import TeacherQuickActions from './components/TeacherQuickActions';
 import TeacherProfileCard from './components/TeacherProfileCard';
 import TeacherRecentActivity from './components/TeacherRecentActivity';
+const getCurrentSemesterName = () => {
+  const now = new Date();
+  const month = now.getMonth() + 1; // getMonth() returns 0-11
+  const year = now.getFullYear();
+
+  if (month >= 1 && month <= 5) {
+    // January - May: HK2 of previous academic year
+    return `HK2 ${year - 1}-${year}`;
+  } else if (month >= 6 && month <= 8) {
+    // June - August: HK3 of previous academic year
+    return `HK3 ${year - 1}-${year}`;
+  } else {
+    // September - December: HK1 of current academic year
+    return `HK1 ${year}-${year + 1}`;
+  }
+};
 
 const TeacherDashboard = () => {
   const muiTheme = useTheme();
@@ -133,7 +149,8 @@ const TeacherDashboard = () => {
         // Fetch schedule count for the week
         let upcomingClasses = 0;
         try {
-          const scheduleCount = await scheduleService.countSchedulesOfLecturer();
+          const scheduleCount =
+            await scheduleService.countSchedulesOfLecturer();
           upcomingClasses = scheduleCount?.countScheduleOfWeek || 0;
         } catch (error) {
           console.log('Error fetching schedule count:', error);
@@ -175,15 +192,21 @@ const TeacherDashboard = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', padding: 24, background: colors.bgPage }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        padding: '24px 24px 40px',
+        background: colors.bgPage,
+      }}
+    >
       {/* Welcome Banner */}
       <div
         style={{
           background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
           borderRadius: 16,
-          padding: '32px 40px',
+          padding: '24px 32px',
           marginBottom: 24,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -191,34 +214,38 @@ const TeacherDashboard = () => {
         <div
           style={{
             position: 'absolute',
-            top: -50,
-            right: -50,
-            width: 200,
-            height: 200,
+            top: -30,
+            right: -30,
+            width: 120,
+            height: 120,
             borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.1)',
+            background: 'rgba(255, 255, 255, 0.08)',
           }}
         />
         <div
           style={{
             position: 'absolute',
-            bottom: -30,
-            left: -30,
-            width: 150,
-            height: 150,
+            bottom: -20,
+            left: -20,
+            width: 100,
+            height: 100,
             borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.08)',
+            background: 'rgba(255, 255, 255, 0.06)',
           }}
         />
-        <Row justify="space-between" align="middle" style={{ position: 'relative' }}>
+        <Row
+          justify="space-between"
+          align="middle"
+          style={{ position: 'relative' }}
+        >
           <Col xs={24} md={16}>
-            <div style={{ marginBottom: 8 }}>
+            <div style={{ marginBottom: 4 }}>
               <span
                 style={{
-                  fontSize: 14,
-                  color: 'rgba(255, 255, 255, 0.9)',
+                  fontSize: 13,
+                  color: 'rgba(255, 255, 255, 0.85)',
                   fontWeight: 500,
-                  letterSpacing: '0.5px',
+                  letterSpacing: '0.3px',
                 }}
               >
                 {new Date().toLocaleDateString('vi-VN', {
@@ -231,52 +258,58 @@ const TeacherDashboard = () => {
             </div>
             <h1
               style={{
-                fontSize: 32,
+                fontSize: 28,
                 fontWeight: 700,
                 color: '#fff',
-                margin: '8px 0',
-                lineHeight: 1.2,
+                margin: '4px 0 8px',
+                lineHeight: 1.3,
               }}
             >
-              Chào mừng trở lại, {academicTitle} {fullName}!
+              Chào mừng, {academicTitle} {fullName}!
             </h1>
             <p
               style={{
-                fontSize: 15,
-                color: 'rgba(255, 255, 255, 0.85)',
+                fontSize: 14,
+                color: 'rgba(255, 255, 255, 0.8)',
                 margin: 0,
               }}
             >
-              {position} - {departmentName}, {facultyName}
+              {position} • {departmentName} • {facultyName}
             </p>
           </Col>
-          <Col xs={24} md={8} style={{ textAlign: 'right' }}>
+          <Col
+            xs={24}
+            md={8}
+            style={{ textAlign: 'right', marginTop: { xs: 16, md: 0 } }}
+          >
             <div
               style={{
-                background: 'rgba(255, 255, 255, 0.15)',
+                background: 'rgba(255, 255, 255, 0.12)',
                 backdropFilter: 'blur(10px)',
-                borderRadius: 12,
-                padding: '16px 24px',
+                borderRadius: 10,
+                padding: '12px 20px',
                 display: 'inline-block',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
               }}
             >
               <div
                 style={{
-                  fontSize: 13,
-                  color: 'rgba(255, 255, 255, 0.8)',
-                  marginBottom: 4,
+                  fontSize: 12,
+                  color: 'rgba(255, 255, 255, 0.75)',
+                  marginBottom: 2,
+                  fontWeight: 500,
                 }}
               >
                 Học kỳ hiện tại
               </div>
               <div
                 style={{
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: 700,
                   color: '#fff',
                 }}
               >
-                Học kỳ 1 - 2024
+                {getCurrentSemesterName()}
               </div>
             </div>
           </Col>
@@ -285,43 +318,103 @@ const TeacherDashboard = () => {
 
       {/* Statistics Cards */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card style={{ ...cardStyle, borderLeft: `4px solid ${colors.primary}` }}>
+        <Col xs={12} sm={12} lg={6}>
+          <Card
+            style={{
+              ...cardStyle,
+              borderLeft: `3px solid ${colors.primary}`,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+              transition: 'all 0.3s ease',
+            }}
+            hoverable
+          >
             <Statistic
-              title={<span style={{ color: colors.sub }}>Tổng số môn học</span>}
+              title={
+                <span style={{ color: colors.sub, fontSize: 13 }}>
+                  Tổng số môn học
+                </span>
+              }
               value={dashboardData.totalCourses}
-              prefix={<BookOutlined style={{ color: colors.primary }} />}
-              valueStyle={{ color: colors.fg, fontWeight: 600 }}
+              prefix={
+                <BookOutlined style={{ color: colors.primary, fontSize: 20 }} />
+              }
+              valueStyle={{ color: colors.fg, fontWeight: 600, fontSize: 24 }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card style={{ ...cardStyle, borderLeft: `4px solid ${colors.success}` }}>
+        <Col xs={12} sm={12} lg={6}>
+          <Card
+            style={{
+              ...cardStyle,
+              borderLeft: `3px solid ${colors.success}`,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+              transition: 'all 0.3s ease',
+            }}
+            hoverable
+          >
             <Statistic
-              title={<span style={{ color: colors.sub }}>Tổng số sinh viên</span>}
+              title={
+                <span style={{ color: colors.sub, fontSize: 13 }}>
+                  Tổng số sinh viên
+                </span>
+              }
               value={dashboardData.totalStudents}
-              prefix={<UserOutlined style={{ color: colors.success }} />}
-              valueStyle={{ color: colors.fg, fontWeight: 600 }}
+              prefix={
+                <UserOutlined style={{ color: colors.success, fontSize: 20 }} />
+              }
+              valueStyle={{ color: colors.fg, fontWeight: 600, fontSize: 24 }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card style={{ ...cardStyle, borderLeft: `4px solid ${colors.warning}` }}>
+        <Col xs={12} sm={12} lg={6}>
+          <Card
+            style={{
+              ...cardStyle,
+              borderLeft: `3px solid ${colors.warning}`,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+              transition: 'all 0.3s ease',
+            }}
+            hoverable
+          >
             <Statistic
-              title={<span style={{ color: colors.sub }}>Lớp sắp tới</span>}
+              title={
+                <span style={{ color: colors.sub, fontSize: 13 }}>
+                  Lớp sắp tới
+                </span>
+              }
               value={dashboardData.upcomingClasses}
-              prefix={<ClockCircleOutlined style={{ color: colors.warning }} />}
-              valueStyle={{ color: colors.fg, fontWeight: 600 }}
+              prefix={
+                <ClockCircleOutlined
+                  style={{ color: colors.warning, fontSize: 20 }}
+                />
+              }
+              valueStyle={{ color: colors.fg, fontWeight: 600, fontSize: 24 }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card style={{ ...cardStyle, borderLeft: `4px solid ${colors.error}` }}>
+        <Col xs={12} sm={12} lg={6}>
+          <Card
+            style={{
+              ...cardStyle,
+              borderLeft: `3px solid ${colors.error}`,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+              transition: 'all 0.3s ease',
+            }}
+            hoverable
+          >
             <Statistic
-              title={<span style={{ color: colors.sub }}>Điểm chưa chấm</span>}
+              title={
+                <span style={{ color: colors.sub, fontSize: 13 }}>
+                  Điểm chưa chấm
+                </span>
+              }
               value={dashboardData.pendingGrades}
-              prefix={<FileTextOutlined style={{ color: colors.error }} />}
-              valueStyle={{ color: colors.fg, fontWeight: 600 }}
+              prefix={
+                <FileTextOutlined
+                  style={{ color: colors.error, fontSize: 20 }}
+                />
+              }
+              valueStyle={{ color: colors.fg, fontWeight: 600, fontSize: 24 }}
             />
           </Card>
         </Col>
@@ -332,48 +425,53 @@ const TeacherDashboard = () => {
         style={{
           ...cardStyle,
           marginBottom: 24,
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
         }}
         title={
-          <span style={{ color: colors.fg, fontSize: 18, fontWeight: 600 }}>
+          <span style={{ color: colors.fg, fontSize: 17, fontWeight: 600 }}>
             Thao tác nhanh
           </span>
         }
       >
-        <Row gutter={[16, 16]}>
+        <Row gutter={[12, 12]}>
           {menuItems.map((item, idx) => (
             <Col xs={12} sm={8} md={4} key={idx}>
               <div
                 onClick={() => navigate(item.path)}
                 style={{
                   textAlign: 'center',
-                  padding: '20px 12px',
-                  borderRadius: 8,
+                  padding: '16px 10px',
+                  borderRadius: 10,
                   cursor: 'pointer',
-                  background: colors.bgPage,
-                  border: `1px solid ${colors.border}`,
-                  transition: 'all 0.3s',
+                  background: alpha(item.color, 0.08),
+                  border: `1px solid ${alpha(item.color, 0.2)}`,
+                  transition: 'all 0.3s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.1)';
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = `0 6px 20px ${alpha(item.color, 0.25)}`;
+                  e.currentTarget.style.background = alpha(item.color, 0.15);
                   e.currentTarget.style.borderColor = item.color;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.borderColor = colors.border;
+                  e.currentTarget.style.background = alpha(item.color, 0.08);
+                  e.currentTarget.style.borderColor = alpha(item.color, 0.2);
                 }}
               >
                 <div
                   style={{
-                    fontSize: 28,
+                    fontSize: 32,
                     color: item.color,
-                    marginBottom: 8,
+                    marginBottom: 6,
                   }}
                 >
                   {item.icon}
                 </div>
-                <div style={{ fontSize: 13, color: colors.fg, fontWeight: 500 }}>
+                <div
+                  style={{ fontSize: 13, color: colors.fg, fontWeight: 600 }}
+                >
                   {item.text}
                 </div>
               </div>

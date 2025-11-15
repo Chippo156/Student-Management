@@ -213,6 +213,7 @@ export const teacherService = {
         sectionId = null,
         fromDate = null,
         toDate = null,
+        scheduleTypeId = null, // null: Tất cả, 1: Lý thuyết, 2: Thực hành
       } = params;
 
       const response = await axios.get('/api/Attendance/MySessions', {
@@ -222,6 +223,7 @@ export const teacherService = {
           sectionId,
           fromDate,
           toDate,
+          scheduleTypeId,
         },
       });
 

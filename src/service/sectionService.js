@@ -235,6 +235,72 @@ const sectionService = {
     }
   },
 
+  // Lấy chi tiết lớp học phần lý thuyết
+  getSectionTheoryDetail: async (sectionId) => {
+    try {
+      const response = await axios.get(`/api/Section/GetSectionTheoryDetail/${sectionId}`);
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Lấy chi tiết lớp học phần lý thuyết thất bại');
+        }
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(error.response.data.message || 'Get section theory detail failed');
+        }
+      } else {
+        message.error(error.message || 'Get section theory detail failed');
+      }
+      return null;
+    }
+  },
+
+  // Lấy chi tiết lớp học phần thực hành
+  getSectionPracticeDetail: async (sectionId, practiceGroupId = null) => {
+    try {
+      const url = practiceGroupId
+        ? `/api/Section/GetSectionPracticeDetail/${sectionId}?practiceGroupId=${practiceGroupId}`
+        : `/api/Section/GetSectionPracticeDetail/${sectionId}`;
+
+      const response = await axios.get(url);
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Lấy chi tiết lớp học phần thực hành thất bại');
+        }
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(error.response.data.message || 'Get section practice detail failed');
+        }
+      } else {
+        message.error(error.message || 'Get section practice detail failed');
+      }
+      return null;
+    }
+  },
+
   // Update section (Admin only)
   updateSection: async (sectionId, sectionData) => {
     try {

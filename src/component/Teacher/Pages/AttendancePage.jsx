@@ -37,17 +37,23 @@ import {
   gradeService,
   sectionService,
   studentServices,
+  practiceService,
 } from '../../../service';
 import dayjs from 'dayjs';
-
+import * as XLSX from 'xlsx';
+import { exportSectionAttendanceExcel } from '../../../until/exportSectionAttendance'; // ✅ FIX: Named export + đúng đường dẫn
 const AttendancePage = () => {
   const theme = useTheme();
   const [courses, setCourses] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedDate, setSelectedDate] = useState(dayjs()); // Thêm state cho ngày đã chọn
+  const [classType, setClassType] = useState(''); // 'theory' hoặc 'practice' hoặc '' (tất cả)
+  const [practiceGroups, setPracticeGroups] = useState([]); // Danh sách nhóm thực hành
   const [loading, setLoading] = useState(false);
   const [openCreateSessionModal, setOpenCreateSessionModal] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
+  console.log(practiceGroups);
 
   // UI cũ cho việc điểm danh
   const [students, setStudents] = useState([]);
@@ -112,16 +118,25 @@ const AttendancePage = () => {
     const fetchSessions = async () => {
       setLoading(true);
       try {
+        const dateStr = selectedDate.format('YYYY-MM-DD');
         const params = {
           pageNumber: 1,
           pageSize: 100,
-          fromDate: dayjs().format('YYYY-MM-DD'), // Luôn là hôm nay
-          toDate: dayjs().format('YYYY-MM-DD'),   // Luôn là hôm nay
+          fromDate: dateStr, // Dùng ngày đã chọn
+          toDate: dateStr, // Cùng ngày đã chọn
         };
 
         if (selectedCourse) {
           params.sectionId = selectedCourse;
         }
+
+        // Thêm scheduleTypeId dựa vào classType
+        if (classType === 'theory') {
+          params.scheduleTypeId = 1; // Lý thuyết
+        } else if (classType === 'practice') {
+          params.scheduleTypeId = 2; // Thực hành
+        }
+        // Nếu classType === '' thì không truyền scheduleTypeId (tất cả)
 
         const response = await teacherService.getMySessions(params);
         setSessions(response.items || []);
@@ -138,6 +153,37 @@ const AttendancePage = () => {
     };
 
     fetchSessions();
+  }, [selectedCourse, selectedDate, classType]); // Thêm classType vào dependency
+
+  // Fetch practice groups khi chọn môn học
+  useEffect(() => {
+    const fetchPracticeGroups = async () => {
+      if (selectedCourse) {
+        try {
+          const response =
+            await practiceService.getPracticeGroupsBySection(selectedCourse);
+          console.log(response);
+          if (response && Array.isArray(response)) {
+            // Map response to dropdown format
+
+            const groups = response.map((group) => ({
+              id: group.practiceGroupId,
+              groupNumber: group.groupName,
+            }));
+            setPracticeGroups(groups);
+          } else {
+            setPracticeGroups([]);
+          }
+        } catch (error) {
+          console.error('Error fetching practice groups:', error);
+          setPracticeGroups([]);
+        }
+      } else {
+        setPracticeGroups([]);
+      }
+    };
+
+    fetchPracticeGroups();
   }, [selectedCourse]);
 
   // Tạo phiên điểm danh mới
@@ -148,10 +194,11 @@ const AttendancePage = () => {
     try {
       const payload = {
         sectionId: selectedCourse,
-        sessionDate: dayjs().format('YYYY-MM-DD'),
+        sessionDate: selectedDate.format('YYYY-MM-DD'), // Dùng ngày đã chọn
         startTime: sessionData.startTime + ':00',
         endTime: sessionData.endTime + ':00',
-        sessionName: sessionData.sessionName || 'Buổi ' + dayjs().format('DD/MM'),
+        sessionName:
+          sessionData.sessionName || 'Buổi ' + selectedDate.format('DD/MM'),
         description: sessionData.description,
         room: sessionData.room,
         practiceGroupId: sessionData.practiceGroupId,
@@ -159,38 +206,46 @@ const AttendancePage = () => {
 
       const response = await teacherService.createAttendanceSession(payload);
 
-      if (response.success) {
-        setOpenCreateSessionModal(false);
-        setSessionData({
-          sessionName: '',
-          startTime: '7:00',
-          endTime: '7:00',
-          room: '',
-          description: '',
-          practiceGroupId: null,
-        });
+      // Close modal and reset form
+      setOpenCreateSessionModal(false);
+      setSessionData({
+        sessionName: '',
+        startTime: '7:00',
+        endTime: '7:00',
+        room: '',
+        description: '',
+        practiceGroupId: null,
+      });
 
-        // Load lại danh sách sessions
-        const params = {
-          pageNumber: 1,
-          pageSize: 100,
-          fromDate: dayjs().format('YYYY-MM-DD'),
-          toDate: dayjs().format('YYYY-MM-DD'),
-        };
+      // Load lại danh sách sessions
+      const dateStr = selectedDate.format('YYYY-MM-DD');
+      const params = {
+        pageNumber: 1,
+        pageSize: 100,
+        fromDate: dateStr, // Dùng ngày đã chọn
+        toDate: dateStr, // Cùng ngày đã chọn
+      };
 
-        if (selectedCourse) {
-          params.sectionId = selectedCourse;
-        }
-
-        const sessionsResponse = await teacherService.getMySessions(params);
-        setSessions(sessionsResponse.items || []);
-
-        setSnackbar({
-          open: true,
-          message: 'Tạo phiên điểm danh thành công!',
-          severity: 'success',
-        });
+      if (selectedCourse) {
+        params.sectionId = selectedCourse;
       }
+
+      // Thêm scheduleTypeId dựa vào classType
+      if (classType === 'theory') {
+        params.scheduleTypeId = 1; // Lý thuyết
+      } else if (classType === 'practice') {
+        params.scheduleTypeId = 2; // Thực hành
+      }
+
+      const sessionsResponse = await teacherService.getMySessions(params);
+      setSessions(sessionsResponse.items || []);
+
+      // Show success message
+      setSnackbar({
+        open: true,
+        message: 'Tạo phiên điểm danh thành công!',
+        severity: 'success',
+      });
     } catch (error) {
       console.error('Error creating session:', error);
       setSnackbar({
@@ -235,12 +290,23 @@ const AttendancePage = () => {
           // Map status API sang status UI cũ
           let status = null;
           switch (record.status) {
-            case 1: status = 'present'; break;
-            case 2: status = 'absent'; break;
-            case 3: status = 'late'; break;
-            case 4: status = 'excused'; break;
-            case 5: status = 'left'; break;
-            default: status = null;
+            case 1:
+              status = 'present';
+              break;
+            case 2:
+              status = 'absent';
+              break;
+            case 3:
+              status = 'late';
+              break;
+            case 4:
+              status = 'excused';
+              break;
+            case 5:
+              status = 'left';
+              break;
+            default:
+              status = null;
           }
           attendanceMap[record.studentId] = status;
         });
@@ -249,7 +315,6 @@ const AttendancePage = () => {
       // Lưu trạng thái gốc để detect thay đổi
       setOriginalAttendance(JSON.parse(JSON.stringify(attendanceMap)));
       setHasChanges(false); // Reset hasChanges khi load session mới
-
     } catch (error) {
       console.error('Error fetching students:', error);
       setSnackbar({
@@ -271,7 +336,8 @@ const AttendancePage = () => {
       };
 
       // Kiểm tra có thay đổi so với original không
-      const hasChanged = JSON.stringify(newAttendance) !== JSON.stringify(originalAttendance);
+      const hasChanged =
+        JSON.stringify(newAttendance) !== JSON.stringify(originalAttendance);
       setHasChanges(hasChanged);
 
       return newAttendance;
@@ -286,7 +352,8 @@ const AttendancePage = () => {
     setAttendance(allAttendance);
 
     // Kiểm tra có thay đổi so với original không
-    const hasChanged = JSON.stringify(allAttendance) !== JSON.stringify(originalAttendance);
+    const hasChanged =
+      JSON.stringify(allAttendance) !== JSON.stringify(originalAttendance);
     setHasChanges(hasChanged);
   };
 
@@ -306,12 +373,23 @@ const AttendancePage = () => {
         // Map status UI sang status API
         let apiStatus = null;
         switch (currentStatus) {
-          case 'present': apiStatus = 1; break;
-          case 'absent': apiStatus = 2; break;
-          case 'late': apiStatus = 3; break;
-          case 'excused': apiStatus = 4; break;
-          case 'left': apiStatus = 5; break;
-          default: apiStatus = 0;
+          case 'present':
+            apiStatus = 1;
+            break;
+          case 'absent':
+            apiStatus = 2;
+            break;
+          case 'late':
+            apiStatus = 3;
+            break;
+          case 'excused':
+            apiStatus = 4;
+            break;
+          case 'left':
+            apiStatus = 5;
+            break;
+          default:
+            apiStatus = 0;
         }
 
         if (originalStatus === null || originalStatus === undefined) {
@@ -325,7 +403,7 @@ const AttendancePage = () => {
           // Có trong original và đã thay đổi -> UPDATE
           // Tìm attendanceId tương ứng
           const attendanceRecord = selectedSession.attendanceRecords?.find(
-            record => record.studentId === parseInt(studentId)
+            (record) => record.studentId === parseInt(studentId)
           );
 
           if (attendanceRecord) {
@@ -375,7 +453,7 @@ const AttendancePage = () => {
 
       // Cập nhật lại selectedSession với data mới
       const updatedSession = sessionsResponse.items?.find(
-        s => s.attendanceSessionId === selectedSession.attendanceSessionId
+        (s) => s.attendanceSessionId === selectedSession.attendanceSessionId
       );
       if (updatedSession) {
         setSelectedSession(updatedSession);
@@ -392,6 +470,78 @@ const AttendancePage = () => {
       setSnackbar({
         open: true,
         message: 'Lỗi khi lưu điểm danh',
+        severity: 'error',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!selectedCourse) {
+      setSnackbar({
+        open: true,
+        message: 'Vui lòng chọn môn học để xuất Excel',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      let sectionData = null;
+
+      // Xác định loại lớp và gọi API tương ứng
+      if (classType === 'theory') {
+        sectionData =
+          await sectionService.getSectionTheoryDetail(selectedCourse);
+      } else if (classType === 'practice') {
+        // Nếu có nhiều nhóm thực hành, cần chọn nhóm
+        const practiceGroupId =
+          sessionData.practiceGroupId ||
+          (practiceGroups.length > 0 ? practiceGroups[0].id : null);
+
+        sectionData = await sectionService.getSectionPracticeDetail(
+          selectedCourse,
+          practiceGroupId
+        );
+      } else {
+        setSnackbar({
+          open: true,
+          message: 'Vui lòng chọn loại lớp (Lý thuyết hoặc Thực hành)',
+          severity: 'warning',
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (
+        !sectionData ||
+        !sectionData.students ||
+        sectionData.students.length === 0
+      ) {
+        setSnackbar({
+          open: true,
+          message: 'Không có dữ liệu sinh viên để xuất Excel',
+          severity: 'warning',
+        });
+        setLoading(false);
+        return;
+      }
+      // Xuất Excel
+      exportSectionAttendanceExcel(sectionData, classType === 'practice');
+
+      setSnackbar({
+        open: true,
+        message: 'Xuất Excel thành công!',
+        severity: 'success',
+      });
+    } catch (error) {
+      console.error('Error exporting Excel:', error);
+      setSnackbar({
+        open: true,
+        message: 'Lỗi khi xuất Excel: ' + (error.message || 'Unknown error'),
         severity: 'error',
       });
     } finally {
@@ -437,7 +587,8 @@ const AttendancePage = () => {
       title: 'Thời gian',
       key: 'time',
       width: 120,
-      render: (_, record) => `${record.startTime.slice(0, 5)} - ${record.endTime.slice(0, 5)}`,
+      render: (_, record) =>
+        `${record.startTime.slice(0, 5)} - ${record.endTime.slice(0, 5)}`,
     },
     {
       title: 'Phòng',
@@ -483,11 +634,17 @@ const AttendancePage = () => {
       width: 100,
       render: (_, record) => (
         <Button
-          variant={selectedSession?.attendanceSessionId === record.attendanceSessionId ? "contained" : "outlined"}
+          variant={
+            selectedSession?.attendanceSessionId === record.attendanceSessionId
+              ? 'contained'
+              : 'outlined'
+          }
           size="small"
           onClick={() => handleSelectSession(record)}
         >
-          {selectedSession?.attendanceSessionId === record.attendanceSessionId ? "Đang chọn" : "Điểm danh"}
+          {selectedSession?.attendanceSessionId === record.attendanceSessionId
+            ? 'Đang chọn'
+            : 'Điểm danh'}
         </Button>
       ),
     },
@@ -607,7 +764,8 @@ const AttendancePage = () => {
           gutterBottom
           sx={{ mb: 3, fontWeight: 'bold', color: colors.text }}
         >
-          Điểm danh - {dayjs().format('DD/MM/YYYY')}
+          Điểm danh
+          {selectedDate ? ` - ${selectedDate.format('DD/MM/YYYY')}` : ''}
         </Typography>
       </Fade>
 
@@ -618,7 +776,7 @@ const AttendancePage = () => {
             sx={{
               mb: 3,
               border: `2px solid ${colors.primary}`,
-              backgroundColor: alpha(colors.primary, 0.05)
+              backgroundColor: alpha(colors.primary, 0.05),
             }}
           >
             <CardContent>
@@ -653,7 +811,14 @@ const AttendancePage = () => {
                   </Box>
                 </Grid>
                 <Grid item xs={12} md={4} sx={{ textAlign: 'right' }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
+                      gap: 1,
+                    }}
+                  >
                     <Chip
                       label={`${presentCount}/${students.length} SV`}
                       color="success"
@@ -678,16 +843,17 @@ const AttendancePage = () => {
       <Fade in={true} timeout={1000}>
         <Card sx={{ mb: 3 }}>
           <CardContent sx={{ pb: 2 }}>
-            <Grid container spacing={2} alignItems="center">
+            <Grid container spacing={2}>
+              {/* Row 1: Filters */}
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth>
-                  <InputLabel>Chọn môn học</InputLabel>
+                  <InputLabel>Chọn lớp học phần</InputLabel>
                   <Select
                     value={selectedCourse}
-                    label="Chọn môn học"
+                    label="Chọn lớp học phần"
                     onChange={(e) => setSelectedCourse(e.target.value)}
                   >
-                    <MenuItem value="">Tất cả môn học</MenuItem>
+                    <MenuItem value="">Tất cả lớp học phần</MenuItem>
                     {courses.map((course) => (
                       <MenuItem key={course.sectionId} value={course.sectionId}>
                         {course.courseName} - {course.sectionCode}
@@ -696,13 +862,56 @@ const AttendancePage = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={8}>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, flexWrap: 'wrap' }}>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Loại lớp</InputLabel>
+                  <Select
+                    value={classType}
+                    label="Loại lớp"
+                    onChange={(e) => setClassType(e.target.value)}
+                  >
+                    <MenuItem value="">Tất cả</MenuItem>
+                    <MenuItem value="theory">Lý thuyết</MenuItem>
+                    <MenuItem value="practice">Thực hành</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel
+                    shrink
+                    sx={{ backgroundColor: colors.bgCard, px: 0.5 }}
+                  >
+                    Ngày điểm danh
+                  </InputLabel>
+                  <DatePicker
+                    value={selectedDate}
+                    onChange={(date) => setSelectedDate(date)}
+                    format="DD/MM/YYYY"
+                    style={{ width: '100%', height: 56 }}
+                    placeholder="Chọn ngày điểm danh"
+                    disabledDate={(current) =>
+                      current && current > dayjs().endOf('day')
+                    }
+                  />
+                </FormControl>
+              </Grid>
+
+              {/* Row 2: Actions */}
+              <Grid item xs={12}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: 1,
+                    flexWrap: 'wrap',
+                  }}
+                >
                   <Button
                     variant="contained"
                     color="primary"
                     onClick={() => setOpenCreateSessionModal(true)}
-                    disabled={loading || !selectedCourse}
+                    disabled={loading || !selectedCourse || !classType}
                     startIcon={<CalendarToday />}
                   >
                     Tạo phiên mới
@@ -736,7 +945,16 @@ const AttendancePage = () => {
                         }
                         onClick={() => setOpenConfirmDialog(true)}
                       >
-                        Lưu điểm danh {!hasChanges ? "(không có thay đổi)" : ""}
+                        Lưu điểm danh {!hasChanges ? '(không có thay đổi)' : ''}
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="info"
+                        onClick={() => handleExportExcel()}
+                        disabled={loading}
+                        startIcon={<CalendarToday />}
+                      >
+                        Excel
                       </Button>
                     </>
                   )}
@@ -752,7 +970,9 @@ const AttendancePage = () => {
         <Card sx={{ mb: selectedSession ? 3 : 0 }}>
           <CardContent sx={{ pb: 2 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
-              📋 Các phiên điểm danh hôm nay ({sessions.length} phiên)
+              📋 Các phiên điểm danh
+              {selectedDate ? ` ${selectedDate.format('DD/MM/YYYY')}` : ''} (
+              {sessions.length} phiên)
             </Typography>
             <Table
               columns={sessionColumns}
@@ -768,7 +988,8 @@ const AttendancePage = () => {
               }}
               scroll={{ x: 1200 }}
               rowClassName={(record) =>
-                selectedSession?.attendanceSessionId === record.attendanceSessionId
+                selectedSession?.attendanceSessionId ===
+                record.attendanceSessionId
                   ? 'selected-row'
                   : ''
               }
@@ -789,7 +1010,8 @@ const AttendancePage = () => {
           <Card>
             <CardContent sx={{ pb: 2 }}>
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
-                👥 Danh sách sinh viên - {selectedSession.sessionName} ({students.length} SV)
+                👥 Danh sách sinh viên - {selectedSession.sessionName} (
+                {students.length} SV)
               </Typography>
               <Table
                 columns={studentColumns}
@@ -827,7 +1049,10 @@ const AttendancePage = () => {
                 label="Tên phiên điểm danh"
                 value={sessionData.sessionName}
                 onChange={(e) =>
-                  setSessionData({ ...sessionData, sessionName: e.target.value })
+                  setSessionData({
+                    ...sessionData,
+                    sessionName: e.target.value,
+                  })
                 }
                 placeholder="Ví dụ: Buổi 1, Tiết 1..."
               />
@@ -867,6 +1092,30 @@ const AttendancePage = () => {
                 placeholder="Ví dụ: P301, Lab 1..."
               />
             </Grid>
+            {classType === 'practice' && (
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Nhóm thực hành</InputLabel>
+                  <Select
+                    value={sessionData.practiceGroupId || ''}
+                    label="Nhóm thực hành"
+                    onChange={(e) =>
+                      setSessionData({
+                        ...sessionData,
+                        practiceGroupId: e.target.value || null,
+                      })
+                    }
+                  >
+                    <MenuItem value="">Chọn nhóm thực hành</MenuItem>
+                    {practiceGroups.map((group) => (
+                      <MenuItem key={group.id} value={group.id}>
+                        Nhóm {group.groupNumber}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -875,7 +1124,10 @@ const AttendancePage = () => {
                 rows={2}
                 value={sessionData.description}
                 onChange={(e) =>
-                  setSessionData({ ...sessionData, description: e.target.value })
+                  setSessionData({
+                    ...sessionData,
+                    description: e.target.value,
+                  })
                 }
                 placeholder="Thông tin thêm về phiên điểm danh..."
               />
@@ -903,7 +1155,8 @@ const AttendancePage = () => {
         <DialogTitle>Xác nhận lưu điểm danh</DialogTitle>
         <DialogContent>
           <Typography>
-            Bạn có chắc chắn muốn lưu điểm danh cho phiên "{selectedSession?.sessionName}" không?
+            Bạn có chắc chắn muốn lưu điểm danh cho phiên "
+            {selectedSession?.sessionName}" không?
           </Typography>
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2">

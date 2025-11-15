@@ -30,6 +30,22 @@ import StudentScheduleSummary from '../../../component/Student/Dashboard/Student
 import StudentAcademicChart from '../../../component/Student/Dashboard/StudentAcademicChart';
 import StudentProgressChart from '../../../component/Student/Dashboard/StudentProgressChart';
 import StudentClassList from '../../../component/Student/Dashboard/StudentClassList';
+const getCurrentSemesterName = () => {
+  const now = new Date();
+  const month = now.getMonth() + 1; // getMonth() returns 0-11
+  const year = now.getFullYear();
+
+  if (month >= 1 && month <= 5) {
+    // January - May: HK2 of previous academic year
+    return `HK2 ${year - 1}-${year}`;
+  } else if (month >= 6 && month <= 8) {
+    // June - August: HK3 of previous academic year
+    return `HK3 ${year - 1}-${year}`;
+  } else {
+    // September - December: HK1 of current academic year
+    return `HK1 ${year}-${year + 1}`;
+  }
+};
 
 const Dashboard = () => {
   const muiTheme = useTheme();
@@ -46,6 +62,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [semesters, setSemesters] = useState([]);
   const [selectedSemesterId, setSelectedSemesterId] = useState(null);
+
+  // Helper function to calculate current semester based on month
 
   const colors = useMemo(() => {
     const p = muiTheme.palette;
@@ -182,6 +200,8 @@ const Dashboard = () => {
       try {
         const data = await semesterService.getStudentSemesters();
         setSemesters(data);
+        console.log(data);
+
         if (data.length > 0)
           setSelectedSemesterId(data[data.length - 1].semesterId);
       } catch {
@@ -338,8 +358,7 @@ const Dashboard = () => {
                 Học kỳ hiện tại
               </div>
               <div style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>
-                {semesters.find((s) => s.semesterId === selectedSemesterId)
-                  ?.semesterName || 'Học kỳ 1 (2024-2025)'}
+                {getCurrentSemesterName()}
               </div>
             </div>
           </Col>
