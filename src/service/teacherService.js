@@ -192,6 +192,71 @@ export const teacherService = {
     }
   },
 
+  // Tạo phiên điểm danh mới
+  createAttendanceSession: async (sessionData) => {
+    try {
+      const response = await axios.post('/api/Attendance/CreateSession', sessionData);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || 'Create attendance session failed'
+      );
+    }
+  },
+
+  // Lấy danh sách phiên điểm danh của giảng viên
+  getMySessions: async (params = {}) => {
+    try {
+      const {
+        pageNumber = 1,
+        pageSize = 10,
+        sectionId = null,
+        fromDate = null,
+        toDate = null,
+      } = params;
+
+      const response = await axios.get('/api/Attendance/MySessions', {
+        params: {
+          PageNumber: pageNumber,
+          PageSize: pageSize,
+          sectionId,
+          fromDate,
+          toDate,
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || 'Get attendance sessions failed'
+      );
+    }
+  },
+
+  // Ghi nhận điểm danh hàng loạt
+  recordAttendance: async (attendanceData) => {
+    try {
+      const response = await axios.post('/api/Attendance/RecordAttendance', attendanceData);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || 'Record attendance failed'
+      );
+    }
+  },
+
+  // Cập nhật điểm danh cho một sinh viên
+  updateAttendance: async (attendanceId, updateData) => {
+    try {
+      const response = await axios.put(`/api/Attendance/UpdateAttendance/${attendanceId}`, updateData);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || 'Update attendance failed'
+      );
+    }
+  },
+
   // Lấy danh sách bài tập
   getAssignments: async (courseId) => {
     try {

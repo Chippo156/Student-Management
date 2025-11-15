@@ -16,14 +16,19 @@ import {
   Alert,
 } from '@mui/material';
 import { Table, Tag } from 'antd';
-import { Grade, TrendingUp, CheckCircle, Warning, FileDownload, FileUpload, Save } from '@mui/icons-material';
+import {
+  Grade,
+  TrendingUp,
+  CheckCircle,
+  Warning,
+  FileDownload,
+  FileUpload,
+  Save,
+} from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
 import * as XLSX from 'xlsx';
-import {
-  sectionService,
-  gradeService,
-} from '../../../service';
+import { sectionService, gradeService } from '../../../service';
 
 const GradesPage = () => {
   const theme = useTheme();
@@ -97,9 +102,8 @@ const GradesPage = () => {
       setLoadingGrades(true);
       try {
         // Fetch all student grades for the section using new API (only 1 call)
-        const gradesResponse = await gradeService.getAllStudentGradesBySection(
-          selectedSection
-        );
+        const gradesResponse =
+          await gradeService.getAllStudentGradesBySection(selectedSection);
 
         if (!gradesResponse || !gradesResponse.studentGrades) {
           setStudents([]);
@@ -119,32 +123,35 @@ const GradesPage = () => {
           assessmentMap.set(header.assessmentId, header);
         });
 
-        const studentsWithGrades = gradesResponse.studentGrades.map((student) => {
-          // Enhance assessmentGrades with full assessment info
-          const enrichedAssessmentGrades = student.assessmentGrades?.map((grade) => {
-            const assessmentInfo = assessmentMap.get(grade.assessmentId);
-            return {
-              ...grade,
-              assessmentName: assessmentInfo?.assessmentName || '',
-              assessmentType: assessmentInfo?.assessmentType || '',
-              assessmentTypeId: assessmentInfo?.assessmentTypeId || null,
-              weight: assessmentInfo?.weight || 0,
-            };
-          }) || [];
+        const studentsWithGrades = gradesResponse.studentGrades.map(
+          (student) => {
+            // Enhance assessmentGrades with full assessment info
+            const enrichedAssessmentGrades =
+              student.assessmentGrades?.map((grade) => {
+                const assessmentInfo = assessmentMap.get(grade.assessmentId);
+                return {
+                  ...grade,
+                  assessmentName: assessmentInfo?.assessmentName || '',
+                  assessmentType: assessmentInfo?.assessmentType || '',
+                  assessmentTypeId: assessmentInfo?.assessmentTypeId || null,
+                  weight: assessmentInfo?.weight || 0,
+                };
+              }) || [];
 
-          return {
-            studentId: student.studentId,
-            studentCode: student.mssv,
-            fullName: student.studentName,
-            enrollmentStatus: student.enrollmentStatus,
-            finalScore: student.finalScore,
-            gradeLetter: student.gradeLetter,
-            assessmentGrades: enrichedAssessmentGrades,
-            completedAssessments: student.completedAssessments || 0,
-            pendingAssessments: student.pendingAssessments || 0,
-            completionPercentage: student.completionPercentage || 0,
-          };
-        });
+            return {
+              studentId: student.studentId,
+              studentCode: student.mssv,
+              fullName: student.studentName,
+              enrollmentStatus: student.enrollmentStatus,
+              finalScore: student.finalScore,
+              gradeLetter: student.gradeLetter,
+              assessmentGrades: enrichedAssessmentGrades,
+              completedAssessments: student.completedAssessments || 0,
+              pendingAssessments: student.pendingAssessments || 0,
+              completionPercentage: student.completionPercentage || 0,
+            };
+          }
+        );
 
         setStudents(studentsWithGrades);
       } catch (error) {
@@ -194,13 +201,18 @@ const GradesPage = () => {
     let failCount = 0;
 
     for (const [assessmentId, studentGradesMap] of editedGrades) {
-      const studentGrades = Array.from(studentGradesMap.entries()).map(([studentId, data]) => ({
-        studentId,
-        score: data.score,
-        note: null,
-      }));
+      const studentGrades = Array.from(studentGradesMap.entries()).map(
+        ([studentId, data]) => ({
+          studentId,
+          score: data.score,
+          note: null,
+        })
+      );
 
-      const result = await gradeService.createBulkGrades(assessmentId, studentGrades);
+      const result = await gradeService.createBulkGrades(
+        assessmentId,
+        studentGrades
+      );
       if (result) {
         successCount++;
       } else {
@@ -219,38 +231,42 @@ const GradesPage = () => {
       // Clear edited grades
       setEditedGrades(new Map());
       // Refresh data
-      const gradesResponse = await gradeService.getAllStudentGradesBySection(selectedSection);
+      const gradesResponse =
+        await gradeService.getAllStudentGradesBySection(selectedSection);
       if (gradesResponse && gradesResponse.studentGrades) {
         const assessmentMap = new Map();
         gradesResponse.assessmentHeaders?.forEach((header) => {
           assessmentMap.set(header.assessmentId, header);
         });
 
-        const studentsWithGrades = gradesResponse.studentGrades.map((student) => {
-          const enrichedAssessmentGrades = student.assessmentGrades?.map((grade) => {
-            const assessmentInfo = assessmentMap.get(grade.assessmentId);
-            return {
-              ...grade,
-              assessmentName: assessmentInfo?.assessmentName || '',
-              assessmentType: assessmentInfo?.assessmentType || '',
-              assessmentTypeId: assessmentInfo?.assessmentTypeId || null,
-              weight: assessmentInfo?.weight || 0,
-            };
-          }) || [];
+        const studentsWithGrades = gradesResponse.studentGrades.map(
+          (student) => {
+            const enrichedAssessmentGrades =
+              student.assessmentGrades?.map((grade) => {
+                const assessmentInfo = assessmentMap.get(grade.assessmentId);
+                return {
+                  ...grade,
+                  assessmentName: assessmentInfo?.assessmentName || '',
+                  assessmentType: assessmentInfo?.assessmentType || '',
+                  assessmentTypeId: assessmentInfo?.assessmentTypeId || null,
+                  weight: assessmentInfo?.weight || 0,
+                };
+              }) || [];
 
-          return {
-            studentId: student.studentId,
-            studentCode: student.mssv,
-            fullName: student.studentName,
-            enrollmentStatus: student.enrollmentStatus,
-            finalScore: student.finalScore,
-            gradeLetter: student.gradeLetter,
-            assessmentGrades: enrichedAssessmentGrades,
-            completedAssessments: student.completedAssessments || 0,
-            pendingAssessments: student.pendingAssessments || 0,
-            completionPercentage: student.completionPercentage || 0,
-          };
-        });
+            return {
+              studentId: student.studentId,
+              studentCode: student.mssv,
+              fullName: student.studentName,
+              enrollmentStatus: student.enrollmentStatus,
+              finalScore: student.finalScore,
+              gradeLetter: student.gradeLetter,
+              assessmentGrades: enrichedAssessmentGrades,
+              completedAssessments: student.completedAssessments || 0,
+              pendingAssessments: student.pendingAssessments || 0,
+              completionPercentage: student.completionPercentage || 0,
+            };
+          }
+        );
 
         setStudents(studentsWithGrades);
         setAssessmentHeaders(gradesResponse.assessmentHeaders || []);
@@ -276,11 +292,7 @@ const GradesPage = () => {
     }
 
     // Create headers
-    const headers = [
-      'STT',
-      'Mã SV',
-      'Họ và tên',
-    ];
+    const headers = ['STT', 'Mã SV', 'Họ và tên'];
 
     // Add assessment headers
     // Lý thuyết columns
@@ -296,11 +308,7 @@ const GradesPage = () => {
 
     // Create data rows
     const data = students.map((student, index) => {
-      const row = [
-        index + 1,
-        student.studentCode,
-        student.fullName,
-      ];
+      const row = [index + 1, student.studentCode, student.fullName];
 
       // Add empty cells for grades (to be filled by teacher)
       for (let i = 0; i < 8; i++) {
@@ -315,15 +323,15 @@ const GradesPage = () => {
 
     // Set column widths
     ws['!cols'] = [
-      { wch: 5 },  // STT
+      { wch: 5 }, // STT
       { wch: 12 }, // Mã SV
       { wch: 25 }, // Họ và tên
-      { wch: 8 },  // LT 1
-      { wch: 8 },  // LT 2
-      { wch: 8 },  // LT 3
-      { wch: 8 },  // TH 1
-      { wch: 8 },  // TH 2
-      { wch: 8 },  // TH 3
+      { wch: 8 }, // LT 1
+      { wch: 8 }, // LT 2
+      { wch: 8 }, // LT 3
+      { wch: 8 }, // TH 1
+      { wch: 8 }, // TH 2
+      { wch: 8 }, // TH 3
       { wch: 10 }, // Giữa kỳ
       { wch: 10 }, // Cuối kỳ
     ];
@@ -333,7 +341,7 @@ const GradesPage = () => {
     XLSX.utils.book_append_sheet(wb, ws, 'Điểm');
 
     // Get section info
-    const section = sections.find(s => s.sectionId === selectedSection);
+    const section = sections.find((s) => s.sectionId === selectedSection);
     const fileName = `Template_Diem_${section?.displayName || 'LopHocPhan'}_${new Date().getTime()}.xlsx`;
 
     // Export
@@ -352,7 +360,7 @@ const GradesPage = () => {
     if (!file) return;
 
     // Validate file name matches current section
-    const section = sections.find(s => s.sectionId === selectedSection);
+    const section = sections.find((s) => s.sectionId === selectedSection);
     if (section) {
       const expectedFilePrefix = `Template_Diem_${section.displayName}`;
       if (!file.name.startsWith(expectedFilePrefix)) {
@@ -385,17 +393,30 @@ const GradesPage = () => {
         }
 
         const headers = jsonData[0];
-        const expectedHeaders = ['STT', 'Mã SV', 'Họ và tên', 'LT 1', 'LT 2', 'LT 3', 'TH 1', 'TH 2', 'TH 3', 'Giữa kỳ', 'Cuối kỳ'];
+        const expectedHeaders = [
+          'STT',
+          'Mã SV',
+          'Họ và tên',
+          'LT 1',
+          'LT 2',
+          'LT 3',
+          'TH 1',
+          'TH 2',
+          'TH 3',
+          'Giữa kỳ',
+          'Cuối kỳ',
+        ];
 
         // Check headers
-        const headersMatch = expectedHeaders.every((header, index) =>
-          headers[index]?.toString().trim() === header
+        const headersMatch = expectedHeaders.every(
+          (header, index) => headers[index]?.toString().trim() === header
         );
 
         if (!headersMatch) {
           setSnackbar({
             open: true,
-            message: 'Cấu trúc file Excel không đúng. Vui lòng sử dụng file template đã xuất.',
+            message:
+              'Cấu trúc file Excel không đúng. Vui lòng sử dụng file template đã xuất.',
             severity: 'error',
           });
           return;
@@ -432,7 +453,9 @@ const GradesPage = () => {
           }
 
           // Check if student exists in the system
-          const systemStudent = students.find(s => s.studentCode === studentCode);
+          const systemStudent = students.find(
+            (s) => s.studentCode === studentCode
+          );
           if (!systemStudent) {
             setSnackbar({
               open: true,
@@ -521,20 +544,29 @@ const GradesPage = () => {
 
         // Validate consistency of all assessment columns
         // For each column (LT 1-3, TH 1-3, Giữa kỳ, Cuối kỳ), if any student has a grade, all must have it
-        const columnNames = ['LT 1', 'LT 2', 'LT 3', 'TH 1', 'TH 2', 'TH 3', 'Giữa kỳ', 'Cuối kỳ'];
+        const columnNames = [
+          'LT 1',
+          'LT 2',
+          'LT 3',
+          'TH 1',
+          'TH 2',
+          'TH 3',
+          'Giữa kỳ',
+          'Cuối kỳ',
+        ];
         const columnIndices = [3, 4, 5, 6, 7, 8, 9, 10];
 
         for (let i = 0; i < columnIndices.length; i++) {
           const columnIndex = columnIndices[i];
           const columnName = columnNames[i];
 
-          const columnPresence = dataRows.map(row => {
+          const columnPresence = dataRows.map((row) => {
             const value = row[columnIndex];
             return value !== undefined && value !== '' && value !== null;
           });
 
-          const someHaveValue = columnPresence.some(v => v);
-          const allHaveValue = columnPresence.every(v => v);
+          const someHaveValue = columnPresence.some((v) => v);
+          const allHaveValue = columnPresence.every((v) => v);
 
           if (someHaveValue && !allHaveValue) {
             setSnackbar({
@@ -555,24 +587,37 @@ const GradesPage = () => {
         // Process each student row
         dataRows.forEach((row) => {
           const studentCode = row[1]?.toString().trim();
-          const student = students.find(s => s.studentCode === studentCode);
+          const student = students.find((s) => s.studentCode === studentCode);
           if (!student) return;
 
           // Find existing gradeId for each assessment if it exists
           const studentGradeData = student.assessmentGrades || [];
 
           // Process LT grades (columns 3, 4, 5) - assessmentTypeId = 1
-          const ltAssessments = assessmentHeaders.filter(a => a.assessmentTypeId === 1);
+          const ltAssessments = assessmentHeaders.filter(
+            (a) => a.assessmentTypeId === 1
+          );
           for (let i = 0; i < 3; i++) {
             const value = row[3 + i];
-            if (value !== undefined && value !== '' && value !== null && ltAssessments[i]) {
+            if (
+              value !== undefined &&
+              value !== '' &&
+              value !== null &&
+              ltAssessments[i]
+            ) {
               const assessmentId = ltAssessments[i].assessmentId;
-              const existingGrade = studentGradeData.find(g => g.assessmentId === assessmentId);
+              const existingGrade = studentGradeData.find(
+                (g) => g.assessmentId === assessmentId
+              );
               const newScore = parseFloat(value);
               const currentScore = existingGrade?.score;
 
               // Only add to editedGrades if the score is different from current score
-              if (currentScore === undefined || currentScore === null || Math.abs(currentScore - newScore) > 0.001) {
+              if (
+                currentScore === undefined ||
+                currentScore === null ||
+                Math.abs(currentScore - newScore) > 0.001
+              ) {
                 if (!newEditedGrades.has(assessmentId)) {
                   newEditedGrades.set(assessmentId, new Map());
                 }
@@ -586,17 +631,30 @@ const GradesPage = () => {
           }
 
           // Process TH grades (columns 6, 7, 8) - assessmentTypeId = 2
-          const thAssessments = assessmentHeaders.filter(a => a.assessmentTypeId === 2);
+          const thAssessments = assessmentHeaders.filter(
+            (a) => a.assessmentTypeId === 2
+          );
           for (let i = 0; i < 3; i++) {
             const value = row[6 + i];
-            if (value !== undefined && value !== '' && value !== null && thAssessments[i]) {
+            if (
+              value !== undefined &&
+              value !== '' &&
+              value !== null &&
+              thAssessments[i]
+            ) {
               const assessmentId = thAssessments[i].assessmentId;
-              const existingGrade = studentGradeData.find(g => g.assessmentId === assessmentId);
+              const existingGrade = studentGradeData.find(
+                (g) => g.assessmentId === assessmentId
+              );
               const newScore = parseFloat(value);
               const currentScore = existingGrade?.score;
 
               // Only add to editedGrades if the score is different from current score
-              if (currentScore === undefined || currentScore === null || Math.abs(currentScore - newScore) > 0.001) {
+              if (
+                currentScore === undefined ||
+                currentScore === null ||
+                Math.abs(currentScore - newScore) > 0.001
+              ) {
                 if (!newEditedGrades.has(assessmentId)) {
                   newEditedGrades.set(assessmentId, new Map());
                 }
@@ -612,15 +670,23 @@ const GradesPage = () => {
           // Process Giữa kỳ (column 9) - assessmentTypeId = 3
           const giuaKy = row[9];
           if (giuaKy !== undefined && giuaKy !== '' && giuaKy !== null) {
-            const giuaKyAssessment = assessmentHeaders.find(a => a.assessmentTypeId === 3);
+            const giuaKyAssessment = assessmentHeaders.find(
+              (a) => a.assessmentTypeId === 3
+            );
             if (giuaKyAssessment) {
               const assessmentId = giuaKyAssessment.assessmentId;
-              const existingGrade = studentGradeData.find(g => g.assessmentId === assessmentId);
+              const existingGrade = studentGradeData.find(
+                (g) => g.assessmentId === assessmentId
+              );
               const newScore = parseFloat(giuaKy);
               const currentScore = existingGrade?.score;
 
               // Only add to editedGrades if the score is different from current score
-              if (currentScore === undefined || currentScore === null || Math.abs(currentScore - newScore) > 0.001) {
+              if (
+                currentScore === undefined ||
+                currentScore === null ||
+                Math.abs(currentScore - newScore) > 0.001
+              ) {
                 if (!newEditedGrades.has(assessmentId)) {
                   newEditedGrades.set(assessmentId, new Map());
                 }
@@ -636,15 +702,23 @@ const GradesPage = () => {
           // Process Cuối kỳ (column 10) - assessmentTypeId = 4
           const cuoiKy = row[10];
           if (cuoiKy !== undefined && cuoiKy !== '' && cuoiKy !== null) {
-            const cuoiKyAssessment = assessmentHeaders.find(a => a.assessmentTypeId === 4);
+            const cuoiKyAssessment = assessmentHeaders.find(
+              (a) => a.assessmentTypeId === 4
+            );
             if (cuoiKyAssessment) {
               const assessmentId = cuoiKyAssessment.assessmentId;
-              const existingGrade = studentGradeData.find(g => g.assessmentId === assessmentId);
+              const existingGrade = studentGradeData.find(
+                (g) => g.assessmentId === assessmentId
+              );
               const newScore = parseFloat(cuoiKy);
               const currentScore = existingGrade?.score;
 
               // Only add to editedGrades if the score is different from current score
-              if (currentScore === undefined || currentScore === null || Math.abs(currentScore - newScore) > 0.001) {
+              if (
+                currentScore === undefined ||
+                currentScore === null ||
+                Math.abs(currentScore - newScore) > 0.001
+              ) {
                 if (!newEditedGrades.has(assessmentId)) {
                   newEditedGrades.set(assessmentId, new Map());
                 }
@@ -666,7 +740,6 @@ const GradesPage = () => {
           message: `Import thành công ${importedGradeCount} điểm từ file Excel. Vui lòng nhấn "Lưu Điểm" để lưu vào hệ thống.`,
           severity: 'success',
         });
-
       } catch (error) {
         console.error('Error importing Excel:', error);
         setSnackbar({
@@ -713,7 +786,9 @@ const GradesPage = () => {
     const currentScore = assessment?.score;
 
     // Get edited value if exists (from import)
-    const editedValue = editedGrades.get(assessmentId)?.get(record.studentId)?.score;
+    const editedValue = editedGrades
+      .get(assessmentId)
+      ?.get(record.studentId)?.score;
     const displayValue = editedValue !== undefined ? editedValue : currentScore;
     const hasChanged = editedValue !== undefined;
 
@@ -748,10 +823,18 @@ const GradesPage = () => {
     const columns = [];
 
     // Group assessments by type
-    const ltAssessments = assessmentHeaders.filter(a => a.assessmentTypeId === 1);
-    const thAssessments = assessmentHeaders.filter(a => a.assessmentTypeId === 2);
-    const giuaKyAssessment = assessmentHeaders.find(a => a.assessmentTypeId === 3);
-    const cuoiKyAssessment = assessmentHeaders.find(a => a.assessmentTypeId === 4);
+    const ltAssessments = assessmentHeaders.filter(
+      (a) => a.assessmentTypeId === 1
+    );
+    const thAssessments = assessmentHeaders.filter(
+      (a) => a.assessmentTypeId === 2
+    );
+    const giuaKyAssessment = assessmentHeaders.find(
+      (a) => a.assessmentTypeId === 3
+    );
+    const cuoiKyAssessment = assessmentHeaders.find(
+      (a) => a.assessmentTypeId === 4
+    );
 
     // Create Thường xuyên group if there are LT or TH assessments
     if (ltAssessments.length > 0 || thAssessments.length > 0) {
@@ -768,7 +851,8 @@ const GradesPage = () => {
             key: `lt_${assessment.assessmentId}`,
             width: 100,
             align: 'center',
-            render: (_, record) => renderScoreCell(record, assessment.assessmentId),
+            render: (_, record) =>
+              renderScoreCell(record, assessment.assessmentId),
           })),
         });
       }
@@ -784,7 +868,8 @@ const GradesPage = () => {
             key: `th_${assessment.assessmentId}`,
             width: 100,
             align: 'center',
-            render: (_, record) => renderScoreCell(record, assessment.assessmentId),
+            render: (_, record) =>
+              renderScoreCell(record, assessment.assessmentId),
           })),
         });
       }
@@ -804,7 +889,8 @@ const GradesPage = () => {
         key: 'giuaky',
         width: 120,
         align: 'center',
-        render: (_, record) => renderScoreCell(record, giuaKyAssessment.assessmentId),
+        render: (_, record) =>
+          renderScoreCell(record, giuaKyAssessment.assessmentId),
       });
     }
 
@@ -815,7 +901,8 @@ const GradesPage = () => {
         key: 'cuoiky',
         width: 120,
         align: 'center',
-        render: (_, record) => renderScoreCell(record, cuoiKyAssessment.assessmentId),
+        render: (_, record) =>
+          renderScoreCell(record, cuoiKyAssessment.assessmentId),
       });
     }
 
@@ -841,7 +928,6 @@ const GradesPage = () => {
       dataIndex: 'studentCode',
       key: 'studentCode',
       width: 120,
-      fixed: 'left',
       render: (text) => <span style={{ fontWeight: 600 }}>{text}</span>,
     },
     {
@@ -849,7 +935,6 @@ const GradesPage = () => {
       dataIndex: 'fullName',
       key: 'fullName',
       width: 200,
-      fixed: 'left',
     },
     // Dynamic assessment columns
     ...getAssessmentColumns(),
@@ -859,7 +944,6 @@ const GradesPage = () => {
       key: 'finalScore',
       width: 110,
       align: 'center',
-      fixed: 'right',
       render: (value) => (
         <span
           style={{
@@ -878,7 +962,6 @@ const GradesPage = () => {
       key: 'gpa4',
       width: 100,
       align: 'center',
-      fixed: 'right',
       render: (finalScore) => {
         const gpa4 = calculateGPA4(finalScore);
         return (
@@ -899,7 +982,6 @@ const GradesPage = () => {
       key: 'gradeLetter',
       width: 100,
       align: 'center',
-      fixed: 'right',
       render: (gradeLetter) => {
         if (!gradeLetter) return <Tag>-</Tag>;
         return <Tag color={getGradeColor(gradeLetter)}>{gradeLetter}</Tag>;
@@ -1059,13 +1141,22 @@ const GradesPage = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={6} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+            <Grid
+              item
+              xs={12}
+              md={6}
+              sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}
+            >
               <Button
                 variant="contained"
                 color="success"
                 startIcon={<Save />}
                 onClick={handleSubmitGrades}
-                disabled={!selectedSection || students.length === 0 || editedGrades.size === 0}
+                disabled={
+                  !selectedSection ||
+                  students.length === 0 ||
+                  editedGrades.size === 0
+                }
               >
                 Lưu Điểm ({editedGrades.size})
               </Button>
@@ -1112,6 +1203,7 @@ const GradesPage = () => {
                 showTotal: (total) => `Tổng số ${total} sinh viên`,
               }}
               scroll={{ x: 1200 }}
+              style={{ maxWidth: 1200 }}
             />
           </Card>
         </Fade>
