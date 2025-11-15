@@ -24,6 +24,6 @@ namespace StudentManagement.Services.Interface
         Task<PagedResult<SectionSimpleResponse>> GetSectionsByLecturerAsync(SectionSearchRequest searchRequest, string lecturerCode);
         Task<IEnumerable<SectionDropdownResponse>> GetSectionDropdownForLecturerAsync(string lecturerCode, int? semesterId = null);
         Task<PagedResult<SectionSimpleResponse>> GetSectionsIsStartingByLecturerAsync(string lecturerCode);
-
+        Task<SectionDetailWithScheduleResponse?> GetSectionDetailWithScheduleAsync(int sectionId, bool isPracticeSchedule = false, int? practiceGroupId = null);
     }
 }

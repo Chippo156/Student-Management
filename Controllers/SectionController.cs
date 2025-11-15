@@ -237,5 +237,54 @@ namespace StudentManagement.Controllers
                     "An error occurred while retrieving sections", new List<string> { ex.Message }));
             }
         }
+
+        [HttpGet("GetSectionTheoryDetail/{sectionId}")]
+        [Authorize(Roles = "Admin,Lecturer")]
+        public async Task<IActionResult> GetSectionTheoryDetail(int sectionId)
+        {
+            try
+            {
+                var result = await sectionService.GetSectionDetailWithScheduleAsync(sectionId, isPracticeSchedule: false);
+                
+                if (result == null)
+                {
+                    return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, 
+                        $"Section with ID {sectionId} not found", null));
+                }
+
+                return Ok(ApiResponse.SuccessResponse(result, "Section theory detail retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving section theory detail", new List<string> { ex.Message }));
+            }
+        }
+
+        [HttpGet("GetSectionPracticeDetail/{sectionId}")]
+        [Authorize(Roles = "Admin,Lecturer")]
+        public async Task<IActionResult> GetSectionPracticeDetail(int sectionId, [FromQuery] int? practiceGroupId = null)
+        {
+            try
+            {
+                var result = await sectionService.GetSectionDetailWithScheduleAsync(
+                    sectionId, 
+                    isPracticeSchedule: true, 
+                    practiceGroupId: practiceGroupId);
+                
+                if (result == null)
+                {
+                    return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, 
+                        $"Section with ID {sectionId} not found or practice group not found", null));
+                }
+
+                return Ok(ApiResponse.SuccessResponse(result, "Section practice detail retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving section practice detail", new List<string> { ex.Message }));
+            }
+        }
     }
 }

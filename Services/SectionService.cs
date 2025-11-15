@@ -776,5 +776,235 @@ namespace StudentManagement.Services
                 _ => ""
             };
         }
+        public async Task<SectionDetailWithScheduleResponse?> GetSectionDetailWithScheduleAsync(
+    int sectionId,
+    bool isPracticeSchedule = false,
+    int? practiceGroupId = null)
+        {
+            // Lấy thông tin section với các related data
+            var section = await context.Sections
+                .Include(s => s.CurriculumCourse)
+                    .ThenInclude(cc => cc.Course)
+                .Include(s => s.Lecturer)
+                    .ThenInclude(l => l.User)
+                .Include(s => s.Semester)
+                .Include(s => s.Class)
+                .Include(s => s.Schedules)
+                    .ThenInclude(sch => sch.ScheduleType)
+                .FirstOrDefaultAsync(s => s.SectionId == sectionId);
+
+            if (section == null)
+                return null;
+
+            List<BasicStudentInfo> students;
+            List<ScheduleInfoSectionDetail> schedules;
+            PracticeGroupInfoWithSection? practiceGroupInfo = null;
+
+            if (isPracticeSchedule)
+            {
+                // Lấy thông tin thực hành
+                if (practiceGroupId.HasValue)
+                {
+                    // Lấy thông tin nhóm thực hành cụ thể
+                    var practiceGroup = await context.PracticeGroups
+                        .Include(pg => pg.Lecturer)
+                            .ThenInclude(l => l.User)
+                        .Include(pg => pg.Schedules)
+                            .ThenInclude(s => s.ScheduleType)
+                        .FirstOrDefaultAsync(pg => pg.PracticeGroupId == practiceGroupId.Value &&
+                                                  pg.SectionId == sectionId);
+
+                    if (practiceGroup == null)
+                        return null;
+
+                    // Lấy sinh viên trong nhóm thực hành này
+                    students = await GetPracticeGroupStudentsAsync(practiceGroupId.Value);
+
+                    // Lấy lịch thực hành của nhóm này
+                    schedules = practiceGroup.Schedules
+                        .Select(s => new ScheduleInfoSectionDetail
+                        {
+                            ScheduleId = s.ScheduleId,
+                            ScheduleTypeName = s.ScheduleType.Name,
+                            DayOfWeek = s.DayOfWeek,
+                            DayOfWeekText = s.DayOfWeek.HasValue ? GetDayOfWeekInVietnamese(s.DayOfWeek.Value) : "",
+                            Date = s.Date,
+                            StartTime = s.StartTime,
+                            EndTime = s.EndTime,
+                            TimeSlot = $"{s.StartTime:HH:mm} - {s.EndTime:HH:mm}",
+                            Room = s.Room ?? "",
+                            OnlineLink = s.OnlineLink,
+                            IsExam = s.ScheduleType.ScheduleTypeId == 3
+                        })
+                        .OrderBy(s => s.DayOfWeek)
+                        .ThenBy(s => s.StartTime)
+                        .ToList();
+
+                    practiceGroupInfo = new PracticeGroupInfoWithSection
+                    {
+                        PracticeGroupId = practiceGroup.PracticeGroupId,
+                        GroupName = practiceGroup.GroupName,
+                        Description = practiceGroup.Description,
+                        MaxCapacity = practiceGroup.MaxCapacity,
+                        CurrentCount = practiceGroup.CurrentCount,
+                        PracticeLecturerName = practiceGroup.Lecturer?.User?.FullName
+                    };
+                }
+                else
+                {
+                    // Lấy tất cả sinh viên có trong các nhóm thực hành của section
+                    students = await GetAllPracticeStudentsInSectionAsync(sectionId);
+
+                    // Lấy tất cả lịch thực hành của section
+                    var allPracticeSchedules = await context.Schedules
+                        .Include(s => s.ScheduleType)
+                        .Include(s => s.PracticeGroup)
+                        .Where(s => s.Section.SectionId == sectionId && s.PracticeGroupId.HasValue)
+                        .ToListAsync();
+
+                    schedules = allPracticeSchedules
+                        .Select(s => new ScheduleInfoSectionDetail
+                        {
+                            ScheduleId = s.ScheduleId,
+                            ScheduleTypeName = s.ScheduleType.Name,
+                            DayOfWeek = s.DayOfWeek,
+                            DayOfWeekText = s.DayOfWeek.HasValue ? GetDayOfWeekInVietnamese(s.DayOfWeek.Value) : "",
+                            Date = s.Date,
+                            StartTime = s.StartTime,
+                            EndTime = s.EndTime,
+                            TimeSlot = $"{s.StartTime:HH:mm} - {s.EndTime:HH:mm}",
+                            Room = s.Room ?? "",
+                            OnlineLink = s.OnlineLink,
+                            IsExam = s.ScheduleType.ScheduleTypeId == 3
+                        })
+                        .OrderBy(s => s.DayOfWeek)
+                        .ThenBy(s => s.StartTime)
+                        .ToList();
+                }
+            }
+            else
+            {
+                // Lấy thông tin lý thuyết
+                students = await GetTheoryStudentsAsync(sectionId);
+
+                // Lấy lịch lý thuyết (không phải thực hành)
+                var theorySchedules = section.Schedules
+                    .Where(s => !s.PracticeGroupId.HasValue && s.ScheduleType.ScheduleTypeId != 3)
+                    .ToList();
+
+                schedules = theorySchedules
+                    .Select(s => new ScheduleInfoSectionDetail
+                    {
+                        ScheduleId = s.ScheduleId,
+                        ScheduleTypeName = s.ScheduleType.Name,
+                        DayOfWeek = s.DayOfWeek,
+                        DayOfWeekText = s.DayOfWeek.HasValue ? GetDayOfWeekInVietnamese(s.DayOfWeek.Value) : "",
+                        StartTime = s.StartTime,
+                        EndTime = s.EndTime,
+                        TimeSlot = $"{s.StartTime:HH:mm} - {s.EndTime:HH:mm}",
+                        Room = s.Room ?? "",
+                        OnlineLink = s.OnlineLink,
+                        Date = s.Date,
+                        IsExam = s.ScheduleType.ScheduleTypeId == 3
+                    })
+                    .OrderBy(s => s.DayOfWeek)
+                    .ThenBy(s => s.StartTime)
+                    .ToList();
+            }
+
+            // Tính toán thống kê
+            var maleCount = students.Count(s => s.Gender.Equals("Male", StringComparison.OrdinalIgnoreCase));
+            var femaleCount = students.Count(s => s.Gender.Equals("Female", StringComparison.OrdinalIgnoreCase));
+
+            return new SectionDetailWithScheduleResponse
+            {
+                SectionId = section.SectionId,
+                SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
+                CourseName = section.CurriculumCourse.Course.CourseName,
+                CourseCode = section.CurriculumCourse.Course.CourseCode,
+                Credits = section.CurriculumCourse.Course.CreditsTheory + section.CurriculumCourse.Course.CreditsLab,
+
+                ClassName = section.Class.ClassName,
+                ClassCode = section.Class.ClassCode,
+
+                SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
+
+                LecturerName = section.Lecturer?.User?.FullName ?? "Not Assigned",
+
+                StartDate = section.StartDate,
+                EndDate = section.EndDate,
+                Capacity = section.Capacity,
+                EnrolledCount = section.EnrolledCount,
+
+                Schedules = schedules,
+                PracticeGroup = practiceGroupInfo,
+                Students = students,
+
+                TotalStudents = students.Count,
+                MaleStudents = maleCount,
+                FemaleStudents = femaleCount
+            };
+        }
+
+        // Helper methods
+        private async Task<List<BasicStudentInfo>> GetTheoryStudentsAsync(int sectionId)
+        {
+            return await context.Enrollments
+                .Include(e => e.Student)
+                    .ThenInclude(s => s.User)
+                .Where(e => e.Section.SectionId == sectionId &&
+                           e.enrollmentStatus == Enum.EnrollmentStatus.Enrolled)
+                .Select(e => new BasicStudentInfo
+                {
+                    StudentId = e.Student.Id,
+                    MSSV = e.Student.MSSV,
+                    FullName = e.Student.User.FullName,
+                    Gender = e.Student.User.Gender.ToString() ?? "",
+                    DateOfBirth = e.Student.User.DateOfBirth,
+                    PracticeGroupName = null // Không có trong lý thuyết
+                })
+                .OrderBy(s => s.MSSV)
+                .ToListAsync();
+        }
+
+        private async Task<List<BasicStudentInfo>> GetPracticeGroupStudentsAsync(int practiceGroupId)
+        {
+            return await context.PracticeGroupEnrollments
+                .Include(pge => pge.Student)
+                    .ThenInclude(s => s.User)
+                .Include(pge => pge.PracticeGroup)
+                .Where(pge => pge.PracticeGroupId == practiceGroupId && pge.IsActive)
+                .Select(pge => new BasicStudentInfo
+                {
+                    StudentId = pge.Student.Id,
+                    MSSV = pge.Student.MSSV,
+                    FullName = pge.Student.User.FullName,
+                    Gender = pge.Student.User.Gender.ToString() ?? "",
+                    DateOfBirth = pge.Student.User.DateOfBirth,
+                    PracticeGroupName = pge.PracticeGroup.GroupName
+                })
+                .OrderBy(s => s.MSSV)
+                .ToListAsync();
+        }
+
+        private async Task<List<BasicStudentInfo>> GetAllPracticeStudentsInSectionAsync(int sectionId)
+        {
+            return await context.PracticeGroupEnrollments
+                .Include(pge => pge.Student)
+                    .ThenInclude(s => s.User)
+                .Include(pge => pge.PracticeGroup)
+                .Where(pge => pge.PracticeGroup.SectionId == sectionId && pge.IsActive)
+                .Select(pge => new BasicStudentInfo
+                {
+                    StudentId = pge.Student.Id,
+                    MSSV = pge.Student.MSSV,
+                    FullName = pge.Student.User.FullName,
+                    Gender = pge.Student.User.Gender.ToString() ?? "",
+                    DateOfBirth = pge.Student.User.DateOfBirth,
+                    PracticeGroupName = pge.PracticeGroup.GroupName
+                })
+                .OrderBy(s => s.MSSV)
+                .ToListAsync();
+        }
     }
 }
