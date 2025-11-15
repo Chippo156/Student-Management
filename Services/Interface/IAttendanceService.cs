@@ -13,6 +13,7 @@ namespace StudentManagement.Services.Interface
             string lecturerCode, 
             PaginationParams pagination,
             int? sectionId = null,
+            int? scheduleTypeId = null,
             DateTime? fromDate = null,
             DateTime? toDate = null);
         Task<StudentAttendanceStatisticsResponse> GetStudentAttendanceStatisticsAsync(int studentId, int sectionId);

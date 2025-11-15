@@ -12,7 +12,9 @@ namespace StudentManagement.Services
     {
         public async Task<Section> CreateSectionAsync(SectionRequest request)
         {
-            var curriculumCourse = await context.CurriculumCourses.FindAsync(request.CurriculumCourseId);
+            var curriculumCourse = await context.CurriculumCourses
+                .Include(e => e.Course)
+                .FirstOrDefaultAsync(cc => cc.Id == request.CurriculumCourseId);
             if (curriculumCourse is null)
             {
                 throw new Exception("CurriculumCourse not found");
@@ -37,9 +39,12 @@ namespace StudentManagement.Services
                 throw new Exception("Class not found");
             }
 
+            string sectionCode = $"LHP{curriculumCourse.Course.CourseCode}-{existingSemester.Year}{existingSemester.Term}-{classSection.ClassCode}";
+
 
             Section newSection = new Section
             {
+                SectionCode = sectionCode,
                 CurriculumCourse = curriculumCourse,
                 Lecturer = lecturer,
                 Semester = existingSemester,
@@ -47,7 +52,7 @@ namespace StudentManagement.Services
                 StartDate = request.StartDate,
                 EndDate = request.EndDate,
                 Capacity = request.Capacity,
-                Status = request.Status
+                Status = SectionStatus.IsPreparing,
             };
 
             context.Sections.Add(newSection);

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
+using StudentManagement.Enum;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
@@ -122,46 +123,115 @@ namespace StudentManagement.Services
 
         public async Task<Schedule> CreateScheduleAsync(ScheduleRequest request)
         {
-            var section = await context.Sections.FindAsync(request.SectionId)
-                ?? throw new Exception("Section not found");
+            using var transaction = await context.Database.BeginTransactionAsync();
 
-            // Check for conflicts
-            var hasConflicts = await CheckScheduleConflictsAsync(
-                request.SectionId,
-                request.Date, // Use request.Date for the dateEvent parameter
-                request.DayOfWeek,
-                request.StartTime,
-                request.EndTime,
-                request.Room);
-
-            if (hasConflicts)
+            try
             {
-                throw new Exception("Schedule conflicts with existing schedules");
+                var section = await context.Sections
+                    .Include(s => s.CurriculumCourse)
+                        .ThenInclude(cc => cc.Program)
+                            .ThenInclude(p => p.Department)
+                    .Include(s => s.Semester)
+                    .FirstOrDefaultAsync(s => s.SectionId == request.SectionId)
+                    ?? throw new Exception("Section not found");
+
+                // Check for conflicts
+                var hasConflicts = await CheckScheduleConflictsAsync(
+                    request.SectionId,
+                    request.Date,
+                    request.DayOfWeek,
+                    request.StartTime,
+                    request.EndTime,
+                    request.Room);
+
+                if (hasConflicts)
+                {
+                    throw new Exception("Schedule conflicts with existing schedules");
+                }
+
+                var scheduleType = await context.ScheduleTypes.FindAsync(request.ScheduleTypeId)
+                    ?? throw new Exception("Schedule type not found");
+
+                var schedule = new Schedule
+                {
+                    Section = section,
+                    ScheduleType = scheduleType,
+                    DayOfWeek = request.DayOfWeek,
+                    StartTime = request.StartTime,
+                    EndTime = request.EndTime,
+                    Room = request.Room
+                };
+
+                if (request.Date.HasValue)
+                {
+                    schedule.Date = request.Date.Value;
+                }
+                if (!string.IsNullOrEmpty(request.OnlineLink))
+                {
+                    schedule.OnlineLink = request.OnlineLink;
+                }
+
+                context.Schedules.Add(schedule);
+                await context.SaveChangesAsync();
+
+                // Kiểm tra xem đây có phải là lịch lý thuyết (main schedule) không
+                bool isMainSchedule = 
+                                     request.ScheduleTypeId != 3; // Không phải lịch thi và không phải lịch thực hành
+
+                if (isMainSchedule)
+                {
+                    // Kiểm tra section hiện tại có đang ở trạng thái IsPreparing không
+                    if (section.Status == SectionStatus.IsPreparing)
+                    {
+                        // Kiểm tra registration period có đang active không
+                        var registrationPeriod = await context.RegistrationPeriods
+                            .FirstOrDefaultAsync(rp =>
+                                rp.Semester.SemesterId == section.Semester.SemesterId &&
+                                rp.Department.DepartmentId == section.CurriculumCourse.Program.Department.DepartmentId);
+
+                        bool canOpenForRegistration = false;
+
+                        if (registrationPeriod != null)
+                        {
+                            var currentDate = DateTime.UtcNow;
+                            var today = DateOnly.FromDateTime(currentDate);
+
+                            // Kiểm tra điều kiện để mở đăng ký
+                            bool isRegistrationActive = registrationPeriod.IsActive &&
+                                                      currentDate >= registrationPeriod.StartDate &&
+                                                      currentDate <= registrationPeriod.EndDate;
+
+                            bool hasNotStartedYet = today < section.StartDate;
+
+                            canOpenForRegistration = isRegistrationActive && hasNotStartedYet;
+                        }
+
+                        // Nếu đủ điều kiện thì chuyển sang IsOpening
+                        if (canOpenForRegistration)
+                        {
+                            section.Status = SectionStatus.IsOpening;
+                            context.Sections.Update(section);
+                            await context.SaveChangesAsync();
+
+                            // Log thông tin cập nhật status
+                            Console.WriteLine($"Section {section.SectionCode ?? $"LHP{section.SectionId}"} status updated to IsOpening after adding main schedule");
+                        }
+                        else
+                        {
+                            // Vẫn giữ ở IsPreparing nhưng log lý do
+                            Console.WriteLine($"Section {section.SectionCode ?? $"LHP{section.SectionId}"} remains in IsPreparing status - registration period conditions not met");
+                        }
+                    }
+                }
+
+                await transaction.CommitAsync();
+                return schedule;
             }
-            var scheduleType = await context.ScheduleTypes.FindAsync(request.ScheduleTypeId)
-                ?? throw new Exception("Schedule type not found");
-
-            var schedule = new Schedule
+            catch
             {
-                Section = section,
-                ScheduleType = scheduleType,
-                DayOfWeek = request.DayOfWeek,
-                StartTime = request.StartTime,
-                EndTime = request.EndTime,
-                Room = request.Room
-            };
-            if (request.Date.HasValue)
-            {
-                schedule.Date = request.Date.Value;
+                await transaction.RollbackAsync();
+                throw;
             }
-            if (!string.IsNullOrEmpty(request.OnlineLink))
-            {
-                schedule.OnlineLink = request.OnlineLink;
-            }
-
-            context.Schedules.Add(schedule);
-            await context.SaveChangesAsync();
-            return schedule;
         }
 
         public async Task<bool> DeleteScheduleAsync(int scheduleId)

@@ -75,6 +75,7 @@ namespace StudentManagement.Controllers
         public async Task<IActionResult> GetMyAttendanceSessions(
             [FromQuery] PaginationParams pagination,
             [FromQuery] int? sectionId = null,
+            [FromQuery] int? scheduleTypeId = null,
             [FromQuery] DateTime? fromDate = null,
             [FromQuery] DateTime? toDate = null)
         {
@@ -87,7 +88,7 @@ namespace StudentManagement.Controllers
                 }
 
                 var result = await attendanceService.GetAttendanceSessionsByLecturerAsync(
-                    lecturerCode, pagination, sectionId, fromDate, toDate);
+                    lecturerCode, pagination, sectionId, scheduleTypeId, fromDate, toDate);
                 
                 return Ok(ApiResponse.SuccessResponse(result, "Attendance sessions retrieved successfully"));
             }

@@ -224,11 +224,12 @@ namespace StudentManagement.Services
         }
 
         public async Task<PagedResult<AttendanceSessionResponse>> GetAttendanceSessionsByLecturerAsync(
-            string lecturerCode, 
-            PaginationParams pagination,
-            int? sectionId = null,
-            DateTime? fromDate = null,
-            DateTime? toDate = null)
+    string lecturerCode,
+    PaginationParams pagination,
+    int? sectionId = null,
+    int? scheduleTypeId = null,
+    DateTime? fromDate = null,
+    DateTime? toDate = null)
         {
             var lecturer = await context.Lecturers
                 .Include(l => l.User)
@@ -260,6 +261,22 @@ namespace StudentManagement.Services
             if (toDate.HasValue)
             {
                 query = query.Where(a => a.SessionDate <= toDate.Value);
+            }
+
+            // Add scheduleTypeId filter by joining with Schedules table
+            if (scheduleTypeId.HasValue)
+            {
+                query = query.Where(a =>
+                    // For theory sessions (no practice group), check section's main schedules
+                    (!a.PracticeGroupId.HasValue &&
+                     context.Schedules.Any(s => s.Section.SectionId == a.SectionId &&
+                                               s.ScheduleType.ScheduleTypeId == scheduleTypeId.Value &&
+                                               !s.PracticeGroupId.HasValue)) ||
+                    // For practice sessions, check practice group's schedules
+                    (a.PracticeGroupId.HasValue &&
+                     context.Schedules.Any(s => s.PracticeGroupId == a.PracticeGroupId &&
+                                               s.ScheduleType.ScheduleTypeId == scheduleTypeId.Value))
+                );
             }
 
             var totalCount = await query.CountAsync();

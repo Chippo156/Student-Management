@@ -20,8 +20,5 @@ namespace StudentManagement.Models.Dto.Request
         public DateOnly StartDate { get; set; }
         public DateOnly EndDate { get; set; }
         public int Capacity { get; set; }
-
-        public SectionStatus Status { get; set; } = SectionStatus.IsPreparing;
-
     }
 }
