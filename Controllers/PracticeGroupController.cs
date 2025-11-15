@@ -36,7 +36,8 @@ namespace StudentManagement.Controllers
         public async Task<IActionResult> GetPracticeGroupsBySection(int sectionId)
         {
             var result = await practiceGroupService.GetPracticeGroupsBySectionAsync(sectionId);
-            return Ok(result);
+            return Ok(ApiResponse.SuccessResponse(result, "Practice group retrieved successfully"));
+
         }
 
         [HttpPost("{practiceGroupId}/enroll/{studentId}")]
