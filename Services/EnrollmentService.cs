@@ -289,10 +289,16 @@ namespace StudentManagement.Services
                 errors.Add("Đăng ký thất bại, khung thời gian đăng ký đã hết hiệu lực");
             }
 
-            if (section.Semester.StartDate < DateOnly.FromDateTime(DateTime.Now))
+            var today = DateOnly.FromDateTime(DateTime.Now);
+
+            // Không cho đăng ký sau 7 ngày kể từ ngày bắt đầu học kỳ
+            var deadline = section.StartDate.AddDays(7);
+
+            if (today > deadline)
             {
-                errors.Add("Không thể đăng ký học phần trong học kỳ đã bắt đầu");
+                errors.Add("Không thể đăng ký học phần sau khi học kỳ đã bắt đầu hơn 1 tuần");
             }
+
 
             // Check prerequisites
             var prerequisites = await context.Prerequisites

@@ -701,6 +701,48 @@ namespace StudentManagement.Services
             return result;
         }
 
+        public async Task<PagedResult<SectionSimpleResponse>> GetSectionsIsStartingByLecturerAsync(string lecturerCode)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var currentTime = TimeOnly.FromDateTime(DateTime.Now);
+
+            var query = context.Sections
+                .Include(s => s.CurriculumCourse.Course)
+                .Include(s => s.Lecturer.User)
+                .Include(s => s.Semester)
+                .Include(s => s.Schedules)
+                    .ThenInclude(sch => sch.ScheduleType)
+                .Where(s => s.Lecturer != null &&
+                           s.Lecturer.User.Username == lecturerCode &&
+                           s.StartDate <= today &&
+                           s.EndDate >= today && // Section đang trong thời gian học
+                           s.Status == SectionStatus.IsOpening) // Chỉ lấy sections đang mở
+                .AsQueryable();
+            var sections = query
+                .Select(s => new SectionSimpleResponse
+                {
+                    SectionId = s.SectionId,
+                    SectionCode = s.SectionCode ?? $"LHP{s.SectionId}",
+                    CourseCode = s.CurriculumCourse.Course.CourseCode,
+                    CourseName = s.CurriculumCourse.Course.CourseName,
+                    LecturerName = s.Lecturer != null ? s.Lecturer.User.FullName : "Chưa phân công",
+                    SemesterName = $"{s.Semester.Year} - {s.Semester.Term}",
+                    Capacity = s.Capacity,
+                    EnrolledCount = s.EnrolledCount,
+                    AvailableSlots = Math.Max(0, s.Capacity - s.EnrolledCount),
+                    Status = s.Status,
+                    StartDate = s.StartDate,
+                    EndDate = s.EndDate,
+
+                })
+                .ToList();
+
+            return new PagedResult<SectionSimpleResponse>
+            {
+                Items = sections,
+            };
+        }
+
         private static string GetSectionStatusInVietnamese(SectionStatus status)
         {
             return status switch
