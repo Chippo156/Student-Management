@@ -17,5 +17,6 @@ namespace StudentManagement.Services.Interface
         Task<bool> DeactivateUserAsync(int userId);
         Task<bool> ReactivateUserAsync(int userId);
         Task<UserCreationResult> CreateUserWithRoleAsync(CreateUserWithRoleRequest request);
+        Task<User?> UpdateUserAvatarAsync(int userId, string avatarUrl);
     }
 }

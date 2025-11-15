@@ -58,12 +58,12 @@ namespace StudentManagement.Controllers
                         .SelectMany(v => v.Errors)
                         .Select(e => e.ErrorMessage)
                         .ToList();
-                    
+
                     return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid input data.", errors));
                 }
 
                 var updatedUser = await userService.UpdateUserAsync(id, request);
-                
+
                 if (updatedUser is null)
                 {
                     return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"User with ID {id} not found.", null));
@@ -206,5 +206,25 @@ namespace StudentManagement.Controllers
                 return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, "An error occurred while reactivating user", new List<string> { ex.Message }));
             }
         }
-    }
+
+        [HttpPost("UpdateAvatarUser")]
+        [Authorize]
+        public async Task<IActionResult> UpdateAvatarUser(string AvatarUrl)
+        {
+            try
+            {
+                var currentUserId = GetAuthenticatedUserId();
+                var updatedUser = await userService.UpdateUserAvatarAsync(currentUserId.UserId, AvatarUrl);
+                if (updatedUser is null)
+                {
+                    return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"User with ID {currentUserId.UserId} not found.", null));
+                }
+                return Ok(ApiResponse.SuccessResponse(updatedUser, "User avatar updated successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, "An error occurred while updating user avatar.", new List<string> { ex.Message }));
+            }
+        }
+    } 
 }

@@ -297,17 +297,6 @@ namespace StudentManagement.Services
                     PlaceOfBirth = request.PlaceOfBirth?.Trim(),
                     Religion = request.Religion?.Trim(),
 
-                    // Address details
-                    //HometownProvince = request.HometownProvince?.Trim(),
-                    //HometownDistrict = request.HometownDistrict?.Trim(),
-                    //HometownWard = request.HometownWard?.Trim(),
-                    //BirthProvince = request.BirthProvince?.Trim(),
-                    //BirthDistrict = request.BirthDistrict?.Trim(),
-                    //BirthWard = request.BirthWard?.Trim(),
-                    //PermanentProvince = request.PermanentProvince?.Trim(),
-                    //PermanentDistrict = request.PermanentDistrict?.Trim(),
-                    //PermanentWard = request.PermanentWard?.Trim(),
-
                     // Additional info
                     Object = request.Object?.Trim(),
                     PolicyArea = request.PolicyArea?.Trim(),
@@ -442,12 +431,6 @@ namespace StudentManagement.Services
                 context.Students.Add(student);
                 await context.SaveChangesAsync();
 
-                // Create family relationships if provided
-                //if (studentData.FamilyRelationships?.Any() == true)
-                //{
-                //    await CreateFamilyRelationshipsAsync(student, studentData.FamilyRelationships);
-                //}
-
                 return new StudentCreationResult
                 {
                     IsSuccess = true,
@@ -528,38 +511,6 @@ namespace StudentManagement.Services
                     Errors = { ex.Message }
                 };
             }
-        }
-
-        private async Task CreateFamilyRelationshipsAsync(Student student, List<FamilyRelationshipData> familyData)
-        {
-            foreach (var familyMember in familyData)
-            {
-                var relationship = new FamilyRelationship
-                {
-                    Student = student,
-                    FullName = familyMember.FullName.Trim(),
-                    RelationshipType = familyMember.RelationshipType,
-                    DateOfBirth = familyMember.DateOfBirth,
-                    Phone = familyMember.Phone?.Trim(),
-                    Email = familyMember.Email?.Trim(),
-                    Occupation = familyMember.Occupation?.Trim(),
-                    Workplace = familyMember.Workplace?.Trim(),
-                    CitizenIdCard = familyMember.CitizenIdCard?.Trim(),
-                    IssuedDate = familyMember.IssuedDate,
-                    IssuedPlace = familyMember.IssuedPlace?.Trim(),
-                    Province = familyMember.Province?.Trim(),
-                    District = familyMember.District?.Trim(),
-                    Ward = familyMember.Ward?.Trim(),
-                    DetailAddress = familyMember.DetailAddress?.Trim(),
-                    IsGuardian = familyMember.IsGuardian,
-                    IsDeceased = familyMember.IsDeceased,
-                    IsHouseholder = familyMember.IsHouseholder
-                };
-
-                context.FamilyRelationships.Add(relationship);
-            }
-
-            await context.SaveChangesAsync();
         }
 
         private async Task<(bool IsValid, List<string> Errors)> ValidateUserCreationRequestAsync(CreateUserWithRoleRequest request)
@@ -672,31 +623,6 @@ namespace StudentManagement.Services
                 // Check if role is changing
                 bool roleChanged = user.Role.RoleId != request.RoleId;
 
-                // Handle avatar upload
-                //string? avatarUrl = user.AvatarUrl;
-                //if (request.AvatarFile != null)
-                //{
-                //    try
-                //    {
-                //        // Upload new avatar
-                //        avatarUrl = await fileService.UploadFileAsync(request.AvatarFile, "avatars");
-
-                //        // Delete old avatar if exists and upload successful
-                //        if (!string.IsNullOrEmpty(user.AvatarUrl))
-                //        {
-                //            await fileService.DeleteFileAsync(user.AvatarUrl);
-                //        }
-                //    }
-                //    catch (Exception ex)
-                //    {
-                //        return new UserUpdateResult
-                //        {
-                //            IsSuccess = false,
-                //            Message = "Avatar upload failed",
-                //            Errors = { ex.Message }
-                //        };
-                //    }
-                //}
 
                 // Update user basic information
                 user.FullName = request.FullName.Trim();
@@ -1051,6 +977,29 @@ namespace StudentManagement.Services
 
             context.Users.Update(user);
             return await context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<User?> UpdateUserAvatarAsync(int userId, string avatarUrl)
+        {
+            using var transaction = await context.Database.BeginTransactionAsync();
+            try
+            {
+                var user = await context.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    return null;
+                }
+                user.AvatarUrl = avatarUrl;
+                context.Users.Update(user);
+                await context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return user;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
     }
 }
