@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using StudentManagement.Exceptions;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
 
@@ -26,7 +27,9 @@ namespace StudentManagement.Controllers
         public async Task<IActionResult> GetPracticeGroup(int id)
         {
             var result = await practiceGroupService.GetPracticeGroupByIdAsync(id);
-            return result != null ? Ok(result) : NotFound();
+
+            return Ok(ApiResponse.SuccessResponse(result, "Practice group retrieved successfully"));
+
         }
 
         [HttpGet("section/{sectionId}")]
