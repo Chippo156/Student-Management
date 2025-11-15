@@ -1046,13 +1046,13 @@ namespace StudentManagement.Services
                 }
 
                 // Tạo mật khẩu mặc định (có thể là MSSV + năm sinh hoặc format khác)
-                var defaultPassword = GenerateDefaultPassword(student.MSSV, student.User.DateOfBirth);
+                var defaultPassword = "123456";
 
-                // Hash mật khẩu mặc định
-                var hashedPassword = new PasswordHasher<User>().HashPassword(student.User, defaultPassword);
+                //// Hash mật khẩu mặc định
+                //var hashedPassword = new PasswordHasher<User>().HashPassword(student.User, defaultPassword);
 
                 // Cập nhật mật khẩu
-                student.User.PasswordHash = hashedPassword;
+                student.User.PasswordHash = defaultPassword;
                 
                 // Xóa refresh token để buộc đăng nhập lại
                 student.User.RefreshToken = null;

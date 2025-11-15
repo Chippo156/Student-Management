@@ -132,7 +132,7 @@ namespace StudentManagement.Controllers
             }
         }
 
-        [HttpPost("forgot-password-by-mssv")]
+        [HttpPost("ForgotPasswordByMSSV")]
         public async Task<IActionResult> ForgotPasswordByMSSV([FromBody] ForgotPasswordByMSSVRequest request)
         {
             try
