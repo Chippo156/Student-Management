@@ -907,7 +907,7 @@ namespace StudentManagement.Services
                             GradeId = grade.GradeId,
                             Score = grade.Score,
                             HasGrade = true,
-                            CanEdit = true // Có thể chỉnh sửa điểm đã có
+                            CanEdit = false 
                         });
                     }
                     else
