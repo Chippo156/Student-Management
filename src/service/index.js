@@ -5,3 +5,6 @@ export { userService } from './userService';
 export { courseService } from './courseService';
 export { teacherService } from './teacherService';
 export { departmentService } from './departmentService';
+export { default as sectionService } from './sectionService';
+export { default as gradeService } from './gradeService';
+export { studentServices } from './studentServices';

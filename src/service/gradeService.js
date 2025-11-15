@@ -11,6 +11,118 @@ const gradaService = {
       return null;
     }
   },
+
+  getAllGradesByStudent: async (studentId, sectionId) => {
+    try {
+      console.log(`Fetching grades for student ${studentId} in section ${sectionId}`);
+      const response = await axios.get(
+        `/api/Grade/GetAllGradesByStudent/student/${studentId}/section/${sectionId}`
+      );
+      console.log('Grade response:', response);
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            response?.message || 'Lấy điểm sinh viên thất bại'
+          );
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching grades:', error);
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Lấy điểm sinh viên thất bại'
+          );
+        }
+      } else {
+        message.error(error.message || 'Lấy điểm sinh viên thất bại');
+      }
+      return null;
+    }
+  },
+
+  getAllStudentGradesBySection: async (sectionId) => {
+    try {
+      console.log(`Fetching all student grades for section ${sectionId}`);
+      const response = await axios.get(
+        `/api/Grade/GetAllStudentGrades/section/${sectionId}`
+      );
+      console.log('All student grades response:', response);
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            response?.message || 'Lấy điểm lớp học phần thất bại'
+          );
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching student grades:', error);
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Lấy điểm lớp học phần thất bại'
+          );
+        }
+      } else {
+        message.error(error.message || 'Lấy điểm lớp học phần thất bại');
+      }
+      return null;
+    }
+  },
+
+  createBulkGrades: async (assessmentId, studentGrades) => {
+    try {
+      console.log(`Creating bulk grades for assessment ${assessmentId}`, studentGrades);
+      const response = await axios.post('/api/Grade/CreateBulkGrades', {
+        assessmentId,
+        studentGrades,
+      });
+      console.log('Create bulk grades response:', response);
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            response?.message || 'Tạo điểm hàng loạt thất bại'
+          );
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error creating bulk grades:', error);
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Tạo điểm hàng loạt thất bại'
+          );
+        }
+      } else {
+        message.error(error.message || 'Tạo điểm hàng loạt thất bại');
+      }
+      return null;
+    }
+  },
 };
 
 export default gradaService;
