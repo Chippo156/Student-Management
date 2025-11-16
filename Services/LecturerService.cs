@@ -291,6 +291,20 @@ namespace StudentManagement.Services
             };
         }
 
+        public Task<IEnumerable<LecturerDropdownResponse>> GetLecturerDropdownsByDepartmentIdAsync(int departmentId)
+        {
+            var lecturers = context.Lecturers
+                .Include(l => l.User)
+                .Where(l => l.Department.DepartmentId == departmentId)
+                .Select(l => new LecturerDropdownResponse
+                {
+                    Id = l.Id,
+                    LecturerCode = l.LecturerCode,
+                    Name = l.User.FullName
+                });
+            return Task.FromResult(lecturers.AsEnumerable());
+        }
+
         public Task<Lecturer?> GetLecturerByIdAsync(int lecturerId)
         {
             throw new NotImplementedException();

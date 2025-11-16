@@ -46,5 +46,69 @@ namespace StudentManagement.Data
         public DbSet<ChatRoom> ChatRooms { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<ChatRoomParticipant> ChatRoomParticipants { get; set; }
+        public DbSet<TuitionFee> TuitionFees { get; set; }
+        public DbSet<TuitionPayment> TuitionPayments { get; set; }
+        public DbSet<TuitionFeeDetail> TuitionFeeDetails { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // TuitionFee configurations
+            modelBuilder.Entity<TuitionFee>(entity =>
+            {
+                entity.HasKey(e => e.TuitionFeeId);
+                entity.Property(e => e.TotalAmount).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.PaidAmount).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.RemainingAmount).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.LateFee).HasColumnType("decimal(18,2)");
+
+                entity.HasOne(e => e.Student)
+                    .WithMany()
+                    .HasForeignKey(e => e.StudentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Semester)
+                    .WithMany()
+                    .HasForeignKey(e => e.SemesterId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Unique constraint: one tuition fee per student per semester
+                entity.HasIndex(e => new { e.StudentId, e.SemesterId }).IsUnique();
+            });
+
+            // TuitionPayment configurations
+            modelBuilder.Entity<TuitionPayment>(entity =>
+            {
+                entity.HasKey(e => e.PaymentId);
+                entity.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+
+                entity.HasOne(e => e.TuitionFee)
+                    .WithMany(tf => tf.Payments)
+                    .HasForeignKey(e => e.TuitionFeeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.ProcessedBy)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProcessedByUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // TuitionFeeDetail configurations
+            modelBuilder.Entity<TuitionFeeDetail>(entity =>
+            {
+                entity.HasKey(e => e.DetailId);
+                entity.Property(e => e.UnitPrice).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+
+                entity.HasOne(e => e.TuitionFee)
+                    .WithMany(tf => tf.Details)
+                    .HasForeignKey(e => e.TuitionFeeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Section)
+                    .WithMany()
+                    .HasForeignKey(e => e.SectionId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+        }
     }
 }

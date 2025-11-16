@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
@@ -35,15 +36,34 @@ namespace StudentManagement.Controllers
             return CreatedAtAction(nameof(GetClassById), new { id = createdClass.ClassId }, ApiResponse.SuccessResponse(createdClass, "Class created successfully"));
         }
 
-        [HttpPut("Update/{id}")]
-        public async Task<ActionResult<Class>> UpdateClass(int id, string className)
+        [HttpPut("UpdateClasses/{classId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateClass(int classId, [FromBody] UpdateClassRequest request)
         {
-            var updatedClass = await classService.UpdateClassAsync(id, className);
-            if (updatedClass is null)
+            try
             {
-                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Class with ID {id} not found.", null));
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid request data", errors));
+                }
+
+                var updatedClass = await classService.UpdateClassAsync(classId, request);
+
+                if (updatedClass == null)
+                {
+                    return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, "Class not found", null));
+                }
+
+                return Ok(ApiResponse.SuccessResponse(updatedClass, "Class updated successfully"));
             }
-            return Ok(ApiResponse.SuccessResponse(updatedClass, "Class updated successfully"));
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
         }
 
         [HttpDelete("DeleteClass/{id}")]

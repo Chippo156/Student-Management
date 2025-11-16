@@ -12,52 +12,178 @@ namespace StudentManagement.Services
     {
         public async Task<Section> CreateSectionAsync(SectionRequest request)
         {
-            var curriculumCourse = await context.CurriculumCourses
-                .Include(e => e.Course)
-                .FirstOrDefaultAsync(cc => cc.Id == request.CurriculumCourseId);
-            if (curriculumCourse is null)
+            using var transaction = await context.Database.BeginTransactionAsync();
+
+            try
             {
-                throw new Exception("CurriculumCourse not found");
+                // Validate CurriculumCourse exists and is active
+                var curriculumCourse = await context.CurriculumCourses
+                    .Include(cc => cc.Course)
+                    .Include(cc => cc.Program)
+                        .ThenInclude(p => p.Department)
+                    .FirstOrDefaultAsync(cc => cc.Id == request.CurriculumCourseId);
+
+                if (curriculumCourse == null)
+                {
+                    throw new Exception("CurriculumCourse not found");
+                }
+
+                // Validate Lecturer exists and is active
+                var lecturer = await context.Lecturers
+                    .Include(l => l.User)
+                    .FirstOrDefaultAsync(l => l.Id == request.LecturerId);
+
+                if (lecturer == null)
+                {
+                    throw new Exception("Lecturer not found");
+                }
+
+                // Check if lecturer is active
+                if (lecturer.User.AccountStatus != Enum.AccountStatus.Active)
+                {
+                    throw new Exception("Cannot assign inactive lecturer to section");
+                }
+
+                // Validate Semester exists and is not in the past
+                var existingSemester = await context.Semesters
+                    .FirstOrDefaultAsync(s => s.SemesterId == request.SemesterId);
+
+                if (existingSemester == null)
+                {
+                    throw new Exception("Semester not found");
+                }
+
+                // Check if semester is not too far in the past (optional business rule)
+                var currentDate = DateOnly.FromDateTime(DateTime.Now);
+                if (existingSemester.EndDate < currentDate.AddDays(-30)) // Allow 30 days grace period
+                {
+                    throw new Exception("Cannot create section for semester that ended more than 30 days ago");
+                }
+
+                // Validate Class exists
+                var classSection = await context.Classes
+                    .Include(c => c.Program)
+                        .ThenInclude(p => p.Department)
+                    .FirstOrDefaultAsync(c => c.ClassId == request.ClassId);
+
+                if (classSection == null)
+                {
+                    throw new Exception("Class not found");
+                }
+
+                // Validate that the class program matches the curriculum course program
+                if (classSection.Program.AcademicProgramId != curriculumCourse.Program.AcademicProgramId)
+                {
+                    throw new Exception("Class program does not match curriculum course program");
+                }
+
+                // Validate capacity
+                if (request.Capacity <= 0)
+                {
+                    throw new Exception("Section capacity must be greater than 0");
+                }
+
+                if (request.Capacity > 200) // Max capacity validation
+                {
+                    throw new Exception("Section capacity cannot exceed 200 students");
+                }
+
+                // Validate dates
+                if (request.StartDate >= request.EndDate)
+                {
+                    throw new Exception("Start date must be before end date");
+                }
+
+                // Check for date conflicts with semester
+                if (request.StartDate < existingSemester.StartDate || request.EndDate > existingSemester.EndDate)
+                {
+                    throw new Exception("Section dates must be within semester dates");
+                }
+
+                // Generate unique section code
+                string baseSectionCode = $"LHP{curriculumCourse.Course.CourseCode}-{existingSemester.Year}{existingSemester.Term}-{classSection.ClassCode}";
+                string sectionCode = await GenerateUniqueSectionCodeAsync(baseSectionCode);
+
+                // Check for potential conflicts with existing sections
+                await ValidateNoScheduleConflictsAsync(request, lecturer.Id);
+
+                // Create the new section
+                var newSection = new Section
+                {
+                    SectionCode = sectionCode,
+                    CurriculumCourse = curriculumCourse,
+                    Lecturer = lecturer,
+                    Semester = existingSemester,
+                    Class = classSection,
+                    StartDate = request.StartDate,
+                    EndDate = request.EndDate,
+                    Capacity = request.Capacity,
+                    Status = SectionStatus.IsPreparing,
+                    EnrolledCount = 0,
+
+                    // Initialize minimum enrollment settings with defaults if not provided
+                    MinEnrollment = request.MinEnrollment ?? 8,
+                    MinEnrollmentPercentage = request.MinEnrollmentPercentage ?? 0.5,
+
+                    IsCancelled = false,
+                    CancelledAt = null,
+                    CancellationReason = null
+                };
+
+                context.Sections.Add(newSection);
+                await context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return newSection;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+
+                throw;
+            }
+        }
+
+        // Helper method to generate unique section code
+        private async Task<string> GenerateUniqueSectionCodeAsync(string baseSectionCode)
+        {
+            string sectionCode = baseSectionCode;
+            int counter = 1;
+
+            // Check if the base code already exists
+            while (await context.Sections.AnyAsync(s => s.SectionCode == sectionCode))
+            {
+                sectionCode = $"{baseSectionCode}-{counter:D2}"; // Add suffix like -01, -02, etc.
+                counter++;
+
+                if (counter > 99) // Prevent infinite loop
+                {
+                    throw new Exception("Unable to generate unique section code after 99 attempts");
+                }
             }
 
-            var lecturer = await context.Lecturers.FindAsync(request.LecturerId);
-            if (lecturer is null)
+            return sectionCode;
+        }
+
+        // Helper method to validate no schedule conflicts for lecturer
+        private async Task ValidateNoScheduleConflictsAsync(SectionRequest request, int lecturerId)
+        {
+            // This is a placeholder for schedule conflict validation
+            // You would implement this based on your scheduling requirements
+
+            // Example: Check if lecturer has conflicting schedules in the same semester
+            var existingLecturerSections = await context.Sections
+                .Where(s => s.Lecturer.Id == lecturerId &&
+                           s.Semester.SemesterId == request.SemesterId &&
+                           !s.IsCancelled &&
+                           s.Status != SectionStatus.IsClosed)
+                .CountAsync();
+
+            // Example business rule: Lecturer can't have more than 10 sections per semester
+            if (existingLecturerSections >= 10)
             {
-                throw new Exception("Lecturer not found");
+                throw new Exception("Lecturer cannot be assigned more than 10 sections per semester");
             }
-
-            Semester? existingSemester = await context.Semesters.FindAsync(request.SemesterId);
-            if (existingSemester is null)
-            {
-                throw new Exception("Semester not found");
-            }
-
-            var classSection = await context.Classes.FindAsync(request.ClassId);
-
-            if (classSection is null)
-            {
-                throw new Exception("Class not found");
-            }
-
-            string sectionCode = $"LHP{curriculumCourse.Course.CourseCode}-{existingSemester.Year}{existingSemester.Term}-{classSection.ClassCode}";
-
-
-            Section newSection = new Section
-            {
-                SectionCode = sectionCode,
-                CurriculumCourse = curriculumCourse,
-                Lecturer = lecturer,
-                Semester = existingSemester,
-                Class = classSection,
-                StartDate = request.StartDate,
-                EndDate = request.EndDate,
-                Capacity = request.Capacity,
-                Status = SectionStatus.IsPreparing,
-            };
-
-            context.Sections.Add(newSection);
-            await context.SaveChangesAsync();
-            return newSection;
         }
 
         public async Task<bool> DeleteSectionAsync(int sectionId)
@@ -1033,6 +1159,316 @@ namespace StudentManagement.Services
                     PracticeGroupName = pge.PracticeGroup.GroupName
                 })
                 .OrderBy(s => s.MSSV)
+                .ToListAsync();
+        }
+
+        public async Task<Section?> UpdateSectionAsync(int sectionId, UpdateSectionRequest request)
+        {
+            using var transaction = await context.Database.BeginTransactionAsync();
+            
+            try
+            {
+                // Get the existing section with all related data
+                var section = await context.Sections
+                    .Include(s => s.CurriculumCourse)
+                        .ThenInclude(cc => cc.Course)
+                    .Include(s => s.Lecturer)
+                    .Include(s => s.Semester)
+                    .Include(s => s.Class)
+                    .FirstOrDefaultAsync(s => s.SectionId == sectionId);
+
+                if (section == null)
+                {
+                    return null;
+                }
+
+                // Check if section can be updated (business rules)
+                var canUpdate = await CanUpdateSectionAsync(section);
+                if (!canUpdate.CanUpdate)
+                {
+                    throw new Exception(canUpdate.Reason);
+                }
+
+                // Update CurriculumCourse if changed
+                if (request.CurriculumCourseId.HasValue && 
+                    section.CurriculumCourse.Id != request.CurriculumCourseId.Value)
+                {
+                    var newCurriculumCourse = await context.CurriculumCourses
+                        .Include(cc => cc.Course)
+                        .FirstOrDefaultAsync(cc => cc.Id == request.CurriculumCourseId.Value);
+                    
+                    if (newCurriculumCourse == null)
+                    {
+                        throw new Exception("CurriculumCourse not found");
+                    }
+                    
+                    section.CurriculumCourse = newCurriculumCourse;
+                }
+
+                // Update Lecturer if changed
+                if (request.LecturerId.HasValue && 
+                    section.Lecturer?.Id != request.LecturerId.Value)
+                {
+                    var newLecturer = await context.Lecturers.FindAsync(request.LecturerId.Value);
+                    if (newLecturer == null)
+                    {
+                        throw new Exception("Lecturer not found");
+                    }
+                    section.Lecturer = newLecturer;
+                }
+
+                // Update Semester if changed
+                if (request.SemesterId.HasValue && 
+                    section.Semester.SemesterId != request.SemesterId.Value)
+                {
+                    var newSemester = await context.Semesters.FindAsync(request.SemesterId.Value);
+                    if (newSemester == null)
+                    {
+                        throw new Exception("Semester not found");
+                    }
+                    section.Semester = newSemester;
+                }
+
+                // Update Class if changed
+                if (request.ClassId.HasValue && 
+                    section.Class.ClassId != request.ClassId.Value)
+                {
+                    var newClass = await context.Classes.FindAsync(request.ClassId.Value);
+                    if (newClass == null)
+                    {
+                        throw new Exception("Class not found");
+                    }
+                    section.Class = newClass;
+                }
+
+                // Update basic properties
+                if (request.StartDate.HasValue)
+                {
+                    section.StartDate = request.StartDate.Value;
+                }
+
+                if (request.EndDate.HasValue)
+                {
+                    section.EndDate = request.EndDate.Value;
+                }
+
+                if (request.Capacity.HasValue)
+                {
+                    // Validate capacity is not less than current enrollment
+                    if (request.Capacity.Value < section.EnrolledCount)
+                    {
+                        throw new Exception($"Capacity cannot be less than current enrollment ({section.EnrolledCount})");
+                    }
+                    section.Capacity = request.Capacity.Value;
+                }
+
+                if (request.Status.HasValue)
+                {
+                    // Validate status change
+                    var canChangeStatus = await CanChangeStatusAsync(section, request.Status.Value);
+                    if (!canChangeStatus.CanChange)
+                    {
+                        throw new Exception(canChangeStatus.Reason);
+                    }
+                    section.Status = request.Status.Value;
+                }
+
+                // Update minimum enrollment settings if provided
+                if (request.MinEnrollment.HasValue)
+                {
+                    section.MinEnrollment = request.MinEnrollment.Value;
+                }
+
+                if (request.MinEnrollmentPercentage.HasValue)
+                {
+                    if (request.MinEnrollmentPercentage.Value < 0 || request.MinEnrollmentPercentage.Value > 1)
+                    {
+                        throw new Exception("MinEnrollmentPercentage must be between 0 and 1");
+                    }
+                    section.MinEnrollmentPercentage = request.MinEnrollmentPercentage.Value;
+                }
+
+                // Regenerate section code if curriculum course, semester, or class changed
+                if (request.CurriculumCourseId.HasValue || request.SemesterId.HasValue || request.ClassId.HasValue)
+                {
+                    // Get updated references
+                    var curriculumCourse = section.CurriculumCourse;
+                    var semester = section.Semester;
+                    var classSection = section.Class;
+
+                    string newSectionCode = $"LHP{curriculumCourse.Course.CourseCode}-{semester.Year}{semester.Term}-{classSection.ClassCode}";
+                    section.SectionCode = newSectionCode;
+                }
+
+                // Update the section
+                context.Sections.Update(section);
+                await context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return section;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        private async Task<(bool CanUpdate, string Reason)> CanUpdateSectionAsync(Section section)
+        {
+            // Check if section is cancelled
+            if (section.IsCancelled)
+            {
+                return (false, "Cannot update a cancelled section");
+            }
+
+            // Check if section has already ended
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            if (today > section.EndDate)
+            {
+                return (false, "Cannot update a section that has already ended");
+            }
+
+            // Check if section has started and has enrollments
+            if (today >= section.StartDate && section.EnrolledCount > 0)
+            {
+                // Allow limited updates for active sections with enrollments
+                // (e.g., only capacity increase, status changes)
+                return (true, "Limited updates allowed for active section");
+            }
+
+            return (true, "Section can be updated");
+        }
+
+        private async Task<(bool CanChange, string Reason)> CanChangeStatusAsync(Section section, SectionStatus newStatus)
+        {
+            var currentStatus = section.Status;
+
+            // Define allowed status transitions
+            var allowedTransitions = new Dictionary<SectionStatus, SectionStatus[]>
+            {
+                [SectionStatus.IsPreparing] = new[] { SectionStatus.IsOpening, SectionStatus.IsClosed },
+                [SectionStatus.IsOpening] = new[] { SectionStatus.IsPreparing, SectionStatus.IsClosed },
+                [SectionStatus.IsClosed] = new[] { SectionStatus.IsOpening } // Can reopen if needed
+            };
+
+            if (!allowedTransitions.ContainsKey(currentStatus))
+            {
+                return (false, $"No transitions allowed from status {currentStatus}");
+            }
+
+            if (!allowedTransitions[currentStatus].Contains(newStatus))
+            {
+                return (false, $"Cannot change status from {currentStatus} to {newStatus}");
+            }
+
+            // Additional business logic checks
+            if (newStatus == SectionStatus.IsOpening)
+            {
+                // Check if section has schedules
+                var hasMainSchedules = await context.Schedules
+                    .AnyAsync(s => s.Section.SectionId == section.SectionId && 
+                                  !s.PracticeGroupId.HasValue && 
+                                  s.ScheduleType.ScheduleTypeId != 3);
+
+                if (!hasMainSchedules)
+                {
+                    return (false, "Cannot open section without main schedules");
+                }
+
+                // Check if registration period is active
+                var registrationPeriod = await context.RegistrationPeriods
+                    .Include(rp => rp.Semester)
+                    .Include(rp => rp.Department)
+                    .FirstOrDefaultAsync(rp => 
+                        rp.Semester.SemesterId == section.Semester.SemesterId &&
+                        rp.Department.DepartmentId == section.CurriculumCourse.Program.Department.DepartmentId);
+
+                if (registrationPeriod == null || !registrationPeriod.IsActive)
+                {
+                    return (false, "Cannot open section when registration period is not active");
+                }
+            }
+
+            return (true, "Status change is allowed");
+        }
+
+        public async Task<IEnumerable<CurriculumCourseDropdownResponse>> GetCurriculumCoursesDropdownAsync()
+        {
+            return await context.CurriculumCourses
+                .Include(cc => cc.Course)
+                .Include(cc => cc.Program)
+                .Select(cc => new CurriculumCourseDropdownResponse
+                {
+                    Id = cc.Id,
+                    Name = $"{cc.Course.CourseCode} - {cc.Course.CourseName}",
+                    CourseCode = cc.Course.CourseCode,
+                    Credits = cc.Course.CreditsTheory + cc.Course.CreditsLab,
+                    ProgramName = cc.Program.ProgramName
+                })
+                .OrderBy(cc => cc.CourseCode)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<LecturerDropdownResponse>> GetLecturersDropdownAsync()
+        {
+            return await context.Lecturers
+                .Include(l => l.User)
+                .Where(l => l.User.AccountStatus == AccountStatus.Active)
+                .Select(l => new LecturerDropdownResponse
+                {
+                    Id = l.Id,
+                    Name = l.User.FullName,
+                    LecturerCode = l.User.Username,
+                    Email = l.User.Email ?? ""
+                })
+                .OrderBy(l => l.Name)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<SemesterDropdownResponse>> GetSemestersDropdownAsync()
+        {
+            return await context.Semesters
+                .Select(s => new SemesterDropdownResponse
+                {
+                    Id = s.SemesterId,
+                    Name = $"{s.Year} - {s.Term}",
+                    Year = s.Year,
+                    Term = s.Term,
+                })
+                .OrderByDescending(s => s.Year)
+                .ThenByDescending(s => s.Term)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<ClassDropdownResponse>> GetClassesDropdownAsync()
+        {
+            return await context.Classes
+                .Include(c => c.Program)
+                .Select(c => new ClassDropdownResponse
+                {
+                    ClassId = c.ClassId,
+                    ClassName = c.ClassName,
+                    ClassCode = c.ClassCode,
+                    ProgramName = c.Program.ProgramName
+                })
+                .OrderBy(c => c.ClassCode)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<ClassDropdownResponse>> GetClassesByProgramDropdownAsync(int programId)
+        {
+            return await context.Classes
+                .Include(c => c.Program)
+                .Where(c => c.Program.AcademicProgramId == programId)
+                .Select(c => new ClassDropdownResponse
+                {
+                    ClassId = c.ClassId,
+                    ClassName = c.ClassName,
+                    ClassCode = c.ClassCode,
+                    ProgramName = c.Program.ProgramName
+                })
+                .OrderBy(c => c.ClassCode)
                 .ToListAsync();
         }
     }

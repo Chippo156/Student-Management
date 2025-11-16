@@ -9,7 +9,7 @@ namespace StudentManagement.Services.Interface
         Task<Class?> GetClassByIdAsync(int classId);
         Task<IEnumerable<Class>> GetAllClassesAsync();
         Task<Class> CreateClassAsync(ClassRequest classRequest);
-        Task<Class?> UpdateClassAsync(int classId, string className);
+        Task<Class?> UpdateClassAsync(int classId, UpdateClassRequest request);
         Task<bool> DeleteClassAsync(int classId);
 
         // Dropdown methods

@@ -42,8 +42,29 @@ namespace StudentManagement.Controllers
         [HttpPost("CreateSection")]
         public async Task<ActionResult<Section>> CreateSection(SectionRequest request)
         {
-            var createdSection = await sectionService.CreateSectionAsync(request);
-            return CreatedAtAction(nameof(GetSectionById), new { id = createdSection.SectionId }, ApiResponse.SuccessResponse(createdSection, "Section created successfully"));
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid request data", errors));
+                }
+
+                var createdSection = await sectionService.CreateSectionAsync(request);
+                
+                // Fix: Use 'sectionId' instead of 'id' to match the GetSectionById parameter name
+                return CreatedAtAction(
+                    nameof(GetSectionById), 
+                    new { sectionId = createdSection.SectionId }, 
+                    ApiResponse.SuccessResponse(createdSection, "Section created successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
         }
 
         [HttpDelete("DeleteSection/{id}")]
@@ -285,6 +306,139 @@ namespace StudentManagement.Controllers
             {
                 return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
                     "An error occurred while retrieving section practice detail", new List<string> { ex.Message }));
+            }
+        }
+
+        [HttpPut("UpdateSection/{sectionId}")]
+        [Authorize(Roles = "Admin,Lecturer")]
+        public async Task<IActionResult> UpdateSection(int sectionId, [FromBody] UpdateSectionRequest request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid request data", errors));
+                }
+
+                var updatedSection = await sectionService.UpdateSectionAsync(sectionId, request);
+                
+                if (updatedSection == null)
+                {
+                    return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, "Section not found", null));
+                }
+
+                return Ok(ApiResponse.SuccessResponse(updatedSection, "Section updated successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+
+        [HttpGet("dropdown/curriculum-courses")]
+        [Authorize(Roles = "Admin,Lecturer")]
+        public async Task<IActionResult> GetCurriculumCoursesDropdown()
+        {
+            try
+            {
+                var curriculumCourses = await sectionService.GetCurriculumCoursesDropdownAsync();
+                return Ok(ApiResponse.SuccessResponse(curriculumCourses, "Curriculum courses dropdown retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving curriculum courses dropdown", new List<string> { ex.Message }));
+            }
+        }
+
+        [HttpGet("dropdown/lecturers")]
+        [Authorize(Roles = "Admin,Lecturer")]
+        public async Task<IActionResult> GetLecturersDropdown()
+        {
+            try
+            {
+                var lecturers = await sectionService.GetLecturersDropdownAsync();
+                return Ok(ApiResponse.SuccessResponse(lecturers, "Lecturers dropdown retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving lecturers dropdown", new List<string> { ex.Message }));
+            }
+        }
+
+        [HttpGet("dropdown/semesters")]
+        [Authorize(Roles = "Admin,Lecturer")]
+        public async Task<IActionResult> GetSemestersDropdown()
+        {
+            try
+            {
+                var semesters = await sectionService.GetSemestersDropdownAsync();
+                return Ok(ApiResponse.SuccessResponse(semesters, "Semesters dropdown retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving semesters dropdown", new List<string> { ex.Message }));
+            }
+        }
+
+        [HttpGet("dropdown/classes")]
+        [Authorize(Roles = "Admin,Lecturer")]
+        public async Task<IActionResult> GetClassesDropdown()
+        {
+            try
+            {
+                var classes = await sectionService.GetClassesDropdownAsync();
+                return Ok(ApiResponse.SuccessResponse(classes, "Classes dropdown retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving classes dropdown", new List<string> { ex.Message }));
+            }
+        }
+
+        [HttpGet("dropdown/classes/by-program/{programId}")]
+        [Authorize(Roles = "Admin,Lecturer")]
+        public async Task<IActionResult> GetClassesByProgramDropdown(int programId)
+        {
+            try
+            {
+                var classes = await sectionService.GetClassesByProgramDropdownAsync(programId);
+                return Ok(ApiResponse.SuccessResponse(classes, "Classes by program dropdown retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving classes by program dropdown", new List<string> { ex.Message }));
+            }
+        }
+
+        [HttpGet("dropdown/all")]
+        [Authorize(Roles = "Admin,Lecturer")]
+        public async Task<IActionResult> GetAllDropdownData()
+        {
+            try
+            {
+                var dropdownData = new
+                {
+                    CurriculumCourses = await sectionService.GetCurriculumCoursesDropdownAsync(),
+                    Lecturers = await sectionService.GetLecturersDropdownAsync(),
+                    Semesters = await sectionService.GetSemestersDropdownAsync(),
+                    Classes = await sectionService.GetClassesDropdownAsync()
+                };
+
+                return Ok(ApiResponse.SuccessResponse(dropdownData, "All dropdown data retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving dropdown data", new List<string> { ex.Message }));
             }
         }
     }

@@ -25,5 +25,13 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<SectionDropdownResponse>> GetSectionDropdownForLecturerAsync(string lecturerCode, int? semesterId = null);
         Task<PagedResult<SectionSimpleResponse>> GetSectionsIsStartingByLecturerAsync(string lecturerCode);
         Task<SectionDetailWithScheduleResponse?> GetSectionDetailWithScheduleAsync(int sectionId, bool isPracticeSchedule = false, int? practiceGroupId = null);
+        Task<Section?> UpdateSectionAsync(int sectionId, UpdateSectionRequest request);
+
+        // Dropdown methods for Section creation/update
+        Task<IEnumerable<CurriculumCourseDropdownResponse>> GetCurriculumCoursesDropdownAsync();
+        Task<IEnumerable<LecturerDropdownResponse>> GetLecturersDropdownAsync();
+        Task<IEnumerable<SemesterDropdownResponse>> GetSemestersDropdownAsync();
+        Task<IEnumerable<ClassDropdownResponse>> GetClassesDropdownAsync();
+        Task<IEnumerable<ClassDropdownResponse>> GetClassesByProgramDropdownAsync(int programId);
     }
 }

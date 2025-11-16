@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
@@ -9,6 +10,7 @@ namespace StudentManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class AdviserAssignmentController(IAdviserAssignmentService assignmentService) : ControllerBase
     {
         [HttpGet("{id}")]
@@ -18,10 +20,10 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(assignments, "Lecturer retrieved successfully."));
         }
 
-        [HttpPost("assign")]
-        public async Task<IActionResult> AssignAdviserToLecturer(int adviserId, int classId)
+        [HttpPost("AssignLecturerToClass")]
+        public async Task<IActionResult> AssignAdviserToLecturer(int lecturerId, int classId)
         {
-            var result = await assignmentService.AssignLecturerToClass(adviserId, classId);
+            var result = await assignmentService.AssignLecturerToClass(lecturerId, classId);
             if (!result)
             {
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.NotFound, "Gán quyền không thành công", null));

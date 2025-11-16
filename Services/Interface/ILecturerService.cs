@@ -12,6 +12,7 @@ namespace StudentManagement.Services.Interface
         Task<Lecturer> CreateLecturerAsync(LecturerRequest lecturer);
         Task<bool> DeleteLecturerAsync(int lecturerId);
         Task<LecturerDetailResponse?> GetLecturerDetailByCodeAsync(string lecturerCode);
+        Task<IEnumerable<LecturerDropdownResponse>> GetLecturerDropdownsByDepartmentIdAsync(int departmentId);
 
     }
 }

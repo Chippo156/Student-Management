@@ -9,5 +9,7 @@ namespace StudentManagement.Models.Dto.Request
         
         [Required(ErrorMessage = "Program ID is required")]
         public int ProgramId { get; set; }
+
+        public int? LecturerId { get; set; }
     }
 }

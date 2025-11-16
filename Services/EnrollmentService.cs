@@ -10,6 +10,8 @@ namespace StudentManagement.Services
 {
     public class EnrollmentService(AppDbContext context) : IEnrollmentService
     {
+        private const decimal DEFAULT_TUITION_PER_CREDIT = 500000; // 500k per credit
+
         public Task<Enrollment> CreateEnrollmentAsync(EnrollmentRequest enrollmentRequest)
         {
             var student = context.Students.Find(enrollmentRequest.StudentId);
@@ -230,14 +232,16 @@ namespace StudentManagement.Services
                     }
                 }
 
+                // After successful enrollment, automatically generate or update tuition fee
+                await HandleTuitionFeeCreationAsync(student, section, enrollment);
+
                 await context.SaveChangesAsync();
                 await transaction.CommitAsync();
-
                 // Create successful response
                 return new EnrollmentResultResponse
                 {
                     IsSuccess = true,
-                    Message = "Successfully enrolled in course" + practiceGroupInfo,
+                    Message = "Successfully enrolled in course" + practiceGroupInfo + ". Học phí đã được cập nhật.",
                     EnrollmentId = enrollment.EnrollmentId,
                     EnrollmentDetails = new EnrollmentDetailInfo
                     {
@@ -262,6 +266,91 @@ namespace StudentManagement.Services
                     Message = "Enrollment failed due to system error",
                     Errors = { ex.Message }
                 };
+            }
+        }
+
+        private async Task HandleTuitionFeeCreationAsync(Student student, Section section, Enrollment enrollment)
+        {
+            // Check if tuition fee already exists for this semester
+            var existingTuition = await context.TuitionFees
+                .Include(tf => tf.Details)
+                .FirstOrDefaultAsync(tf => tf.StudentId == student.Id && 
+                                          tf.SemesterId == section.Semester.SemesterId);
+
+            var course = section.CurriculumCourse.Course;
+            var credits = course.CreditsTheory + course.CreditsLab;
+            var courseAmount = credits * DEFAULT_TUITION_PER_CREDIT;
+
+            if (existingTuition == null)
+            {
+                // Create new tuition fee for this semester
+                var newTuition = new TuitionFee
+                {
+                    StudentId = student.Id,
+                    SemesterId = section.Semester.SemesterId,
+                    TotalAmount = courseAmount,
+                    PaidAmount = 0,
+                    RemainingAmount = courseAmount,
+                    Status = TuitionStatus.Pending,
+                    DueDate = section.Semester.EndDate.AddDays(30).ToDateTime(TimeOnly.MinValue),
+                    CreatedAt = DateTime.UtcNow,
+                    IsLate = false,
+                };
+
+                context.TuitionFees.Add(newTuition);
+                await context.SaveChangesAsync(); // Save to get TuitionFeeId
+
+                // Add course detail
+                var tuitionDetail = new TuitionFeeDetail
+                {
+                    TuitionFeeId = newTuition.TuitionFeeId,
+                    SectionId = section.SectionId,
+                    ItemName = course.CourseName,
+                    ItemType = "Tuition",
+                    Credits = credits,
+                    UnitPrice = DEFAULT_TUITION_PER_CREDIT,
+                    Amount = courseAmount,
+                    Description = $"Học phí môn {course.CourseCode} - {course.CourseName}"
+                };
+
+                context.TuitionFeeDetails.Add(tuitionDetail);
+            }
+            else
+            {
+                // Check if this course is already in the tuition fee
+                var existingDetail = existingTuition.Details
+                    .FirstOrDefault(d => d.SectionId == section.SectionId);
+
+                if (existingDetail == null)
+                {
+                    // Add new course to existing tuition fee
+                    var tuitionDetail = new TuitionFeeDetail
+                    {
+                        TuitionFeeId = existingTuition.TuitionFeeId,
+                        SectionId = section.SectionId,
+                        ItemName = course.CourseName,
+                        ItemType = "Tuition",
+                        Credits = credits,
+                        UnitPrice = DEFAULT_TUITION_PER_CREDIT,
+                        Amount = courseAmount,
+                        Description = $"Học phí môn {course.CourseCode} - {course.CourseName}"
+                    };
+
+                    context.TuitionFeeDetails.Add(tuitionDetail);
+
+                    // Update totals
+                    existingTuition.TotalAmount += courseAmount;
+                    existingTuition.RemainingAmount += courseAmount;
+
+                    // Update status if it was fully paid before
+                    if (existingTuition.Status == TuitionStatus.FullyPaid)
+                    {
+                        existingTuition.Status = TuitionStatus.PartialPaid;
+                        existingTuition.PaidAt = null;
+                    }
+
+                    context.TuitionFees.Update(existingTuition);
+                }
             }
         }
 
@@ -543,16 +632,17 @@ namespace StudentManagement.Services
 
                 context.PracticeGroupEnrollments.RemoveRange(practiceGroupEnrollments);
                 
+                // Handle tuition fee adjustment before removing enrollment
+                await HandleTuitionFeeAdjustmentAsync(student, section, existingEnrollment);
 
                 context.Enrollments.Remove(existingEnrollment); 
                 await context.SaveChangesAsync();
                 
                 await transaction.CommitAsync();
-
                 return new EnrollmentResultResponse
                 {
                     IsSuccess = true,
-                    Message = "Successfully dropped enrollment",
+                    Message = "Successfully dropped enrollment. Học phí đã được cập nhật.",
 
                 };
             }
@@ -568,6 +658,87 @@ namespace StudentManagement.Services
             }
         }
 
+        private async Task HandleTuitionFeeAdjustmentAsync(Student student, Section section, Enrollment enrollment)
+        {
+            // Find tuition fee for this semester
+            var tuitionFee = await context.TuitionFees
+                .Include(tf => tf.Details)
+                .Include(tf => tf.Payments)
+                .FirstOrDefaultAsync(tf => tf.StudentId == student.Id && 
+                                          tf.SemesterId == section.Semester.SemesterId);
+
+            if (tuitionFee != null)
+            {
+                // Find the detail for this section
+                var tuitionDetail = tuitionFee.Details
+                    .FirstOrDefault(d => d.SectionId == section.SectionId);
+
+                if (tuitionDetail != null)
+                {
+                    var courseAmount = tuitionDetail.Amount;
+
+                    // Check if there are any payments
+                    if (tuitionFee.PaidAmount > 0)
+                    {
+                        // If already paid, we need to handle refund or credit
+                        if (tuitionFee.PaidAmount >= courseAmount)
+                        {
+                            // Can refund this course amount
+                            tuitionFee.PaidAmount -= courseAmount;
+                            tuitionFee.TotalAmount -= courseAmount;
+                            
+                            // Adjust status
+                            if (tuitionFee.RemainingAmount <= 0 && tuitionFee.TotalAmount > 0)
+                            {
+                                tuitionFee.Status = TuitionStatus.FullyPaid;
+                            }
+                            else if (tuitionFee.PaidAmount > 0 && tuitionFee.RemainingAmount > 0)
+                            {
+                                tuitionFee.Status = TuitionStatus.PartialPaid;
+                            }
+                            else
+                            {
+                                tuitionFee.Status = TuitionStatus.Pending;
+                            }
+                        }
+                        else
+                        {
+                            // Partial payment situation - need to adjust carefully
+                            tuitionFee.TotalAmount -= courseAmount;
+                            tuitionFee.RemainingAmount = tuitionFee.TotalAmount - tuitionFee.PaidAmount;
+                            
+                            if (tuitionFee.RemainingAmount <= 0)
+                            {
+                                tuitionFee.Status = TuitionStatus.FullyPaid;
+                                tuitionFee.RemainingAmount = 0;
+                            }
+                            else if (tuitionFee.PaidAmount > 0)
+                            {
+                                tuitionFee.Status = TuitionStatus.PartialPaid;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // No payments yet, just remove the amount
+                        tuitionFee.TotalAmount -= courseAmount;
+                        tuitionFee.RemainingAmount -= courseAmount;
+                        
+                        if (tuitionFee.TotalAmount <= 0)
+                        {
+                            // Remove the entire tuition fee if no courses left
+                            context.TuitionFeeDetails.Remove(tuitionDetail);
+                            context.TuitionFees.Remove(tuitionFee);
+                            return;
+                        }
+                    }
+
+                    // Remove the detail
+                    context.TuitionFeeDetails.Remove(tuitionDetail);
+                    context.TuitionFees.Update(tuitionFee);
+                }
+            }
+        }
         private async Task<(bool IsValid, List<string> Errors)> ValidateDropEnrollmentAsync(Student student, Section section, Enrollment enrollment)
         {
             var errors = new List<string>();

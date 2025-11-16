@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Controllers
@@ -48,6 +49,12 @@ namespace StudentManagement.Controllers
                 return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Lecturer with ID {id} not found.", null));
             }
             return Ok(ApiResponse.SuccessResponse(null, "Lecturer deleted successfully"));
+        }
+        [HttpGet("GetLecturerDropdownByDepartmentId")] 
+        public async Task<ActionResult<IEnumerable<LecturerDropdownResponse>>> GetLecturersByDepartmentId([FromQuery] int departmentId)
+        {
+            var lecturers = await lecturerService.GetLecturerDropdownsByDepartmentIdAsync(departmentId);
+            return Ok(ApiResponse.SuccessResponse(lecturers, "Lecturers retrieved successfully"));
         }
     }
 }

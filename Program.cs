@@ -68,6 +68,7 @@ builder.Services.AddScoped<IPracticeGroupService, PracticeGroupService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ITuitionService, TuitionService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
