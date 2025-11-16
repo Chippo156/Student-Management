@@ -142,13 +142,13 @@ namespace StudentManagement.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<bool> ResetPassword(int userId, string newPassword)
+        public async Task<bool> ResetPassword(int userId, ResetPasswordRequest request)
         {
             User? user= await context.Users.FindAsync(userId);
             if (user is null) return false;
-            var hashedPassword = new PasswordHasher<User>()
-                 .HashPassword(user, newPassword);
-            user.PasswordHash = hashedPassword;
+            if (user.PasswordHash != request.OldPassword) return false;
+            if (request.NewPassword != request.ConfirmPassword) return false;
+            user.PasswordHash = request.NewPassword;
             context.Users.Update(user);
             return await context.SaveChangesAsync() > 0;
         }
