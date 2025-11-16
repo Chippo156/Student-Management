@@ -1,11 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudentManagement.Enum;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
-using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using StudentManagement.Enum;
 
 namespace StudentManagement.Controllers
 {
@@ -20,13 +21,13 @@ namespace StudentManagement.Controllers
         //    return Ok(ApiResponse.SuccessResponse(sections, "Sections retrieved successfully"));
         //}
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Section>> GetSectionById(int id)
+        [HttpGet("GetSectionById/{sectionId}")]
+        public async Task<ActionResult<SectionListResponse>> GetSectionById(int sectionId)
         {
-            var section = await sectionService.GetSectionByIdAsync(id);
+            var section = await sectionService.GetSectionByIdAsync(sectionId);
             if (section is null)
             {
-                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Section with ID {id} not found.", null));
+                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Section with ID {sectionId} not found.", null));
             }
             return Ok(ApiResponse.SuccessResponse(section, "Section retrieved successfully"));
         }

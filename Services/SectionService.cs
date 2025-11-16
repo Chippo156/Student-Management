@@ -81,12 +81,41 @@ namespace StudentManagement.Services
                 .ToListAsync();
         }
 
-        public async Task<Section?> GetSectionByIdAsync(int sectionId)
+        public async Task<SectionListResponse?> GetSectionByIdAsync(int sectionId)
         {
-            return await context.Sections
+            var section = await context.Sections
                 .Include(s => s.CurriculumCourse)
+                  .ThenInclude(cc => cc.Course)
+
                 .Include(s => s.Lecturer)
+                  .ThenInclude(l => l.User)
+                .Include(s => s.Semester)
+                .Include(s => s.Class)
                 .FirstOrDefaultAsync(s => s.SectionId == sectionId);
+
+            if (section == null)
+                return null;
+            return new SectionListResponse
+            {
+                SectionId = section.SectionId,
+                SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
+                CourseCode = section.CurriculumCourse.Course.CourseCode,
+                CourseName = section.CurriculumCourse.Course.CourseName,
+                CreditsTheory = section.CurriculumCourse.Course.CreditsTheory,
+                CreditsLab = section.CurriculumCourse.Course.CreditsLab,
+                TotalCredits = section.CurriculumCourse.Course.CreditsTheory + section.CurriculumCourse.Course.CreditsLab,
+                LecturerName = section.Lecturer?.User?.FullName ?? "Chưa phân công",
+                StartDate = section.StartDate,
+                EndDate = section.EndDate,
+                Capacity = section.Capacity,
+                EnrolledCount = section.EnrolledCount,
+                Status = section.Status,
+                StatusName = GetSectionStatusInVietnamese(section.Status),
+                LecturerEmail = section.Lecturer.User.Email,
+                IsActive = section.Status != SectionStatus.IsClosed,
+                ClassName =  section.Class.ClassName,
+                SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
+            };
         }
 
         public async Task<IEnumerable<Section>> GetSectionsByCourseAsync(int courseId)

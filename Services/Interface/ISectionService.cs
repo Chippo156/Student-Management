@@ -7,7 +7,7 @@ namespace StudentManagement.Services.Interface
 {
     public interface ISectionService
     {
-        Task<Section?> GetSectionByIdAsync(int sectionId);
+        Task<SectionListResponse?> GetSectionByIdAsync(int sectionId);
         Task<IEnumerable<Section>> GetAllSectionsAsync();
         Task<PagedResult<SectionListResponse>> GetAllSectionsWithPaginationAsync(
             PaginationParams pagination,
