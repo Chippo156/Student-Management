@@ -26,6 +26,7 @@ import {
   Folder as FolderIcon,
 } from '@mui/icons-material';
 import HeaderPage from '../Header';
+import ChatWidget from '../Chat/ChatWidget';
 
 const menuData = [
   {
@@ -171,6 +172,7 @@ const LayoutTeacher = () => {
           </Box>
         </Box>
       </Container>
+      <ChatWidget />
     </Box>
   );
 };
