@@ -15,7 +15,7 @@ namespace StudentManagement.Controllers
             try
             {
                 var result = await practiceGroupService.CreatePracticeGroupAsync(request);
-                return Ok(result);
+                return Ok(ApiResponse.SuccessResponse(result, "Practice group retrieved successfully"));
             }
             catch (Exception ex)
             {

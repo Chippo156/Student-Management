@@ -17,8 +17,9 @@ namespace StudentManagement.Models
 
         // Danh sách sinh viên trong nhóm
         public ICollection<PracticeGroupEnrollment> PracticeGroupEnrollments { get; set; } = new List<PracticeGroupEnrollment>();
-        
+
         // Danh sách lịch thực hành của nhóm
+        [JsonIgnore]
         public ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
 
         // Thông tin giáo viên dạy thực hành
