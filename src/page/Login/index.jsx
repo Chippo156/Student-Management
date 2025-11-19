@@ -59,12 +59,6 @@ const Login = () => {
   useEffect(() => {
     if (isAuthenticated && account && account.role) {
       const dashboard = getDashboardByRole(account.role.roleId);
-      console.log(
-        'useEffect redirect to:',
-        dashboard,
-        'role:',
-        account.role.roleId
-      );
       navigate(dashboard, { replace: true });
     }
   }, [isAuthenticated, account, navigate]);
@@ -257,7 +251,8 @@ const Login = () => {
         <DialogTitle>Quên mật khẩu</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 3, mt: 1 }}>
-            Nhập mã số sinh viên của bạn. Mật khẩu mới sẽ được gửi đến email đã đăng ký.
+            Nhập mã số sinh viên của bạn. Mật khẩu mới sẽ được gửi đến email đã
+            đăng ký.
           </Typography>
           <TextField
             fullWidth
@@ -271,7 +266,10 @@ const Login = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenForgotPassword(false)} disabled={isSubmitting}>
+          <Button
+            onClick={() => setOpenForgotPassword(false)}
+            disabled={isSubmitting}
+          >
             Hủy
           </Button>
           <Button

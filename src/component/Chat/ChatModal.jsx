@@ -33,8 +33,12 @@ import { useChat } from '../../context/ChatContext';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Button } from '@mui/material';
+import { useSelector } from 'react-redux';
 
 const ChatModal = ({ open, onClose }) => {
+  // ✅ Lấy user từ Redux
+  const reduxUser = useSelector((state) => state.user?.account);
+
   const {
     currentRoom,
     messages,
@@ -57,12 +61,16 @@ const ChatModal = ({ open, onClose }) => {
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
-  // Auto scroll to bottom khi có tin nhắn mới
+  // Auto scroll to bottom khi:
+  // 1. Có tin nhắn mới
+  // 2. Có người đang typing (typingUsers thay đổi)
+  // 3. Mở room mới (currentRoom thay đổi)
+  // 4. Mở modal (open thay đổi từ false -> true)
   useEffect(() => {
-    if (messagesEndRef.current && !isMinimized) {
+    if (messagesEndRef.current && !isMinimized && open) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isMinimized]);
+  }, [messages, typingUsers, currentRoom, open, isMinimized]);
 
   // Filter chat rooms - tìm theo tên room hoặc tên giảng viên
   const filteredRooms = chatRooms.filter((room) => {
@@ -76,17 +84,13 @@ const ChatModal = ({ open, onClose }) => {
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || !currentRoom) {
-      console.warn('Cannot send message:', { hasMessage: !!inputMessage.trim(), hasRoom: !!currentRoom });
       return;
     }
 
-    console.log('Sending message:', inputMessage.trim(), 'to room:', currentRoom.chatRoomId);
     const success = await sendMessage(inputMessage.trim());
     if (success) {
       setInputMessage('');
       stopTyping();
-    } else {
-      console.error('Failed to send message');
     }
   };
 
@@ -163,25 +167,48 @@ const ChatModal = ({ open, onClose }) => {
 
   const getUserInfo = () => {
     try {
-      const userStr = localStorage.getItem('user');
-      return userStr ? JSON.parse(userStr) : null;
-    } catch {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+
+        const userId =
+          payload[
+            'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
+          ] ||
+          payload.sub ||
+          payload.userId;
+
+        const username =
+          payload[
+            'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
+          ] || payload.username;
+
+        return {
+          id: parseInt(userId),
+          userId: parseInt(userId),
+          username: username,
+          fullName: reduxUser?.user?.fullName || reduxUser?.fullName,
+          avatarUrl: reduxUser?.user?.avatarUrl || reduxUser?.avatarUrl,
+        };
+      }
+
+      if (reduxUser?.userId) {
+        return {
+          id: reduxUser.userId,
+          userId: reduxUser.userId,
+          username: reduxUser.username,
+          ...reduxUser,
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error('getUserInfo error:', error);
       return null;
     }
   };
 
   const currentUser = getUserInfo();
-
-  // Debug logging
-  useEffect(() => {
-    console.log('ChatModal state:', {
-      open,
-      currentRoom: currentRoom?.chatRoomId,
-      messagesCount: messages.length,
-      isConnected,
-      isLoading
-    });
-  }, [open, currentRoom, messages.length, isConnected, isLoading]);
 
   if (!open) return null;
 
@@ -224,32 +251,53 @@ const ChatModal = ({ open, onClose }) => {
                 horizontal: 'right',
               }}
             >
-              <Avatar sx={{ width: 36, height: 36, bgcolor: 'white', color: 'primary.main' }}>
+              <Avatar
+                sx={{
+                  width: 36,
+                  height: 36,
+                  bgcolor: 'white',
+                  color: 'primary.main',
+                }}
+              >
                 {currentRoom?.roomName?.[0]?.toUpperCase() ||
-                 currentRoom?.lecturerName?.[0]?.toUpperCase() || 'C'}
+                  currentRoom?.lecturerName?.[0]?.toUpperCase() ||
+                  'C'}
               </Avatar>
             </Badge>
             <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 600, lineHeight: 1.2 }}
+              >
                 {currentRoom?.roomName || currentRoom?.lecturerName || 'Chat'}
               </Typography>
               {isConnected && (
                 <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                  {typingUsers.length > 0
-                    ? `${typingUsers[0]} đang nhập...`
-                    : currentRoom?.lecturerName ? `GV: ${currentRoom.lecturerName}` : 'Đang hoạt động'}
+                  {typingUsers?.size > 0
+                    ? `đang nhập...`
+                    : currentRoom?.lecturerName
+                      ? `GV: ${currentRoom.lecturerName}`
+                      : 'Đang hoạt động'}
                 </Typography>
               )}
             </Box>
           </Box>
           <Box>
             <Tooltip title={isMinimized ? 'Mở rộng' : 'Thu gọn'}>
-              <IconButton size="small" sx={{ color: 'white' }} onClick={() => setIsMinimized(!isMinimized)}>
+              <IconButton
+                size="small"
+                sx={{ color: 'white' }}
+                onClick={() => setIsMinimized(!isMinimized)}
+              >
                 <MinimizeIcon />
               </IconButton>
             </Tooltip>
             <Tooltip title="Đóng">
-              <IconButton size="small" sx={{ color: 'white' }} onClick={onClose}>
+              <IconButton
+                size="small"
+                sx={{ color: 'white' }}
+                onClick={onClose}
+              >
                 <CloseIcon />
               </IconButton>
             </Tooltip>
@@ -269,7 +317,14 @@ const ChatModal = ({ open, onClose }) => {
         )}
 
         {/* Content */}
-        <Box sx={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <Box
+          sx={{
+            flex: 1,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           {!currentRoom ? (
             // Danh sách chat rooms
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -326,31 +381,46 @@ const ChatModal = ({ open, onClose }) => {
                           >
                             <Avatar sx={{ bgcolor: 'primary.light' }}>
                               {room.roomName?.[0]?.toUpperCase() ||
-                               room.lecturerName?.[0]?.toUpperCase() || '?'}
+                                room.lecturerName?.[0]?.toUpperCase() ||
+                                '?'}
                             </Avatar>
                           </Badge>
                         </ListItemAvatar>
                         <ListItemText
                           primary={
                             <Box>
-                              <Typography variant="body2" sx={{ fontWeight: room.unreadCount > 0 ? 600 : 400 }}>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: room.unreadCount > 0 ? 600 : 400,
+                                }}
+                              >
                                 {room.roomName}
                               </Typography>
                               {room.lecturerName && (
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
                                   GV: {room.lecturerName}
                                 </Typography>
                               )}
                             </Box>
                           }
                           secondary={
-                            <Typography variant="caption" color="text.secondary" noWrap>
-                              {room.lastMessage?.content || 'Bắt đầu trò chuyện'}
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              noWrap
+                            >
+                              {room.lastMessage?.content ||
+                                'Bắt đầu trò chuyện'}
                             </Typography>
                           }
                         />
                         <Typography variant="caption" color="text.secondary">
-                          {room.lastMessage?.sentAt && formatLastMessageTime(room.lastMessage.sentAt)}
+                          {room.lastMessage?.sentAt &&
+                            formatLastMessageTime(room.lastMessage.sentAt)}
                         </Typography>
                       </ListItemButton>
                       <Divider variant="inset" component="li" />
@@ -361,7 +431,15 @@ const ChatModal = ({ open, onClose }) => {
             </Box>
           ) : (
             // Chat messages
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 0,
+                overflow: 'hidden',
+              }}
+            >
               {/* Back button */}
               <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider' }}>
                 <Chip
@@ -387,7 +465,14 @@ const ChatModal = ({ open, onClose }) => {
                 }}
               >
                 {isLoading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      height: '100%',
+                    }}
+                  >
                     <CircularProgress size={30} />
                   </Box>
                 ) : messages.length === 0 ? (
@@ -398,13 +483,18 @@ const ChatModal = ({ open, onClose }) => {
                   </Box>
                 ) : (
                   messages.map((msg, index) => {
-                    const isMyMessage = msg.isCurrentUser;
+                    const isMyMessage =
+                      msg.senderId === currentUser?.id ||
+                      msg.senderId === currentUser?.userId;
+
                     return (
                       <Box
                         key={msg.chatMessageId || index}
                         sx={{
                           display: 'flex',
-                          justifyContent: isMyMessage ? 'flex-end' : 'flex-start',
+                          justifyContent: isMyMessage
+                            ? 'flex-end'
+                            : 'flex-start',
                           mb: 1,
                         }}
                       >
@@ -418,7 +508,11 @@ const ChatModal = ({ open, onClose }) => {
                         >
                           {/* Hiển thị tên người gửi nếu không phải tin nhắn của mình */}
                           {!isMyMessage && (
-                            <Typography variant="caption" color="text.secondary" sx={{ px: 1, mb: 0.5 }}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ px: 1, mb: 0.5 }}
+                            >
                               {msg.senderName} • {msg.senderRole}
                             </Typography>
                           )}
@@ -440,29 +534,54 @@ const ChatModal = ({ open, onClose }) => {
                                   mb: 1,
                                   p: 1,
                                   borderLeft: 3,
-                                  borderColor: isMyMessage ? 'rgba(255,255,255,0.3)' : 'primary.main',
-                                  bgcolor: isMyMessage ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                  borderColor: isMyMessage
+                                    ? 'rgba(255,255,255,0.3)'
+                                    : 'primary.main',
+                                  bgcolor: isMyMessage
+                                    ? 'rgba(255,255,255,0.1)'
+                                    : 'rgba(0,0,0,0.05)',
                                   borderRadius: 1,
                                 }}
                               >
-                                <Typography variant="caption" sx={{ opacity: 0.8, display: 'block' }}>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ opacity: 0.8, display: 'block' }}
+                                >
                                   {msg.replyToMessage.senderName}
                                 </Typography>
-                                <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ opacity: 0.9 }}
+                                >
                                   {msg.replyToMessage.content}
                                 </Typography>
                               </Box>
                             )}
-                            <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ wordBreak: 'break-word' }}
+                            >
                               {msg.content}
                             </Typography>
                             {msg.editedAt && (
-                              <Typography variant="caption" sx={{ opacity: 0.7, fontStyle: 'italic', display: 'block', mt: 0.5 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  opacity: 0.7,
+                                  fontStyle: 'italic',
+                                  display: 'block',
+                                  mt: 0.5,
+                                }}
+                              >
                                 (đã chỉnh sửa)
                               </Typography>
                             )}
                           </Paper>
-                          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, px: 1 }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ mt: 0.5, px: 1 }}
+                          >
                             {formatMessageTime(msg.sentAt)}
                           </Typography>
                         </Box>
@@ -470,31 +589,124 @@ const ChatModal = ({ open, onClose }) => {
                     );
                   })
                 )}
+
+                {/* Typing indicator as message bubble - Zalo/Messenger style */}
+                {typingUsers?.length > 0 &&
+                  typingUsers.map((username) => (
+                    <Box
+                      key={`typing-${username}`}
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'flex-start',
+                        mb: 1,
+                        animation: 'fadeIn 0.3s ease-in',
+                        '@keyframes fadeIn': {
+                          from: { opacity: 0, transform: 'translateY(10px)' },
+                          to: { opacity: 1, transform: 'translateY(0)' },
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          maxWidth: '75%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-start',
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ px: 1, mb: 0.5 }}
+                        >
+                          {username}
+                        </Typography>
+                        <Paper
+                          elevation={1}
+                          sx={{
+                            py: 1.5,
+                            px: 2,
+                            bgcolor: 'white',
+                            borderRadius: 2,
+                            borderTopLeftRadius: 0,
+                            minWidth: 60,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {/* Wave animation dots - Zalo style */}
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              gap: 0.75,
+                              alignItems: 'center',
+                              height: 16,
+                              '& > span': {
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                bgcolor: '#90a4ae',
+                                animation: 'wave 1.4s ease-in-out infinite',
+                                '&:nth-of-type(1)': { animationDelay: '0s' },
+                                '&:nth-of-type(2)': { animationDelay: '0.2s' },
+                                '&:nth-of-type(3)': { animationDelay: '0.4s' },
+                              },
+                              '@keyframes wave': {
+                                '0%, 60%, 100%': {
+                                  transform: 'translateY(0)',
+                                  opacity: 0.6,
+                                },
+                                '30%': {
+                                  transform: 'translateY(-8px)',
+                                  opacity: 1,
+                                },
+                              },
+                            }}
+                          >
+                            <span />
+                            <span />
+                            <span />
+                          </Box>
+                        </Paper>
+                      </Box>
+                    </Box>
+                  ))}
+
                 <div ref={messagesEndRef} />
               </Box>
 
-              {/* Typing indicator */}
-              {typingUsers.length > 0 && (
-                <Box sx={{ px: 2, py: 0.5, bgcolor: '#f5f5f5', flexShrink: 0 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                    {typingUsers[0]} đang nhập...
-                  </Typography>
-                </Box>
-              )}
-
               {/* Input */}
-              <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', bgcolor: 'white', flexShrink: 0 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  borderTop: 1,
+                  borderColor: 'divider',
+                  bgcolor: 'white',
+                  flexShrink: 0,
+                }}
+              >
                 {!isConnected && (
-                  <Box sx={{ mb: 1, p: 1, bgcolor: 'warning.light', borderRadius: 1 }}>
+                  <Box
+                    sx={{
+                      mb: 1,
+                      p: 1,
+                      bgcolor: 'warning.light',
+                      borderRadius: 1,
+                    }}
+                  >
                     <Typography variant="caption" color="text.secondary">
-                      Đang kết nối real-time... Bạn có thể xem tin nhắn nhưng chưa thể gửi.
+                      Đang kết nối real-time... Bạn có thể xem tin nhắn nhưng
+                      chưa thể gửi.
                     </Typography>
                   </Box>
                 )}
                 <TextField
                   fullWidth
                   size="small"
-                  placeholder={isConnected ? "Nhập tin nhắn..." : "Đang kết nối..."}
+                  placeholder={
+                    isConnected ? 'Nhập tin nhắn...' : 'Đang kết nối...'
+                  }
                   value={inputMessage}
                   onChange={handleInputChange}
                   onKeyPress={handleKeyPress}

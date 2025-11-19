@@ -200,7 +200,6 @@ const Dashboard = () => {
       try {
         const data = await semesterService.getStudentSemesters();
         setSemesters(data);
-        console.log(data);
 
         if (data.length > 0)
           setSelectedSemesterId(data[data.length - 1].semesterId);

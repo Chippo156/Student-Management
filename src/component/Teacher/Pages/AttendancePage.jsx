@@ -53,7 +53,6 @@ const AttendancePage = () => {
   const [loading, setLoading] = useState(false);
   const [openCreateSessionModal, setOpenCreateSessionModal] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
-  console.log(practiceGroups);
 
   // UI cũ cho việc điểm danh
   const [students, setStudents] = useState([]);
@@ -162,10 +161,7 @@ const AttendancePage = () => {
         try {
           const response =
             await practiceService.getPracticeGroupsBySection(selectedCourse);
-          console.log(response);
           if (response && Array.isArray(response)) {
-            // Map response to dropdown format
-
             const groups = response.map((group) => ({
               id: group.practiceGroupId,
               groupNumber: group.groupName,

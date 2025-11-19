@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
 import { chatService, chatApi } from '../service/chatService';
 import { message } from 'antd';
 
@@ -33,20 +39,8 @@ export const ChatProvider = ({ children }) => {
       }
 
       await chatService.connect(token);
-
-      // Kiểm tra xem có thực sự kết nối thành công không (check SignalR state)
-      if (chatService.isReallyConnected) {
-        setIsConnected(true);
-        console.log('Chat connected successfully. State:', chatService.connectionState);
-        // Chỉ hiển thị message khi user chủ động mở chat
-      } else {
-        setIsConnected(false);
-        console.warn('Chat connection failed. State:', chatService.connectionState);
-      }
     } catch (error) {
       console.error('Failed to connect chat:', error);
-      // Không hiển thị error message để không làm phiền user
-      // Chỉ log ra console
       setIsConnected(false);
     }
   }, []);
@@ -108,7 +102,7 @@ export const ChatProvider = ({ children }) => {
           // Truyền vào là ID - legacy support
           roomId = roomOrId;
           // Tìm room trong danh sách
-          const existingRoom = chatRooms.find(r => r.chatRoomId === roomId);
+          const existingRoom = chatRooms.find((r) => r.chatRoomId === roomId);
           if (existingRoom) {
             room = existingRoom;
           } else {
@@ -122,7 +116,10 @@ export const ChatProvider = ({ children }) => {
           try {
             await chatService.joinChatRoom(roomId);
           } catch (error) {
-            console.warn('Failed to join room via SignalR, continuing with REST API only:', error);
+            console.warn(
+              'Failed to join room via SignalR, continuing with REST API only:',
+              error
+            );
             // Không throw error, vẫn cho phép xem tin nhắn qua REST API
           }
         } else {
@@ -177,13 +174,6 @@ export const ChatProvider = ({ children }) => {
    */
   const sendMessage = useCallback(
     async (content, messageType = 1) => {
-      console.log('sendMessage called:', {
-        content,
-        hasRoom: !!currentRoom,
-        roomId: currentRoom?.chatRoomId,
-        isConnected
-      });
-
       if (!currentRoom) {
         console.error('No current room');
         message.error('Chưa mở chat room');
@@ -192,17 +182,20 @@ export const ChatProvider = ({ children }) => {
 
       if (!isConnected) {
         console.error('Not connected to SignalR');
-        message.error('Chưa kết nối real-time chat. Vui lòng đợi kết nối hoặc tải lại trang.');
+        message.error(
+          'Chưa kết nối real-time chat. Vui lòng đợi kết nối hoặc tải lại trang.'
+        );
         return false;
       }
 
       try {
-        console.log('Calling chatService.sendMessage with roomId:', currentRoom.chatRoomId);
-        await chatService.sendMessage(currentRoom.chatRoomId, content, messageType);
-        console.log('Message sent successfully');
+        await chatService.sendMessage(
+          currentRoom.chatRoomId,
+          content,
+          messageType
+        );
         return true;
       } catch (error) {
-        console.error('Failed to send message:', error);
         message.error('Gửi tin nhắn thất bại');
         return false;
       }
@@ -249,7 +242,10 @@ export const ChatProvider = ({ children }) => {
         try {
           await chatService.joinChatRoom(room.chatRoomId);
         } catch (error) {
-          console.warn('Failed to join room via SignalR, continuing with REST API only:', error);
+          console.warn(
+            'Failed to join room via SignalR, continuing with REST API only:',
+            error
+          );
           // Không throw error, vẫn cho phép xem tin nhắn qua REST API
         }
       } else {
@@ -285,10 +281,51 @@ export const ChatProvider = ({ children }) => {
   }, [isConnected, fetchChatRooms]);
 
   /**
-   * Đăng ký event listeners
+   * Đăng ký CONNECTION event listeners - CHỈ ĐĂNG KÝ 1 LẦN KHI MOUNT
+   * ⚠️ Sử dụng useRef để tránh cleanup trong StrictMode
+   */
+  const connectionListenersRef = React.useRef(false);
+
+  useEffect(() => {
+    // ✅ Chỉ đăng ký 1 lần duy nhất, ngay cả trong StrictMode
+    if (connectionListenersRef.current) {
+      return;
+    }
+
+    connectionListenersRef.current = true;
+    console.log('Registering SignalR CONNECTION event listeners...');
+
+    // Connection events - Đăng ký TRƯỚC khi connect
+    chatService.addEventListener('connected', () => {
+      console.log('Event: connected received');
+      setIsConnected(true);
+    });
+
+    chatService.addEventListener('reconnected', () => {
+      console.log('Event: reconnected received');
+      setIsConnected(true);
+      message.success('Đã kết nối lại chat');
+    });
+
+    chatService.addEventListener('closed', () => {
+      console.log('Event: closed received');
+      setIsConnected(false);
+      message.warning('Mất kết nối chat');
+    });
+
+    chatService.addEventListener('reconnecting', () => {
+      console.log('Event: reconnecting received');
+      setIsConnected(false);
+    });
+
+    // ✅ KHÔNG cleanup - để listeners tồn tại suốt đời app
+  }, []); // ✅ KHÔNG có dependencies - chỉ đăng ký 1 lần
+
+  /**
+   * Đăng ký MESSAGE event listeners - Phụ thuộc vào currentRoom
    */
   useEffect(() => {
-    if (!isConnected) return;
+    console.log('Registering SignalR MESSAGE event listeners...');
 
     // Nhận tin nhắn mới
     const unsubReceiveMessage = chatService.addEventListener(
@@ -308,62 +345,41 @@ export const ChatProvider = ({ children }) => {
       }
     );
 
-    // User typing
+    // User typing - Backend chỉ gửi username, vì user chỉ typing trong room họ đang join
     const unsubTyping = chatService.addEventListener('UserTyping', (data) => {
-      if (currentRoom && data.ChatRoomId === currentRoom.chatRoomId) {
-        setTypingUsers((prev) => new Set(prev).add(data.Username));
-      }
-    });
-
-    // User stopped typing
-    const unsubStopTyping = chatService.addEventListener('UserStoppedTyping', (data) => {
-      if (currentRoom && data.ChatRoomId === currentRoom.chatRoomId) {
+      const username = data.username || data.Username;
+      if (username && currentRoom) {
         setTypingUsers((prev) => {
           const newSet = new Set(prev);
-          newSet.delete(data.Username);
+          newSet.add(username);
           return newSet;
         });
       }
     });
 
-    // Connection events
-    const unsubConnected = chatService.addEventListener('connected', () => {
-      console.log('Event: connected received');
-      setIsConnected(true);
-    });
-
-    const unsubReconnected = chatService.addEventListener('reconnected', () => {
-      console.log('Event: reconnected received');
-      setIsConnected(true);
-      message.success('Đã kết nối lại chat');
-      // Rejoin current room if any
-      if (currentRoom) {
-        chatService.joinChatRoom(currentRoom.chatRoomId);
+    // User stopped typing
+    const unsubStopTyping = chatService.addEventListener(
+      'UserStoppedTyping',
+      (data) => {
+        const username = data.username || data.Username;
+        if (username && currentRoom) {
+          setTypingUsers((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(username);
+            return newSet;
+          });
+        }
       }
-    });
-
-    const unsubClosed = chatService.addEventListener('closed', () => {
-      console.log('Event: closed received');
-      setIsConnected(false);
-      message.warning('Mất kết nối chat');
-    });
-
-    const unsubReconnecting = chatService.addEventListener('reconnecting', () => {
-      console.log('Event: reconnecting received');
-      setIsConnected(false);
-    });
+    );
 
     // Cleanup
     return () => {
+      console.log('Unregistering SignalR MESSAGE event listeners...');
       unsubReceiveMessage();
       unsubTyping();
       unsubStopTyping();
-      unsubConnected();
-      unsubReconnected();
-      unsubClosed();
-      unsubReconnecting();
     };
-  }, [isConnected, currentRoom, fetchChatRooms]);
+  }, [currentRoom, fetchChatRooms]); // Phụ thuộc vào currentRoom
 
   /**
    * Auto connect khi mount

@@ -29,12 +29,14 @@ class ChatService {
    */
   async connect(token) {
     if (this.connection && this.isConnected) {
-      console.log('Already connected to ChatHub');
       return;
     }
 
     try {
-      const accessToken = localStorage.getItem('access_token') || token || localStorage.getItem('access_token');
+      const accessToken =
+        localStorage.getItem('access_token') ||
+        token ||
+        localStorage.getItem('access_token');
 
       if (!accessToken) {
         console.warn('No access token available for SignalR connection');
@@ -57,21 +59,18 @@ class ChatService {
 
       // Xử lý sự kiện reconnecting
       this.connection.onreconnecting((error) => {
-        console.log('Reconnecting to ChatHub...', error);
         this.isConnected = false;
         this.notifyListeners('reconnecting', { error });
       });
 
       // Xử lý sự kiện reconnected
       this.connection.onreconnected((connectionId) => {
-        console.log('Reconnected to ChatHub:', connectionId);
         this.isConnected = true;
         this.notifyListeners('reconnected', { connectionId });
       });
 
       // Xử lý sự kiện close
       this.connection.onclose((error) => {
-        console.log('Connection closed:', error);
         this.isConnected = false;
         this.notifyListeners('closed', { error });
       });
@@ -81,7 +80,6 @@ class ChatService {
 
       await this.connection.start();
       this.isConnected = true;
-      console.log('Connected to ChatHub successfully');
       this.notifyListeners('connected');
     } catch (error) {
       console.error('Failed to connect to ChatHub:', error);
@@ -99,37 +97,31 @@ class ChatService {
 
     // Nhận tin nhắn mới
     this.connection.on('ReceiveMessage', (message) => {
-      console.log('ReceiveMessage:', message);
       this.notifyListeners('ReceiveMessage', message);
     });
 
     // User join room
     this.connection.on('UserJoined', (data) => {
-      console.log('UserJoined:', data);
       this.notifyListeners('UserJoined', data);
     });
 
     // User left room
     this.connection.on('UserLeft', (data) => {
-      console.log('UserLeft:', data);
       this.notifyListeners('UserLeft', data);
     });
 
     // User typing
     this.connection.on('UserTyping', (data) => {
-      console.log('UserTyping:', data);
       this.notifyListeners('UserTyping', data);
     });
 
     // User stopped typing
     this.connection.on('UserStoppedTyping', (data) => {
-      console.log('UserStoppedTyping:', data);
       this.notifyListeners('UserStoppedTyping', data);
     });
 
     // Error
     this.connection.on('Error', (error) => {
-      console.error('SignalR Error:', error);
       this.notifyListeners('Error', error);
     });
   }
@@ -182,7 +174,6 @@ class ChatService {
       // Đảm bảo roomId là số nguyên
       const chatRoomId = parseInt(roomId);
       await this.connection.invoke('JoinChatRoom', chatRoomId);
-      console.log('Joined chat room:', chatRoomId);
     } catch (error) {
       console.error('Failed to join chat room:', error);
       throw error;
@@ -200,7 +191,6 @@ class ChatService {
       // Đảm bảo roomId là số nguyên
       const chatRoomId = parseInt(roomId);
       await this.connection.invoke('LeaveChatRoom', chatRoomId);
-      console.log('Left chat room:', chatRoomId);
     } catch (error) {
       console.error('Failed to leave chat room:', error);
       throw error;
@@ -212,7 +202,10 @@ class ChatService {
    */
   async sendMessage(roomId, content, messageType = 1) {
     // Kiểm tra cả connection state của SignalR
-    if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) {
+    if (
+      !this.connection ||
+      this.connection.state !== signalR.HubConnectionState.Connected
+    ) {
       const currentState = this.connection?.state || 'No connection';
       console.error('Cannot send message. Connection state:', currentState);
       throw new Error(`Not connected to ChatHub. State: ${currentState}`);
@@ -225,7 +218,6 @@ class ChatService {
         content: content,
         messageType: messageType,
       });
-      console.log('Message sent to room:', chatRoomId);
     } catch (error) {
       console.error('Failed to send message:', error);
       throw error;
@@ -269,7 +261,6 @@ class ChatService {
     if (this.connection) {
       try {
         await this.connection.stop();
-        console.log('Disconnected from ChatHub');
       } catch (error) {
         console.error('Error disconnecting:', error);
       } finally {
@@ -320,7 +311,7 @@ const chatApi = {
       const response = await axios.get(`/api/v1/Chat/${chatRoomId}/messages`, {
         params: {
           PageNumber: pageNumber,
-          PageSize: pageSize
+          PageSize: pageSize,
         },
       });
       return response;

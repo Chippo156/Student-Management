@@ -17,7 +17,6 @@ const enrollmentService = {
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
-        console.log('API error:', error.response.data);
         const errData = error.response.data.data;
         if (Array.isArray(errData) && errData.length > 0) {
           throw new Error(errData[0]);
@@ -43,7 +42,6 @@ const enrollmentService = {
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
-        console.log('API error:', error.response.data);
         const errData = error.response.data.data;
         if (Array.isArray(errData) && errData.length > 0) {
           throw new Error(errData[0]);
@@ -69,7 +67,6 @@ const enrollmentService = {
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
-        console.log('API error:', error.response.data);
         const errData = error.response.data.data;
         if (Array.isArray(errData) && errData.length > 0) {
           throw new Error(errData[0]);
@@ -98,7 +95,6 @@ const enrollmentService = {
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
-        console.log('API error:', error.response.data);
         const errData = error.response.data.data;
         if (Array.isArray(errData) && errData.length > 0) {
           throw new Error(errData[0]);
