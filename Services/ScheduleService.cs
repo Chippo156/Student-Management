@@ -443,16 +443,32 @@ namespace StudentManagement.Services
                 .Select(pge => pge.PracticeGroupId)
                 .ToListAsync();
 
+            // **MỚI: Lấy danh sách CourseId có lịch thi trong tuần này**
+            var coursesWithExamThisWeek = await context.Schedules
+                .Include(s => s.Section)
+                    .ThenInclude(s => s.CurriculumCourse)
+                .Where(s =>
+                    studentSections.Contains(s.Section.SectionId) &&
+                    s.ScheduleType.ScheduleTypeId == 3 && // Lịch thi
+                    s.Date.HasValue && // Có ngày cụ thể
+                    s.Date >= weekStart && s.Date <= weekEnd // Nằm trong tuần này
+                )
+                .Select(s => s.Section.CurriculumCourse.Course.CourseId)
+                .Distinct()
+                .ToListAsync();
+
             if (scheduleTypeId == 0)
             {
                 // Nếu không truyền scheduleTypeId, lấy tất cả các loại lịch
 
                 // Lấy lịch học chính (không phải lịch thi và không phải lịch thực hành)
+                // **CẬP NHẬT: Loại bỏ lịch học của môn có thi trong tuần**
                 var regularSchedules = await context.Schedules
                     .Where(s =>
                         studentSections.Contains(s.Section.SectionId) &&
                         s.ScheduleType.ScheduleTypeId != 3 && // Không phải lịch thi
-                        !s.PracticeGroupId.HasValue // Không phải lịch thực hành
+                        !s.PracticeGroupId.HasValue && // Không phải lịch thực hành
+                        !coursesWithExamThisWeek.Contains(s.Section.CurriculumCourse.Course.CourseId) // **MỚI: Loại bỏ môn có thi**
                     )
                     .Include(s => s.ScheduleType)
                     .Include(s => s.Section)
@@ -462,11 +478,13 @@ namespace StudentManagement.Services
                     .ToListAsync();
 
                 // Lấy lịch thực hành của các nhóm mà sinh viên đã đăng ký
+                // **CẬP NHẬT: Loại bỏ lịch thực hành của môn có thi trong tuần**
                 var practiceSchedules = await context.Schedules
                     .Where(s =>
                         s.PracticeGroupId.HasValue &&
                         studentPracticeGroups.Contains(s.PracticeGroupId.Value) &&
-                        s.ScheduleType.ScheduleTypeId != 3 // Không phải lịch thi
+                        s.ScheduleType.ScheduleTypeId != 3 && // Không phải lịch thi
+                        !coursesWithExamThisWeek.Contains(s.Section.CurriculumCourse.Course.CourseId) // **MỚI: Loại bỏ môn có thi**
                     )
                     .Include(s => s.ScheduleType)
                     .Include(s => s.Section)
@@ -518,11 +536,13 @@ namespace StudentManagement.Services
             else
             {
                 // Các loại lịch khác - bao gồm cả lịch chính và lịch thực hành
+                // **CẬP NHẬT: Loại bỏ lịch học của môn có thi trong tuần**
                 var regularSchedules = await context.Schedules
                     .Where(s =>
                         studentSections.Contains(s.Section.SectionId) &&
                         s.ScheduleType.ScheduleTypeId == scheduleTypeId &&
-                        !s.PracticeGroupId.HasValue // Lịch chính
+                        !s.PracticeGroupId.HasValue && // Lịch chính
+                        !coursesWithExamThisWeek.Contains(s.Section.CurriculumCourse.Course.CourseId) // **MỚI: Loại bỏ môn có thi**
                     )
                     .Include(s => s.ScheduleType)
                     .Include(s => s.Section)
@@ -532,11 +552,13 @@ namespace StudentManagement.Services
                     .ToListAsync();
 
                 // Lấy lịch thực hành của cùng loại schedule type
+                // **CẬP NHẬT: Loại bỏ lịch thực hành của môn có thi trong tuần**
                 var practiceSchedules = await context.Schedules
                     .Where(s =>
                         s.PracticeGroupId.HasValue &&
                         studentPracticeGroups.Contains(s.PracticeGroupId.Value) &&
-                        s.ScheduleType.ScheduleTypeId == scheduleTypeId
+                        s.ScheduleType.ScheduleTypeId == scheduleTypeId &&
+                        !coursesWithExamThisWeek.Contains(s.Section.CurriculumCourse.Course.CourseId) // **MỚI: Loại bỏ môn có thi**
                     )
                     .Include(s => s.ScheduleType)
                     .Include(s => s.Section)
@@ -635,14 +657,30 @@ namespace StudentManagement.Services
                 .Select(pg => pg.PracticeGroupId)
                 .ToListAsync();
 
+            // **MỚI: Lấy danh sách CourseId có lịch thi trong tuần này cho giáo viên**
+            var coursesWithExamThisWeek = await context.Schedules
+                .Include(s => s.Section)
+                    .ThenInclude(s => s.CurriculumCourse)
+                .Where(s =>
+                    lecturerSections.Contains(s.Section.SectionId) &&
+                    s.ScheduleType.ScheduleTypeId == 3 && // Lịch thi
+                    s.Date.HasValue && // Có ngày cụ thể
+                    s.Date >= weekStart && s.Date <= weekEnd // Nằm trong tuần này
+                )
+                .Select(s => s.Section.CurriculumCourse.Course.CourseId)
+                .Distinct()
+                .ToListAsync();
+
             if (scheduleTypeId == 0)
             {
                 // Lấy lịch giảng dạy chính (không phải lịch thi và không phải lịch thực hành)
+                // **CẬP NHẬT: Loại bỏ lịch học của môn có thi trong tuần**
                 var regularSchedules = await context.Schedules
                     .Where(s =>
                         lecturerSections.Contains(s.Section.SectionId) &&
                         s.ScheduleType.ScheduleTypeId != 3 && // Không phải lịch thi
-                        !s.PracticeGroupId.HasValue // Không phải lịch thực hành
+                        !s.PracticeGroupId.HasValue && // Không phải lịch thực hành
+                        !coursesWithExamThisWeek.Contains(s.Section.CurriculumCourse.Course.CourseId) // **MỚI: Loại bỏ môn có thi**
                     )
                     .Include(s => s.ScheduleType)
                     .Include(s => s.Section)
@@ -653,11 +691,13 @@ namespace StudentManagement.Services
                     .ToListAsync();
 
                 // Lấy lịch thực hành mà giáo viên đang phụ trách
+                // **CẬP NHẬT: Loại bỏ lịch thực hành của môn có thi trong tuần**
                 var practiceSchedules = await context.Schedules
                     .Where(s =>
                         s.PracticeGroupId.HasValue &&
                         lecturerPracticeGroups.Contains(s.PracticeGroupId.Value) &&
-                        s.ScheduleType.ScheduleTypeId != 3 // Không phải lịch thi
+                        s.ScheduleType.ScheduleTypeId != 3 && // Không phải lịch thi
+                        !coursesWithExamThisWeek.Contains(s.Section.CurriculumCourse.Course.CourseId) // **MỚI: Loại bỏ môn có thi**
                     )
                     .Include(s => s.ScheduleType)
                     .Include(s => s.Section)
@@ -712,11 +752,13 @@ namespace StudentManagement.Services
             else
             {
                 // Các loại lịch khác - bao gồm cả lịch chính và lịch thực hành
+                // **CẬP NHẬT: Loại bỏ lịch học của môn có thi trong tuần**
                 var regularSchedules = await context.Schedules
                     .Where(s =>
                         lecturerSections.Contains(s.Section.SectionId) &&
                         s.ScheduleType.ScheduleTypeId == scheduleTypeId &&
-                        !s.PracticeGroupId.HasValue // Lịch chính
+                        !s.PracticeGroupId.HasValue && // Lịch chính
+                        !coursesWithExamThisWeek.Contains(s.Section.CurriculumCourse.Course.CourseId) // **MỚI: Loại bỏ môn có thi**
                     )
                     .Include(s => s.ScheduleType)
                     .Include(s => s.Section)
@@ -727,11 +769,13 @@ namespace StudentManagement.Services
                     .ToListAsync();
 
                 // Lấy lịch thực hành của cùng loại schedule type
+                // **CẬP NHẬT: Loại bỏ lịch thực hành của môn có thi trong tuần**
                 var practiceSchedules = await context.Schedules
                     .Where(s =>
                         s.PracticeGroupId.HasValue &&
                         lecturerPracticeGroups.Contains(s.PracticeGroupId.Value) &&
-                        s.ScheduleType.ScheduleTypeId == scheduleTypeId
+                        s.ScheduleType.ScheduleTypeId == scheduleTypeId &&
+                        !coursesWithExamThisWeek.Contains(s.Section.CurriculumCourse.Course.CourseId) // **MỚI: Loại bỏ môn có thi**
                     )
                     .Include(s => s.ScheduleType)
                     .Include(s => s.Section)
