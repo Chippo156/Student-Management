@@ -8,6 +8,7 @@ import { store } from './redux/store';
 import getTheme from './theme';
 import AppRoutes from './routes';
 import ErrorBoundary from './component/ErrorBoundary';
+import { ChatProvider } from './context/ChatContext';
 import './App.scss';
 import { doLoadUserFromToken, doLogoutAction } from './redux/UserSlice';
 
@@ -97,9 +98,11 @@ const AppContent = () => {
     <ConfigProvider theme={antdThemeConfig}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <ErrorBoundary>
-          <AppRoutes />
-        </ErrorBoundary>
+        <ChatProvider>
+          <ErrorBoundary>
+            <AppRoutes />
+          </ErrorBoundary>
+        </ChatProvider>
       </ThemeProvider>
     </ConfigProvider>
   );

@@ -34,6 +34,7 @@ import {
   MenuOpen as MenuOpenIcon,
 } from '@mui/icons-material';
 import HeaderPage from '../Header';
+import ChatWidget from '../Chat/ChatWidget';
 const menuData = [
   {
     label: 'Trang chủ',
@@ -298,6 +299,7 @@ const LayoutStudent = () => {
           </Box>
         </Box>
       </Container>
+      <ChatWidget />
     </Box>
   );
 };
