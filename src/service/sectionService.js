@@ -362,6 +362,66 @@ const sectionService = {
       return null;
     }
   },
+
+  // Get section by ID
+  getSectionById: async (sectionId) => {
+    try {
+      const response = await axios.get(`/api/Section/GetSectionById/${sectionId}`);
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Lấy thông tin lớp học phần thất bại');
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(error.response.data.message || 'Get section by ID failed');
+        }
+      } else {
+        message.error(error.message || 'Get section by ID failed');
+      }
+      return null;
+    }
+  },
+
+  // Get dropdown data for create/update section
+  getSectionDropdownAll: async () => {
+    try {
+      const response = await axios.get('/api/Section/dropdown/all');
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Lấy dữ liệu dropdown thất bại');
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(error.response.data.message || 'Get dropdown data failed');
+        }
+      } else {
+        message.error(error.message || 'Get dropdown data failed');
+      }
+      return null;
+    }
+  },
 };
 
 export default sectionService;

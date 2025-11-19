@@ -32,6 +32,9 @@ import { PageHeader, StatsCard, DataTable, FilterSection } from '../../../compon
 import sectionService from '../../../service/sectionService';
 import { semesterService } from '../../../service/semesterService';
 import * as XLSX from 'xlsx';
+import SectionDetailModal from '../../../component/Admin/SectionManagement/SectionDetailModal';
+import SectionCreateModal from '../../../component/Admin/SectionManagement/SectionCreateModal';
+import SectionEditModal from '../../../component/Admin/SectionManagement/SectionEditModal';
 
 const Sections = () => {
   const theme = useTheme();
@@ -44,6 +47,12 @@ const Sections = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
+
+  // Modal states
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedSection, setSelectedSection] = useState(null);
 
   const statusOptions = [
     { value: 0, label: 'Chưa mở', color: 'default' },
@@ -169,6 +178,53 @@ const Sections = () => {
     worksheet['!cols'] = colWidths;
 
     XLSX.writeFile(workbook, `Danh_sach_lop_hoc_phan_${new Date().getTime()}.xlsx`);
+  };
+
+  // Modal handlers
+  const handleViewSection = async (section) => {
+    setLoading(true);
+    try {
+      const detailData = await sectionService.getSectionById(section.sectionId);
+      if (detailData) {
+        setSelectedSection(detailData);
+        setDetailModalOpen(true);
+      }
+    } catch (error) {
+      console.error('Failed to fetch section detail:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditSection = async (section) => {
+    setLoading(true);
+    try {
+      const detailData = await sectionService.getSectionById(section.sectionId);
+      if (detailData) {
+        setSelectedSection(detailData);
+        setEditModalOpen(true);
+      }
+    } catch (error) {
+      console.error('Failed to fetch section detail:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateSection = () => {
+    setCreateModalOpen(true);
+  };
+
+  const handleCloseModals = () => {
+    setDetailModalOpen(false);
+    setCreateModalOpen(false);
+    setEditModalOpen(false);
+    setSelectedSection(null);
+  };
+
+  const handleSaveSection = () => {
+    fetchSections();
+    handleCloseModals();
   };
 
   if (loading && sections.length === 0) {
@@ -304,15 +360,15 @@ const Sections = () => {
       headerName: 'Thao tác',
       width: 120,
       align: 'center',
-      renderCell: () => (
+      renderCell: (section) => (
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
           <Tooltip title="Xem chi tiết">
-            <IconButton size="small">
+            <IconButton size="small" onClick={() => handleViewSection(section)}>
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Chỉnh sửa">
-            <IconButton size="small" color="primary">
+            <IconButton size="small" color="primary" onClick={() => handleEditSection(section)}>
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -342,6 +398,7 @@ const Sections = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
+              onClick={handleCreateSection}
               sx={{ textTransform: 'none', px: 3 }}
             >
               Thêm lớp học phần
@@ -445,6 +502,26 @@ const Sections = () => {
             </Typography>
           </>
         }
+      />
+
+      {/* Modals */}
+      <SectionDetailModal
+        open={detailModalOpen}
+        onCancel={handleCloseModals}
+        section={selectedSection}
+      />
+
+      <SectionCreateModal
+        open={createModalOpen}
+        onCancel={handleCloseModals}
+        onSave={handleSaveSection}
+      />
+
+      <SectionEditModal
+        open={editModalOpen}
+        onCancel={handleCloseModals}
+        onSave={handleSaveSection}
+        section={selectedSection}
       />
     </Box>
   );
