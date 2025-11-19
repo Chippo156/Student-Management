@@ -27,10 +27,12 @@ import {
   Minimize as MinimizeIcon,
   Search as SearchIcon,
   Circle as CircleIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { useChat } from '../../context/ChatContext';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { Button } from '@mui/material';
 
 const ChatModal = ({ open, onClose }) => {
   const {
@@ -40,6 +42,7 @@ const ChatModal = ({ open, onClose }) => {
     typingUsers,
     isLoading,
     openChatRoom,
+    openClassTeacherChat,
     closeChatRoom,
     sendMessage,
     startTyping,
@@ -61,18 +64,29 @@ const ChatModal = ({ open, onClose }) => {
     }
   }, [messages, isMinimized]);
 
-  // Filter chat rooms
-  const filteredRooms = chatRooms.filter((room) =>
-    room.participantName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter chat rooms - tìm theo tên room hoặc tên giảng viên
+  const filteredRooms = chatRooms.filter((room) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      room.roomName?.toLowerCase().includes(searchLower) ||
+      room.lecturerName?.toLowerCase().includes(searchLower) ||
+      room.description?.toLowerCase().includes(searchLower)
+    );
+  });
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || !currentRoom) return;
+    if (!inputMessage.trim() || !currentRoom) {
+      console.warn('Cannot send message:', { hasMessage: !!inputMessage.trim(), hasRoom: !!currentRoom });
+      return;
+    }
 
+    console.log('Sending message:', inputMessage.trim(), 'to room:', currentRoom.chatRoomId);
     const success = await sendMessage(inputMessage.trim());
     if (success) {
       setInputMessage('');
       stopTyping();
+    } else {
+      console.error('Failed to send message');
     }
   };
 
@@ -105,7 +119,12 @@ const ChatModal = ({ open, onClose }) => {
   };
 
   const handleSelectRoom = async (room) => {
-    await openChatRoom(room.participantId, room.participantName);
+    await openChatRoom(room); // Truyền toàn bộ room object
+    setTabValue(1); // Chuyển sang tab chat
+  };
+
+  const handleOpenTeacherChat = async () => {
+    await openClassTeacherChat();
     setTabValue(1); // Chuyển sang tab chat
   };
 
@@ -153,6 +172,17 @@ const ChatModal = ({ open, onClose }) => {
 
   const currentUser = getUserInfo();
 
+  // Debug logging
+  useEffect(() => {
+    console.log('ChatModal state:', {
+      open,
+      currentRoom: currentRoom?.chatRoomId,
+      messagesCount: messages.length,
+      isConnected,
+      isLoading
+    });
+  }, [open, currentRoom, messages.length, isConnected, isLoading]);
+
   if (!open) return null;
 
   return (
@@ -195,18 +225,19 @@ const ChatModal = ({ open, onClose }) => {
               }}
             >
               <Avatar sx={{ width: 36, height: 36, bgcolor: 'white', color: 'primary.main' }}>
-                {currentRoom?.participantName?.[0]?.toUpperCase() || 'C'}
+                {currentRoom?.roomName?.[0]?.toUpperCase() ||
+                 currentRoom?.lecturerName?.[0]?.toUpperCase() || 'C'}
               </Avatar>
             </Badge>
             <Box>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
-                {currentRoom ? currentRoom.participantName : 'Chat'}
+                {currentRoom?.roomName || currentRoom?.lecturerName || 'Chat'}
               </Typography>
               {isConnected && (
                 <Typography variant="caption" sx={{ opacity: 0.9 }}>
                   {typingUsers.length > 0
                     ? `${typingUsers[0]} đang nhập...`
-                    : 'Đang hoạt động'}
+                    : currentRoom?.lecturerName ? `GV: ${currentRoom.lecturerName}` : 'Đang hoạt động'}
                 </Typography>
               )}
             </Box>
@@ -260,6 +291,20 @@ const ChatModal = ({ open, onClose }) => {
                 />
               </Box>
 
+              {/* Quick action: Chat với giảng viên chủ nhiệm */}
+              <Box sx={{ px: 2, pb: 1 }}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<PersonIcon />}
+                  onClick={handleOpenTeacherChat}
+                  disabled={!isConnected || isLoading}
+                  size="small"
+                >
+                  Chat với giảng viên chủ nhiệm
+                </Button>
+              </Box>
+
               {/* Rooms List */}
               <List sx={{ flex: 1, overflow: 'auto', p: 0 }}>
                 {filteredRooms.length === 0 ? (
@@ -280,24 +325,32 @@ const ChatModal = ({ open, onClose }) => {
                             overlap="circular"
                           >
                             <Avatar sx={{ bgcolor: 'primary.light' }}>
-                              {room.participantName?.[0]?.toUpperCase() || '?'}
+                              {room.roomName?.[0]?.toUpperCase() ||
+                               room.lecturerName?.[0]?.toUpperCase() || '?'}
                             </Avatar>
                           </Badge>
                         </ListItemAvatar>
                         <ListItemText
                           primary={
-                            <Typography variant="body2" sx={{ fontWeight: room.unreadCount > 0 ? 600 : 400 }}>
-                              {room.participantName}
-                            </Typography>
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: room.unreadCount > 0 ? 600 : 400 }}>
+                                {room.roomName}
+                              </Typography>
+                              {room.lecturerName && (
+                                <Typography variant="caption" color="text.secondary">
+                                  GV: {room.lecturerName}
+                                </Typography>
+                              )}
+                            </Box>
                           }
                           secondary={
                             <Typography variant="caption" color="text.secondary" noWrap>
-                              {room.lastMessage || 'Bắt đầu trò chuyện'}
+                              {room.lastMessage?.content || 'Bắt đầu trò chuyện'}
                             </Typography>
                           }
                         />
                         <Typography variant="caption" color="text.secondary">
-                          {room.lastMessageAt && formatLastMessageTime(room.lastMessageAt)}
+                          {room.lastMessage?.sentAt && formatLastMessageTime(room.lastMessage.sentAt)}
                         </Typography>
                       </ListItemButton>
                       <Divider variant="inset" component="li" />
@@ -308,7 +361,7 @@ const ChatModal = ({ open, onClose }) => {
             </Box>
           ) : (
             // Chat messages
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               {/* Back button */}
               <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider' }}>
                 <Chip
@@ -324,11 +377,13 @@ const ChatModal = ({ open, onClose }) => {
                 sx={{
                   flex: 1,
                   overflow: 'auto',
+                  overflowY: 'auto',
                   p: 2,
                   bgcolor: '#f5f5f5',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 1,
+                  minHeight: 0, // Important for flex scrolling
                 }}
               >
                 {isLoading ? (
@@ -343,10 +398,10 @@ const ChatModal = ({ open, onClose }) => {
                   </Box>
                 ) : (
                   messages.map((msg, index) => {
-                    const isMyMessage = msg.senderId === currentUser?.userId;
+                    const isMyMessage = msg.isCurrentUser;
                     return (
                       <Box
-                        key={msg.messageId || index}
+                        key={msg.chatMessageId || index}
                         sx={{
                           display: 'flex',
                           justifyContent: isMyMessage ? 'flex-end' : 'flex-start',
@@ -361,6 +416,12 @@ const ChatModal = ({ open, onClose }) => {
                             alignItems: isMyMessage ? 'flex-end' : 'flex-start',
                           }}
                         >
+                          {/* Hiển thị tên người gửi nếu không phải tin nhắn của mình */}
+                          {!isMyMessage && (
+                            <Typography variant="caption" color="text.secondary" sx={{ px: 1, mb: 0.5 }}>
+                              {msg.senderName} • {msg.senderRole}
+                            </Typography>
+                          )}
                           <Paper
                             elevation={1}
                             sx={{
@@ -372,13 +433,37 @@ const ChatModal = ({ open, onClose }) => {
                               borderTopLeftRadius: isMyMessage ? 2 : 0,
                             }}
                           >
+                            {/* Reply indicator */}
+                            {msg.replyToMessage && (
+                              <Box
+                                sx={{
+                                  mb: 1,
+                                  p: 1,
+                                  borderLeft: 3,
+                                  borderColor: isMyMessage ? 'rgba(255,255,255,0.3)' : 'primary.main',
+                                  bgcolor: isMyMessage ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                  borderRadius: 1,
+                                }}
+                              >
+                                <Typography variant="caption" sx={{ opacity: 0.8, display: 'block' }}>
+                                  {msg.replyToMessage.senderName}
+                                </Typography>
+                                <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                                  {msg.replyToMessage.content}
+                                </Typography>
+                              </Box>
+                            )}
                             <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
                               {msg.content}
                             </Typography>
+                            {msg.editedAt && (
+                              <Typography variant="caption" sx={{ opacity: 0.7, fontStyle: 'italic', display: 'block', mt: 0.5 }}>
+                                (đã chỉnh sửa)
+                              </Typography>
+                            )}
                           </Paper>
                           <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, px: 1 }}>
-                            {formatMessageTime(msg.timestamp)}
-                            {msg.isRead && isMyMessage && ' • Đã xem'}
+                            {formatMessageTime(msg.sentAt)}
                           </Typography>
                         </Box>
                       </Box>
@@ -390,7 +475,7 @@ const ChatModal = ({ open, onClose }) => {
 
               {/* Typing indicator */}
               {typingUsers.length > 0 && (
-                <Box sx={{ px: 2, py: 0.5, bgcolor: '#f5f5f5' }}>
+                <Box sx={{ px: 2, py: 0.5, bgcolor: '#f5f5f5', flexShrink: 0 }}>
                   <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
                     {typingUsers[0]} đang nhập...
                   </Typography>
@@ -398,11 +483,18 @@ const ChatModal = ({ open, onClose }) => {
               )}
 
               {/* Input */}
-              <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', bgcolor: 'white' }}>
+              <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', bgcolor: 'white', flexShrink: 0 }}>
+                {!isConnected && (
+                  <Box sx={{ mb: 1, p: 1, bgcolor: 'warning.light', borderRadius: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Đang kết nối real-time... Bạn có thể xem tin nhắn nhưng chưa thể gửi.
+                    </Typography>
+                  </Box>
+                )}
                 <TextField
                   fullWidth
                   size="small"
-                  placeholder="Nhập tin nhắn..."
+                  placeholder={isConnected ? "Nhập tin nhắn..." : "Đang kết nối..."}
                   value={inputMessage}
                   onChange={handleInputChange}
                   onKeyPress={handleKeyPress}

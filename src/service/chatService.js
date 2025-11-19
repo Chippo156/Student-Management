@@ -11,6 +11,20 @@ class ChatService {
   }
 
   /**
+   * Get real-time connection state
+   */
+  get connectionState() {
+    return this.connection?.state || signalR.HubConnectionState.Disconnected;
+  }
+
+  /**
+   * Check if really connected
+   */
+  get isReallyConnected() {
+    return this.connection?.state === signalR.HubConnectionState.Connected;
+  }
+
+  /**
    * Khởi tạo kết nối SignalR
    */
   async connect(token) {
@@ -20,11 +34,22 @@ class ChatService {
     }
 
     try {
+      const accessToken = localStorage.getItem('access_token') || token || localStorage.getItem('access_token');
+
+      if (!accessToken) {
+        console.warn('No access token available for SignalR connection');
+        this.isConnected = false;
+        return;
+      }
+
       this.connection = new signalR.HubConnectionBuilder()
         .withUrl(CHAT_HUB_URL, {
-          accessTokenFactory: () => token || localStorage.getItem('access_token'),
-          skipNegotiation: true,
-          transport: signalR.HttpTransportType.WebSockets,
+          // accessTokenFactory được gọi mỗi khi cần token
+          // Token sẽ được thêm vào query string: ?access_token=...
+          accessTokenFactory: () => accessToken,
+          // Cho phép negotiate trước để server quyết định transport tốt nhất
+          // skipNegotiation: true,
+          // transport: signalR.HttpTransportType.WebSockets,
         })
         .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
         .configureLogging(signalR.LogLevel.Information)
@@ -61,7 +86,8 @@ class ChatService {
     } catch (error) {
       console.error('Failed to connect to ChatHub:', error);
       this.isConnected = false;
-      throw error;
+      // Không throw error để không crash app, chỉ log
+      // throw error;
     }
   }
 
@@ -153,8 +179,10 @@ class ChatService {
       throw new Error('Not connected to ChatHub');
     }
     try {
-      await this.connection.invoke('JoinChatRoom', roomId);
-      console.log('Joined chat room:', roomId);
+      // Đảm bảo roomId là số nguyên
+      const chatRoomId = parseInt(roomId);
+      await this.connection.invoke('JoinChatRoom', chatRoomId);
+      console.log('Joined chat room:', chatRoomId);
     } catch (error) {
       console.error('Failed to join chat room:', error);
       throw error;
@@ -169,8 +197,10 @@ class ChatService {
       throw new Error('Not connected to ChatHub');
     }
     try {
-      await this.connection.invoke('LeaveChatRoom', roomId);
-      console.log('Left chat room:', roomId);
+      // Đảm bảo roomId là số nguyên
+      const chatRoomId = parseInt(roomId);
+      await this.connection.invoke('LeaveChatRoom', chatRoomId);
+      console.log('Left chat room:', chatRoomId);
     } catch (error) {
       console.error('Failed to leave chat room:', error);
       throw error;
@@ -181,16 +211,21 @@ class ChatService {
    * Gửi tin nhắn
    */
   async sendMessage(roomId, content, messageType = 1) {
-    if (!this.connection || !this.isConnected) {
-      throw new Error('Not connected to ChatHub');
+    // Kiểm tra cả connection state của SignalR
+    if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) {
+      const currentState = this.connection?.state || 'No connection';
+      console.error('Cannot send message. Connection state:', currentState);
+      throw new Error(`Not connected to ChatHub. State: ${currentState}`);
     }
     try {
+      // Đảm bảo roomId là số nguyên
+      const chatRoomId = parseInt(roomId);
       await this.connection.invoke('SendMessage', {
-        chatRoomId: roomId,
+        chatRoomId: chatRoomId,
         content: content,
         messageType: messageType,
       });
-      console.log('Message sent');
+      console.log('Message sent to room:', chatRoomId);
     } catch (error) {
       console.error('Failed to send message:', error);
       throw error;
@@ -205,7 +240,8 @@ class ChatService {
       return;
     }
     try {
-      await this.connection.invoke('StartTyping', roomId);
+      const chatRoomId = parseInt(roomId);
+      await this.connection.invoke('StartTyping', chatRoomId);
     } catch (error) {
       console.error('Failed to send typing indicator:', error);
     }
@@ -219,7 +255,8 @@ class ChatService {
       return;
     }
     try {
-      await this.connection.invoke('StopTyping', roomId);
+      const chatRoomId = parseInt(roomId);
+      await this.connection.invoke('StopTyping', chatRoomId);
     } catch (error) {
       console.error('Failed to stop typing indicator:', error);
     }
@@ -247,44 +284,46 @@ class ChatService {
 // REST API functions
 const chatApi = {
   /**
-   * Lấy danh sách chat rooms
+   * Lấy danh sách tất cả chat rooms của user hiện tại
    */
-  getChatRooms: async (pageNumber = 1, pageSize = 20) => {
+  getMyChatRooms: async () => {
     try {
-      const response = await axios.get('/api/v1/ChatRoom', {
-        params: { PageNumber: pageNumber, PageSize: pageSize },
-      });
-      return response.data;
+      const response = await axios.get('/api/v1/Chat/my-rooms');
+      return response;
     } catch (error) {
-      console.error('Failed to get chat rooms:', error);
+      console.error('Failed to get my chat rooms:', error);
       return null;
     }
   },
 
   /**
-   * Lấy hoặc tạo chat room giữa 2 users
+   * Lấy hoặc tạo chat room với giảng viên chủ nhiệm lớp
    */
-  getOrCreateChatRoom: async (participantId) => {
+  getClassTeacherRoom: async () => {
     try {
-      const response = await axios.post('/api/v1/ChatRoom/get-or-create', {
-        participantId,
-      });
-      return response.data;
+      const response = await axios.post('/api/v1/Chat/class-teacher');
+      return response;
     } catch (error) {
-      console.error('Failed to get or create chat room:', error);
+      console.error('Failed to get class teacher room:', error);
       return null;
     }
   },
 
   /**
-   * Lấy lịch sử tin nhắn
+   * Lấy lịch sử tin nhắn của một chat room
+   * @param {number} chatRoomId - ID của chat room
+   * @param {number} pageNumber - Trang hiện tại (mặc định 1)
+   * @param {number} pageSize - Số lượng tin nhắn mỗi trang (mặc định 20)
    */
-  getMessages: async (roomId, pageNumber = 1, pageSize = 50) => {
+  getMessages: async (chatRoomId, pageNumber = 1, pageSize = 20) => {
     try {
-      const response = await axios.get(`/api/v1/ChatRoom/${roomId}/messages`, {
-        params: { PageNumber: pageNumber, PageSize: pageSize },
+      const response = await axios.get(`/api/v1/Chat/${chatRoomId}/messages`, {
+        params: {
+          PageNumber: pageNumber,
+          PageSize: pageSize
+        },
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Failed to get messages:', error);
       return null;
@@ -296,11 +335,37 @@ const chatApi = {
    */
   markAsRead: async (roomId) => {
     try {
-      await axios.post(`/api/v1/ChatRoom/${roomId}/mark-read`);
+      await axios.post(`/api/v1/Chat/${roomId}/mark-read`);
       return true;
     } catch (error) {
       console.error('Failed to mark as read:', error);
       return false;
+    }
+  },
+
+  /**
+   * Legacy - Lấy danh sách chat rooms (giữ để tương thích ngược)
+   * @deprecated Use getMyChatRooms instead
+   */
+  getChatRooms: async (pageNumber = 1, pageSize = 20) => {
+    console.warn('getChatRooms is deprecated, use getMyChatRooms instead');
+    return chatApi.getMyChatRooms();
+  },
+
+  /**
+   * Legacy - Lấy hoặc tạo chat room giữa 2 users (giữ để tương thích ngược)
+   * @deprecated This endpoint may no longer be supported
+   */
+  getOrCreateChatRoom: async (participantId) => {
+    console.warn('getOrCreateChatRoom may be deprecated');
+    try {
+      const response = await axios.post('/api/v1/ChatRoom/get-or-create', {
+        participantId,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get or create chat room:', error);
+      return null;
     }
   },
 };

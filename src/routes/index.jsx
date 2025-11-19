@@ -18,7 +18,7 @@ import UserProfiles from '../page/Admin/UserManagement/UserProfiles';
 import StudentProfiles from '../page/Admin/StudentManagement/StudentProfiles';
 import AdminStudentInfo from '../page/Admin/StudentManagement/StudentInfo';
 import Classes from '../page/Admin/EducationManagement/Classes';
-import TuitionList from '../page/Admin/TuitionManagement/TuitionList';
+import TuitionFees from '../page/Admin/TuitionManagement/TuitionFees';
 import SendNotifications from '../page/Admin/SendNotifications';
 import Curriculum from '../page/Admin/EducationManagement/Curriculum';
 import Sections from '../page/Admin/EducationManagement/Sections';
@@ -183,7 +183,7 @@ const AppRoutes = () => {
           />
 
           {/* Quản lý Học phí */}
-          <Route path="tuition-list" element={<TuitionList />} />
+          <Route path="tuition-list" element={<TuitionFees />} />
           <Route
             path="payments"
             element={<div>Thanh toán - Coming Soon</div>}
