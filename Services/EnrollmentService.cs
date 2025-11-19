@@ -373,20 +373,20 @@ namespace StudentManagement.Services
                     rp.Semester.SemesterId == section.Semester.SemesterId &&
                     rp.Department.DepartmentId == student.Class.Program.Department.DepartmentId);
 
-            if (registrationPeriod == null || !registrationPeriod.IsActive)
-            {
-                errors.Add("Đăng ký thất bại, khung thời gian đăng ký đã hết hiệu lực");
-            }
+            //if (registrationPeriod == null || !registrationPeriod.IsActive)
+            //{
+            //    errors.Add("Đăng ký thất bại, khung thời gian đăng ký đã hết hiệu lực");
+            //}
 
             var today = DateOnly.FromDateTime(DateTime.Now);
 
             // Không cho đăng ký sau 7 ngày kể từ ngày bắt đầu học kỳ
             var deadline = section.StartDate.AddDays(7);
 
-            if (today > deadline)
-            {
-                errors.Add("Không thể đăng ký học phần sau khi học kỳ đã bắt đầu hơn 1 tuần");
-            }
+            //if (today > deadline)
+            //{
+            //    errors.Add("Không thể đăng ký học phần sau khi học kỳ đã bắt đầu hơn 1 tuần");
+            //}
 
 
             // Check prerequisites
@@ -492,7 +492,7 @@ namespace StudentManagement.Services
                     EndDate = section.EndDate,
                     RegistrationStatus = GetEnrollmentStatusInVietnamese(enrollment.enrollmentStatus),
                     RegistrationDate = enrollment.RegisteredAt,
-                    SectionStatus = GetSectionStatusInVietnamese(section),
+                    SectionStatus = GetSectionStatusInVietnamese(section.Status),
                     
                     // Additional information
                     LecturerName = section.Lecturer?.User?.FullName ?? "Not Assigned",
@@ -799,14 +799,15 @@ namespace StudentManagement.Services
             };
         }
 
-        private string GetSectionStatusInVietnamese(Section section)
+        private static string GetSectionStatusInVietnamese(SectionStatus status)
         {
-            if (section.EnrolledCount >= section.Capacity)
-                return "Full";
-            else if (section.EnrolledCount > 0)
-                return "Available";
-            else
-                return "New";
+            return status switch
+            {
+                SectionStatus.IsOpening => "Đang mở",
+                SectionStatus.IsPreparing => "Đang chuẩn bị",
+                SectionStatus.IsClosed => "Đã đóng",
+                _ => "Không xác định"
+            };
         }
 
         private string GetExpectedClassInfo(Section section)

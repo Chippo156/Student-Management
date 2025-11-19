@@ -5,6 +5,8 @@ using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
+using System.Collections.Generic;
+using System.Runtime.ConstrainedExecution;
 
 namespace StudentManagement.Services
 {
@@ -51,13 +53,6 @@ namespace StudentManagement.Services
                 if (existingSemester == null)
                 {
                     throw new Exception("Semester not found");
-                }
-
-                // Check if semester is not too far in the past (optional business rule)
-                var currentDate = DateOnly.FromDateTime(DateTime.Now);
-                if (existingSemester.EndDate < currentDate.AddDays(-30)) // Allow 30 days grace period
-                {
-                    throw new Exception("Cannot create section for semester that ended more than 30 days ago");
                 }
 
                 // Validate Class exists
@@ -133,15 +128,123 @@ namespace StudentManagement.Services
                 context.Sections.Add(newSection);
                 await context.SaveChangesAsync();
 
+                // Tự động tạo cột điểm dựa trên tín chỉ thực hành
+                await CreateDefaultAssessmentsAsync(newSection, curriculumCourse.Course);
+
                 await transaction.CommitAsync();
                 return newSection;
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-
                 throw;
             }
+        }
+
+        // Helper method để tạo các cột điểm mặc định
+        private async Task CreateDefaultAssessmentsAsync(Section section, Course course)
+        {
+            var assessments = new List<Assessment>();
+            List<AssessmentType> assessment = await context.AssessmentTypes.ToListAsync();
+
+            // Kiểm tra xem môn học có tín chỉ thực hành không
+            bool hasLabCredits = course.CreditsLab > 0;
+
+            if (hasLabCredits)
+            {
+                // Môn có thực hành: 2 cột lý thuyết + 2 cột thực hành + 1 giữa kỳ + 1 cuối kỳ
+                assessments.AddRange(new[]
+                {
+            new Assessment
+            {
+                Section = section,
+                Title = "Thường kỳ 1",
+                Weight = 10,
+                AssessmentType = assessment.Find(e => e.AssessmentTypeId == 1),
+            },
+            new Assessment
+            {
+                Section = section,
+                Title = "Thường kỳ 2",
+                Weight = 10,
+                AssessmentType = assessment.Find(e => e.AssessmentTypeId == 1),
+            },
+            new Assessment
+            {
+                Section = section,
+                Title = "Thực hành 1",
+                Weight = 15,
+                AssessmentType = assessment.Find(e => e.AssessmentTypeId == 2),
+            },
+            new Assessment
+            {
+                Section = section,
+                Title = "Thực hành 2",
+                Weight = 15,
+                AssessmentType = assessment.Find(e => e.AssessmentTypeId == 2),
+            },
+            new Assessment
+            {
+                Section = section,
+                Title = "Giữa kỳ",
+                Weight = 25,
+                AssessmentType = assessment.Find(e => e.AssessmentTypeId == 3),
+            },
+            new Assessment
+            {
+                Section = section,
+                Title = "Cuối kỳ",
+                Weight = 25,
+                AssessmentType = assessment.Find(e => e.AssessmentTypeId == 4),
+            }
+        });
+            }
+            else
+            {
+                // Môn không có thực hành: 3 cột lý thuyết + 1 giữa kỳ + 1 cuối kỳ
+                assessments.AddRange(new[]
+                {
+            new Assessment
+            {
+                Section = section,
+                Title = "Thường kỳ 1",
+                Weight = 15,
+                AssessmentType = assessment.Find(e => e.AssessmentTypeId == 1),
+            },
+            new Assessment
+            {
+                Section = section,
+                Title = "Thường kỳ 2",
+                Weight = 15,
+                AssessmentType = assessment.Find(e => e.AssessmentTypeId == 1),
+            },
+            new Assessment
+            {
+                Section = section,
+                Title = "Thường kỳ 3",
+                Weight = 10,
+                AssessmentType = assessment.Find(e => e.AssessmentTypeId == 1),
+            },
+            new Assessment
+            {
+                Section = section,
+                Title = "Giữa kỳ",
+                Weight = 30,
+                AssessmentType = assessment.Find(e => e.AssessmentTypeId == 3),
+            },
+            new Assessment
+            {
+                Section = section,
+                Title = "Cuối kỳ",
+                Weight = 30,
+                AssessmentType = assessment.Find(e => e.AssessmentTypeId == 4),
+            }
+        });
+            }
+
+            // Thêm tất cả assessments vào database
+            context.Assessment.AddRange(assessments);
+            await context.SaveChangesAsync();
         }
 
         // Helper method to generate unique section code

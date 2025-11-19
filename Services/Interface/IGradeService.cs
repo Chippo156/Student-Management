@@ -17,5 +17,6 @@ namespace StudentManagement.Services.Interface
         Task<StudentAllGradesResponse> GetAllStudentGradesByMSSVAsync(string mssv);
         Task<SectionAllStudentsGradesResponse> GetAllGradesByStudentAndSectionAsync(int sectionId);
         Task<BulkGradeResponse> CreateBulkGradesAsync(BulkGradeRequest request);
+        Task<bool> updateGradeAuto(int studentId);
     }
 }

@@ -4,6 +4,7 @@ using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
+using static System.Collections.Specialized.BitVector32;
 
 namespace StudentManagement.Services
 {
@@ -46,10 +47,8 @@ namespace StudentManagement.Services
                 SectionId = request.SectionId,
                 Section = section
             };
-
             context.PracticeGroups.Add(practiceGroup);
             await context.SaveChangesAsync();
-
             PracticeScheduleRequest practiceScheduleRequest = new PracticeScheduleRequest
             {
                 PracticeGroupId = practiceGroup.PracticeGroupId,
@@ -63,7 +62,6 @@ namespace StudentManagement.Services
             };
 
             await AddPracticeScheduleAsync(practiceScheduleRequest);
-
             return practiceGroup;
         }
 
@@ -200,6 +198,7 @@ namespace StudentManagement.Services
 
             // Kiểm tra xung đột lịch (có thể sử dụng lại logic từ ScheduleService)
             var hasConflicts = await CheckPracticeScheduleConflictsAsync(
+                practiceGroup.SectionId,
                 request.PracticeGroupId,
                 request.Date,
                 request.DayOfWeek,
@@ -327,19 +326,86 @@ namespace StudentManagement.Services
         }
 
         // Helper methods
-        private async Task<bool> CheckPracticeScheduleConflictsAsync(int practiceGroupId, DateOnly? dateEvent, DayOfWeek? dayOfWeek, TimeOnly startTime, TimeOnly endTime, string room)
+        // Helper methods
+        private async Task<bool> CheckPracticeScheduleConflictsAsync(int sectionId, int practiceGroupId, DateOnly? dateEvent, DayOfWeek? dayOfWeek, TimeOnly startTime, TimeOnly endTime, string room)
         {
-            var conflicts = await context.Schedules
-                .Where(s => s.DayOfWeek == dayOfWeek &&
-                            s.Date == dateEvent && 
+            // 1. Lấy SemesterId của Section hiện tại
+            var currentSection = await context.Sections
+                .Include(s => s.Semester)
+                .Where(s => s.SectionId == sectionId)
+                .Select(s => new { s.Semester.SemesterId }) // Chỉ lấy trường cần thiết
+                .FirstOrDefaultAsync();
+
+            if (currentSection == null)
+            {
+                return false;
+            }
+
+            var targetSemesterId = currentSection.SemesterId;
+
+            // 2. Check conflict với lịch lý thuyết (main schedules) trong cùng Semester
+            var mainScheduleConflicts = await context.Schedules
+                .Include(s => s.Section) // Cần Include bảng Section để truy cập SemesterId
+                  .ThenInclude(s => s.Semester)
+                .Where(s => s.Section.Semester.SemesterId == targetSemesterId && // <--- CHỈ CHECK TRONG CÙNG SEMESTER
+                            s.DayOfWeek == dayOfWeek &&
+                            s.Date == dateEvent &&
                             s.Room == room &&
-                            s.PracticeGroupId != practiceGroupId &&
+                            !s.PracticeGroupId.HasValue && // Lịch lý thuyết (không phải lịch thực hành)
+                            s.ScheduleType.ScheduleTypeId != 3 && // Không phải lịch thi
                             ((s.StartTime <= startTime && s.EndTime > startTime) ||
                              (s.StartTime < endTime && s.EndTime >= endTime) ||
                              (s.StartTime >= startTime && s.EndTime <= endTime)))
                 .AnyAsync();
 
-            return conflicts;
+            if (mainScheduleConflicts)
+            {
+                return true; // Conflict với lịch lý thuyết
+            }
+
+            // 3. Check conflict với các lịch thực hành khác (practice group schedules) trong cùng Semester
+            var practiceScheduleConflicts = await context.Schedules
+                .Include(s => s.Section) // Cần Include bảng Section để truy cập SemesterId
+                  .ThenInclude(s => s.Semester)
+                .Where(s => s.Section.Semester.SemesterId == targetSemesterId && // <--- CHỈ CHECK TRONG CÙNG SEMESTER
+                            s.DayOfWeek == dayOfWeek &&
+                            s.Date == dateEvent &&
+                            s.Room == room &&
+                            s.PracticeGroupId.HasValue && // Lịch thực hành
+                            s.PracticeGroupId != practiceGroupId && // Tránh conflict với chính nó (nếu update) & các nhóm khác
+                            s.ScheduleType.ScheduleTypeId != 3 && // Không phải lịch thi
+                            ((s.StartTime <= startTime && s.EndTime > startTime) ||
+                             (s.StartTime < endTime && s.EndTime >= endTime) ||
+                             (s.StartTime >= startTime && s.EndTime <= endTime)))
+                .AnyAsync();
+
+            if (practiceScheduleConflicts)
+            {
+                return true; // Conflict với lịch thực hành khác
+            }
+
+            // 4. Check conflict với lịch thi trong cùng Semester (nếu có date cụ thể)
+            if (dateEvent.HasValue)
+            {
+                var examScheduleConflicts = await context.Schedules
+                    .Include(s => s.Section)
+                      .ThenInclude(s => s.Semester)
+                    .Where(s => s.Section.Semester.SemesterId == targetSemesterId &&
+                                s.Date == dateEvent &&
+                                s.Room == room &&
+                                s.ScheduleType.ScheduleTypeId == 3 && // Lịch thi
+                                ((s.StartTime <= startTime && s.EndTime > startTime) ||
+                                 (s.StartTime < endTime && s.EndTime >= endTime) ||
+                                 (s.StartTime >= startTime && s.EndTime <= endTime)))
+                    .AnyAsync();
+
+                if (examScheduleConflicts)
+                {
+                    return true; // Conflict với lịch thi
+                }
+            }
+
+            return false; // Không có conflict
         }
 
         private static PracticeGroupResponse MapToPracticeGroupResponse(PracticeGroup practiceGroup)

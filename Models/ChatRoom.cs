@@ -1,24 +1,47 @@
-using StudentManagement.Enum;
+﻿using StudentManagement.Enum;
 using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 
 namespace StudentManagement.Models
 {
     public class ChatRoom
     {
+        [Key]
         public int ChatRoomId { get; set; }
-        public int SectionId { get; set; }
-        public Section Section { get; set; } = null!;
         
+        // Không còn liên kết với Section
+        // public int SectionId { get; set; }
+        // [JsonIgnore]
+        // public Section Section { get; set; } = null!;
+        
+        // Thêm các trường mới
+        public ChatType ChatType { get; set; }
+        
+        // Liên kết với Class (cho chat với chủ nhiệm)
+        public int? ClassId { get; set; }
+        [JsonIgnore]
+        public Class? Class { get; set; }
+        
+        // Liên kết với Department (cho chat với học vụ)
+        public int? DepartmentId { get; set; }
+        [JsonIgnore]
+        public Department? Department { get; set; }
+        
+        [Required]
+        [StringLength(200)]
         public string RoomName { get; set; } = string.Empty;
+        
+        [StringLength(500)]
         public string? Description { get; set; }
         
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
-        // Chat messages in this room
+        // Navigation properties
+        [JsonIgnore]
         public ICollection<ChatMessage> Messages { get; set; } = new List<ChatMessage>();
         
-        // Room participants
+        [JsonIgnore]
         public ICollection<ChatRoomParticipant> Participants { get; set; } = new List<ChatRoomParticipant>();
     }
 

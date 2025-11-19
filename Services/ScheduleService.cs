@@ -12,16 +12,35 @@ namespace StudentManagement.Services
     {
         public async Task<bool> CheckScheduleConflictsAsync(int sectionId, DateOnly? dateEvent, DayOfWeek? dayOfWeek, TimeOnly startTime, TimeOnly endTime, string room)
         {
-            // Check for room conflicts at the same time with main schedules (theory schedules)
+            // BƯỚC 1: Lấy SemesterId của section hiện tại
+            var currentSection = await context.Sections
+                .Include(s => s.Semester)
+                .Where(s => s.SectionId == sectionId)
+                .Select(s => new { s.Semester.SemesterId }) // Chỉ lấy trường cần thiết
+                .FirstOrDefaultAsync();
+
+            if (currentSection == null)
+            {
+                // Xử lý trường hợp không tìm thấy section
+                return false;
+            }
+
+            var targetSemesterId = currentSection.SemesterId;
+
+            // BƯỚC 2: Check for conflicts với main schedules (theory schedules)
             var mainScheduleConflicts = await context.Schedules
-                .Where(s => s.DayOfWeek == dayOfWeek &&
+                .Include(s => s.Section) // Cần Include bảng Section để truy cập SemesterId
+                  .ThenInclude(s => s.Semester)
+                .Where(s => s.Section.Semester.SemesterId == targetSemesterId && // <--- CHỈ CHECK TRONG CÙNG SEMESTER
+                            s.DayOfWeek == dayOfWeek &&
                             s.Date == dateEvent &&
-                           s.Room == room &&
-                           s.Section.SectionId != sectionId &&
-                           !s.PracticeGroupId.HasValue && // Only main/theory schedules
-                           ((s.StartTime <= startTime && s.EndTime > startTime) ||
-                            (s.StartTime < endTime && s.EndTime >= endTime) ||
-                            (s.StartTime >= startTime && s.EndTime <= endTime)))
+                            s.Room == room &&
+                            s.Section.SectionId != sectionId &&
+                            !s.PracticeGroupId.HasValue &&
+                            s.ScheduleType.ScheduleTypeId != 3 && // Không phải lịch thi
+                            ((s.StartTime <= startTime && s.EndTime > startTime) ||
+                             (s.StartTime < endTime && s.EndTime >= endTime) ||
+                             (s.StartTime >= startTime && s.EndTime <= endTime)))
                 .AnyAsync();
 
             if (mainScheduleConflicts)
@@ -29,18 +48,48 @@ namespace StudentManagement.Services
                 return true;
             }
 
-            // Check for room conflicts with practice group schedules
+            // BƯỚC 3: Check for conflicts với practice group schedules
             var practiceScheduleConflicts = await context.Schedules
-                .Where(s => s.DayOfWeek == dayOfWeek &&
+                .Include(s => s.Section) // Cần Include bảng Section để truy cập SemesterId
+                  .ThenInclude(s => s.Semester)
+                .Where(s => s.Section.Semester.SemesterId == targetSemesterId && // <--- CHỈ CHECK TRONG CÙNG SEMESTER
+                            s.DayOfWeek == dayOfWeek &&
                             s.Date == dateEvent &&
-                           s.Room == room &&
-                           s.PracticeGroupId.HasValue && // Only practice group schedules
-                           ((s.StartTime <= startTime && s.EndTime > startTime) ||
-                            (s.StartTime < endTime && s.EndTime >= endTime) ||
-                            (s.StartTime >= startTime && s.EndTime <= endTime)))
+                            s.Room == room &&
+                            s.PracticeGroupId.HasValue &&
+                            s.ScheduleType.ScheduleTypeId != 3 && // Không phải lịch thi
+                            ((s.StartTime <= startTime && s.EndTime > startTime) ||
+                             (s.StartTime < endTime && s.EndTime >= endTime) ||
+                             (s.StartTime >= startTime && s.EndTime <= endTime)))
                 .AnyAsync();
 
-            return practiceScheduleConflicts;
+            if (practiceScheduleConflicts)
+            {
+                return true;
+            }
+
+            // BƯỚC 4: Check for conflicts với exam schedules (nếu có date cụ thể)
+            if (dateEvent.HasValue)
+            {
+                var examScheduleConflicts = await context.Schedules
+                    .Include(s => s.Section)
+                      .ThenInclude(s => s.Semester)
+                    .Where(s => s.Section.Semester.SemesterId == targetSemesterId &&
+                                s.Date == dateEvent &&
+                                s.Room == room &&
+                                s.ScheduleType.ScheduleTypeId == 3 && // Lịch thi
+                                ((s.StartTime <= startTime && s.EndTime > startTime) ||
+                                 (s.StartTime < endTime && s.EndTime >= endTime) ||
+                                 (s.StartTime >= startTime && s.EndTime <= endTime)))
+                    .AnyAsync();
+
+                if (examScheduleConflicts)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public async Task<CountSchedule> countSchedule(string mssv)
@@ -388,7 +437,7 @@ namespace StudentManagement.Services
             // Lấy các nhóm thực hành mà sinh viên đã đăng ký
             var studentPracticeGroups = await context.PracticeGroupEnrollments
                 .Include(pge => pge.PracticeGroup)
-                .Where(pge => pge.StudentId == student.Id && 
+                .Where(pge => pge.StudentId == student.Id &&
                              pge.IsActive &&
                              studentSections.Contains(pge.PracticeGroup.SectionId))
                 .Select(pge => pge.PracticeGroupId)
@@ -397,7 +446,7 @@ namespace StudentManagement.Services
             if (scheduleTypeId == 0)
             {
                 // Nếu không truyền scheduleTypeId, lấy tất cả các loại lịch
-                
+
                 // Lấy lịch học chính (không phải lịch thi và không phải lịch thực hành)
                 var regularSchedules = await context.Schedules
                     .Where(s =>
@@ -442,8 +491,12 @@ namespace StudentManagement.Services
                         .ThenInclude(l => l.User)
                     .ToListAsync();
 
-                // Kết hợp tất cả lịch
-                return regularSchedules.Concat(practiceSchedules).Concat(examSchedules);
+                // Filter schedules based on actual occurrence in the current week
+                var filteredRegularSchedules = FilterSchedulesByWeekOccurrence(regularSchedules, weekStart, weekEnd);
+                var filteredPracticeSchedules = FilterSchedulesByWeekOccurrence(practiceSchedules, weekStart, weekEnd);
+
+                // Kết hợp tất cả lịch (exam schedules đã được filter theo date)
+                return filteredRegularSchedules.Concat(filteredPracticeSchedules).Concat(examSchedules);
             }
             else if (scheduleTypeId == 3) // Lịch thi
             {
@@ -493,8 +546,52 @@ namespace StudentManagement.Services
                     .Include(s => s.PracticeGroup)
                     .ToListAsync();
 
-                return regularSchedules.Concat(practiceSchedules);
+                // Filter schedules based on actual occurrence in the current week
+                var filteredRegularSchedules = FilterSchedulesByWeekOccurrence(regularSchedules, weekStart, weekEnd);
+                var filteredPracticeSchedules = FilterSchedulesByWeekOccurrence(practiceSchedules, weekStart, weekEnd);
+
+                return filteredRegularSchedules.Concat(filteredPracticeSchedules);
             }
+        }
+
+        // Helper method để kiểm tra lịch có thực sự diễn ra trong tuần đang xét không
+        private List<Schedule> FilterSchedulesByWeekOccurrence(List<Schedule> schedules, DateOnly weekStart, DateOnly weekEnd)
+        {
+            var filteredSchedules = new List<Schedule>();
+
+            foreach (var schedule in schedules)
+            {
+                // Nếu có ngày cụ thể, kiểm tra ngày đó có trong tuần không
+                if (schedule.Date.HasValue)
+                {
+                    if (schedule.Date >= weekStart && schedule.Date <= weekEnd &&
+                        schedule.Date >= schedule.Section.StartDate && schedule.Date <= schedule.Section.EndDate)
+                    {
+                        filteredSchedules.Add(schedule);
+                    }
+                    continue;
+                }
+
+                // Nếu có DayOfWeek (lịch định kỳ), kiểm tra ngày đó trong tuần có nằm trong thời gian section không
+                if (schedule.DayOfWeek.HasValue)
+                {
+                    // Tính ngày cụ thể của DayOfWeek trong tuần đang xét
+                    var targetDayOfWeek = schedule.DayOfWeek.Value;
+                    var daysDifference = ((int)targetDayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+                    var actualDateInWeek = weekStart.AddDays(daysDifference);
+
+                    // Kiểm tra ngày đó có nằm trong khoảng thời gian của section không
+                    if (actualDateInWeek >= schedule.Section.StartDate &&
+                        actualDateInWeek <= schedule.Section.EndDate &&
+                        actualDateInWeek >= weekStart &&
+                        actualDateInWeek <= weekEnd)
+                    {
+                        filteredSchedules.Add(schedule);
+                    }
+                }
+            }
+
+            return filteredSchedules;
         }
 
         public async Task<IEnumerable<Schedule>> GetSchedulesByDateAndLecturerAsync(DateOnly date, string lecturerCode, int scheduleTypeId)
@@ -540,8 +637,6 @@ namespace StudentManagement.Services
 
             if (scheduleTypeId == 0)
             {
-                // Nếu không truyền scheduleTypeId, lấy tất cả các loại lịch
-
                 // Lấy lịch giảng dạy chính (không phải lịch thi và không phải lịch thực hành)
                 var regularSchedules = await context.Schedules
                     .Where(s =>
@@ -589,8 +684,12 @@ namespace StudentManagement.Services
                     .Include(s => s.Section.Class)
                     .ToListAsync();
 
+                // Filter schedules based on actual occurrence in the current week
+                var filteredRegularSchedules = FilterSchedulesByWeekOccurrence(regularSchedules, weekStart, weekEnd);
+                var filteredPracticeSchedules = FilterSchedulesByWeekOccurrence(practiceSchedules, weekStart, weekEnd);
+
                 // Kết hợp tất cả lịch
-                return regularSchedules.Concat(practiceSchedules).Concat(examSchedules);
+                return filteredRegularSchedules.Concat(filteredPracticeSchedules).Concat(examSchedules);
             }
             else if (scheduleTypeId == 3) // Lịch thi
             {
@@ -643,7 +742,11 @@ namespace StudentManagement.Services
                     .Include(s => s.PracticeGroup)
                     .ToListAsync();
 
-                return regularSchedules.Concat(practiceSchedules);
+                // Filter schedules based on actual occurrence in the current week
+                var filteredRegularSchedules = FilterSchedulesByWeekOccurrence(regularSchedules, weekStart, weekEnd);
+                var filteredPracticeSchedules = FilterSchedulesByWeekOccurrence(practiceSchedules, weekStart, weekEnd);
+
+                return filteredRegularSchedules.Concat(filteredPracticeSchedules);
             }
         }
 

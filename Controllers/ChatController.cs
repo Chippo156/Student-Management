@@ -8,52 +8,24 @@ using System.Security.Claims;
 
 namespace StudentManagement.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     [Authorize]
-    public class ChatController : ControllerBase
+    public class ChatController(IChatService chatService) : ControllerBase
     {
-        private readonly IChatService _chatService;
-
-        public ChatController(IChatService chatService)
-        {
-            _chatService = chatService;
-        }
-
-        [HttpGet("GetMyChatRooms")]
-        public async Task<IActionResult> GetMyChatRooms()
+        [HttpPost("class-teacher")]
+        public async Task<IActionResult> GetOrCreateChatWithClassTeacher()
         {
             try
             {
                 var username = User.FindFirstValue(ClaimTypes.Name);
-                if (username == null)
+                if (string.IsNullOrEmpty(username))
                 {
-                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid user in token.", null));
+                    return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "Invalid user", null));
                 }
 
-                var chatRooms = await _chatService.GetUserChatRoomsAsync(username);
-                return Ok(ApiResponse.SuccessResponse(chatRooms, "Chat rooms retrieved successfully"));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
-                    "An error occurred while retrieving chat rooms", new List<string> { ex.Message }));
-            }
-        }
-
-        [HttpPost("JoinSectionChat/{sectionId}")]
-        public async Task<IActionResult> JoinSectionChat(int sectionId)
-        {
-            try
-            {
-                var username = User.FindFirstValue(ClaimTypes.Name);
-                if (username == null)
-                {
-                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid user in token.", null));
-                }
-
-                var chatRoom = await _chatService.GetOrCreateChatRoomForSectionAsync(sectionId, username);
-                return Ok(ApiResponse.SuccessResponse(chatRoom, "Joined chat room successfully"));
+                var chatRoom = await chatService.GetOrCreateChatRoomWithClassTeacherAsync(username);
+                return Ok(ApiResponse.SuccessResponse(chatRoom, "Chat room with class teacher retrieved successfully"));
             }
             catch (Exception ex)
             {
@@ -61,20 +33,62 @@ namespace StudentManagement.Controllers
             }
         }
 
-        [HttpGet("GetMessages/{chatRoomId}")]
-        public async Task<IActionResult> GetChatMessages(
-            int chatRoomId,
-            [FromQuery] PaginationParams pagination)
+        [HttpPost("academic-staff")]
+        public async Task<IActionResult> GetOrCreateChatWithAcademicStaff()
         {
             try
             {
                 var username = User.FindFirstValue(ClaimTypes.Name);
-                if (username == null)
+                if (string.IsNullOrEmpty(username))
                 {
-                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid user in token.", null));
+                    return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "Invalid user", null));
                 }
 
-                var messages = await _chatService.GetChatMessagesAsync(chatRoomId, username, pagination);
+                var chatRoom = await chatService.GetOrCreateChatRoomWithAcademicStaffAsync(username);
+                return Ok(ApiResponse.SuccessResponse(chatRoom, "Chat room with academic staff retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+
+        [HttpPost("send-message")]
+        public async Task<IActionResult> SendMessage([FromBody] SendMessageRequest request)
+        {
+            try
+            {
+                var username = User.FindFirstValue(ClaimTypes.Name);
+                if (string.IsNullOrEmpty(username))
+                {
+                    return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "Invalid user", null));
+                }
+
+                var message = await chatService.SendMessageAsync(request, username);
+                return Ok(ApiResponse.SuccessResponse(message, "Message sent successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+
+        [HttpGet("{chatRoomId}/messages")]
+        public async Task<IActionResult> GetMessages(
+            int chatRoomId,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            try
+            {
+                var username = User.FindFirstValue(ClaimTypes.Name);
+                if (string.IsNullOrEmpty(username))
+                {
+                    return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "Invalid user", null));
+                }
+
+                var pagination = new PaginationParams { PageNumber = pageNumber, PageSize = pageSize };
+                var messages = await chatService.GetChatMessagesAsync(chatRoomId, username, pagination);
                 return Ok(ApiResponse.SuccessResponse(messages, "Messages retrieved successfully"));
             }
             catch (Exception ex)
@@ -83,19 +97,39 @@ namespace StudentManagement.Controllers
             }
         }
 
-        [HttpPost("SendMessage")]
-        public async Task<IActionResult> SendMessage([FromBody] SendMessageRequest request)
+        [HttpGet("my-rooms")]
+        public async Task<IActionResult> GetMyChatRooms()
         {
             try
             {
                 var username = User.FindFirstValue(ClaimTypes.Name);
-                if (username == null)
+                if (string.IsNullOrEmpty(username))
                 {
-                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid user in token.", null));
+                    return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "Invalid user", null));
                 }
 
-                var message = await _chatService.SendMessageAsync(request, username);
-                return Ok(ApiResponse.SuccessResponse(message, "Message sent successfully"));
+                var rooms = await chatService.GetUserChatRoomsAsync(username);
+                return Ok(ApiResponse.SuccessResponse(rooms, "Chat rooms retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+
+        [HttpPost("{chatRoomId}/mark-read")]
+        public async Task<IActionResult> MarkAsRead(int chatRoomId)
+        {
+            try
+            {
+                var username = User.FindFirstValue(ClaimTypes.Name);
+                if (string.IsNullOrEmpty(username))
+                {
+                    return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "Invalid user", null));
+                }
+
+                await chatService.UpdateLastSeenAsync(username, chatRoomId);
+                return Ok(ApiResponse.SuccessResponse(null, "Messages marked as read"));
             }
             catch (Exception ex)
             {

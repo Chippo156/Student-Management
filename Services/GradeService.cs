@@ -1009,5 +1009,25 @@ namespace StudentManagement.Services
             return (gradeLetter, gradePoint);
         }
 
+        public Task<bool> updateGradeAuto(int studentId)
+        {
+            var grades = context.Grades
+                .Include(g => g.Student)
+                .Include(g => g.Assessment)
+                    .ThenInclude(a => a.AssessmentType)
+              .Include(g => g.Assessment)
+                    .ThenInclude(a => a.Section)
+                      .ThenInclude(g => g.Semester)
+                .Where(g => g.Student.Id == studentId && g.Assessment.AssessmentType.AssessmentTypeId == 4)
+                .ToList();
+
+            foreach (var grade in grades)
+                {
+                UpdateFinalResultAsync(grade.Student.Id, grade.Assessment.Section.SectionId).Wait();
+                UpdateGpaSnapshotAsync(grade.Student.Id, grade.Assessment.Section.Semester.SemesterId).Wait();
+            }
+            return Task.FromResult(true);
+
+        }
     }
 }

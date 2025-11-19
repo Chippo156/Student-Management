@@ -17,55 +17,116 @@ namespace StudentManagement.Services
             _context = context;
         }
 
-        public async Task<ChatRoomResponse> GetOrCreateChatRoomForSectionAsync(int sectionId, string username)
+        public async Task<ChatRoomResponse> GetOrCreateChatRoomWithClassTeacherAsync(string studentUsername)
         {
-            // Check if chat room already exists for this section
+            // Lấy thông tin sinh viên
+            var student = await _context.Students
+                .Include(s => s.User)
+                .Include(s => s.Class)
+                    .ThenInclude(c => c.Program)
+                        .ThenInclude(p => p.Department)
+                .FirstOrDefaultAsync(s => s.User.Username == studentUsername)
+                ?? throw new Exception("Student not found");
+
+            // Lấy thông tin giảng viên chủ nhiệm
+            var classTeacher = await _context.AdviserAssignments
+                .Include(aa => aa.Lecturer)
+                    .ThenInclude(l => l.User)
+                .Where(aa => aa.ClassId == student.Class.ClassId && aa.IsActive)
+                .FirstOrDefaultAsync()
+                ?? throw new Exception("Class teacher not found");
+
+             
+
+            // Tìm room đã tồn tại
             var existingRoom = await _context.ChatRooms
-                .Include(cr => cr.Section)
-                    .ThenInclude(s => s.CurriculumCourse)
-                        .ThenInclude(cc => cc.Course)
-                .Include(cr => cr.Section)
-                    .ThenInclude(s => s.Lecturer)
-                        .ThenInclude(l => l.User)
-                .FirstOrDefaultAsync(cr => cr.SectionId == sectionId);
+                .Include(cr => cr.Class)
+                .FirstOrDefaultAsync(cr => cr.ChatType == ChatType.ClassTeacher &&
+                                          cr.ClassId == student.Class.ClassId);
 
             if (existingRoom != null)
             {
-                // Add user as participant if not already
-                await EnsureUserIsParticipantAsync(existingRoom.ChatRoomId, username);
-                return await MapToChatRoomResponseAsync(existingRoom, username);
+                // Ensure user is participant
+                await EnsureUserIsParticipantAsync(existingRoom.ChatRoomId, studentUsername);
+                return await MapToChatRoomResponseAsync(existingRoom, studentUsername);
             }
 
-            // Create new chat room
-            var section = await _context.Sections
-                .Include(s => s.CurriculumCourse)
-                    .ThenInclude(cc => cc.Course)
-                .Include(s => s.Lecturer)
-                    .ThenInclude(l => l.User)
-                .FirstOrDefaultAsync(s => s.SectionId == sectionId)
-                ?? throw new Exception("Section not found");
-
+            // Tạo room mới
             var chatRoom = new ChatRoom
             {
-                SectionId = sectionId,
-                Section = section,
-                RoomName = $"{section.CurriculumCourse.Course.CourseCode} - {section.SectionCode}",
-                Description = $"Chat room for {section.CurriculumCourse.Course.CourseName}"
+                ChatType = ChatType.ClassTeacher,
+                ClassId = student.Class.ClassId,
+                Class = student.Class,
+                RoomName = $"Lớp {student.Class.ClassName} - GV Chủ nhiệm",
+                Description = $"Chat với giảng viên chủ nhiệm lớp {student.Class.ClassName}"
             };
 
             _context.ChatRooms.Add(chatRoom);
             await _context.SaveChangesAsync();
 
-            // Add lecturer as participant
-            if (section.Lecturer != null)
+            // Add class teacher as participant
+            await AddParticipantAsync(chatRoom.ChatRoomId, classTeacher.Lecturer.User.Username, ParticipantRole.Lecturer);
+
+            // Add requesting student as participant
+            await EnsureUserIsParticipantAsync(chatRoom.ChatRoomId, studentUsername);
+
+            return await MapToChatRoomResponseAsync(chatRoom, studentUsername);
+        }
+
+        public async Task<ChatRoomResponse> GetOrCreateChatRoomWithAcademicStaffAsync(string studentUsername)
+        {
+            // Lấy thông tin sinh viên
+            var student = await _context.Students
+                .Include(s => s.User)
+                .Include(s => s.Class)
+                    .ThenInclude(c => c.Program)
+                        .ThenInclude(p => p.Department)
+                .FirstOrDefaultAsync(s => s.User.Username == studentUsername)
+                ?? throw new Exception("Student not found");
+
+            // Tìm room đã tồn tại cho department
+            var existingRoom = await _context.ChatRooms
+                .Include(cr => cr.Department)
+                .FirstOrDefaultAsync(cr => cr.ChatType == ChatType.AcademicStaff &&
+                                          cr.DepartmentId == student.Class.Program.Department.DepartmentId);
+
+            if (existingRoom != null)
             {
-                await AddParticipantAsync(chatRoom.ChatRoomId, section.Lecturer.User.Username, ParticipantRole.Lecturer);
+                // Ensure user is participant
+                await EnsureUserIsParticipantAsync(existingRoom.ChatRoomId, studentUsername);
+                return await MapToChatRoomResponseAsync(existingRoom, studentUsername);
             }
 
-            // Add requesting user as participant
-            await EnsureUserIsParticipantAsync(chatRoom.ChatRoomId, username);
+            // Tạo room mới
+            var chatRoom = new ChatRoom
+            {
+                ChatType = ChatType.AcademicStaff,
+                DepartmentId = student.Class.Program.Department.DepartmentId,
+                Department = student.Class.Program.Department,
+                RoomName = $"Học vụ - {student.Class.Program.Department.DepartmentName}",
+                Description = $"Chat với giáo viên học vụ khoa {student.Class.Program.Department.DepartmentName}"
+            };
 
-            return await MapToChatRoomResponseAsync(chatRoom, username);
+            _context.ChatRooms.Add(chatRoom);
+            await _context.SaveChangesAsync();
+
+            // Add academic staff as participants (all lecturers with AcademicStaff role in this department)
+            var academicStaffs = await _context.Lecturers
+                .Include(l => l.User)
+                    .ThenInclude(u => u.Role)
+                .Where(l => l.Department.DepartmentId == student.Class.Program.Department.DepartmentId &&
+                           l.User.Role.RoleName == "AcademicStaff")
+                .ToListAsync();
+
+            foreach (var staff in academicStaffs)
+            {
+                await AddParticipantAsync(chatRoom.ChatRoomId, staff.User.Username, ParticipantRole.Lecturer);
+            }
+
+            // Add requesting student as participant
+            await EnsureUserIsParticipantAsync(chatRoom.ChatRoomId, studentUsername);
+
+            return await MapToChatRoomResponseAsync(chatRoom, studentUsername);
         }
 
         public async Task<ChatMessageResponse> SendMessageAsync(SendMessageRequest request, string username)
@@ -99,8 +160,8 @@ namespace StudentManagement.Services
         }
 
         public async Task<PagedResult<ChatMessageResponse>> GetChatMessagesAsync(
-            int chatRoomId, 
-            string username, 
+            int chatRoomId,
+            string username,
             PaginationParams pagination)
         {
             // Verify access
@@ -145,13 +206,9 @@ namespace StudentManagement.Services
 
             var chatRooms = await _context.ChatRoomParticipants
                 .Include(crp => crp.ChatRoom)
-                    .ThenInclude(cr => cr.Section)
-                        .ThenInclude(s => s.CurriculumCourse)
-                            .ThenInclude(cc => cc.Course)
+                    .ThenInclude(cr => cr.Class)
                 .Include(crp => crp.ChatRoom)
-                    .ThenInclude(cr => cr.Section)
-                        .ThenInclude(s => s.Lecturer)
-                            .ThenInclude(l => l.User)
+                    .ThenInclude(cr => cr.Department)
                 .Where(crp => crp.UserId == user.UserId && crp.IsActive)
                 .Select(crp => crp.ChatRoom)
                 .ToListAsync();
@@ -173,8 +230,8 @@ namespace StudentManagement.Services
             if (user == null) return false;
 
             return await _context.ChatRoomParticipants
-                .AnyAsync(crp => crp.ChatRoomId == chatRoomId && 
-                                crp.UserId == user.UserId && 
+                .AnyAsync(crp => crp.ChatRoomId == chatRoomId &&
+                                crp.UserId == user.UserId &&
                                 crp.IsActive);
         }
 
@@ -218,8 +275,6 @@ namespace StudentManagement.Services
 
         public async Task MarkMessageAsReadAsync(string username, int messageId)
         {
-            // Implementation for read receipts if needed
-            // For now, just update last seen
             var message = await _context.ChatMessages
                 .FirstOrDefaultAsync(m => m.ChatMessageId == messageId);
 
@@ -245,14 +300,9 @@ namespace StudentManagement.Services
                 // Determine role based on user type
                 var role = ParticipantRole.Student; // Default
 
-                if (user.Role.RoleName == "Lecturer")
+                if (user.Role.RoleName == "Lecturer" || user.Role.RoleName == "AcademicStaff")
                 {
-                    // Check if this user is the lecturer for this section
-                    var isLecturerForSection = await _context.ChatRooms
-                        .Include(cr => cr.Section)
-                        .AnyAsync(cr => cr.ChatRoomId == chatRoomId && cr.Section.Lecturer.User.UserId == user.UserId);
-
-                    role = isLecturerForSection ? ParticipantRole.Lecturer : ParticipantRole.Assistant;
+                    role = ParticipantRole.Lecturer;
                 }
 
                 await AddParticipantAsync(chatRoomId, username, role);
@@ -304,7 +354,7 @@ namespace StudentManagement.Services
             if (participant?.LastSeenAt != null)
             {
                 unreadCount = await _context.ChatMessages
-                    .CountAsync(m => m.ChatRoomId == chatRoom.ChatRoomId && 
+                    .CountAsync(m => m.ChatRoomId == chatRoom.ChatRoomId &&
                                    !m.IsDeleted &&
                                    m.SentAt > participant.LastSeenAt &&
                                    m.SenderId != currentUser.UserId);
@@ -317,27 +367,46 @@ namespace StudentManagement.Services
             // Get online count (users who were active in last 5 minutes)
             var onlineThreshold = DateTime.UtcNow.AddMinutes(-5);
             var onlineCount = await _context.ChatRoomParticipants
-                .CountAsync(crp => crp.ChatRoomId == chatRoom.ChatRoomId && 
+                .CountAsync(crp => crp.ChatRoomId == chatRoom.ChatRoomId &&
                                   crp.IsActive &&
                                   crp.LastSeenAt != null &&
                                   crp.LastSeenAt > onlineThreshold);
 
+            // Get teacher info based on chat type
+            string teacherName = "Unknown";
+            if (chatRoom.ChatType == ChatType.ClassTeacher && chatRoom.ClassId.HasValue)
+            {
+
+                var classTeacher = await _context.AdviserAssignments
+                    .Include(aa => aa.Lecturer)
+                        .ThenInclude(l => l.User)
+                    .Where(aa => aa.Class.ClassId == chatRoom.ClassId.Value && aa.IsActive)
+                    .FirstOrDefaultAsync();
+
+                teacherName = classTeacher?.Lecturer?.User?.FullName ?? "Not Assigned";
+            }
+            else if (chatRoom.ChatType == ChatType.AcademicStaff)
+            {
+                teacherName = "Giáo viên Học vụ";
+            }
+
             return new ChatRoomResponse
             {
                 ChatRoomId = chatRoom.ChatRoomId,
-                SectionId = chatRoom.SectionId,
-                SectionCode = chatRoom.Section.SectionCode ?? $"LHP{chatRoom.SectionId}",
-                CourseCode = chatRoom.Section.CurriculumCourse.Course.CourseCode,
-                CourseName = chatRoom.Section.CurriculumCourse.Course.CourseName,
+                SectionId = 0, // No longer applicable
+                SectionCode = "", // No longer applicable
+                CourseCode = "", // No longer applicable
+                CourseName = "", // No longer applicable
                 RoomName = chatRoom.RoomName,
                 Description = chatRoom.Description,
                 IsActive = chatRoom.IsActive,
                 CreatedAt = chatRoom.CreatedAt,
-                LecturerName = chatRoom.Section.Lecturer?.User?.FullName ?? "Not Assigned",
+                LecturerName = teacherName,
                 TotalParticipants = totalParticipants,
                 OnlineCount = onlineCount,
                 LastMessage = lastMessage != null ? await MapToChatMessageResponseAsync(lastMessage, currentUsername) : null,
-                UnreadCount = unreadCount
+                UnreadCount = unreadCount,
+                ChatType = chatRoom.ChatType.ToString()
             };
         }
 

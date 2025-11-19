@@ -145,6 +145,20 @@ namespace StudentManagement.Controllers
             }
         }
 
-        
+        [HttpPost("UpdateAuto/{id}")]
+        public async Task<IActionResult> UpdateGradesAuto(int id)
+        {
+            try
+            {
+                await gradeService.updateGradeAuto(id);
+                return Ok(ApiResponse.SuccessResponse(null, "Grades updated successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+
+
     }
 }

@@ -20,7 +20,11 @@ namespace StudentManagement.Services
             {
                 Lecturer = lecturer,
                 StartDate = DateOnly.FromDateTime(DateTime.Now),
-                EndDate = null
+                EndDate = null,
+                ClassId = classId,
+                Class = cls,
+                IsActive = true
+
             };
             context.AdviserAssignments.Add(assignment);
             cls.AdviserAssignment = assignment;
