@@ -14,6 +14,7 @@ import {
   Grow,
   Snackbar,
   Alert,
+  TextField,
 } from '@mui/material';
 import { Table, Tag } from 'antd';
 import {
@@ -29,6 +30,7 @@ import { useTheme, alpha } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
 import * as XLSX from 'xlsx';
 import { sectionService, gradeService } from '../../../service';
+import { exportGradesExcel } from '../../../until/exportGradesExcel';
 
 const GradesPage = () => {
   const theme = useTheme();
@@ -280,7 +282,7 @@ const GradesPage = () => {
     }
   };
 
-  // Export Excel Template
+  // Export Excel with school format
   const handleExportTemplate = () => {
     if (students.length === 0) {
       setSnackbar({
@@ -291,88 +293,53 @@ const GradesPage = () => {
       return;
     }
 
-    // Create headers
-    const headers = ['STT', 'Mã SV', 'Họ và tên'];
-
-    // Add assessment headers
-    // Lý thuyết columns
-    for (let i = 1; i <= 3; i++) {
-      headers.push(`LT ${i}`);
-    }
-    // Thực hành columns
-    for (let i = 1; i <= 3; i++) {
-      headers.push(`TH ${i}`);
-    }
-    headers.push('Giữa kỳ');
-    headers.push('Cuối kỳ');
-
-    // Create data rows
-    const data = students.map((student, index) => {
-      const row = [index + 1, student.studentCode, student.fullName];
-
-      // Add empty cells for grades (to be filled by teacher)
-      for (let i = 0; i < 8; i++) {
-        row.push('');
-      }
-
-      return row;
-    });
-
-    // Create worksheet
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
-
-    // Set column widths
-    ws['!cols'] = [
-      { wch: 5 }, // STT
-      { wch: 12 }, // Mã SV
-      { wch: 25 }, // Họ và tên
-      { wch: 8 }, // LT 1
-      { wch: 8 }, // LT 2
-      { wch: 8 }, // LT 3
-      { wch: 8 }, // TH 1
-      { wch: 8 }, // TH 2
-      { wch: 8 }, // TH 3
-      { wch: 10 }, // Giữa kỳ
-      { wch: 10 }, // Cuối kỳ
-    ];
-
-    // Create workbook
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Điểm');
-
     // Get section info
     const section = sections.find((s) => s.sectionId === selectedSection);
-    const fileName = `Template_Diem_${section?.displayName || 'LopHocPhan'}_${new Date().getTime()}.xlsx`;
 
-    // Export
-    XLSX.writeFile(wb, fileName);
+    // Prepare section data with additional info
+    const sectionData = {
+      courseName: section?.courseName || 'Tên môn học',
+      sectionCode: section?.sectionCode || section?.displayName || 'Mã lớp',
+      className: section?.className || '',
+      semester: 'HK1',
+      academicYear: '2025-2026',
+    };
 
-    setSnackbar({
-      open: true,
-      message: 'Xuất file template thành công!',
-      severity: 'success',
+    // Split fullName into lastName and firstName for better formatting
+    const studentsWithNames = students.map(student => {
+      const nameParts = (student.fullName || '').trim().split(' ');
+      const firstName = nameParts.pop() || '';
+      const lastName = nameParts.join(' ') || '';
+
+      return {
+        ...student,
+        firstName,
+        lastName,
+      };
     });
+
+    // Export using new utility
+    const result = exportGradesExcel(sectionData, assessmentHeaders, studentsWithNames);
+
+    if (result.success) {
+      setSnackbar({
+        open: true,
+        message: `Xuất file Excel thành công: ${result.fileName}`,
+        severity: 'success',
+      });
+    } else {
+      setSnackbar({
+        open: true,
+        message: `Lỗi khi xuất Excel: ${result.error}`,
+        severity: 'error',
+      });
+    }
   };
 
   // Import Excel
   const handleImportExcel = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    // Validate file name matches current section
-    const section = sections.find((s) => s.sectionId === selectedSection);
-    if (section) {
-      const expectedFilePrefix = `Template_Diem_${section.displayName}`;
-      if (!file.name.startsWith(expectedFilePrefix)) {
-        setSnackbar({
-          open: true,
-          message: `File Excel không đúng lớp học phần. Vui lòng sử dụng file template của lớp "${section.displayName}"`,
-          severity: 'error',
-        });
-        event.target.value = '';
-        return;
-      }
-    }
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -382,71 +349,53 @@ const GradesPage = () => {
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-        // Validate structure
-        if (jsonData.length < 2) {
+        // New format has 3 header rows (rows 9, 10, 11 = index 9, 10, 11)
+        // Data starts at row 12 (index 12)
+        // Row 9: Main headers (STT, Mã số, Họ đệm, Tên, Lớp học, Điểm GKTH, ...)
+        // Row 10: Sub-headers (Lý thuyết, Thực hành)
+        // Row 11: Assessment numbers (1, 2, 3...)
+
+        if (jsonData.length < 13) {
           setSnackbar({
             open: true,
-            message: 'File Excel không hợp lệ',
+            message: 'File Excel không hợp lệ hoặc không có dữ liệu sinh viên',
             severity: 'error',
           });
           return;
         }
 
-        const headers = jsonData[0];
-        const expectedHeaders = [
-          'STT',
-          'Mã SV',
-          'Họ và tên',
-          'LT 1',
-          'LT 2',
-          'LT 3',
-          'TH 1',
-          'TH 2',
-          'TH 3',
-          'Giữa kỳ',
-          'Cuối kỳ',
-        ];
+        // Data rows start at index 12 (row 13 in Excel)
+        const dataRows = jsonData.slice(12);
 
-        // Check headers
-        const headersMatch = expectedHeaders.every(
-          (header, index) => headers[index]?.toString().trim() === header
+        // Filter out empty rows
+        const validDataRows = dataRows.filter(
+          (row) => row && row.length > 0 && row[0] && row[1]
         );
 
-        if (!headersMatch) {
+        if (validDataRows.length === 0) {
           setSnackbar({
             open: true,
-            message:
-              'Cấu trúc file Excel không đúng. Vui lòng sử dụng file template đã xuất.',
+            message: 'File Excel không có dữ liệu sinh viên',
             severity: 'error',
           });
           return;
         }
 
-        const dataRows = jsonData.slice(1); // Skip header row
-
-        // Validate number of students matches
-        if (dataRows.length !== students.length) {
-          setSnackbar({
-            open: true,
-            message: `Số lượng sinh viên không khớp. Excel có ${dataRows.length} sinh viên, hệ thống có ${students.length} sinh viên.`,
-            severity: 'error',
-          });
-          return;
-        }
-
-        // Validate STT and student codes match exactly
-        for (let i = 0; i < dataRows.length; i++) {
-          const row = dataRows[i];
+        // Validate STT and student codes match
+        for (let i = 0; i < validDataRows.length; i++) {
+          const row = validDataRows[i];
           const expectedSTT = i + 1;
           const actualSTT = row[0];
           const studentCode = row[1]?.toString().trim();
-          const studentName = row[2]?.toString().trim();
+          const lastName = row[2]?.toString().trim() || '';
+          const firstName = row[3]?.toString().trim() || '';
+          const fullName = `${lastName} ${firstName}`.trim();
 
           // Check STT
           if (actualSTT !== expectedSTT) {
             setSnackbar({
               open: true,
-              message: `Lỗi tại dòng ${i + 2}: STT không đúng. Mong đợi ${expectedSTT}, nhận được ${actualSTT}`,
+              message: `Lỗi tại dòng ${i + 13}: STT không đúng. Mong đợi ${expectedSTT}, nhận được ${actualSTT}`,
               severity: 'error',
             });
             return;
@@ -459,258 +408,120 @@ const GradesPage = () => {
           if (!systemStudent) {
             setSnackbar({
               open: true,
-              message: `Lỗi tại dòng ${i + 2}: Không tìm thấy sinh viên ${studentCode} trong lớp học phần này`,
+              message: `Lỗi tại dòng ${i + 13}: Không tìm thấy sinh viên ${studentCode} trong lớp học phần này`,
               severity: 'error',
             });
             return;
           }
 
-          // Check if student name matches
-          if (systemStudent.fullName !== studentName) {
-            setSnackbar({
-              open: true,
-              message: `Lỗi tại dòng ${i + 2}: Tên sinh viên không khớp. Hệ thống: "${systemStudent.fullName}", Excel: "${studentName}"`,
-              severity: 'error',
-            });
-            return;
+          // Optional: Check if student name matches
+          if (fullName && systemStudent.fullName !== fullName) {
+            console.warn(
+              `Warning: Name mismatch at row ${i + 13}. System: "${systemStudent.fullName}", Excel: "${fullName}"`
+            );
           }
         }
 
-        // Validate all grade values are valid numbers or empty
-        for (let i = 0; i < dataRows.length; i++) {
-          const row = dataRows[i];
+        // Determine column indices dynamically based on assessmentHeaders
+        // New format: STT, Mã số, Họ đệm, Tên, Lớp học, then assessment columns
+        // Column 0: STT
+        // Column 1: Mã số
+        // Column 2: Họ đệm
+        // Column 3: Tên
+        // Column 4: Lớp học
+        // Column 5+: Assessment scores (LT 1, LT 2, LT 3, TH 1, TH 2, TH 3, Giữa kỳ, Cuối kỳ, ...)
+
+        const ltAssessments = assessmentHeaders.filter((a) => a.assessmentTypeId === 1);
+        const thAssessments = assessmentHeaders.filter((a) => a.assessmentTypeId === 2);
+        const giuaKyAssessment = assessmentHeaders.find((a) => a.assessmentTypeId === 3);
+        const cuoiKyAssessment = assessmentHeaders.find((a) => a.assessmentTypeId === 4);
+
+        // Build column mapping
+        const columnMapping = [];
+        let currentCol = 5; // Start after Lớp học
+
+        // LT columns
+        ltAssessments.forEach((assessment, index) => {
+          columnMapping.push({
+            col: currentCol++,
+            assessmentId: assessment.assessmentId,
+            name: `LT ${index + 1}`,
+            type: 'LT',
+          });
+        });
+
+        // TH columns
+        thAssessments.forEach((assessment, index) => {
+          columnMapping.push({
+            col: currentCol++,
+            assessmentId: assessment.assessmentId,
+            name: `TH ${index + 1}`,
+            type: 'TH',
+          });
+        });
+
+        // Giữa kỳ
+        if (giuaKyAssessment) {
+          columnMapping.push({
+            col: currentCol++,
+            assessmentId: giuaKyAssessment.assessmentId,
+            name: 'Giữa kỳ',
+            type: 'GK',
+          });
+        }
+
+        // Cuối kỳ
+        if (cuoiKyAssessment) {
+          columnMapping.push({
+            col: currentCol++,
+            assessmentId: cuoiKyAssessment.assessmentId,
+            name: 'Cuối kỳ',
+            type: 'CK',
+          });
+        }
+
+        // Validate all grade values
+        for (let i = 0; i < validDataRows.length; i++) {
+          const row = validDataRows[i];
           const studentCode = row[1]?.toString().trim();
 
-          // Check LT grades (columns 3, 4, 5)
-          for (let j = 3; j <= 5; j++) {
-            const value = row[j];
+          for (const colInfo of columnMapping) {
+            const value = row[colInfo.col];
             if (value !== undefined && value !== '' && value !== null) {
               const numValue = parseFloat(value);
               if (isNaN(numValue) || numValue < 0 || numValue > 10) {
                 setSnackbar({
                   open: true,
-                  message: `Lỗi tại dòng ${i + 2} (${studentCode}), cột LT ${j - 2}: Điểm phải là số từ 0-10`,
+                  message: `Lỗi tại dòng ${i + 13} (${studentCode}), cột ${colInfo.name}: Điểm phải là số từ 0-10`,
                   severity: 'error',
                 });
                 return;
               }
             }
           }
-
-          // Check TH grades (columns 6, 7, 8)
-          for (let j = 6; j <= 8; j++) {
-            const value = row[j];
-            if (value !== undefined && value !== '' && value !== null) {
-              const numValue = parseFloat(value);
-              if (isNaN(numValue) || numValue < 0 || numValue > 10) {
-                setSnackbar({
-                  open: true,
-                  message: `Lỗi tại dòng ${i + 2} (${studentCode}), cột TH ${j - 5}: Điểm phải là số từ 0-10`,
-                  severity: 'error',
-                });
-                return;
-              }
-            }
-          }
-
-          // Check Giữa kỳ (column 9)
-          const giuaKy = row[9];
-          if (giuaKy !== undefined && giuaKy !== '' && giuaKy !== null) {
-            const numValue = parseFloat(giuaKy);
-            if (isNaN(numValue) || numValue < 0 || numValue > 10) {
-              setSnackbar({
-                open: true,
-                message: `Lỗi tại dòng ${i + 2} (${studentCode}), cột Giữa kỳ: Điểm phải là số từ 0-10`,
-                severity: 'error',
-              });
-              return;
-            }
-          }
-
-          // Check Cuối kỳ (column 10)
-          const cuoiKy = row[10];
-          if (cuoiKy !== undefined && cuoiKy !== '' && cuoiKy !== null) {
-            const numValue = parseFloat(cuoiKy);
-            if (isNaN(numValue) || numValue < 0 || numValue > 10) {
-              setSnackbar({
-                open: true,
-                message: `Lỗi tại dòng ${i + 2} (${studentCode}), cột Cuối kỳ: Điểm phải là số từ 0-10`,
-                severity: 'error',
-              });
-              return;
-            }
-          }
         }
 
-        // Validate consistency of all assessment columns
-        // For each column (LT 1-3, TH 1-3, Giữa kỳ, Cuối kỳ), if any student has a grade, all must have it
-        const columnNames = [
-          'LT 1',
-          'LT 2',
-          'LT 3',
-          'TH 1',
-          'TH 2',
-          'TH 3',
-          'Giữa kỳ',
-          'Cuối kỳ',
-        ];
-        const columnIndices = [3, 4, 5, 6, 7, 8, 9, 10];
-
-        for (let i = 0; i < columnIndices.length; i++) {
-          const columnIndex = columnIndices[i];
-          const columnName = columnNames[i];
-
-          const columnPresence = dataRows.map((row) => {
-            const value = row[columnIndex];
-            return value !== undefined && value !== '' && value !== null;
-          });
-
-          const someHaveValue = columnPresence.some((v) => v);
-          const allHaveValue = columnPresence.every((v) => v);
-
-          if (someHaveValue && !allHaveValue) {
-            setSnackbar({
-              open: true,
-              message: `Lỗi: Nếu có sinh viên có điểm "${columnName}" thì tất cả sinh viên phải có điểm "${columnName}"`,
-              severity: 'error',
-            });
-            return;
-          }
-        }
-
-        // Parse data and update UI state (editedGrades) - don't call API yet
-        // Only import grades that are DIFFERENT from existing grades
-        // The user will click "Lưu Điểm" button to submit
+        // Parse data and update UI state (editedGrades)
         const newEditedGrades = new Map(editedGrades);
         let importedGradeCount = 0;
 
         // Process each student row
-        dataRows.forEach((row) => {
+        validDataRows.forEach((row) => {
           const studentCode = row[1]?.toString().trim();
           const student = students.find((s) => s.studentCode === studentCode);
           if (!student) return;
 
-          // Find existing gradeId for each assessment if it exists
           const studentGradeData = student.assessmentGrades || [];
 
-          // Process LT grades (columns 3, 4, 5) - assessmentTypeId = 1
-          const ltAssessments = assessmentHeaders.filter(
-            (a) => a.assessmentTypeId === 1
-          );
-          for (let i = 0; i < 3; i++) {
-            const value = row[3 + i];
-            if (
-              value !== undefined &&
-              value !== '' &&
-              value !== null &&
-              ltAssessments[i]
-            ) {
-              const assessmentId = ltAssessments[i].assessmentId;
+          // Process each assessment column based on columnMapping
+          for (const colInfo of columnMapping) {
+            const value = row[colInfo.col];
+            if (value !== undefined && value !== '' && value !== null) {
+              const assessmentId = colInfo.assessmentId;
               const existingGrade = studentGradeData.find(
                 (g) => g.assessmentId === assessmentId
               );
               const newScore = parseFloat(value);
-              const currentScore = existingGrade?.score;
-
-              // Only add to editedGrades if the score is different from current score
-              if (
-                currentScore === undefined ||
-                currentScore === null ||
-                Math.abs(currentScore - newScore) > 0.001
-              ) {
-                if (!newEditedGrades.has(assessmentId)) {
-                  newEditedGrades.set(assessmentId, new Map());
-                }
-                newEditedGrades.get(assessmentId).set(student.studentId, {
-                  score: newScore,
-                  gradeId: existingGrade?.gradeId || null,
-                });
-                importedGradeCount++;
-              }
-            }
-          }
-
-          // Process TH grades (columns 6, 7, 8) - assessmentTypeId = 2
-          const thAssessments = assessmentHeaders.filter(
-            (a) => a.assessmentTypeId === 2
-          );
-          for (let i = 0; i < 3; i++) {
-            const value = row[6 + i];
-            if (
-              value !== undefined &&
-              value !== '' &&
-              value !== null &&
-              thAssessments[i]
-            ) {
-              const assessmentId = thAssessments[i].assessmentId;
-              const existingGrade = studentGradeData.find(
-                (g) => g.assessmentId === assessmentId
-              );
-              const newScore = parseFloat(value);
-              const currentScore = existingGrade?.score;
-
-              // Only add to editedGrades if the score is different from current score
-              if (
-                currentScore === undefined ||
-                currentScore === null ||
-                Math.abs(currentScore - newScore) > 0.001
-              ) {
-                if (!newEditedGrades.has(assessmentId)) {
-                  newEditedGrades.set(assessmentId, new Map());
-                }
-                newEditedGrades.get(assessmentId).set(student.studentId, {
-                  score: newScore,
-                  gradeId: existingGrade?.gradeId || null,
-                });
-                importedGradeCount++;
-              }
-            }
-          }
-
-          // Process Giữa kỳ (column 9) - assessmentTypeId = 3
-          const giuaKy = row[9];
-          if (giuaKy !== undefined && giuaKy !== '' && giuaKy !== null) {
-            const giuaKyAssessment = assessmentHeaders.find(
-              (a) => a.assessmentTypeId === 3
-            );
-            if (giuaKyAssessment) {
-              const assessmentId = giuaKyAssessment.assessmentId;
-              const existingGrade = studentGradeData.find(
-                (g) => g.assessmentId === assessmentId
-              );
-              const newScore = parseFloat(giuaKy);
-              const currentScore = existingGrade?.score;
-
-              // Only add to editedGrades if the score is different from current score
-              if (
-                currentScore === undefined ||
-                currentScore === null ||
-                Math.abs(currentScore - newScore) > 0.001
-              ) {
-                if (!newEditedGrades.has(assessmentId)) {
-                  newEditedGrades.set(assessmentId, new Map());
-                }
-                newEditedGrades.get(assessmentId).set(student.studentId, {
-                  score: newScore,
-                  gradeId: existingGrade?.gradeId || null,
-                });
-                importedGradeCount++;
-              }
-            }
-          }
-
-          // Process Cuối kỳ (column 10) - assessmentTypeId = 4
-          const cuoiKy = row[10];
-          if (cuoiKy !== undefined && cuoiKy !== '' && cuoiKy !== null) {
-            const cuoiKyAssessment = assessmentHeaders.find(
-              (a) => a.assessmentTypeId === 4
-            );
-            if (cuoiKyAssessment) {
-              const assessmentId = cuoiKyAssessment.assessmentId;
-              const existingGrade = studentGradeData.find(
-                (g) => g.assessmentId === assessmentId
-              );
-              const newScore = parseFloat(cuoiKy);
               const currentScore = existingGrade?.score;
 
               // Only add to editedGrades if the score is different from current score
@@ -777,7 +588,7 @@ const GradesPage = () => {
       ).toFixed(0)
     : 0;
 
-  // Helper function to render assessment score cell (read-only display)
+  // Helper function to render assessment score cell with inline editing
   const renderScoreCell = (record, assessmentId) => {
     const assessment = record.assessmentGrades?.find(
       (a) => a.assessmentId === assessmentId
@@ -785,35 +596,108 @@ const GradesPage = () => {
 
     const currentScore = assessment?.score;
 
-    // Get edited value if exists (from import)
+    // Get edited value if exists (from import or manual edit)
     const editedValue = editedGrades
       .get(assessmentId)
       ?.get(record.studentId)?.score;
     const displayValue = editedValue !== undefined ? editedValue : currentScore;
     const hasChanged = editedValue !== undefined;
 
-    if (displayValue !== null && displayValue !== undefined) {
-      return (
-        <span
-          style={{
-            fontWeight: 600,
-            fontSize: '14px',
-            color: hasChanged ? '#d48806' : theme.palette.text.primary,
-            backgroundColor: hasChanged ? '#fffbe6' : 'transparent',
-            padding: hasChanged ? '4px 12px' : '4px 0',
-            borderRadius: hasChanged ? '4px' : '0',
-            display: 'inline-block',
-            minWidth: '50px',
-            textAlign: 'center',
-            border: hasChanged ? '1px solid #ffd666' : 'none',
-          }}
-        >
-          {parseFloat(displayValue).toFixed(2)}
-        </span>
-      );
-    }
+    const handleScoreChange = (e) => {
+      const value = e.target.value;
 
-    return <span style={{ color: '#bfbfbf', fontSize: '14px' }}>-</span>;
+      // Allow empty value
+      if (value === '') {
+        const newEditedGrades = new Map(editedGrades);
+        if (newEditedGrades.has(assessmentId)) {
+          newEditedGrades.get(assessmentId).delete(record.studentId);
+          if (newEditedGrades.get(assessmentId).size === 0) {
+            newEditedGrades.delete(assessmentId);
+          }
+        }
+        setEditedGrades(newEditedGrades);
+        return;
+      }
+
+      // Validate number
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) return;
+
+      // Validate range 0-10
+      if (numValue < 0 || numValue > 10) {
+        setSnackbar({
+          open: true,
+          message: 'Điểm phải nằm trong khoảng 0-10',
+          severity: 'error',
+        });
+        return;
+      }
+
+      // Only update if different from current score
+      if (
+        currentScore === undefined ||
+        currentScore === null ||
+        Math.abs(currentScore - numValue) > 0.001
+      ) {
+        const newEditedGrades = new Map(editedGrades);
+        if (!newEditedGrades.has(assessmentId)) {
+          newEditedGrades.set(assessmentId, new Map());
+        }
+        newEditedGrades.get(assessmentId).set(record.studentId, {
+          score: numValue,
+          gradeId: assessment?.gradeId || null,
+        });
+        setEditedGrades(newEditedGrades);
+      } else {
+        // If the new value is same as original, remove from editedGrades
+        const newEditedGrades = new Map(editedGrades);
+        if (newEditedGrades.has(assessmentId)) {
+          newEditedGrades.get(assessmentId).delete(record.studentId);
+          if (newEditedGrades.get(assessmentId).size === 0) {
+            newEditedGrades.delete(assessmentId);
+          }
+        }
+        setEditedGrades(newEditedGrades);
+      }
+    };
+
+    return (
+      <TextField
+        type="number"
+        size="small"
+        value={displayValue !== null && displayValue !== undefined ? displayValue : ''}
+        onChange={handleScoreChange}
+        placeholder="-"
+        inputProps={{
+          min: 0,
+          max: 10,
+          step: 0.01,
+          style: {
+            textAlign: 'center',
+            padding: '6px 8px',
+            fontSize: '14px',
+            fontWeight: hasChanged ? 600 : 400,
+            color: hasChanged ? '#d48806' : theme.palette.text.primary,
+          },
+        }}
+        sx={{
+          width: '80px',
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: hasChanged ? '#fffbe6' : 'transparent',
+            '& fieldset': {
+              borderColor: hasChanged ? '#ffd666' : theme.palette.divider,
+              borderWidth: hasChanged ? '2px' : '1px',
+            },
+            '&:hover fieldset': {
+              borderColor: hasChanged ? '#ffc53d' : theme.palette.primary.main,
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: theme.palette.primary.main,
+            },
+          },
+        }}
+      />
+    );
   };
 
   // Dynamic column structure based on assessmentHeaders

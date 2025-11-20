@@ -41,7 +41,7 @@ import {
 } from '../../../service';
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
-import { exportSectionAttendanceExcel } from '../../../until/exportSectionAttendance'; // ✅ FIX: Named export + đúng đường dẫn
+import { exportAttendanceExcel } from '../../../until/exportAttendanceExcel';
 const AttendancePage = () => {
   const theme = useTheme();
   const [courses, setCourses] = useState([]);
@@ -525,14 +525,54 @@ const AttendancePage = () => {
         setLoading(false);
         return;
       }
-      // Xuất Excel
-      exportSectionAttendanceExcel(sectionData, classType === 'practice');
 
-      setSnackbar({
-        open: true,
-        message: 'Xuất Excel thành công!',
-        severity: 'success',
+      // Prepare data for export
+      const exportSectionData = {
+        courseName: sectionData.courseName || 'Tên môn học',
+        sectionCode: sectionData.sectionCode || selectedCourse,
+        className: sectionData.className || 'Lớp',
+        semester: 'HK1',
+        academicYear: '2025-2026',
+        startDate: sectionData.startDate,
+        endDate: sectionData.endDate,
+        schedules: sectionData.schedules || [],
+      };
+
+      // Prepare students with attendance data
+      const studentsWithAttendance = sectionData.students.map((student) => {
+        const nameParts = (student.fullName || '').trim().split(' ');
+        const firstName = nameParts.pop() || '';
+        const lastName = nameParts.join(' ') || '';
+
+        return {
+          ...student,
+          firstName,
+          lastName,
+          attendances: student.attendances || [],
+          totalExcusedAbsences: student.totalExcusedAbsences || 0,
+          totalUnexcusedAbsences: student.totalUnexcusedAbsences || 0,
+        };
       });
+
+      // Export using new utility (sessions are generated from startDate/endDate/schedules)
+      const result = exportAttendanceExcel(
+        exportSectionData,
+        studentsWithAttendance
+      );
+
+      if (result.success) {
+        setSnackbar({
+          open: true,
+          message: `Xuất file Excel thành công: ${result.fileName}`,
+          severity: 'success',
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: `Lỗi khi xuất Excel: ${result.error}`,
+          severity: 'error',
+        });
+      }
     } catch (error) {
       console.error('Error exporting Excel:', error);
       setSnackbar({
