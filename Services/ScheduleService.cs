@@ -873,7 +873,9 @@ namespace StudentManagement.Services
 
         public async Task<Schedule?> UpdateScheduleAsync(int scheduleId, ScheduleRequest request)
         {
-            var schedule = await context.Schedules.FindAsync(scheduleId);
+            var schedule = await context.Schedules.
+                Include(s => s.Section)
+                .FirstOrDefaultAsync(s => s.ScheduleId == scheduleId);
             if (schedule is null)
             {
                 return null;
