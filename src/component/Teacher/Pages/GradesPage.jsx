@@ -71,6 +71,13 @@ const GradesPage = () => {
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
 
+  // Check if selected section allows grade editing
+  const isSectionOpen = useMemo(() => {
+    if (!selectedSection) return false;
+    const section = sections.find((s) => s.sectionId === selectedSection);
+    return section?.status === 'Đang mở';
+  }, [selectedSection, sections]);
+
   useEffect(() => {
     const fetchSections = async () => {
       try {
@@ -306,7 +313,7 @@ const GradesPage = () => {
     };
 
     // Split fullName into lastName and firstName for better formatting
-    const studentsWithNames = students.map(student => {
+    const studentsWithNames = students.map((student) => {
       const nameParts = (student.fullName || '').trim().split(' ');
       const firstName = nameParts.pop() || '';
       const lastName = nameParts.join(' ') || '';
@@ -319,7 +326,11 @@ const GradesPage = () => {
     });
 
     // Export using new utility
-    const result = exportGradesExcel(sectionData, assessmentHeaders, studentsWithNames);
+    const result = exportGradesExcel(
+      sectionData,
+      assessmentHeaders,
+      studentsWithNames
+    );
 
     if (result.success) {
       setSnackbar({
@@ -431,10 +442,18 @@ const GradesPage = () => {
         // Column 4: Lớp học
         // Column 5+: Assessment scores (LT 1, LT 2, LT 3, TH 1, TH 2, TH 3, Giữa kỳ, Cuối kỳ, ...)
 
-        const ltAssessments = assessmentHeaders.filter((a) => a.assessmentTypeId === 1);
-        const thAssessments = assessmentHeaders.filter((a) => a.assessmentTypeId === 2);
-        const giuaKyAssessment = assessmentHeaders.find((a) => a.assessmentTypeId === 3);
-        const cuoiKyAssessment = assessmentHeaders.find((a) => a.assessmentTypeId === 4);
+        const ltAssessments = assessmentHeaders.filter(
+          (a) => a.assessmentTypeId === 1
+        );
+        const thAssessments = assessmentHeaders.filter(
+          (a) => a.assessmentTypeId === 2
+        );
+        const giuaKyAssessment = assessmentHeaders.find(
+          (a) => a.assessmentTypeId === 3
+        );
+        const cuoiKyAssessment = assessmentHeaders.find(
+          (a) => a.assessmentTypeId === 4
+        );
 
         // Build column mapping
         const columnMapping = [];
@@ -665,9 +684,14 @@ const GradesPage = () => {
       <TextField
         type="number"
         size="small"
-        value={displayValue !== null && displayValue !== undefined ? displayValue : ''}
+        value={
+          displayValue !== null && displayValue !== undefined
+            ? displayValue
+            : ''
+        }
         onChange={handleScoreChange}
         placeholder="-"
+        disabled={!isSectionOpen}
         inputProps={{
           min: 0,
           max: 10,
@@ -694,6 +718,17 @@ const GradesPage = () => {
             '&.Mui-focused fieldset': {
               borderColor: theme.palette.primary.main,
             },
+            '&.Mui-disabled': {
+              backgroundColor: 'transparent',
+              '& fieldset': {
+                borderColor: alpha(theme.palette.text.primary, 0.3),
+              },
+            },
+          },
+          '& .MuiInputBase-input.Mui-disabled': {
+            WebkitTextFillColor: theme.palette.text.primary,
+            color: theme.palette.text.primary,
+            opacity: 0.6,
           },
         }}
       />
@@ -1019,11 +1054,18 @@ const GradesPage = () => {
                 >
                   {sections.map((section) => (
                     <MenuItem key={section.sectionId} value={section.sectionId}>
-                      {section.displayName} - {section.className}
+                      {section.displayName} - {section.className} (
+                      {section.status})
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
+              {selectedSection && !isSectionOpen && (
+                <Alert severity="warning" sx={{ mt: 2 }}>
+                  Lớp học phần này không ở trạng thái "Đang mở". Không thể cập
+                  nhật hoặc import điểm.
+                </Alert>
+              )}
             </Grid>
             <Grid
               item
@@ -1039,7 +1081,8 @@ const GradesPage = () => {
                 disabled={
                   !selectedSection ||
                   students.length === 0 ||
-                  editedGrades.size === 0
+                  editedGrades.size === 0 ||
+                  !isSectionOpen
                 }
               >
                 Lưu Điểm ({editedGrades.size})
@@ -1056,7 +1099,9 @@ const GradesPage = () => {
                 variant="contained"
                 startIcon={<FileUpload />}
                 onClick={() => fileInputRef.current?.click()}
-                disabled={!selectedSection || students.length === 0}
+                disabled={
+                  !selectedSection || students.length === 0 || !isSectionOpen
+                }
               >
                 Import Excel
               </Button>
