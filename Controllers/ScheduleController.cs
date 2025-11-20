@@ -16,7 +16,7 @@ namespace StudentManagement.Controllers
     {
 
 
-        [HttpPost("GetAllSchedulesBySectionId")]
+        [HttpGet("GetAllSchedulesBySectionId")]
         public async Task<IActionResult> GetAllSchedulesWithFilters([FromQuery] int sectionId)
         {
             try
