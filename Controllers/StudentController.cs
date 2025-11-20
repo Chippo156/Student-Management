@@ -114,7 +114,7 @@ namespace StudentManagement.Controllers
         }
 
         [HttpGet("GetStudentsWithSection/{sectionId}")]
-        [Authorize(Roles = "Lecturer")]
+        [Authorize(Roles = "Admin,Lecturer")]
         public async Task<ActionResult<IEnumerable<StudentInSectionDto>>> GetStudentsWithSection(
             int sectionId, [FromQuery] PaginationParams paginationParams, string? searchTerm = null)
         {
