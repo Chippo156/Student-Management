@@ -978,8 +978,8 @@ namespace StudentManagement.Services
                 .Where(s => s.Lecturer != null &&
                            s.Lecturer.User.Username == lecturerCode &&
                            s.StartDate <= today &&
-                           s.EndDate >= today && // Section đang trong thời gian học
-                           s.Status == SectionStatus.IsOpening) // Chỉ lấy sections đang mở
+                           s.EndDate >= today) // Section đang trong thời gian học
+                           //s.Status == SectionStatus.IsOpening) // Chỉ lấy sections đang mở
                 .AsQueryable();
             var sections = query
                 .Select(s => new SectionSimpleResponse

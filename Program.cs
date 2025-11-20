@@ -78,15 +78,16 @@ builder.Services.AddScoped<IChatService, ChatService>();
 
 builder.Services.AddHttpContextAccessor();
 
+// Restrict origins and allow credentials for SignalR negotiate with credentials: 'include'
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:3000")
               .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
+              .AllowAnyMethod()
+              .AllowCredentials());   // QUAN TRỌNG
 });
+
 
 var app = builder.Build();
 
@@ -99,19 +100,22 @@ if (app.Environment.IsDevelopment())
         options.Title = "Student Management API";
         options.Theme = ScalarTheme.BluePlanet;
         options.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.HttpClient);
-        
     });
-    
 }
+
 app.UseCors("AllowAll");
+
+app.UseWebSockets();
 
 app.UseHttpsRedirection();
 
+// Ensure authentication middleware is enabled before authorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// Configure SignalR hub
+// Configure SignalR hub (CORS already applied)
 app.MapHub<ChatHub>("/chathub");
 
 app.Run();

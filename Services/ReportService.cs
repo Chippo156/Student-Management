@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
+using StudentManagement.Enum;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
@@ -345,6 +346,72 @@ namespace StudentManagement.Services
                 .ToList();
             
             return response;
+        }
+
+        public async Task<StatisticsOverviewResponse> GetStatisticsOverviewAsync()
+        {
+            // Đếm tổng số sinh viên
+            var totalStudents = await _context.Students.CountAsync();
+
+            // Đếm tổng số giảng viên
+            var totalLecturers = await _context.Lecturers.CountAsync();
+
+            // Đếm tổng số môn học
+            var totalCourses = await _context.Courses.CountAsync();
+
+            // Tính tỷ lệ sinh viên qua môn
+            double passingRate = 0.0;
+            
+            // Lấy tất cả final results
+            var allFinalResults = await _context.FinalResults.ToListAsync();
+            
+            if (allFinalResults.Any())
+            {
+                // Đếm số kết quả đậu (GradePoint >= 1.0)
+                var passedResults = allFinalResults.Count(fr => fr.GradePoint >= 1.0);
+                
+                // Tính tỷ lệ phần trăm
+                passingRate = Math.Round((double)passedResults / allFinalResults.Count * 100, 2);
+            }
+
+            return new StatisticsOverviewResponse
+            {
+                TotalStudents = totalStudents,
+                TotalLecturers = totalLecturers,
+                TotalCourses = totalCourses,
+                PassingRate = passingRate
+            };
+        }
+
+        public async Task<StudentStatusStatisticsResponse> GetStudentStatusStatisticsAsync()
+        {
+            // Đếm theo từng trạng thái
+            var activeCount = await _context.Students
+                .CountAsync(s => s.StudentStatus == StudentStatus.Active);
+
+            var inactiveCount = await _context.Students
+                .CountAsync(s => s.StudentStatus == StudentStatus.Inactive);
+
+            var graduatedCount = await _context.Students
+                .CountAsync(s => s.StudentStatus == StudentStatus.Graduated);
+
+            var suspendedCount = await _context.Students
+                .CountAsync(s => s.StudentStatus == StudentStatus.Suspended);
+
+            var reservedCount = await _context.Students
+                .CountAsync(s => s.StudentStatus == StudentStatus.Reserved);
+
+            var totalCount = activeCount + inactiveCount + graduatedCount + suspendedCount + reservedCount;
+
+            return new StudentStatusStatisticsResponse
+            {
+                ActiveStudents = activeCount,
+                InactiveStudents = inactiveCount,
+                GraduatedStudents = graduatedCount,
+                SuspendedStudents = suspendedCount,
+                ReservedStudents = reservedCount,
+                TotalStudents = totalCount
+            };
         }
     }
 }

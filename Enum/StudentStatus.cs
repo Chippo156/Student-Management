@@ -5,6 +5,7 @@
         Active = 1,
         Inactive = 2,
         Graduated = 3,
-        Suspended = 4
+        Suspended = 4,
+        Reserved = 5
     }
 }

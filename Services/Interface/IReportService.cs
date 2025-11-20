@@ -8,5 +8,7 @@ namespace StudentManagement.Services.Interface
         Task<SemesterCreditDetail> GetStudentSemesterStatisticsAsync(string mssv, int semesterId);
         Task<CreditStudentResponse> GetStudentCreditStatisticsByMSSVAsync(string mssv);
         Task<StudentAcademicSummaryResponse> GetStudentAcademicSummaryAsync(string mssv, int semesterId);
+        Task<StatisticsOverviewResponse> GetStatisticsOverviewAsync();
+        Task<StudentStatusStatisticsResponse> GetStudentStatusStatisticsAsync();
     }
 }
