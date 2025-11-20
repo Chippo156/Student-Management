@@ -958,7 +958,8 @@ namespace StudentManagement.Services
             {
                 SectionId = section.SectionId,
                 DisplayName = $"{section.CurriculumCourse.Course.CourseCode} - {section.CurriculumCourse.Course.CourseName} ({section.SectionCode ?? $"LHP{section.SectionId}"})",
-                ClassName = section.Class.ClassName
+                ClassName = section.Class.ClassName,
+                Status = GetSectionStatusInVietnamese(section.Status),
             }).ToList();
 
             return result;
@@ -1013,6 +1014,8 @@ namespace StudentManagement.Services
                 SectionStatus.IsOpening => "Đang mở",
                 SectionStatus.IsPreparing => "Đang chuẩn bị", 
                 SectionStatus.IsClosed => "Đã đóng",
+                SectionStatus.IsCancelled => "Đã hủy",
+                SectionStatus.IsCompleted => "Đã hoàn thành",
                 _ => "Không xác định"
             };
         }

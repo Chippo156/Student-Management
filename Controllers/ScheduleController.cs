@@ -14,8 +14,6 @@ namespace StudentManagement.Controllers
     [ApiController]
     public class ScheduleController(IScheduleService scheduleService) : ControllerBase
     {
-
-
         [HttpGet("GetAllSchedulesBySectionId")]
         public async Task<IActionResult> GetAllSchedulesWithFilters([FromQuery] int sectionId)
         {

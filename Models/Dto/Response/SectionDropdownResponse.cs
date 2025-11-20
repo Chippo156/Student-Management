@@ -1,3 +1,5 @@
+using StudentManagement.Enum;
+
 namespace StudentManagement.Models.Dto.Response
 {
     public class SectionDropdownResponse
@@ -5,5 +7,6 @@ namespace StudentManagement.Models.Dto.Response
         public int SectionId { get; set; }
         public string DisplayName { get; set; } = string.Empty;
         public string ClassName { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
     }
 }
