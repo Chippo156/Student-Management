@@ -10,5 +10,7 @@ namespace StudentManagement.Services.Interface
         Task<StudentAcademicSummaryResponse> GetStudentAcademicSummaryAsync(string mssv, int semesterId);
         Task<StatisticsOverviewResponse> GetStatisticsOverviewAsync();
         Task<StudentStatusStatisticsResponse> GetStudentStatusStatisticsAsync();
+        Task<SimpleYearlyGrowthResponse> GetSimpleYearlyGrowthAsync(int years = 7);
+
     }
 }

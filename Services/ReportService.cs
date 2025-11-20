@@ -413,5 +413,49 @@ namespace StudentManagement.Services
                 TotalStudents = totalCount
             };
         }
+
+        public async Task<SimpleYearlyGrowthResponse> GetSimpleYearlyGrowthAsync(int years = 5)
+        {
+            var currentYear = DateTime.Now.Year;
+            var startYear = currentYear - years + 1;
+
+            // Lấy sinh viên theo năm
+            var studentCounts = await _context.Students
+                .Where(s => 
+                           s.YearOfAdmission >= startYear && 
+                           s.YearOfAdmission <= currentYear)
+                .GroupBy(s => s.YearOfAdmission)
+                .Select(g => new { Year = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Year, x => x.Count);
+
+            // Lấy giảng viên theo năm
+            var lecturerCounts = await _context.Lecturers
+                .Include(l => l.User)
+                .Where(l => l.User.CreatedAt.Year >= startYear && 
+                           l.User.CreatedAt.Year <= currentYear)
+                .GroupBy(l => l.User.CreatedAt.Year)
+                .Select(g => new { Year = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Year, x => x.Count);
+
+            var yearlyData = new List<SimpleYearlyData>();
+
+            for (int year = startYear; year <= currentYear; year++)
+            {
+                yearlyData.Add(new SimpleYearlyData
+                {
+                    Year = year,
+                    StudentCount = studentCounts.GetValueOrDefault(year, 0),
+                    LecturerCount = lecturerCounts.GetValueOrDefault(year, 0)
+                });
+            }
+
+            return new SimpleYearlyGrowthResponse
+            {
+                Years = years,
+                Data = yearlyData,
+                TotalStudents = yearlyData.Sum(x => x.StudentCount),
+                TotalLecturers = yearlyData.Sum(x => x.LecturerCount)
+            };
+        }
     }
 }

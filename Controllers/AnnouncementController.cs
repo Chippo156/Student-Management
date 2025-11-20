@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Enum;
 using StudentManagement.Exceptions;
@@ -146,6 +146,48 @@ namespace StudentManagement.Controllers
                 return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Announcement with ID {id} not found", null));
             }
             return Ok(ApiResponse.SuccessResponse(null, "Announcement deleted successfully"));
+        }
+
+        [HttpGet("public/type/{type}")]
+        [AllowAnonymous] // Cho phép truy cập ẩn danh
+        public async Task<IActionResult> GetPublicAnnouncementsByType(
+            AnnouncementType type,
+            [FromQuery] PaginationParams pagination)
+        {
+            try
+            {
+
+                // With this line:
+                if (!System.Enum.IsDefined(typeof(AnnouncementType), type))
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, 
+                        "Invalid announcement type", null));
+                }
+
+                var result = await announcementService.GetPublicAnnouncementsByTypeAsync(type, pagination);
+                
+                var message = $"Public announcements of type '{GetTypeText(type)}' retrieved successfully";
+                return Ok(ApiResponse.SuccessResponse(result, message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving public announcements", new List<string> { ex.Message }));
+            }
+        }
+
+        // Helper method để get type text (có thể move vào shared utility nếu cần)
+        private static string GetTypeText(AnnouncementType type)
+        {
+            return type switch
+            {
+                AnnouncementType.General => "Thông báo chung",
+                AnnouncementType.Academic => "Học tập",
+                AnnouncementType.Event => "Sự kiện",
+                AnnouncementType.Tuition => "Học phí",
+                AnnouncementType.Emergency => "Khẩn cấp",
+                _ => "Không xác định"
+            };
         }
     }
 }

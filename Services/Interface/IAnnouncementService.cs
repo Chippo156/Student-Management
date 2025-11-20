@@ -25,5 +25,8 @@ namespace StudentManagement.Services.Interface
         Task<Announcement?> UpdateAnnouncementAsync(int announcementId, AnnouncementRequest request);
         Task<bool> DeleteAnnouncementAsync(int announcementId);
         Task<int> GetUnreadCountForUserAsync(string username);
+        Task<PagedResult<AnnouncementListResponse>> GetPublicAnnouncementsByTypeAsync(
+            AnnouncementType type,
+            PaginationParams pagination);
     }
 }

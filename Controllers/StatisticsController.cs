@@ -50,5 +50,19 @@ namespace StudentManagement.Controllers
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
+        [HttpGet("Yearly-growth")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetSimpleYearlyGrowth([FromQuery] int years = 7)
+        {
+            try
+            {
+                var statistics = await _reportService.GetSimpleYearlyGrowthAsync(years);
+                return Ok(ApiResponse.SuccessResponse(statistics, $"Thống kê tăng trưởng {years} năm gần nhất thành công"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
     }
 }

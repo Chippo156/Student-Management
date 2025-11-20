@@ -22,7 +22,6 @@
         All = 1,           // Tất cả
         Students = 2,      // Sinh viên
         Lecturers = 3,     // Giảng viên
-        Department = 4,    // Theo khoa
-        AcademicYear = 5   // Theo năm học
+        AcademicYear = 4  // Theo năm học
     }
 }

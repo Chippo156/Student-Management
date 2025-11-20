@@ -16,11 +16,7 @@ namespace StudentManagement.Services
                 .FirstOrDefaultAsync(u => u.Username == createdByUsername)
                 ?? throw new Exception("Creator user not found");
 
-            // Validate target specific fields
-            if (request.TargetType == AnnouncementTargetType.Department && !request.TargetDepartmentId.HasValue)
-            {
-                throw new Exception("TargetDepartmentId is required when TargetType is Department");
-            }
+
 
             if (request.TargetType == AnnouncementTargetType.AcademicYear && !request.TargetYear.HasValue)
             {
@@ -122,7 +118,6 @@ namespace StudentManagement.Services
                     a.TargetType == AnnouncementTargetType.All ||
                     (a.TargetType == AnnouncementTargetType.Students && user.Role.RoleId == 2) ||
                     (a.TargetType == AnnouncementTargetType.Lecturers && user.Role.RoleId == 3) ||
-                    (a.TargetType == AnnouncementTargetType.Department && a.TargetDepartmentId == userDepartmentId) ||
                     (a.TargetType == AnnouncementTargetType.AcademicYear && a.TargetYear == userYear)
                 );
 
@@ -258,11 +253,7 @@ namespace StudentManagement.Services
             if (announcement == null)
                 return null;
 
-            // Validate target specific fields
-            if (request.TargetType == AnnouncementTargetType.Department && !request.TargetDepartmentId.HasValue)
-            {
-                throw new Exception("TargetDepartmentId is required when TargetType is Department");
-            }
+
 
             if (request.TargetType == AnnouncementTargetType.AcademicYear && !request.TargetYear.HasValue)
             {
@@ -341,10 +332,70 @@ namespace StudentManagement.Services
                     (a.TargetType == AnnouncementTargetType.All ||
                     (a.TargetType == AnnouncementTargetType.Students && user.Role.RoleId == 2) ||
                     (a.TargetType == AnnouncementTargetType.Lecturers && user.Role.RoleId == 3) ||
-                    (a.TargetType == AnnouncementTargetType.Department && a.TargetDepartmentId == userDepartmentId) ||
                     (a.TargetType == AnnouncementTargetType.AcademicYear && a.TargetYear == userYear))
                 )
                 .CountAsync();
+        }
+
+        public async Task<PagedResult<AnnouncementListResponse>> GetPublicAnnouncementsByTypeAsync(
+            AnnouncementType type,
+            PaginationParams pagination)
+        {
+            var query = context.Announcements
+                .Include(a => a.CreatedByUser)
+                .Include(a => a.TargetDepartment)
+                .Where(a => 
+                    a.Type == type &&
+                    a.IsActive && 
+                    (a.ExpiryDate == null || a.ExpiryDate > DateTime.UtcNow) &&
+                    (a.TargetType == AnnouncementTargetType.All || 
+                     a.TargetType == AnnouncementTargetType.Students || 
+                     a.TargetType == AnnouncementTargetType.Lecturers) // Chỉ lấy thông báo công khai
+                );
+
+            var totalCount = await query.CountAsync();
+
+            var announcements = await query
+                .OrderByDescending(a => a.Priority)
+                .ThenByDescending(a => a.CreatedAt)
+                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+
+            var responses = announcements.Select(a => new AnnouncementListResponse
+            {
+                AnnouncementId = a.AnnouncementId,
+                Title = a.Title,
+                Content = a.Content,
+                SourceUrl = a.SourceUrl,
+                CreatedAt = a.CreatedAt,
+                ExpiryDate = a.ExpiryDate,
+                IsActive = a.IsActive,
+                Priority = a.Priority,
+                PriorityText = GetPriorityText(a.Priority),
+                PriorityColor = GetPriorityColor(a.Priority),
+                Type = a.Type,
+                TypeText = GetTypeText(a.Type),
+                TypeIcon = GetTypeIcon(a.Type),
+                TargetType = a.TargetType,
+                TargetTypeText = GetTargetTypeText(a.TargetType),
+                TargetDescription = GetTargetDescription(a),
+                CreatedByUserName = a.CreatedByUser.Username,
+                CreatedByFullName = a.CreatedByUser.FullName,
+                IsExpired = a.ExpiryDate.HasValue && a.ExpiryDate.Value <= DateTime.UtcNow,
+                DaysUntilExpiry = a.ExpiryDate.HasValue ? 
+                    Math.Max(0, (int)(a.ExpiryDate.Value - DateTime.UtcNow).TotalDays) : -1,
+                ViewCount = 0, // TODO: Implement view tracking if needed
+                LastViewedAt = null // TODO: Implement view tracking if needed
+            }).ToList();
+
+            return new PagedResult<AnnouncementListResponse>
+            {
+                Items = responses,
+                TotalCount = totalCount,
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize
+            };
         }
 
         private static AnnouncementResponse MapToAnnouncementResponse(Announcement announcement)
@@ -432,7 +483,6 @@ namespace StudentManagement.Services
                 AnnouncementTargetType.All => "Tất cả",
                 AnnouncementTargetType.Students => "Sinh viên",
                 AnnouncementTargetType.Lecturers => "Giảng viên",
-                AnnouncementTargetType.Department => "Theo khoa",
                 AnnouncementTargetType.AcademicYear => "Theo năm học",
                 _ => "Không xác định"
             };
@@ -445,7 +495,6 @@ namespace StudentManagement.Services
                 AnnouncementTargetType.All => "Tất cả người dùng",
                 AnnouncementTargetType.Students => "Tất cả sinh viên",
                 AnnouncementTargetType.Lecturers => "Tất cả giảng viên",
-                AnnouncementTargetType.Department => announcement.TargetDepartment?.DepartmentName ?? "Khoa không xác định",
                 AnnouncementTargetType.AcademicYear => $"Sinh viên khóa {announcement.TargetYear}",
                 _ => "Không xác định"
             };
