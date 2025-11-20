@@ -46,7 +46,9 @@ export const studentServices = {
         params.search = search.trim();
       }
 
-      const response = await customizeAxios.get('/api/Student/GetAllStudents', { params });
+      const response = await customizeAxios.get('/api/Student/GetAllStudents', {
+        params,
+      });
       if (response?.success === false) {
         const errData = response?.data;
         if (Array.isArray(errData) && errData.length > 0) {
@@ -75,7 +77,7 @@ export const studentServices = {
       return null;
     }
   },
-    // New: get students with section (paged, searchable)
+  // New: get students with section (paged, searchable)
   getStudentsWithSection: async (
     sectionId,
     pageNumber = 1,
