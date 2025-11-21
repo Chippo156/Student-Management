@@ -64,5 +64,36 @@ namespace StudentManagement.Controllers
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
+        [HttpGet("student-grades/{mssv}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetStudentGradeStatistics(string mssv)
+        {
+            try
+            {
+                var statistics = await _reportService.GetStudentGradeStatisticsAsync(mssv);
+                return Ok(ApiResponse.SuccessResponse(statistics, "Thống kê điểm số sinh viên thành công"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+
+        [HttpGet("all-students-grades")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllStudentsGradeStatistics(
+            [FromQuery] int? departmentId = null,
+            [FromQuery] int? semesterId = null)
+        {
+            try
+            {
+                var statistics = await _reportService.GetAllStudentsGradeStatisticsAsync(departmentId, semesterId);
+                return Ok(ApiResponse.SuccessResponse(statistics, "Thống kê điểm số tất cả sinh viên thành công"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
     }
 }

@@ -14,5 +14,6 @@ namespace StudentManagement.Services.Interface
         Task<bool> GenerateTuitionForSemesterAsync(GenerateTuitionRequest request);
         Task<List<TuitionFeeResponse>> GetOverdueTuitionFeesAsync();
         Task UpdateOverdueTuitionFeesAsync();
+        Task<StudentTuitionDebtResponse> GetStudentTuitionDebtBySemesterAsync(string mssv, int? semesterId = null);
     }
 }

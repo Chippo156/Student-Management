@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models.Dto.Request;
@@ -130,6 +130,30 @@ namespace StudentManagement.Controllers
             {
                 var result = await tuitionService.GetOverdueTuitionFeesAsync();
                 return Ok(ApiResponse.SuccessResponse(result, "Overdue tuition fees retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+        [HttpGet("student/debt")]
+        [Authorize]
+        public async Task<IActionResult> GetStudentTuitionDebt(
+    [FromQuery] int? semesterId = null)
+        {
+            try
+            {
+                // Kiểm tra quyền truy cập
+                var currentUserRole = User.FindFirstValue(ClaimTypes.Role);
+                var UserNameStr = User.FindFirstValue(ClaimTypes.Name);
+
+                var debtInfo = await tuitionService.GetStudentTuitionDebtBySemesterAsync(UserNameStr, semesterId);
+
+                var message = semesterId.HasValue && semesterId.Value > 0
+                    ? $"Thông tin công nợ học kỳ được lấy thành công"
+                    : "Thông tin công nợ tất cả học kỳ được lấy thành công";
+
+                return Ok(ApiResponse.SuccessResponse(debtInfo, message));
             }
             catch (Exception ex)
             {

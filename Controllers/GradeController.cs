@@ -51,6 +51,7 @@ namespace StudentManagement.Controllers
         }
 
         [HttpPost("CreateGrade")]
+        [Authorize(Roles = "Admin,Lecturer")]
         public async Task<ActionResult<Grade>> CreateGrade(GradeRequest request)
         {
             var createdGrade = await gradeService.CreateGradeAsync(request);
@@ -158,7 +159,20 @@ namespace StudentManagement.Controllers
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
-
+        [HttpGet("GetAllGradesByStudentCode/{mssv}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllGradeByStudentCode(string mssv)
+        {
+            try
+            {
+                var allGrades = await gradeService.GetAllStudentGradesByMSSVAsync(mssv);
+                return Ok(ApiResponse.SuccessResponse(allGrades, "All student grades retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
 
     }
 }

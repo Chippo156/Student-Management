@@ -457,5 +457,358 @@ namespace StudentManagement.Services
                 TotalLecturers = yearlyData.Sum(x => x.LecturerCount)
             };
         }
+
+        public async Task<StudentGradeStatisticsResponse> GetStudentGradeStatisticsAsync(string mssv)
+        {
+            // Lấy thông tin sinh viên
+            var student = await _context.Students
+                .Include(s => s.User)
+                .Include(s => s.Class)
+                    .ThenInclude(c => c.Program)
+                .FirstOrDefaultAsync(s => s.MSSV == mssv)
+                ?? throw new Exception($"Student with MSSV {mssv} not found");
+
+            // Lấy tất cả final results
+            var finalResults = await _context.FinalResults
+                .Include(fr => fr.Section)
+                    .ThenInclude(s => s.CurriculumCourse)
+                        .ThenInclude(cc => cc.Course)
+                .Include(fr => fr.Section.Semester)
+                .Where(fr => fr.Student.MSSV == mssv)
+                .ToListAsync();
+
+            // Lấy GPA snapshots
+            var gpaSnapshots = await _context.GpaSnapshots
+                .Include(g => g.Semester)
+                .Where(g => g.Student.MSSV == mssv)
+                .OrderBy(g => g.Semester.Year)
+                .ThenBy(g => g.Semester.Term)
+                .ToListAsync();
+
+            // Tính toán overall statistics
+            var overallStats = CalculateOverallStats(finalResults);
+            
+            // Thống kê phân bố điểm chữ
+            var gradeDistribution = CalculateGradeDistribution(finalResults);
+            
+            // Thống kê theo học kỳ
+            var semesterStats = CalculateSemesterStats(finalResults, gpaSnapshots);
+            
+            // Thống kê theo loại môn học (có thể mở rộng later)
+            var subjectTypeStats = CalculateSubjectTypeStats(finalResults);
+            
+            // Performance trend
+            var performanceTrend = CalculatePerformanceTrend(gpaSnapshots);
+
+            return new StudentGradeStatisticsResponse
+            {
+                MSSV = student.MSSV,
+                StudentName = student.User.FullName,
+                ClassName = student.Class.ClassName,
+                ProgramName = student.Class.Program.ProgramName,
+                OverallStats = overallStats,
+                GradeDistribution = gradeDistribution,
+                SemesterStats = semesterStats,
+                SubjectTypeStats = subjectTypeStats,
+                PerformanceTrend = performanceTrend
+            };
+        }
+
+        public async Task<AllStudentsGradeStatisticsResponse> GetAllStudentsGradeStatisticsAsync(int? departmentId = null, int? semesterId = null)
+        {
+            // Base query cho final results
+            var query = _context.FinalResults
+                .Include(fr => fr.Student)
+                    .ThenInclude(s => s.User)
+                .Include(fr => fr.Student)
+                    .ThenInclude(s => s.Class)
+                        .ThenInclude(c => c.Program)
+                            .ThenInclude(p => p.Department)
+                .Include(fr => fr.Section)
+                    .ThenInclude(s => s.CurriculumCourse)
+                        .ThenInclude(cc => cc.Course)
+                .Include(fr => fr.Section.Semester)
+                .AsQueryable();
+
+            // Apply filters
+            if (departmentId.HasValue)
+            {
+                query = query.Where(fr => fr.Student.Class.Program.Department.DepartmentId == departmentId.Value);
+            }
+
+            if (semesterId.HasValue)
+            {
+                query = query.Where(fr => fr.Section.Semester.SemesterId == semesterId.Value);
+            }
+
+            var allResults = await query.ToListAsync();
+
+            // Overall statistics
+            var overallStats = new OverallGradeStats
+            {
+                TotalStudents = allResults.Select(r => r.Student.Id).Distinct().Count(),
+                StudentsWithGrades = allResults.Select(r => r.Student.Id).Distinct().Count(),
+                SystemWideGPA = Math.Round(allResults.Average(r => r.GradePoint), 2),
+                AverageScore = Math.Round(allResults.Average(r => r.FinalScore), 2),
+                OverallPassingRate = Math.Round((double)allResults.Count(r => r.GradePoint >= 1.0) / allResults.Count * 100, 2),
+                TotalSubjects = allResults.Count,
+                TotalPassedSubjects = allResults.Count(r => r.GradePoint >= 1.0),
+                TotalFailedSubjects = allResults.Count(r => r.GradePoint < 1.0)
+            };
+
+            // Grade distribution
+            var gradeDistribution = CalculateSystemGradeDistribution(allResults);
+
+            // Department statistics
+            var departmentStats = allResults
+                .GroupBy(r => r.Student.Class.Program.Department)
+                .Select(g => new DepartmentGradeStat
+                {
+                    DepartmentId = g.Key.DepartmentId,
+                    DepartmentName = g.Key.DepartmentName,
+                    StudentsCount = g.Select(r => r.Student.Id).Distinct().Count(),
+                    AverageGPA = Math.Round(g.Average(r => r.GradePoint), 2),
+                    PassingRate = Math.Round((double)g.Count(r => r.GradePoint >= 1.0) / g.Count() * 100, 2),
+                    TotalSubjects = g.Count()
+                })
+                .OrderByDescending(d => d.AverageGPA)
+                .ToList();
+
+            // Program statistics
+            var programStats = allResults
+                .GroupBy(r => r.Student.Class.Program)
+                .Select(g => new ProgramGradeStat
+                {
+                    ProgramId = g.Key.AcademicProgramId,
+                    ProgramName = g.Key.ProgramName,
+                    DepartmentName = g.Key.Department.DepartmentName,
+                    StudentsCount = g.Select(r => r.Student.Id).Distinct().Count(),
+                    AverageGPA = Math.Round(g.Average(r => r.GradePoint), 2),
+                    PassingRate = Math.Round((double)g.Count(r => r.GradePoint >= 1.0) / g.Count() * 100, 2)
+                })
+                .OrderByDescending(p => p.AverageGPA)
+                .ToList();
+
+            // Semester statistics
+            var semesterStats = allResults
+                .GroupBy(r => r.Section.Semester)
+                .Select(g => new SemesterOverallStat
+                {
+                    SemesterId = g.Key.SemesterId,
+                    SemesterName = $"{g.Key.Year} - {g.Key.Term}",
+                    StudentsCount = g.Select(r => r.Student.Id).Distinct().Count(),
+                    AverageGPA = Math.Round(g.Average(r => r.GradePoint), 2),
+                    PassingRate = Math.Round((double)g.Count(r => r.GradePoint >= 1.0) / g.Count() * 100, 2),
+                    TotalSubjects = g.Count()
+                })
+                .OrderByDescending(s => s.SemesterName)
+                .ToList();
+
+            // Rankings
+
+            return new AllStudentsGradeStatisticsResponse
+            {
+                OverallStats = overallStats,
+                GradeDistribution = gradeDistribution,
+                DepartmentStats = departmentStats,
+                ProgramStats = programStats,
+                SemesterStats = semesterStats,
+            };
+        }
+
+        // Helper methods
+        private GradeOverallStats CalculateOverallStats(List<FinalResult> finalResults)
+        {
+            if (!finalResults.Any())
+            {
+                return new GradeOverallStats();
+            }
+
+            var passedResults = finalResults.Where(r => r.GradePoint >= 1.0).ToList();
+            var failedResults = finalResults.Where(r => r.GradePoint < 1.0).ToList();
+
+            var highest = finalResults.OrderByDescending(r => r.FinalScore).First();
+            var lowest = finalResults.OrderBy(r => r.FinalScore).First();
+
+            return new GradeOverallStats
+            {
+                TotalSubjects = finalResults.Count,
+                PassedSubjects = passedResults.Count,
+                FailedSubjects = failedResults.Count,
+                PassingRate = Math.Round((double)passedResults.Count / finalResults.Count * 100, 2),
+                AverageScore = Math.Round(finalResults.Average(r => r.FinalScore), 2),
+                CurrentGPA4 = Math.Round(finalResults.Average(r => r.GradePoint), 2),
+                CurrentGPA10 = Math.Round(finalResults.Average(r => r.GradePoint) * 2.5, 2),
+                HighestScore = highest.FinalScore,
+                LowestScore = lowest.FinalScore,
+                HighestScoreSubject = highest.Section.CurriculumCourse.Course.CourseName,
+                LowestScoreSubject = lowest.Section.CurriculumCourse.Course.CourseName,
+                TotalCreditsRegistered = finalResults.Sum(r => r.Section.CurriculumCourse.Course.CreditsTheory + r.Section.CurriculumCourse.Course.CreditsLab),
+                TotalCreditsEarned = passedResults.Sum(r => r.Section.CurriculumCourse.Course.CreditsTheory + r.Section.CurriculumCourse.Course.CreditsLab),
+                TotalCreditsFailed = failedResults.Sum(r => r.Section.CurriculumCourse.Course.CreditsTheory + r.Section.CurriculumCourse.Course.CreditsLab)
+            };
+        }
+
+        private List<GradeLetterStat> CalculateGradeDistribution(List<FinalResult> finalResults)
+        {
+            var gradeGroups = finalResults
+                .GroupBy(r => r.GradeLetter)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var gradeLetters = new[] { "A", "B+", "B", "C+", "C", "D+", "D", "F" };
+            var gradeDescriptions = new Dictionary<string, string>
+            {
+                { "A", "Xuất sắc" },
+                { "B+", "Giỏi" },
+                { "B", "Khá" },
+                { "C+", "Khá" },
+                { "C", "Trung bình" },
+                { "D+", "Trung bình" },
+                { "D", "Yếu" },
+                { "F", "Kém" }
+            };
+
+            return gradeLetters.Select(grade => new GradeLetterStat
+            {
+                GradeLetter = grade,
+                Count = gradeGroups.GetValueOrDefault(grade, 0),
+                Percentage = finalResults.Count > 0 ? 
+                    Math.Round((double)gradeGroups.GetValueOrDefault(grade, 0) / finalResults.Count * 100, 2) : 0,
+                Description = gradeDescriptions.GetValueOrDefault(grade, "")
+            }).ToList();
+        }
+
+        private List<SemesterGradeStat> CalculateSemesterStats(List<FinalResult> finalResults, List<GpaSnapshot> gpaSnapshots)
+        {
+            return finalResults
+                .GroupBy(r => r.Section.Semester)
+                .Select(g =>
+                {
+                    var semester = g.Key;
+                    var results = g.ToList();
+                    var passedCount = results.Count(r => r.GradePoint >= 1.0);
+                    
+                    var semesterGpa = gpaSnapshots
+                        .FirstOrDefault(gpa => gpa.Semester.SemesterId == semester.SemesterId);
+
+                    return new SemesterGradeStat
+                    {
+                        SemesterId = semester.SemesterId,
+                        SemesterName = $"{semester.Year} - {semester.Term}",
+                        Year = semester.Year,
+                        Term = semester.Term,
+                        SubjectsCount = results.Count,
+                        PassedCount = passedCount,
+                        FailedCount = results.Count - passedCount,
+                        SemesterGPA4 = Math.Round(semesterGpa?.Gpa ?? 0, 2),
+                        SemesterGPA10 = Math.Round((semesterGpa?.Gpa ?? 0) * 2.5, 2),
+                        AverageScore = Math.Round(results.Average(r => r.FinalScore), 2),
+                        PassingRate = Math.Round((double)passedCount / results.Count * 100, 2),
+                        CreditsRegistered = results.Sum(r => r.Section.CurriculumCourse.Course.CreditsTheory + r.Section.CurriculumCourse.Course.CreditsLab),
+                        CreditsEarned = results.Where(r => r.GradePoint >= 1.0).Sum(r => r.Section.CurriculumCourse.Course.CreditsTheory + r.Section.CurriculumCourse.Course.CreditsLab),
+                        AcademicRank = GetAcademicRank(semesterGpa?.Gpa ?? 0)
+                    };
+                })
+                .OrderByDescending(s => s.Year)
+                .ThenByDescending(s => s.Term)
+                .ToList();
+        }
+
+        private List<SubjectTypeStat> CalculateSubjectTypeStats(List<FinalResult> finalResults)
+        {
+            // Simplified subject type classification - có thể mở rộng dựa trên course properties
+            return new List<SubjectTypeStat>
+            {
+                new SubjectTypeStat
+                {
+                    SubjectType = "Tất cả môn học",
+                    SubjectsCount = finalResults.Count,
+                    AverageScore = finalResults.Count > 0 ? Math.Round(finalResults.Average(r => r.FinalScore), 2) : 0,
+                    PassingRate = finalResults.Count > 0 ? Math.Round((double)finalResults.Count(r => r.GradePoint >= 1.0) / finalResults.Count * 100, 2) : 0,
+                    TotalCredits = finalResults.Sum(r => r.Section.CurriculumCourse.Course.CreditsTheory + r.Section.CurriculumCourse.Course.CreditsLab)
+                }
+            };
+        }
+
+        private GradePerformanceTrend CalculatePerformanceTrend(List<GpaSnapshot> gpaSnapshots)
+        {
+            if (gpaSnapshots.Count < 2)
+            {
+                return new GradePerformanceTrend
+                {
+                    TrendDirection = "Stable",
+                    TrendDescription = "Chưa đủ dữ liệu để đánh giá xu hướng",
+                    TrendPoints = gpaSnapshots.Select(g => new SemesterTrendPoint
+                    {
+                        SemesterName = $"{g.Semester.Year}-{g.Semester.Term}",
+                        GPA = Math.Round(g.Gpa, 2),
+                        AverageScore = Math.Round(g.Gpa * 2.5, 2)
+                    }).ToList()
+                };
+            }
+
+            var firstGpa = gpaSnapshots.First().Gpa;
+            var lastGpa = gpaSnapshots.Last().Gpa;
+            var changeFromFirst = lastGpa - firstGpa;
+            var changeFromPrevious = gpaSnapshots.Count > 1 ? lastGpa - gpaSnapshots[gpaSnapshots.Count - 2].Gpa : 0;
+
+            string direction;
+            string description;
+
+            if (Math.Abs(changeFromFirst) < 0.1)
+            {
+                direction = "Stable";
+                description = "Kết quả học tập ổn định qua các học kỳ";
+            }
+            else if (changeFromFirst > 0)
+            {
+                direction = "Improving";
+                description = $"Kết quả học tập có xu hướng cải thiện (tăng {changeFromFirst:F2} điểm GPA)";
+            }
+            else
+            {
+                direction = "Declining";
+                description = $"Kết quả học tập có xu hướng giảm sút (giảm {Math.Abs(changeFromFirst):F2} điểm GPA)";
+            }
+
+            return new GradePerformanceTrend
+            {
+                TrendDirection = direction,
+                TrendDescription = description,
+                GPAChangeFromFirstSemester = Math.Round(changeFromFirst, 2),
+                GPAChangeFromLastSemester = Math.Round(changeFromPrevious, 2),
+                TrendPoints = gpaSnapshots.Select(g => new SemesterTrendPoint
+                {
+                    SemesterName = $"{g.Semester.Year}-{g.Semester.Term}",
+                    GPA = Math.Round(g.Gpa, 2),
+                    AverageScore = Math.Round(g.Gpa * 2.5, 2)
+                }).ToList()
+            };
+        }
+
+        private List<GradeLetterDistribution> CalculateSystemGradeDistribution(List<FinalResult> allResults)
+        {
+            return CalculateGradeDistribution(allResults)
+                .Select(g => new GradeLetterDistribution
+                {
+                    GradeLetter = g.GradeLetter,
+                    Count = g.Count,
+                    Percentage = g.Percentage,
+                    Description = g.Description
+                }).ToList();
+        }
+
+        private string GetAcademicRank(double gpa)
+        {
+            return gpa switch
+            {
+                >= 3.6 => "Xuất sắc",
+                >= 3.2 => "Giỏi", 
+                >= 2.5 => "Khá",
+                >= 2.0 => "Trung bình",
+                >= 1.0 => "Yếu",
+                _ => "Kém"
+            };
+        }
     }
 }

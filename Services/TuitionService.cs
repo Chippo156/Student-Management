@@ -5,6 +5,7 @@ using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
+using System.Collections.Generic;
 
 namespace StudentManagement.Services
 {
@@ -142,6 +143,132 @@ namespace StudentManagement.Services
                 TotalSemestersWithDebt = tuitionFees.Count(tf => tf.RemainingAmount > 0),
                 TotalOverdueSemesters = tuitionFees.Count(tf => tf.DueDate < DateTime.UtcNow && tf.Status != TuitionStatus.FullyPaid),
                 SemesterTuitions = semesterTuitions
+            };
+        }
+
+        public async Task<StudentTuitionDebtResponse> GetStudentTuitionDebtBySemesterAsync(string mssv, int? semesterId = null)
+        {
+            // Lấy thông tin sinh viên
+            var student = await context.Students
+                .Include(s => s.User)
+                .Include(s => s.Class)
+                    .ThenInclude(c => c.Program)
+                .FirstOrDefaultAsync(s => s.MSSV == mssv);
+
+            if (student == null)
+            {
+                throw new Exception($"Student with MSSV {mssv} not found");
+            }
+
+            // Query tuition fees
+            var tuitionQuery = context.TuitionFees
+                .Include(tf => tf.Semester)
+                .Include(tf => tf.Details)
+                    .ThenInclude(d => d.Section)
+                        .ThenInclude(s => s.CurriculumCourse)
+                            .ThenInclude(cc => cc.Course)
+                .Include(tf => tf.Payments)
+                    .ThenInclude(p => p.ProcessedBy)
+                .Where(tf => tf.StudentId == student.Id);
+
+            // Filter by semester if specified
+            if (semesterId.HasValue && semesterId.Value > 0)
+            {
+                tuitionQuery = tuitionQuery.Where(tf => tf.SemesterId == semesterId.Value);
+            }
+
+            var tuitionFees = await tuitionQuery
+                .OrderByDescending(tf => tf.Semester.Year)
+                .ThenByDescending(tf => tf.Semester.Term)
+                .ToListAsync();
+
+            // Tính tổng công nợ
+            var totalDebt = tuitionFees.Sum(tf => tf.RemainingAmount);
+            var totalLateFee = tuitionFees.Sum(tf => tf.LateFee ?? 0);
+
+            var semesterDebts = new List<SemesterTuitionDebt>();
+
+            foreach (var tuition in tuitionFees)
+            {
+                var isOverdue = tuition.DueDate < DateTime.UtcNow && tuition.Status != TuitionStatus.FullyPaid;
+                var daysOverdue = isOverdue ? (DateTime.UtcNow - tuition.DueDate).Days : 0;
+
+                // Lấy thông tin enrollment cho các section trong tuition này
+                var sectionIds = tuition.Details.Select(d => d.SectionId).ToList();
+                var enrollments = await context.Enrollments
+                    .Where(e => e.Student.Id == student.Id && sectionIds.Contains(e.Section.SectionId))
+                    .Include(e => e.Section)
+                    .ToDictionaryAsync(e => e.Section.SectionId, e => e);
+
+                // Map course details với thông tin enrollment
+                var courseDetails = tuition.Details.Select(detail =>
+                {
+                    Enrollment? enrollment = null;
+                    if (detail.SectionId.HasValue)
+                    {
+                        enrollments.TryGetValue(detail.SectionId.Value, out enrollment);
+                    }
+                    return new TuitionFeeDetailDebt
+                    {
+                        DetailId = detail.DetailId,
+                        SectionId = detail.Section.SectionId,
+                        SectionCode = detail.Section?.SectionCode ?? $"LHP{detail.SectionId}",
+                        CourseName = detail.ItemName,
+                        Credits = detail.Credits,
+                        UnitPrice = detail.UnitPrice,
+                        Amount = detail.Amount,
+                        Description = detail.Description ?? "",
+                        EnrollmentStatus = enrollment?.enrollmentStatus.ToString() ?? "Unknown",
+                        RegisteredAt = enrollment?.RegisteredAt ?? DateTime.MinValue
+                    };
+                }).ToList();
+
+                // Map payment info
+                var payments = tuition.Payments.Select(p => new PaymentInfo
+                {
+                    PaymentId = p.PaymentId,
+                    Amount = p.Amount,
+                    PaymentDate = p.PaymentDate,
+                    PaymentMethod = GetPaymentMethodName(p.PaymentMethod),
+                    PaymentStatus = p.PaymentStatus.ToString(),
+                    TransactionId = p.TransactionId,
+                    Note = p.Note
+                }).OrderByDescending(p => p.PaymentDate).ToList();
+
+                var semesterDebt = new SemesterTuitionDebt
+                {
+                    SemesterId = tuition.SemesterId,
+                    SemesterName = $"{tuition.Semester.Year} - {tuition.Semester.Term}",
+                    Year = tuition.Semester.Year,
+                    Term = tuition.Semester.Term,
+                    TuitionFeeId = tuition.TuitionFeeId,
+                    TuitionFeeCode = $"HF{tuition.TuitionFeeId:D6}", // Mã học phí
+                    TotalAmount = tuition.TotalAmount,
+                    PaidAmount = tuition.PaidAmount,
+                    RemainingAmount = tuition.RemainingAmount,
+                    LateFee = tuition.LateFee ?? 0,
+                    DueDate = tuition.DueDate,
+                    PaidAt = tuition.PaidAt,
+                    IsOverdue = isOverdue,
+                    DaysOverdue = daysOverdue,
+                    Status = tuition.Status,
+                    StatusName = GetTuitionStatusName(tuition.Status),
+                    CourseDetails = courseDetails,
+                    Payments = payments
+                };
+
+                semesterDebts.Add(semesterDebt);
+            }
+
+            return new StudentTuitionDebtResponse
+            {
+                MSSV = student.MSSV,
+                StudentName = student.User.FullName,
+                ClassName = student.Class.ClassName,
+                TotalDebt = totalDebt,
+                TotalLateFee = totalLateFee,
+                TotalSemesters = semesterDebts.Count,
+                SemesterDebts = semesterDebts
             };
         }
 
