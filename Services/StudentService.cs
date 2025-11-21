@@ -152,6 +152,7 @@ namespace StudentManagement.Services
                     MSSV = s.MSSV,
                     User = new UserResponse
                     {
+                        UserId = s.User.UserId,
                         Username = s.User.Username,
                         FullName = s.User.FullName,
                         Email = s.User.Email,

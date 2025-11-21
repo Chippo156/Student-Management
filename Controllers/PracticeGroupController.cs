@@ -19,7 +19,7 @@ namespace StudentManagement.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
 
@@ -50,23 +50,23 @@ namespace StudentManagement.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
 
-        [HttpPost("schedule")]
-        public async Task<IActionResult> AddPracticeSchedule([FromBody] PracticeScheduleRequest request)
-        {
-            try
-            {
-                var result = await practiceGroupService.AddPracticeScheduleAsync(request);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
+        //[HttpPost("schedule")]
+        //public async Task<IActionResult> AddPracticeSchedule([FromBody] PracticeScheduleRequest request)
+        //{
+        //    try
+        //    {
+        //        var result = await practiceGroupService.AddPracticeScheduleAsync(request);
+        //        return Ok(result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+        //    }
+        //}
 
         [HttpPost("section/{sectionId}/auto-assign")]
         public async Task<IActionResult> AutoAssignStudents(int sectionId)
@@ -78,7 +78,7 @@ namespace StudentManagement.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
     }

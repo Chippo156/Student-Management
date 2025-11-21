@@ -24,7 +24,23 @@ namespace StudentManagement.Services
                 // Xử lý trường hợp không tìm thấy section
                 return false;
             }
+            var query = context.Schedules
+    .Include(s => s.Section)
+ .Where(s =>
+  s.Section.SectionId == sectionId &&
+  s.DayOfWeek == dayOfWeek &&
+  s.Room == room &&
+ ((s.StartTime <= startTime && s.EndTime > startTime) ||
+                 (s.StartTime < endTime && s.EndTime >= endTime) ||
+                 (s.StartTime >= startTime && s.EndTime <= endTime))
+ );
 
+            bool hasConflict = await query.AnyAsync();
+
+            if (hasConflict)
+            {
+                return true;
+            }
             var targetSemesterId = currentSection.SemesterId;
 
             // BƯỚC 2: Check for conflicts với main schedules (theory schedules)
@@ -195,7 +211,7 @@ namespace StudentManagement.Services
 
                 if (hasConflicts)
                 {
-                    throw new Exception("Schedule conflicts with existing schedules");
+                    throw new Exception("Xung đột lịch với lịch hiện có");
                 }
 
                 var scheduleType = await context.ScheduleTypes.FindAsync(request.ScheduleTypeId)

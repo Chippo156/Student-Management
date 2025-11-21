@@ -204,6 +204,7 @@ namespace StudentManagement.Services
             }
             var userResponse = new UserResponse
             {
+                UserId = user.UserId,
                 Username = user.Username,
                 FullName = user.FullName,
                 Email = user.Email,

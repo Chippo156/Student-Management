@@ -17,7 +17,7 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<PracticeGroupResponse>> GetAvailablePracticeGroupsAsync(int sectionId);
         Task<PracticeGroupResponse?> GetStudentPracticeGroupAsync(int studentId, int sectionId);
         
-        Task<Schedule> AddPracticeScheduleAsync(PracticeScheduleRequest request);
+        Task<Schedule> AddPracticeScheduleAsync(PracticeScheduleRequest request, PracticeGroup practiceGroup);
         Task<bool> RemovePracticeScheduleAsync(int scheduleId);
         Task<IEnumerable<Schedule>> GetPracticeGroupSchedulesAsync(int practiceGroupId);
         

@@ -19,13 +19,13 @@ namespace StudentManagement.Services
 
             if (section == null)
             {
-                throw new Exception("Section not found");
+                throw new Exception("Không tìm thấy lớp học phần");
             }
 
             // Kiểm tra xem môn học có tín chỉ thực hành không
             if (section.CurriculumCourse.Course.CreditsLab <= 0)
             {
-                throw new Exception("This course does not have practical credits");
+                throw new Exception("Môn học này không có tín chỉ thực hành");
             }
 
             // Kiểm tra trùng tên nhóm trong cùng section
@@ -36,7 +36,7 @@ namespace StudentManagement.Services
 
             if (existingGroup != null)
             {
-                throw new Exception("Practice group with this name already exists in this section");
+                throw new Exception("Nhóm thực hành có tên này đã tồn tại trong phần này");
             }
 
             var practiceGroup = new PracticeGroup
@@ -47,8 +47,7 @@ namespace StudentManagement.Services
                 SectionId = request.SectionId,
                 Section = section
             };
-            context.PracticeGroups.Add(practiceGroup);
-            await context.SaveChangesAsync();
+
             PracticeScheduleRequest practiceScheduleRequest = new PracticeScheduleRequest
             {
                 PracticeGroupId = practiceGroup.PracticeGroupId,
@@ -61,7 +60,7 @@ namespace StudentManagement.Services
                 OnlineLink = request.OnlineLink
             };
 
-            await AddPracticeScheduleAsync(practiceScheduleRequest);
+            await AddPracticeScheduleAsync(practiceScheduleRequest, practiceGroup);
             return practiceGroup;
         }
 
@@ -179,21 +178,21 @@ namespace StudentManagement.Services
             }
         }
 
-        public async Task<Schedule> AddPracticeScheduleAsync(PracticeScheduleRequest request)
+        public async Task<Schedule> AddPracticeScheduleAsync(PracticeScheduleRequest request, PracticeGroup practiceGroup)
         {
-            var practiceGroup = await context.PracticeGroups
-                .Include(pg => pg.Section)
-                .FirstOrDefaultAsync(pg => pg.PracticeGroupId == request.PracticeGroupId && pg.IsActive);
+            //var practiceGroup = await context.PracticeGroups
+            //    .Include(pg => pg.Section)
+            //    .FirstOrDefaultAsync(pg => pg.PracticeGroupId == request.PracticeGroupId && pg.IsActive);
 
             if (practiceGroup == null)
             {
-                throw new Exception("Practice group not found");
+                throw new Exception("Không tìm thấy nhóm thực hành");
             }
 
             var scheduleType = await context.ScheduleTypes.FindAsync(request.ScheduleTypeId);
             if (scheduleType == null)
             {
-                throw new Exception("Schedule type not found");
+                throw new Exception("Không tìm thấy loại lịch");
             }
 
             // Kiểm tra xung đột lịch (có thể sử dụng lại logic từ ScheduleService)
@@ -208,8 +207,10 @@ namespace StudentManagement.Services
 
             if (hasConflicts)
             {
-                throw new Exception("Schedule conflicts with existing schedules");
+                throw new Exception("Xung đột lịch với lịch hiện có");
             }
+            context.PracticeGroups.Add(practiceGroup);
+            await context.SaveChangesAsync();
 
             var schedule = new Schedule
             {
@@ -224,6 +225,8 @@ namespace StudentManagement.Services
                 Room = request.Room,
                 OnlineLink = request.OnlineLink
             };
+
+
 
             context.Schedules.Add(schedule);
             await context.SaveChangesAsync();
@@ -341,6 +344,23 @@ namespace StudentManagement.Services
                 return false;
             }
 
+            var query = context.Schedules
+                .Include(s => s.Section)
+             .Where(s =>
+              s.Section.SectionId == sectionId &&
+              s.DayOfWeek == dayOfWeek &&
+              s.Room == room &&
+             ((s.StartTime <= startTime && s.EndTime > startTime) ||
+                             (s.StartTime < endTime && s.EndTime >= endTime) ||
+                             (s.StartTime >= startTime && s.EndTime <= endTime))
+             );
+
+            bool hasConflict = await query.AnyAsync();
+
+            if (hasConflict)
+            {
+                return true;
+            }
             var targetSemesterId = currentSection.SemesterId;
 
             // 2. Check conflict với lịch lý thuyết (main schedules) trong cùng Semester

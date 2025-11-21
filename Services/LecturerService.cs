@@ -103,6 +103,7 @@ namespace StudentManagement.Services
                 // Create base user response
                 var userResponse = new UserResponse
                 {
+                    UserId = lecturer.User.UserId,
                     Username = lecturer.User.Username,
                     FullName = lecturer.User.FullName,
                     Email = lecturer.User.Email ?? string.Empty,
