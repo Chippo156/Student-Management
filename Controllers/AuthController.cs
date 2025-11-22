@@ -23,7 +23,7 @@ namespace StudentManagement.Controllers
             var user = await authService.RegisterAsync(request);
             if (user is null)
             {
-                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Register failed", null));
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Đăng ký không thành công, null"));
             }
             return Ok(ApiResponse.SuccessResponse(user, "Success"));
         }
@@ -54,7 +54,7 @@ namespace StudentManagement.Controllers
             var result = await authService.RefreshTokenAsync(refreshTokenRequest);
             if (result is null)
             {
-                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Refresh token failed", null));
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Làm mới mã thông báo không thành công", null));
             }
             return Ok(ApiResponse.SuccessResponse(result, "Refresh token success"));
         }
@@ -71,7 +71,7 @@ namespace StudentManagement.Controllers
 
             if (!int.TryParse(userIdStr, out int userId))
             {
-                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid user ID in token.", null));
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "ID người dùng trong mã thông báo không hợp lệ.", null));
             }
             var result = await authService.LogoutAsync(userId);
             if (!result)

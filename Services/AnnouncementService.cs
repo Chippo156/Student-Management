@@ -14,13 +14,13 @@ namespace StudentManagement.Services
         {
             var creator = await context.Users
                 .FirstOrDefaultAsync(u => u.Username == createdByUsername)
-                ?? throw new Exception("Creator user not found");
+                ?? throw new Exception("Không tìm thấy thông tin người tạo");
 
 
 
             if (request.TargetType == AnnouncementTargetType.AcademicYear && !request.TargetYear.HasValue)
             {
-                throw new Exception("TargetYear is required when TargetType is AcademicYear");
+                throw new Exception("TargetYear là bắt buộc khi TargetType là AcademicYear");
             }
 
             // Validate department exists if specified
@@ -260,7 +260,7 @@ namespace StudentManagement.Services
 
             if (request.TargetType == AnnouncementTargetType.AcademicYear && !request.TargetYear.HasValue)
             {
-                throw new Exception("TargetYear is required when TargetType is AcademicYear");
+                throw new Exception("TargetYear là bắt buộc khi TargetType là AcademicYear");
             }
 
             announcement.Title = request.Title.Trim();

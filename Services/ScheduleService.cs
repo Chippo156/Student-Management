@@ -8,7 +8,7 @@ using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Services
 {
-    public class ScheduleService(AppDbContext context) : IScheduleService
+    public class ScheduleService(AppDbContext context, IPracticeGroupService practiceGroupService) : IScheduleService
     {
         public async Task<bool> CheckScheduleConflictsAsync(int sectionId, DateOnly? dateEvent, DayOfWeek? dayOfWeek, TimeOnly startTime, TimeOnly endTime, string room)
         {
@@ -198,7 +198,7 @@ namespace StudentManagement.Services
                             .ThenInclude(p => p.Department)
                     .Include(s => s.Semester)
                     .FirstOrDefaultAsync(s => s.SectionId == request.SectionId)
-                    ?? throw new Exception("Section not found");
+                    ?? throw new Exception("Không tìm thấy học phần");
 
                 // Check for conflicts
                 var hasConflicts = await CheckScheduleConflictsAsync(
@@ -211,11 +211,11 @@ namespace StudentManagement.Services
 
                 if (hasConflicts)
                 {
-                    throw new Exception("Xung đột lịch với lịch hiện có");
+                    throw new Exception("Xung đột với lịch hiện có");
                 }
 
                 var scheduleType = await context.ScheduleTypes.FindAsync(request.ScheduleTypeId)
-                    ?? throw new Exception("Schedule type not found");
+                    ?? throw new Exception("Không tìm thấy loại lịch");
 
                 var schedule = new Schedule
                 {
@@ -279,12 +279,12 @@ namespace StudentManagement.Services
                             await context.SaveChangesAsync();
 
                             // Log thông tin cập nhật status
-                            Console.WriteLine($"Section {section.SectionCode ?? $"LHP{section.SectionId}"} status updated to IsOpening after adding main schedule");
+                            Console.WriteLine($"Lớp học phần {section.SectionCode ?? $"LHP{section.SectionId}"} trạng thái được cập nhật thành IsOpening sau khi thêm lịch trình chính");
                         }
                         else
                         {
                             // Vẫn giữ ở IsPreparing nhưng log lý do
-                            Console.WriteLine($"Section {section.SectionCode ?? $"LHP{section.SectionId}"} remains in IsPreparing status - registration period conditions not met");
+                            Console.WriteLine($"Lớp học phần {section.SectionCode ?? $"LHP{section.SectionId}"} vẫn ở trạng thái IsPreparing - các điều kiện của thời gian đăng ký không được đáp ứng");
                         }
                     }
                 }
@@ -305,6 +305,11 @@ namespace StudentManagement.Services
             if (schedule is null)
             {
                 return false;
+            }
+            if (schedule.PracticeGroupId.HasValue)
+            {
+                // Nếu là lịch của nhóm thực hành, cần cập nhật số lượng hiện tại của nhóm
+                await practiceGroupService.DeletePracticeGroupAsync(schedule.PracticeGroupId.Value);
             }
 
             context.Schedules.Remove(schedule);
@@ -902,7 +907,7 @@ namespace StudentManagement.Services
                 var section = await context.Sections.FindAsync(request.SectionId);
                 if (section is null)
                 {
-                    throw new Exception("Section not found");
+                    throw new Exception("Không tìm thấy học phần");
                 }
                 schedule.Section = section;
             }
@@ -923,7 +928,7 @@ namespace StudentManagement.Services
 
                 if (hasConflicts)
                 {
-                    throw new Exception("Schedule conflicts with existing schedules");
+                    throw new Exception("Xung đột với lịch hiện có");
                 }
             }
 

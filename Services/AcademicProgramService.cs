@@ -14,7 +14,7 @@ namespace StudentManagement.Services
             var department = await context.Departments.FindAsync(request.DepartmentId);
             if (department is null)
             {
-                throw new Exception("Department not found");
+                throw new Exception("Không tìm thấy chuyên ngành nào");
             }
 
             var program = new AcademicProgram
@@ -142,7 +142,7 @@ namespace StudentManagement.Services
             var department = await context.Departments.FindAsync(request.DepartmentId);
             if (department is null)
             {
-                throw new Exception("Department not found");
+                throw new Exception("Không tìm thấy chuyên ngành nào");
             }
 
             program.ProgramName = request.ProgramName;
@@ -161,7 +161,7 @@ namespace StudentManagement.Services
                 .Include(p => p.Department)
                     .ThenInclude(d => d.Faculty)
                 .FirstOrDefaultAsync(p => p.AcademicProgramId == programId)
-                ?? throw new Exception($"Program with ID {programId} not found");
+                ?? throw new Exception($"Chương trình với ID {programId} không tìm thấy");
 
             // Get all curriculum courses for this program
             var curriculumCourses = await context.CurriculumCourses

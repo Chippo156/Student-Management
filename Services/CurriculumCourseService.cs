@@ -393,12 +393,12 @@ namespace StudentManagement.Services
 
                 var today = DateOnly.FromDateTime(DateTime.Now);
 
-                // Nếu học kỳ đó chưa bắt đầu (tương lai)
-                if (today < semester.StartDate)
-                {
-                    // Future semester - chưa có môn học khả dụng
-                    return new List<CourseByStudentDepartmentResponse>();
-                }
+                //// Nếu học kỳ đó chưa bắt đầu (tương lai)
+                //if (today < semester.StartDate)
+                //{
+                //    // Future semester - chưa có môn học khả dụng
+                //    return new List<CourseByStudentDepartmentResponse>();
+                //}
 
                 // Nếu học kỳ đó đã kết thúc (quá hạn)
                 if (today > semester.EndDate)

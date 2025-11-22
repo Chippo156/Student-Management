@@ -20,7 +20,7 @@ namespace StudentManagement.Services
                 var lecturer = await context.Lecturers
                     .Include(l => l.User)
                     .FirstOrDefaultAsync(l => l.User.Username == lecturerCode)
-                    ?? throw new Exception("Lecturer not found");
+                    ?? throw new Exception("Không tìm thấy giảng viên");
 
                 // Get section information
                 var section = await context.Sections
@@ -28,7 +28,7 @@ namespace StudentManagement.Services
                         .ThenInclude(cc => cc.Course)
                     .Include(s => s.Lecturer)
                     .FirstOrDefaultAsync(s => s.SectionId == request.SectionId)
-                    ?? throw new Exception("Section not found");
+                    ?? throw new Exception("Không tìm thấy học phần");
 
                 // Verify lecturer owns this section or practice group
                 if (request.PracticeGroupId.HasValue)
@@ -36,13 +36,13 @@ namespace StudentManagement.Services
                     var practiceGroup = await context.PracticeGroups
                         .FirstOrDefaultAsync(pg => pg.PracticeGroupId == request.PracticeGroupId.Value && 
                                                   pg.LecturerId == lecturer.Id)
-                        ?? throw new Exception("Practice group not found or you don't have permission");
+                        ?? throw new Exception("Nhóm thực hành không tìm thấy hoặc bạn không có quyền");
                 }
                 else
                 {
                     if (section.Lecturer.Id != lecturer.Id)
                     {
-                        throw new Exception("You don't have permission to create attendance for this section");
+                        throw new Exception("Bạn không có quyền tạo điểm danh cho phần này");
                     }
                 }
 
@@ -88,14 +88,14 @@ namespace StudentManagement.Services
                 var lecturer = await context.Lecturers
                     .Include(l => l.User)
                     .FirstOrDefaultAsync(l => l.User.Username == lecturerCode)
-                    ?? throw new Exception("Lecturer not found");
+                    ?? throw new Exception("Không tìm thấy giảng viên");
 
                 // Get attendance session
                 var attendanceSession = await context.AttendanceSessions
                     .Include(a => a.Section)
                     .Include(a => a.PracticeGroup)
                     .FirstOrDefaultAsync(a => a.AttendanceSessionId == request.AttendanceSessionId)
-                    ?? throw new Exception("Attendance session not found");
+                    ?? throw new Exception("Không tìm thấy phiên diểm danh");
 
                 // Verify permission
                 var hasPermission = attendanceSession.CreatedByLecturerId == lecturer.Id ||
@@ -105,7 +105,7 @@ namespace StudentManagement.Services
 
                 if (!hasPermission)
                 {
-                    throw new Exception("You don't have permission to record attendance for this session");
+                    throw new Exception("Bạn không có quyền ghi lại sự tham dự cho phiên này");
                 }
 
                 // Update attendance records
@@ -303,70 +303,6 @@ namespace StudentManagement.Services
                 PageSize = pagination.PageSize
             };
         }
-
-        //public async Task<StudentAttendanceStatisticsResponse> GetStudentAttendanceStatisticsAsync(int studentId, int sectionId)
-        //{
-        //    var student = await context.Students
-        //        .Include(s => s.User)
-        //        .Include(s => s.Class)
-        //        .FirstOrDefaultAsync(s => s.Id == studentId)
-        //        ?? throw new Exception("Student not found");
-
-        //    var section = await context.Sections
-        //        .Include(s => s.CurriculumCourse)
-        //            .ThenInclude(cc => cc.Course)
-        //        .FirstOrDefaultAsync(s => s.SectionId == sectionId)
-        //        ?? throw new Exception("Section not found");
-
-        //    // Check if student is enrolled in this section
-        //    var enrollment = await context.Enrollments
-        //        .FirstOrDefaultAsync(e => e.Student.Id == studentId && e.Section.SectionId == sectionId)
-        //        ?? throw new Exception("Student is not enrolled in this section");
-
-        //    // Get all attendance records
-        //    var attendances = await context.Attendances
-        //        .Include(a => a.AttendanceSession)
-        //        .Where(a => a.StudentId == studentId && a.SectionId == sectionId)
-        //        .OrderBy(a => a.AttendanceSession.SessionDate)
-        //        .ToListAsync();
-
-        //    // Calculate statistics
-        //    var totalSessions = attendances.Count;
-        //    var presentCount = attendances.Count(a => a.Status == AttendanceStatus.Present);
-        //    var absentCount = attendances.Count(a => a.Status == AttendanceStatus.Absent);
-        //    var lateCount = attendances.Count(a => a.Status == AttendanceStatus.Late);
-        //    var excusedCount = attendances.Count(a => a.Status == AttendanceStatus.Excused);
-        //    var attendanceRate = totalSessions > 0 ? Math.Round((double)presentCount / totalSessions * 100, 2) : 0;
-
-        //    var response = new StudentAttendanceStatisticsResponse
-        //    {
-        //        StudentId = student.Id,
-        //        MSSV = student.MSSV,
-        //        StudentName = student.User.FullName,
-        //        ClassName = student.Class.ClassName,
-        //        SectionId = section.SectionId,
-        //        SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
-        //        CourseName = section.CurriculumCourse.Course.CourseName,
-        //        TotalSessions = totalSessions,
-        //        PresentCount = presentCount,
-        //        AbsentCount = absentCount,
-        //        LateCount = lateCount,
-        //        ExcusedCount = excusedCount,
-        //        AttendanceRate = attendanceRate,
-        //        AttendanceRecords = attendances.Select(a => new StudentAttendanceRecord
-        //        {
-        //            AttendanceSessionId = a.AttendanceSessionId,
-        //            SessionDate = a.AttendanceSession.SessionDate,
-        //            SessionName = a.AttendanceSession.SessionName,
-        //            Status = a.Status,
-        //            StatusVietnamese = GetAttendanceStatusInVietnamese(a.Status),
-        //            Note = a.Note
-        //        }).ToList()
-        //    };
-
-        //    return response;
-        //}
-
         private async Task CreateInitialAttendanceRecordsAsync(AttendanceSession attendanceSession, int? practiceGroupId)
         {
             List<int> studentIds;
@@ -425,12 +361,12 @@ namespace StudentManagement.Services
             var lecturer = await context.Lecturers
                 .Include(l => l.User)
                 .FirstOrDefaultAsync(l => l.User.Username == lecturerCode)
-                ?? throw new Exception("Lecturer not found");
+                ?? throw new Exception("Không tìm thấy giảng viên");
 
             var attendance = await context.Attendances
                 .Include(a => a.AttendanceSession)
                 .FirstOrDefaultAsync(a => a.AttendanceId == attendanceId)
-                ?? throw new Exception("Attendance record not found");
+                ?? throw new Exception("Không tìm thấy hồ sơ điểm danh");
 
             // Verify permission
             var hasPermission = attendance.AttendanceSession.CreatedByLecturerId == lecturer.Id ||
@@ -438,7 +374,7 @@ namespace StudentManagement.Services
 
             if (!hasPermission)
             {
-                throw new Exception("You don't have permission to update this attendance record");
+                throw new Exception("Bạn không có quyền cập nhật hồ sơ tham dự này");
             }
 
             attendance.Status = request.Status;
@@ -455,17 +391,17 @@ namespace StudentManagement.Services
             var lecturer = await context.Lecturers
                 .Include(l => l.User)
                 .FirstOrDefaultAsync(l => l.User.Username == lecturerCode)
-                ?? throw new Exception("Lecturer not found");
+                ?? throw new Exception("Không tìm thấy giảng viên");
 
             var attendanceSession = await context.AttendanceSessions
                 .Include(a => a.Attendances)
                 .FirstOrDefaultAsync(a => a.AttendanceSessionId == attendanceSessionId)
-                ?? throw new Exception("Attendance session not found");
+                ?? throw new Exception("Không tìm thấy phiên điểm danh");
 
             // Verify permission
             if (attendanceSession.CreatedByLecturerId != lecturer.Id)
             {
-                throw new Exception("You don't have permission to delete this attendance session");
+                throw new Exception("Bạn không có quyền xóa phiên tham dự này");
             }
 
             // Delete related attendance records first

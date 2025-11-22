@@ -14,7 +14,7 @@ namespace StudentManagement.Services
 
             if (cls.AdviserAssignment != null)
             {
-                throw new System.Exception("Class already has an adviser");
+                throw new System.Exception("Lớp đã được phân công giáo viên chủ nhiệm");
             }
             AdviserAssignment assignment = new AdviserAssignment
             {

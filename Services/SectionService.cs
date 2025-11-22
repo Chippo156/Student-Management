@@ -27,7 +27,7 @@ namespace StudentManagement.Services
 
                 if (curriculumCourse == null)
                 {
-                    throw new Exception("CurriculumCourse not found");
+                    throw new Exception("Không tìm thấy môn học");
                 }
 
                 // Validate Lecturer exists and is active
@@ -37,13 +37,13 @@ namespace StudentManagement.Services
 
                 if (lecturer == null)
                 {
-                    throw new Exception("Lecturer not found");
+                    throw new Exception("Không tìm thấy giảng viên");
                 }
 
                 // Check if lecturer is active
                 if (lecturer.User.AccountStatus != Enum.AccountStatus.Active)
                 {
-                    throw new Exception("Cannot assign inactive lecturer to section");
+                    throw new Exception("Không thể chỉ định giảng viên không hoạt động cho học phần");
                 }
 
                 // Validate Semester exists and is not in the past
@@ -52,7 +52,7 @@ namespace StudentManagement.Services
 
                 if (existingSemester == null)
                 {
-                    throw new Exception("Semester not found");
+                    throw new Exception("Không tìm thấy học kỳ");
                 }
 
                 // Validate Class exists
@@ -63,36 +63,36 @@ namespace StudentManagement.Services
 
                 if (classSection == null)
                 {
-                    throw new Exception("Class not found");
+                    throw new Exception("Không tìm thấy lớp học");
                 }
 
                 // Validate that the class program matches the curriculum course program
                 if (classSection.Program.AcademicProgramId != curriculumCourse.Program.AcademicProgramId)
                 {
-                    throw new Exception("Class program does not match curriculum course program");
+                    throw new Exception("Chương trình của lớp học không phù hợp với chương trình học");
                 }
 
                 // Validate capacity
                 if (request.Capacity <= 0)
                 {
-                    throw new Exception("Section capacity must be greater than 0");
+                    throw new Exception("Sức chứa của phần phải lớn hơn 0");
                 }
 
-                if (request.Capacity > 200) // Max capacity validation
+                if (request.Capacity > 40) // Max capacity validation
                 {
-                    throw new Exception("Section capacity cannot exceed 200 students");
+                    throw new Exception("Sức chứa của một khu vực không được vượt quá 40 sinh viên");
                 }
 
                 // Validate dates
                 if (request.StartDate >= request.EndDate)
                 {
-                    throw new Exception("Start date must be before end date");
+                    throw new Exception("Ngày bắt đầu phải trước ngày kết thúc");
                 }
 
                 // Check for date conflicts with semester
                 if (request.StartDate < existingSemester.StartDate || request.EndDate > existingSemester.EndDate)
                 {
-                    throw new Exception("Section dates must be within semester dates");
+                    throw new Exception("Ngày học phần phải nằm trong ngày học kỳ");
                 }
 
                 // Generate unique section code
@@ -261,7 +261,7 @@ namespace StudentManagement.Services
 
                 if (counter > 99) // Prevent infinite loop
                 {
-                    throw new Exception("Unable to generate unique section code after 99 attempts");
+                    throw new Exception("Không thể tạo mã phần duy nhất sau 99 lần thử");
                 }
             }
 
@@ -285,7 +285,7 @@ namespace StudentManagement.Services
             // Example business rule: Lecturer can't have more than 10 sections per semester
             if (existingLecturerSections >= 10)
             {
-                throw new Exception("Lecturer cannot be assigned more than 10 sections per semester");
+                throw new Exception("Giảng viên không thể được giao hơn 10 phần mỗi học kỳ");
             }
         }
 
@@ -372,14 +372,14 @@ namespace StudentManagement.Services
                     .ThenInclude(c => c.Program)
                         .ThenInclude(p => p.Department)
                 .FirstOrDefaultAsync(s => s.MSSV == studentMSSV)
-                ?? throw new Exception($"Student with MSSV {studentMSSV} not found");
+                ?? throw new Exception($"Không tìm thấy sinh viên có MSSV {studentMSSV}");
 
             // Verify curriculum course exists
             var curriculumCourse = await context.CurriculumCourses
                 .Include(cc => cc.Course)
                 .Include(cc => cc.Program)
                 .FirstOrDefaultAsync(cc => cc.Id == curriculumCourseId)
-                ?? throw new Exception("Curriculum course not found");
+                ?? throw new Exception("Không tìm thấy môn học");
 
             // Check if registration period is active for the student's department and semester
             var registrationPeriod = await context.RegistrationPeriods
@@ -452,7 +452,7 @@ namespace StudentManagement.Services
                     .ThenInclude(c => c.Program)
                         .ThenInclude(p => p.Department)
                 .FirstOrDefaultAsync(s => s.MSSV == studentMSSV)
-                ?? throw new Exception($"Student with MSSV {studentMSSV} not found");
+                ?? throw new Exception($"Không tìm thấy sinh viên có MSSV {studentMSSV}");
 
             // Get section with related data
             var section = await context.Sections
@@ -929,7 +929,7 @@ namespace StudentManagement.Services
 
             if (lecturer == null)
             {
-                throw new Exception("Lecturer not found");
+                throw new Exception("Không tìm thấy giảng viên");
             }
 
             // Build query for sections taught by this lecturer
@@ -1425,14 +1425,14 @@ namespace StudentManagement.Services
             // Check if section is cancelled
             if (section.IsCancelled)
             {
-                return (false, "Cannot update a cancelled section");
+                return (false, "Không thể cập nhật học phần đã hủy");
             }
 
             // Check if section has already ended
             var today = DateOnly.FromDateTime(DateTime.Now);
             if (today > section.EndDate)
             {
-                return (false, "Cannot update a section that has already ended");
+                return (false, "Không thể cập nhật học phần đã kết thúc");
             }
 
             // Check if section has started and has enrollments
@@ -1440,10 +1440,10 @@ namespace StudentManagement.Services
             {
                 // Allow limited updates for active sections with enrollments
                 // (e.g., only capacity increase, status changes)
-                return (true, "Limited updates allowed for active section");
+                return (true, "Cho phép cập nhật giới hạn cho học phần đang hoạt động");
             }
 
-            return (true, "Section can be updated");
+            return (true, "Học phần có thể được cập nhật");
         }
 
         private async Task<(bool CanChange, string Reason)> CanChangeStatusAsync(Section section, SectionStatus newStatus)
@@ -1460,12 +1460,12 @@ namespace StudentManagement.Services
 
             if (!allowedTransitions.ContainsKey(currentStatus))
             {
-                return (false, $"No transitions allowed from status {currentStatus}");
+                return (false, $"Không được phép chuyển đổi từ trạng thái {currentStatus}");
             }
 
             if (!allowedTransitions[currentStatus].Contains(newStatus))
             {
-                return (false, $"Cannot change status from {currentStatus} to {newStatus}");
+                return (false, $"Không thể thay đổi trạng thái từ {currentStatus} to {newStatus}");
             }
 
             // Additional business logic checks
@@ -1479,7 +1479,7 @@ namespace StudentManagement.Services
 
                 if (!hasMainSchedules)
                 {
-                    return (false, "Cannot open section without main schedules");
+                    return (false, "Không thể mở phần không có lịch chính");
                 }
 
                 // Check if registration period is active
@@ -1492,11 +1492,11 @@ namespace StudentManagement.Services
 
                 if (registrationPeriod == null || !registrationPeriod.IsActive)
                 {
-                    return (false, "Cannot open section when registration period is not active");
+                    return (false, "Không thể mở phần khi thời gian đăng ký không còn hiệu lực");
                 }
             }
 
-            return (true, "Status change is allowed");
+            return (true, "Cho phép thay đổi trạng thái");
         }
 
         public async Task<IEnumerable<CurriculumCourseDropdownResponse>> GetCurriculumCoursesDropdownAsync()

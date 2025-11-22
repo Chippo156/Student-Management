@@ -13,7 +13,7 @@ namespace StudentManagement.Services
         public async Task<Class> CreateClassAsync(ClassRequest classRequest)
         {
             var program = await context.Programs.FindAsync(classRequest.ProgramId)
-                ?? throw new Exception("Program not found");
+                ?? throw new Exception("Không tìm thấy chương trình");
             
             var newClass = new Class
             {
@@ -25,7 +25,7 @@ namespace StudentManagement.Services
             {
                 var lecturer = await context.Lecturers.FindAsync(classRequest.LecturerId);
                 if (lecturer == null)
-                    throw new Exception("Lecturer not found");
+                    throw new Exception("Không tìm thấy giảng viên");
                 AdviserAssignment adviserAssignment = new AdviserAssignment
                 {
                     Lecturer = lecturer,
@@ -116,7 +116,7 @@ namespace StudentManagement.Services
                     var newProgram = await context.Programs.FindAsync(request.ProgramId.Value);
                     if (newProgram == null)
                     {
-                        throw new Exception("Program not found");
+                        throw new Exception("Không tìm thấy chương trình");
                     }
                     classEntity.Program = newProgram;
                 }
@@ -130,13 +130,13 @@ namespace StudentManagement.Services
                     
                     if (newLecturer == null)
                     {
-                        throw new Exception("Lecturer not found");
+                        throw new Exception("Không tìm thấy giảng viên");
                     }
 
                     // Check if lecturer is active
                     if (newLecturer.User.AccountStatus != AccountStatus.Active)
                     {
-                        throw new Exception("Cannot assign inactive lecturer as class adviser");
+                        throw new Exception("Không thể chỉ định giảng viên không hoạt động làm cố vấn lớp");
                     }
 
                     // Update existing adviser assignment or create new one

@@ -26,7 +26,7 @@ namespace StudentManagement.Services
                     .ThenInclude(c => c.Program)
                         .ThenInclude(p => p.Department)
                 .FirstOrDefaultAsync(s => s.User.Username == studentUsername)
-                ?? throw new Exception("Student not found");
+                ?? throw new Exception("Không tìm thấy sinh viên");
 
             // Lấy thông tin giảng viên chủ nhiệm
             var classTeacher = await _context.AdviserAssignments
@@ -34,7 +34,7 @@ namespace StudentManagement.Services
                     .ThenInclude(l => l.User)
                 .Where(aa => aa.ClassId == student.Class.ClassId && aa.IsActive)
                 .FirstOrDefaultAsync()
-                ?? throw new Exception("Class teacher not found");
+                ?? throw new Exception("Không tìm thấy giáo viên dạy lớp");
 
              
 
@@ -82,7 +82,7 @@ namespace StudentManagement.Services
                     .ThenInclude(c => c.Program)
                         .ThenInclude(p => p.Department)
                 .FirstOrDefaultAsync(s => s.User.Username == studentUsername)
-                ?? throw new Exception("Student not found");
+                ?? throw new Exception("Không tìm thấy sinh viên");
 
             // Tìm room đã tồn tại cho department
             var existingRoom = await _context.ChatRooms
@@ -138,7 +138,7 @@ namespace StudentManagement.Services
             // Verify user has access to chat room
             var hasAccess = await VerifyUserAccessToChatRoomAsync(username, request.ChatRoomId);
             if (!hasAccess)
-                throw new Exception("Access denied to this chat room");
+                throw new Exception("Truy cập vào phòng chat này bị từ chối");
 
             var message = new ChatMessage
             {
@@ -167,7 +167,7 @@ namespace StudentManagement.Services
             // Verify access
             var hasAccess = await VerifyUserAccessToChatRoomAsync(username, chatRoomId);
             if (!hasAccess)
-                throw new Exception("Access denied to this chat room");
+                throw new Exception("Truy cập vào phòng chat này bị từ chối");
 
             var query = _context.ChatMessages
                 .Include(m => m.Sender)
@@ -202,7 +202,7 @@ namespace StudentManagement.Services
         {
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Username == username)
-                ?? throw new Exception("User not found");
+                ?? throw new Exception("Không tìm thấy người dùng");
 
             var chatRooms = await _context.ChatRoomParticipants
                 .Include(crp => crp.ChatRoom)

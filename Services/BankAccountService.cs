@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
@@ -12,7 +12,7 @@ namespace StudentManagement.Services
         public async Task<BankAccount> CreateBankAccountAsync(int userId, BankAccountRequest request)
         {
             var user = await context.Users.FindAsync(userId)
-                ?? throw new Exception("User not found");
+                ?? throw new Exception("Không tìm thấy người dùng");
 
             // If this is set as default, remove default from other accounts
             if (request.IsDefault)

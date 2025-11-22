@@ -17,13 +17,13 @@ namespace StudentManagement.Services
             var student = context.Students.Find(enrollmentRequest.StudentId);
             if (student is null)
             {
-                throw new Exception("Student not found");
+                throw new Exception("Không tìm thấy sinh viên");
             }
             
             var section = context.Sections.Find(enrollmentRequest.SectionId);
             if (section is null)
             {
-                throw new Exception("Course not found");
+                throw new Exception("Không tìm thấy môn học");
             }
 
             Enrollment newEnrollment = new Enrollment
@@ -41,7 +41,7 @@ namespace StudentManagement.Services
 
         public Task<bool> DeleteEnrollmentAsync(int enrollmentId)
         {
-            Enrollment enrollment = context.Enrollments.Find(enrollmentId) ?? throw new Exception("Enrollment not found");
+            Enrollment enrollment = context.Enrollments.Find(enrollmentId) ?? throw new Exception("Không tìm thấy thông tin đăng ký");
             context.Enrollments.Remove(enrollment);
             return Task.FromResult(context.SaveChanges() > 0);
         }
@@ -118,6 +118,7 @@ namespace StudentManagement.Services
                         .ThenInclude(l => l.User)
                     .Include(s => s.Semester)
                     .Include(s => s.Enrollments)
+                    .Include(s => s.Schedules)
                     .FirstOrDefaultAsync(s => s.SectionId == request.SectionId);
 
 
@@ -126,8 +127,8 @@ namespace StudentManagement.Services
                     return new EnrollmentResultResponse
                     {
                         IsSuccess = false,
-                        Message = "Section not found",
-                        Errors = { "The requested section does not exist" }
+                        Message = "Không tìm thấy học phần",
+                        Errors = { "Học phần yêu cầu không tồn tại" }
                     };
                 }
 
@@ -148,7 +149,7 @@ namespace StudentManagement.Services
                     return new EnrollmentResultResponse
                     {
                         IsSuccess = false,
-                        Message = "Enrollment validation failed",
+                        Message = "Xác thực đăng ký không thành công",
                         Errors = validationResult.Errors
                     };
                 }
@@ -241,7 +242,7 @@ namespace StudentManagement.Services
                 return new EnrollmentResultResponse
                 {
                     IsSuccess = true,
-                    Message = "Successfully enrolled in course" + practiceGroupInfo + ". Học phí đã được cập nhật.",
+                    Message = "Đã đăng ký khóa học thành công" + practiceGroupInfo + ". Học phí đã được cập nhật.",
                     EnrollmentId = enrollment.EnrollmentId,
                     EnrollmentDetails = new EnrollmentDetailInfo
                     {
@@ -263,7 +264,7 @@ namespace StudentManagement.Services
                 return new EnrollmentResultResponse
                 {
                     IsSuccess = false,
-                    Message = "Enrollment failed due to system error",
+                    Message = "Đăng ký không thành công do lỗi hệ thống",
                     Errors = { ex.Message }
                 };
             }
@@ -365,6 +366,12 @@ namespace StudentManagement.Services
                 return (false, errors);
             }
 
+            if (section.Schedules == null || !section.Schedules.Any())
+            {
+                errors.Add("Lớp học phần không có lịch học được thiết lập, vui lòng liên hệ phòng đào tạo.");
+                return (false, errors);
+            }
+
             // Check registration period
             var registrationPeriod = await context.RegistrationPeriods
                 .Include(rp => rp.Semester)
@@ -373,21 +380,20 @@ namespace StudentManagement.Services
                     rp.Semester.SemesterId == section.Semester.SemesterId &&
                     rp.Department.DepartmentId == student.Class.Program.Department.DepartmentId);
 
-            //if (registrationPeriod == null || !registrationPeriod.IsActive)
-            //{
-            //    errors.Add("Đăng ký thất bại, khung thời gian đăng ký đã hết hiệu lực");
-            //}
+            if (registrationPeriod == null || !registrationPeriod.IsActive)
+            {
+                errors.Add("Đăng ký thất bại, khung thời gian đăng ký đã hết hiệu lực");
+            }
 
             var today = DateOnly.FromDateTime(DateTime.Now);
 
             // Không cho đăng ký sau 7 ngày kể từ ngày bắt đầu học kỳ
             var deadline = section.StartDate.AddDays(7);
 
-            //if (today > deadline)
-            //{
-            //    errors.Add("Không thể đăng ký học phần sau khi học kỳ đã bắt đầu hơn 1 tuần");
-            //}
-
+            if (today > deadline)
+            {
+                errors.Add("Không thể đăng ký học phần sau khi học kỳ đã bắt đầu hơn 1 tuần");
+            }
 
             // Check prerequisites
             var prerequisites = await context.Prerequisites
@@ -527,8 +533,8 @@ namespace StudentManagement.Services
                     return new EnrollmentResultResponse
                     {
                         IsSuccess = false,
-                        Message = "Student not found",
-                        Errors = { "Student with provided MSSV does not exist" }
+                        Message = "Không tìm thấy sinh viên",
+                        Errors = { "Sinh viên có MSSV được cung cấp không tồn tại" }
                     };
                 }
 
@@ -548,8 +554,8 @@ namespace StudentManagement.Services
                     return new EnrollmentResultResponse
                     {
                         IsSuccess = false,
-                        Message = "Section not found",
-                        Errors = { "The requested section does not exist" }
+                        Message = "Không tìm thấy phần",
+                        Errors = { "Học phần yêu cầu không tồn tại" }
                     };
                 }
 
@@ -563,8 +569,8 @@ namespace StudentManagement.Services
                     return new EnrollmentResultResponse
                     {
                         IsSuccess = false,
-                        Message = "Enrollment not found",
-                        Errors = { "Student is not enrolled in this section" }
+                        Message = "Không tìm thấy thông tin đăng ký",
+                        Errors = { "Sinh viên không được ghi danh vào phần này" }
                     };
                 }
 
@@ -575,7 +581,7 @@ namespace StudentManagement.Services
                     return new EnrollmentResultResponse
                     {
                         IsSuccess = false,
-                        Message = "Drop enrollment validation failed",
+                        Message = "Xác thực hủy đăng ký không thành công",
                         Errors = validationResult.Errors
                     };
                 }
@@ -642,7 +648,7 @@ namespace StudentManagement.Services
                 return new EnrollmentResultResponse
                 {
                     IsSuccess = true,
-                    Message = "Successfully dropped enrollment. Học phí đã được cập nhật.",
+                    Message = "Đã hủy đăng ký thành công. Học phí đã được cập nhật.",
 
                 };
             }
@@ -652,7 +658,7 @@ namespace StudentManagement.Services
                 return new EnrollmentResultResponse
                 {
                     IsSuccess = false,
-                    Message = "Drop enrollment failed due to system error",
+                    Message = "Hủy đăng ký không thành công do lỗi hệ thống",
                     Errors = { ex.Message }
                 };
             }
