@@ -38,7 +38,6 @@ namespace StudentManagement.Services
             {
                 Title = request.Title.Trim(),
                 Content = request.Content.Trim(),
-                SourceUrl = request.SourceUrl.Trim(),
                 Priority = request.Priority,
                 Type = request.Type,
                 TargetType = request.TargetType,
@@ -48,6 +47,10 @@ namespace StudentManagement.Services
                 CreatedByUserId = creator.UserId,
                 CreatedByUser = creator
             };
+            if (request.SourceUrl != null)
+            {
+                announcement.SourceUrl = request.SourceUrl.Trim();
+            }
 
             context.Announcements.Add(announcement);
             await context.SaveChangesAsync();

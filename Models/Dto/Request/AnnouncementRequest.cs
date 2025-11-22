@@ -12,7 +12,7 @@ namespace StudentManagement.Models.Dto.Request
         [Required(ErrorMessage = "Content is required")]
         public string Content { get; set; } = string.Empty;
         
-        public string SourceUrl { get; set; } = string.Empty;
+        public string? SourceUrl { get; set; } = string.Empty;
         
         public AnnouncementPriority Priority { get; set; } = AnnouncementPriority.Normal;
         public AnnouncementType Type { get; set; } = AnnouncementType.General;
