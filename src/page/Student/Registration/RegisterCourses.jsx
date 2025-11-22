@@ -78,7 +78,7 @@ const RegisterCourses = () => {
         case 'scheduleDetail':
           return selectedSection !== null; // Hiển thị khi đã chọn lớp học phần
         case 'enrolledTable':
-          return enrolledSections && enrolledSections.length > 0; // Chỉ hiển thị khi có môn đã đăng ký
+          return true; // Luôn hiển thị vì component luôn được mount
         default:
           return false;
       }

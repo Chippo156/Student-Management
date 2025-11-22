@@ -11,8 +11,10 @@ export const mapCourseGrades = (courseGrades) =>
       if (a.assessmentTypeId === 4) final = a.score ?? '';
       if (a.assessmentTypeId === 1 && Array.isArray(a.regularPointsDetails))
         regulars = a.regularPointsDetails.map((r) => r.score ?? '');
-      if (a.assessmentTypeId === 2 && Array.isArray(a.regularPointsDetails))
-        practices = a.regularPointsDetails.map((r) => r.score ?? '');
+      if (a.assessmentTypeId === 2) {
+        // Practice assessments have score directly, not in regularPointsDetails
+        practices.push(a.score ?? '');
+      }
     });
     while (regulars.length < REGULAR_COLS) regulars.push('');
     while (practices.length < PRACTICE_COLS) practices.push('');

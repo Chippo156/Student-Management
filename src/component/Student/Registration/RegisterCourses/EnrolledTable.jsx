@@ -1,21 +1,28 @@
-import React, { useState } from 'react';
-import { Table, Button, Dropdown, Menu, Tag, Popconfirm, Spin } from 'antd';
+import React, { forwardRef } from 'react';
+import {
+  Table,
+  Button,
+  Dropdown,
+  Menu,
+  Tag,
+  Popconfirm,
+  Spin,
+  Card,
+} from 'antd';
 import {
   UnorderedListOutlined,
   DeleteOutlined,
   CheckSquareOutlined,
+  CheckCircleOutlined,
 } from '@ant-design/icons';
 import { tableRowClassName, parseModalSchedule } from './helpers';
 import ScheduleModal from './ScheduleModal';
 
-const EnrolledTable = ({
-  theme,
-  enrolledSections,
-  handleDropEnrollment,
-  loading,
-}) => {
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [modalSchedule, setModalSchedule] = useState([]);
+const EnrolledTable = forwardRef((props, ref) => {
+  const { theme, enrolledSections, handleDropEnrollment, loading } = props;
+
+  const [showScheduleModal, setShowScheduleModal] = React.useState(false);
+  const [modalSchedule, setModalSchedule] = React.useState([]);
 
   const enrolledColumns = [
     {
@@ -132,7 +139,22 @@ const EnrolledTable = ({
   ];
 
   return (
-    <>
+    <Card
+      ref={ref}
+      title={
+        <>
+          <CheckCircleOutlined style={{ marginRight: 8 }} />
+          Danh sách môn đã đăng ký ({enrolledSections.length})
+        </>
+      }
+      style={{
+        marginTop: 24,
+        borderRadius: 8,
+        background: theme.palette.background.paper,
+        borderColor: theme.palette.divider,
+      }}
+      className="register-courses-enrolled-table"
+    >
       <div
         style={{
           fontWeight: 600,
@@ -165,8 +187,10 @@ const EnrolledTable = ({
         setShowScheduleModal={setShowScheduleModal}
         modalSchedule={modalSchedule}
       />
-    </>
+    </Card>
   );
-};
+});
+
+EnrolledTable.displayName = 'EnrolledTable';
 
 export default EnrolledTable;
