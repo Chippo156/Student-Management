@@ -148,16 +148,25 @@ const PublicAnnouncementPanel = () => {
         overflow: 'hidden',
       }}
     >
-      <CardContent sx={{ p: 0, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <CardContent
+        sx={{
+          p: 0,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
         {/* Header */}
         <Box
           sx={{
             p: 3,
             pb: 2.5,
             flexShrink: 0,
-            background: theme.palette.mode === 'dark'
-              ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.secondary.main, 0.15)} 100%)`
-              : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.secondary.main, 0.08)} 100%)`,
+            background:
+              theme.palette.mode === 'dark'
+                ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.secondary.main, 0.15)} 100%)`
+                : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.secondary.main, 0.08)} 100%)`,
             borderBottom: `1px solid ${theme.palette.divider}`,
           }}
         >
@@ -176,7 +185,11 @@ const PublicAnnouncementPanel = () => {
               <Typography variant="h5" fontWeight={700} sx={{ mb: 0.25 }}>
                 Thông báo mới
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.813rem' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: '0.813rem' }}
+              >
                 Cập nhật liên tục từ nhà trường
               </Typography>
             </Box>
@@ -251,7 +264,9 @@ const PublicAnnouncementPanel = () => {
                       <Skeleton variant="circular" width={48} height={48} />
                     </ListItemAvatar>
                     <ListItemText
-                      primary={<Skeleton variant="text" width="85%" height={24} />}
+                      primary={
+                        <Skeleton variant="text" width="85%" height={24} />
+                      }
                       secondary={
                         <>
                           <Skeleton variant="text" width="100%" />
@@ -345,7 +360,10 @@ const PublicAnnouncementPanel = () => {
                               height: 20,
                               fontSize: 11,
                               fontWeight: 600,
-                              bgcolor: alpha(getPriorityColor(announcement.priority), 0.15),
+                              bgcolor: alpha(
+                                getPriorityColor(announcement.priority),
+                                0.15
+                              ),
                               color: getPriorityColor(announcement.priority),
                               border: `1px solid ${alpha(getPriorityColor(announcement.priority), 0.3)}`,
                             }}
@@ -438,10 +456,20 @@ const PublicAnnouncementPanel = () => {
                 bgcolor: alpha(theme.palette.primary.main, 0.05),
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, flex: 1 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 2,
+                  flex: 1,
+                }}
+              >
                 <Avatar
                   sx={{
-                    bgcolor: alpha(getTypeColor(selectedAnnouncement.type), 0.15),
+                    bgcolor: alpha(
+                      getTypeColor(selectedAnnouncement.type),
+                      0.15
+                    ),
                     color: getTypeColor(selectedAnnouncement.type),
                     width: 48,
                     height: 48,
@@ -460,7 +488,10 @@ const PublicAnnouncementPanel = () => {
                       sx={{
                         height: 20,
                         fontSize: 11,
-                        bgcolor: alpha(getTypeColor(selectedAnnouncement.type), 0.15),
+                        bgcolor: alpha(
+                          getTypeColor(selectedAnnouncement.type),
+                          0.15
+                        ),
                         color: getTypeColor(selectedAnnouncement.type),
                       }}
                     />
@@ -470,14 +501,21 @@ const PublicAnnouncementPanel = () => {
                       sx={{
                         height: 20,
                         fontSize: 11,
-                        bgcolor: alpha(getPriorityColor(selectedAnnouncement.priority), 0.15),
+                        bgcolor: alpha(
+                          getPriorityColor(selectedAnnouncement.priority),
+                          0.15
+                        ),
                         color: getPriorityColor(selectedAnnouncement.priority),
                       }}
                     />
                   </Box>
                 </Box>
               </Box>
-              <IconButton size="small" onClick={handleCloseDetail} sx={{ ml: 1 }}>
+              <IconButton
+                size="small"
+                onClick={handleCloseDetail}
+                sx={{ ml: 1 }}
+              >
                 <CloseIcon />
               </IconButton>
             </DialogTitle>
@@ -487,8 +525,12 @@ const PublicAnnouncementPanel = () => {
             <DialogContent sx={{ pt: 3, pb: 2 }}>
               {/* Thông tin thời gian */}
               <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <CalendarIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}
+                >
+                  <CalendarIcon
+                    sx={{ fontSize: 18, color: 'text.secondary' }}
+                  />
                   <Typography variant="body2" color="text.secondary">
                     Thời gian:{' '}
                     <Typography
@@ -497,7 +539,9 @@ const PublicAnnouncementPanel = () => {
                       fontWeight={600}
                       color="text.primary"
                     >
-                      {dayjs(selectedAnnouncement.createdAt).format('DD/MM/YYYY HH:mm')}
+                      {dayjs(selectedAnnouncement.createdAt).format(
+                        'DD/MM/YYYY HH:mm'
+                      )}
                     </Typography>
                   </Typography>
                 </Box>
@@ -521,21 +565,96 @@ const PublicAnnouncementPanel = () => {
 
               {/* Nội dung */}
               <Box>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    whiteSpace: 'pre-wrap',
-                    lineHeight: 1.8,
-                    color: 'text.primary',
-                  }}
-                >
-                  {selectedAnnouncement.content}
-                </Typography>
+                {(() => {
+                  // Tách content và ảnh đính kèm
+                  const contentParts = selectedAnnouncement.content.split(
+                    '\n\n[Ảnh đính kèm]:\n'
+                  );
+                  const mainContent = contentParts[0];
+                  const imageLinks = contentParts[1]
+                    ? contentParts[1].split('\n').filter((link) => link.trim())
+                    : [];
+
+                  return (
+                    <>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          whiteSpace: 'pre-wrap',
+                          lineHeight: 1.8,
+                          color: 'text.primary',
+                        }}
+                      >
+                        {mainContent}
+                      </Typography>
+
+                      {/* Hiển thị ảnh đính kèm từ content */}
+                      {imageLinks.length > 0 && (
+                        <Box sx={{ mt: 3 }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            fontWeight={600}
+                            textTransform="uppercase"
+                            sx={{ mb: 1.5, display: 'block' }}
+                          >
+                            Hình ảnh đính kèm
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 2,
+                            }}
+                          >
+                            {imageLinks.map((imageUrl, index) => (
+                              <Box
+                                key={index}
+                                sx={{
+                                  width: '100%',
+                                  borderRadius: 2,
+                                  overflow: 'hidden',
+                                  border: `1px solid ${theme.palette.divider}`,
+                                  cursor: 'pointer',
+                                  transition: 'transform 0.2s',
+                                  '&:hover': {
+                                    transform: 'scale(1.02)',
+                                    boxShadow: theme.shadows[4],
+                                  },
+                                }}
+                                onClick={() =>
+                                  window.open(imageUrl.trim(), '_blank')
+                                }
+                              >
+                                <img
+                                  src={imageUrl.trim()}
+                                  alt={`Ảnh đính kèm ${index + 1}`}
+                                  style={{
+                                    width: '100%',
+                                    height: 'auto',
+                                    display: 'block',
+                                  }}
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                  }}
+                                />
+                              </Box>
+                            ))}
+                          </Box>
+                        </Box>
+                      )}
+                    </>
+                  );
+                })()}
               </Box>
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2 }}>
-              <Button onClick={handleCloseDetail} variant="contained" color="primary">
+              <Button
+                onClick={handleCloseDetail}
+                variant="contained"
+                color="primary"
+              >
                 Đóng
               </Button>
             </DialogActions>

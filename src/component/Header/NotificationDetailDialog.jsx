@@ -40,9 +40,7 @@ const NotificationDetailDialog = ({ open, onClose, announcement }) => {
   const isImageUrl = (url) => {
     if (!url) return false;
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-    return imageExtensions.some((ext) =>
-      url.toLowerCase().includes(ext)
-    );
+    return imageExtensions.some((ext) => url.toLowerCase().includes(ext));
   };
 
   // Lấy tên file từ URL
@@ -93,7 +91,9 @@ const NotificationDetailDialog = ({ open, onClose, announcement }) => {
           bgcolor: alpha(theme.palette.primary.main, 0.05),
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, flex: 1 }}>
+        <Box
+          sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, flex: 1 }}
+        >
           <Avatar
             sx={{
               bgcolor: getPriorityColor(announcement.priority) + '20',
@@ -159,7 +159,8 @@ const NotificationDetailDialog = ({ open, onClose, announcement }) => {
                 fontWeight={600}
                 color="text.primary"
               >
-                {announcement.createdByFullName || announcement.createdByUserName}
+                {announcement.createdByFullName ||
+                  announcement.createdByUserName}
               </Typography>
             </Typography>
           </Box>
@@ -203,16 +204,84 @@ const NotificationDetailDialog = ({ open, onClose, announcement }) => {
 
         {/* Nội dung */}
         <Box>
-          <Typography
-            variant="body1"
-            sx={{
-              whiteSpace: 'pre-wrap',
-              lineHeight: 1.8,
-              color: 'text.primary',
-            }}
-          >
-            {announcement.content}
-          </Typography>
+          {(() => {
+            // Tách content và ảnh đính kèm
+            const contentParts = announcement.content.split(
+              '\n\n[Ảnh đính kèm]:\n'
+            );
+            const mainContent = contentParts[0];
+            const imageLinks = contentParts[1]
+              ? contentParts[1].split('\n').filter((link) => link.trim())
+              : [];
+
+            return (
+              <>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    whiteSpace: 'pre-wrap',
+                    lineHeight: 1.8,
+                    color: 'text.primary',
+                  }}
+                >
+                  {mainContent}
+                </Typography>
+
+                {/* Hiển thị ảnh đính kèm từ content */}
+                {imageLinks.length > 0 && (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                      textTransform="uppercase"
+                      sx={{ mb: 1.5, display: 'block' }}
+                    >
+                      <ImageIcon
+                        sx={{ fontSize: 14, mr: 0.5, verticalAlign: 'middle' }}
+                      />
+                      Hình ảnh đính kèm
+                    </Typography>
+                    <Box
+                      sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                    >
+                      {imageLinks.map((imageUrl, index) => (
+                        <Box
+                          key={index}
+                          sx={{
+                            width: '100%',
+                            borderRadius: 2,
+                            overflow: 'hidden',
+                            border: `1px solid ${theme.palette.divider}`,
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s',
+                            '&:hover': {
+                              transform: 'scale(1.02)',
+                              boxShadow: theme.shadows[4],
+                            },
+                          }}
+                          onClick={() => window.open(imageUrl.trim(), '_blank')}
+                        >
+                          <img
+                            src={imageUrl.trim()}
+                            alt={`Ảnh đính kèm ${index + 1}`}
+                            style={{
+                              width: '100%',
+                              height: 'auto',
+                              display: 'block',
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+              </>
+            );
+          })()}
         </Box>
 
         {/* Đối tượng nhận */}
@@ -247,7 +316,9 @@ const NotificationDetailDialog = ({ open, onClose, announcement }) => {
                 textTransform="uppercase"
                 sx={{ mb: 1, display: 'block' }}
               >
-                {isImageUrl(announcement.sourceUrl) ? 'Hình ảnh đính kèm' : 'File đính kèm'}
+                {isImageUrl(announcement.sourceUrl)
+                  ? 'Hình ảnh đính kèm'
+                  : 'File đính kèm'}
               </Typography>
 
               {/* Hiển thị ảnh nếu là image */}
