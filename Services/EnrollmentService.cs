@@ -200,7 +200,7 @@ namespace StudentManagement.Services
                 await context.SaveChangesAsync();
 
                 // Update section enrollment count
-                section.EnrolledCount = section.Enrollments.Count + 1;
+                section.EnrolledCount = section.EnrolledCount + 1;
                 context.Sections.Update(section);
 
                 // Handle practice group enrollment

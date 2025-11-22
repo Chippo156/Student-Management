@@ -555,7 +555,7 @@ namespace StudentManagement.Services
                     ScheduleId = s.ScheduleId,
                     DayOfWeek = GetDayOfWeekInVietnamese(s.DayOfWeek),
                     Date = s.Date,
-                    TimeSlot = $"{s.StartTime:HH:mm} - {s.EndTime:HH:mm}",
+                    TimeSlot = $"{s.StartTime:HH:mm:ss} - {s.EndTime:HH:mm:ss}",
                     Room = s.Room,
                     ScheduleType = s.ScheduleType.Name
                 }).ToList()
