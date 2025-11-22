@@ -95,5 +95,21 @@ namespace StudentManagement.Controllers
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
+        [HttpGet("graduation-yearly")]
+        [Authorize(Roles = "Admin,AcademicStaff")]
+        public async Task<IActionResult> GetGraduationYearlyStatistics(
+    [FromQuery] int? startYear = null,
+    [FromQuery] int? endYear = null)
+        {
+            try
+            {
+                var statistics = await _reportService.GetGraduationYearlyStatisticsAsync(startYear, endYear);
+                return Ok(ApiResponse.SuccessResponse(statistics, "Thống kê tốt nghiệp hàng năm thành công"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
     }
 }

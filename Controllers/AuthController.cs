@@ -34,9 +34,9 @@ namespace StudentManagement.Controllers
             var loginResponse = await authService.LoginAsync(request);
             if (loginResponse == null)
             {
-                return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "Invalid username or password.", null));
+                return Unauthorized(ApiResponse.ErrorResponse(ErrorCodes.Unauthorized, "Username hoặc password không đúng", null));
             }
-            return Ok(ApiResponse.SuccessResponse(loginResponse, "Login success"));
+            return Ok(ApiResponse.SuccessResponse(loginResponse, "Đăng nhập thành công"));
         }
 
         [Authorize]

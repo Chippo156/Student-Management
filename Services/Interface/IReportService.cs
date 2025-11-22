@@ -13,5 +13,6 @@ namespace StudentManagement.Services.Interface
         Task<SimpleYearlyGrowthResponse> GetSimpleYearlyGrowthAsync(int years = 7);
         Task<StudentGradeStatisticsResponse> GetStudentGradeStatisticsAsync(string mssv);
         Task<AllStudentsGradeStatisticsResponse> GetAllStudentsGradeStatisticsAsync(int? departmentId = null, int? semesterId = null);
+        Task<GraduationYearlyStatisticsResponse> GetGraduationYearlyStatisticsAsync(int? startYear = null, int? endYear = null);
     }
 }

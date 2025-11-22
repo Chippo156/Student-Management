@@ -616,6 +616,111 @@ namespace StudentManagement.Services
             };
         }
 
+        public async Task<GraduationYearlyStatisticsResponse> GetGraduationYearlyStatisticsAsync(int? startYear = null, int? endYear = null)
+        {
+            const double STANDARD_DURATION_YEARS = 4.5; // 4 năm rưởi
+
+            // Xác định khoảng thời gian phân tích
+            var currentYear = DateTime.Now.Year;
+            startYear ??= currentYear - 5; // 5 năm gần đây
+            endYear ??= currentYear;
+
+            var yearlyStats = new List<YearlyGraduationStat>();
+
+            for (int year = startYear.Value; year <= endYear.Value; year++)
+            {
+                // Tính năm nhập học dự kiến cho sinh viên ra trường năm này
+                var expectedAdmissionYear = year - (int)Math.Ceiling(STANDARD_DURATION_YEARS);
+
+                // Lấy sinh viên nhập học vào năm dự kiến
+                var studentsInYear = await _context.Students
+                    .Where(s => s.YearOfAdmission == expectedAdmissionYear)
+                    .ToListAsync();
+
+                if (!studentsInYear.Any())
+                {
+                    // Nếu không có sinh viên nào trong năm này, thêm record với 0
+                    yearlyStats.Add(new YearlyGraduationStat
+                    {
+                        Year = year,
+                        OnTimeGraduates = 0,
+                        LateGraduates = 0
+                    });
+                    continue;
+                }
+
+                // Tính thời gian tốt nghiệp chuẩn (4.5 năm sau khi nhập học)
+                var standardGraduationDate = DateOnly.FromDateTime(
+                    new DateTime(expectedAdmissionYear + (int)Math.Ceiling(STANDARD_DURATION_YEARS), 8, 31)
+                );
+
+                int onTimeCount = 0;
+                int lateCount = 0;
+
+                foreach (var student in studentsInYear)
+                {
+                    if (student.StudentStatus == StudentStatus.Graduated)
+                    {
+                        // Sử dụng GraduationDate thực tế thay vì ước tính
+                        if (student.GraduationDate != default(DateOnly))
+                        {
+                            // Kiểm tra tốt nghiệp có đúng hạn không
+                            // Cho phép trễ tối đa 6 tháng (180 ngày)
+                            var allowedLateDate = standardGraduationDate.AddDays(180);
+
+                            if (student.GraduationDate <= standardGraduationDate)
+                            {
+                                onTimeCount++;
+                            }
+                            else if (student.GraduationDate <= allowedLateDate)
+                            {
+                                lateCount++;
+                            }
+                            // Nếu tốt nghiệp quá trễ (> 6 tháng) thì không tính vào thống kê năm này
+                        }
+                        else
+                        {
+                            // Nếu không có GraduationDate cụ thể, dùng logic cũ
+                            // Giả định tốt nghiệp trong năm hiện tại
+                            var assumedGraduationDate = DateOnly.FromDateTime(new DateTime(year, 6, 30));
+
+                            if (assumedGraduationDate <= standardGraduationDate.AddDays(180))
+                            {
+                                onTimeCount++;
+                            }
+                            else
+                            {
+                                lateCount++;
+                            }
+                        }
+                    }
+                    else if (student.StudentStatus == StudentStatus.Active)
+                    {
+                        // Sinh viên vẫn đang học nhưng đã quá thời hạn chuẩn + 6 tháng
+                        var currentDate = DateOnly.FromDateTime(DateTime.Now);
+                        if (currentDate > standardGraduationDate.AddDays(180))
+                        {
+                            lateCount++; // Coi như trễ hạn vì vẫn chưa tốt nghiệp
+                        }
+                        // Nếu chưa quá hạn thì không tính vào thống kê năm này
+                    }
+                    // Các trạng thái khác (Dropped, Suspended, Inactive, Reserved) không tính vào thống kê tốt nghiệp
+                }
+
+                yearlyStats.Add(new YearlyGraduationStat
+                {
+                    Year = year,
+                    OnTimeGraduates = onTimeCount,
+                    LateGraduates = lateCount
+                });
+            }
+
+            return new GraduationYearlyStatisticsResponse
+            {
+                YearlyStats = yearlyStats.OrderBy(y => y.Year).ToList()
+            };
+        }
+
         // Helper methods
         private GradeOverallStats CalculateOverallStats(List<FinalResult> finalResults)
         {
