@@ -28,6 +28,11 @@ import Sections from '../page/Admin/EducationManagement/Sections';
 import StudentList from '../page/Admin/StudentManagement/StudentList';
 import TeacherList from '../page/Admin/EducationManagement/TeacherList';
 
+// Grade management pages
+import GradeEntry from '../page/Admin/GradeManagement/GradeEntry';
+import GradeSheet from '../page/Admin/GradeManagement/GradeSheet';
+import GradeStatistics from '../page/Admin/GradeManagement/GradeStatistics';
+
 // Student pages
 import StudentDashboard from '../page/Student/Dashboard';
 import StudentInfoPage from '../page/Student/General information/StudentInfoPage';
@@ -195,15 +200,9 @@ const AppRoutes = () => {
           />
 
           {/* Quản lý Điểm số */}
-          <Route path="grades" element={<div>Nhập điểm - Coming Soon</div>} />
-          <Route
-            path="grade-sheets"
-            element={<div>Bảng điểm - Coming Soon</div>}
-          />
-          <Route
-            path="grade-statistics"
-            element={<div>Thống kê điểm - Coming Soon</div>}
-          />
+          <Route path="grades" element={<GradeEntry />} />
+          <Route path="grade-sheets" element={<GradeSheet />} />
+          <Route path="grade-statistics" element={<GradeStatistics />} />
 
           {/* Báo cáo Thống kê */}
           <Route
