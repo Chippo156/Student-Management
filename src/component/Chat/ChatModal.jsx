@@ -32,10 +32,11 @@ import {
 import { useChat } from '../../context/ChatContext';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { Button } from '@mui/material';
+import { Button, useTheme } from '@mui/material';
 import { useSelector } from 'react-redux';
 
 const ChatModal = ({ open, onClose }) => {
+  const theme = useTheme();
   // ✅ Lấy user từ Redux
   const reduxUser = useSelector((state) => state.user?.account);
 
@@ -283,15 +284,6 @@ const ChatModal = ({ open, onClose }) => {
             </Box>
           </Box>
           <Box>
-            <Tooltip title={isMinimized ? 'Mở rộng' : 'Thu gọn'}>
-              <IconButton
-                size="small"
-                sx={{ color: 'white' }}
-                onClick={() => setIsMinimized(!isMinimized)}
-              >
-                <MinimizeIcon />
-              </IconButton>
-            </Tooltip>
             <Tooltip title="Đóng">
               <IconButton
                 size="small"
@@ -457,7 +449,8 @@ const ChatModal = ({ open, onClose }) => {
                   overflow: 'auto',
                   overflowY: 'auto',
                   p: 2,
-                  bgcolor: '#f5f5f5',
+                  bgcolor:
+                    theme.palette.mode === 'dark' ? '#1E293B' : 'grey.100',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 1,
@@ -520,7 +513,9 @@ const ChatModal = ({ open, onClose }) => {
                             elevation={1}
                             sx={{
                               p: 1.5,
-                              bgcolor: isMyMessage ? 'primary.main' : 'white',
+                              bgcolor: isMyMessage
+                                ? 'primary.main'
+                                : 'background.paper',
                               color: isMyMessage ? 'white' : 'text.primary',
                               borderRadius: 2,
                               borderTopRightRadius: isMyMessage ? 0 : 2,
@@ -539,7 +534,9 @@ const ChatModal = ({ open, onClose }) => {
                                     : 'primary.main',
                                   bgcolor: isMyMessage
                                     ? 'rgba(255,255,255,0.1)'
-                                    : 'rgba(0,0,0,0.05)',
+                                    : theme.palette.mode === 'dark'
+                                      ? 'rgba(255,255,255,0.05)'
+                                      : 'rgba(0,0,0,0.05)',
                                   borderRadius: 1,
                                 }}
                               >
@@ -626,7 +623,7 @@ const ChatModal = ({ open, onClose }) => {
                           sx={{
                             py: 1.5,
                             px: 2,
-                            bgcolor: 'white',
+                            bgcolor: 'background.paper',
                             borderRadius: 2,
                             borderTopLeftRadius: 0,
                             minWidth: 60,
@@ -682,7 +679,7 @@ const ChatModal = ({ open, onClose }) => {
                   p: 2,
                   borderTop: 1,
                   borderColor: 'divider',
-                  bgcolor: 'white',
+                  bgcolor: 'background.paper',
                   flexShrink: 0,
                 }}
               >
