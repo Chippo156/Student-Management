@@ -9,6 +9,7 @@ import AuthLoader from '../component/AuthLoader';
 // Import pages
 import Home from '../page/Home';
 import Login from '../page/Login';
+import NotificationHistory from '../page/NotificationHistory';
 
 // Admin pages
 import AdminDashboard from '../page/Admin/Dashboard';
@@ -220,10 +221,7 @@ const AppRoutes = () => {
 
           {/* Quản lý Thông báo */}
           <Route path="send-notifications" element={<SendNotifications />} />
-          <Route
-            path="notification-history"
-            element={<div>Lịch sử thông báo - Coming Soon</div>}
-          />
+          <Route path="notification-history" element={<NotificationHistory />} />
           <Route
             path="email-settings"
             element={<div>Cài đặt email - Coming Soon</div>}
@@ -251,6 +249,9 @@ const AppRoutes = () => {
           <Route path="assignments" element={<TeacherAssignments />} />
           <Route path="materials" element={<TeacherMaterials />} />
           <Route path="settings" element={<TeacherSettings />} />
+
+          {/* Thông báo */}
+          <Route path="notifications" element={<NotificationHistory />} />
         </Route>
 
         {/* Student routes - Role ID 3 */}
@@ -284,6 +285,9 @@ const AppRoutes = () => {
           {/* Học phí */}
           <Route path="debt" element={<DebtPage />} />
           <Route path="payment" element={<PaymentPage />} />
+
+          {/* Thông báo */}
+          <Route path="notifications" element={<NotificationHistory />} />
         </Route>
 
         {/* Redirect authenticated users to appropriate dashboard */}

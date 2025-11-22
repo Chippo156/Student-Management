@@ -8,4 +8,6 @@ export { departmentService } from './departmentService';
 export { default as sectionService } from './sectionService';
 export { default as gradeService } from './gradeService';
 export { default as practiceService } from './practiceService';
+export { default as fileService } from './fileService';
+export { default as announcementService } from './announcementService';
 export { studentServices } from './studentServices';

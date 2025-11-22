@@ -16,6 +16,7 @@ export const userService = {
         }
         return null;
       }
+      console.log(response.data);
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
@@ -122,7 +123,12 @@ export const userService = {
     }
   },
 
-  getAllUsers: async (pageNumber = 1, pageSize = 10, roleId = null, search = '') => {
+  getAllUsers: async (
+    pageNumber = 1,
+    pageSize = 10,
+    roleId = null,
+    search = ''
+  ) => {
     try {
       const params = {
         PageNumber: pageNumber,

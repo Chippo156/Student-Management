@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -20,138 +20,192 @@ import {
   DialogContent,
   DialogActions,
   Divider,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
 } from '@mui/material';
 import {
   Announcement as AnnouncementIcon,
   Send as SendIcon,
   Preview as PreviewIcon,
   People as PeopleIcon,
-  Email as EmailIcon,
-  Sms as SmsIcon,
-  Notifications as NotificationsIcon,
+  AttachFile as AttachFileIcon,
+  Delete as DeleteIcon,
+  Image as ImageIcon,
 } from '@mui/icons-material';
+import { useSelector } from 'react-redux';
+import { message as antMessage } from 'antd';
+import announcementService from '../../service/announcementService';
+import fileService from '../../service/fileService';
+import {
+  ANNOUNCEMENT_PRIORITY,
+  ANNOUNCEMENT_TYPE,
+  ANNOUNCEMENT_TARGET_TYPE,
+  PRIORITY_OPTIONS,
+  TYPE_OPTIONS,
+  TARGET_TYPE_OPTIONS,
+} from '../../constants/announcementConstants';
 
 const SendNotifications = () => {
+  const user = useSelector((state) => state.user);
+  const fileInputRef = useRef(null);
+  const imageInputRef = useRef(null);
+
   const [notificationData, setNotificationData] = useState({
     title: '',
     content: '',
-    type: 'general',
-    recipients: 'all',
-    department: '',
-    year: '',
-    priority: 'normal',
-    sendMethod: 'system',
+    type: ANNOUNCEMENT_TYPE.GENERAL,
+    targetType: ANNOUNCEMENT_TARGET_TYPE.ALL,
+    targetYear: null,
+    priority: ANNOUNCEMENT_PRIORITY.NORMAL,
+    sourceUrl: '',
+    expiryDate: null,
   });
 
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadedImages, setUploadedImages] = useState([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
-  const notificationTypes = [
-    { value: 'general', label: 'Thông báo chung' },
-    { value: 'academic', label: 'Học tập' },
-    { value: 'payment', label: 'Học phí' },
-    { value: 'event', label: 'Sự kiện' },
-    { value: 'urgent', label: 'Khẩn cấp' },
-  ];
-
-  const recipientTypes = [
-    { value: 'all', label: 'Tất cả người dùng' },
-    { value: 'students', label: 'Tất cả sinh viên' },
-    { value: 'teachers', label: 'Tất cả giảng viên' },
-    { value: 'department', label: 'Theo khoa' },
-    { value: 'year', label: 'Theo năm học' },
-    { value: 'custom', label: 'Tùy chọn' },
-  ];
-
-  const departments = [
-    'Công nghệ thông tin',
-    'Kinh tế',
-    'Ngoại ngữ',
-    'Khoa học tự nhiên',
-    'Kỹ thuật',
-    'Y khoa',
-  ];
-  const years = [1, 2, 3, 4, 5];
-  const priorities = [
-    { value: 'low', label: 'Thấp', color: 'default' },
-    { value: 'normal', label: 'Bình thường', color: 'primary' },
-    { value: 'high', label: 'Cao', color: 'warning' },
-    { value: 'urgent', label: 'Khẩn cấp', color: 'error' },
-  ];
-
-  const sendMethods = [
-    {
-      value: 'system',
-      label: 'Thông báo hệ thống',
-      icon: <NotificationsIcon />,
-    },
-    { value: 'email', label: 'Email', icon: <EmailIcon /> },
-    { value: 'sms', label: 'SMS', icon: <SmsIcon /> },
-    { value: 'all', label: 'Tất cả phương thức', icon: <SendIcon /> },
-  ];
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (field, value) => {
     setNotificationData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleFileUpload = async (event, type = 'file') => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      antMessage.error('File không được vượt quá 10MB!');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await fileService.uploadFile(file, user?.userId || 2);
+
+      if (result) {
+        if (type === 'image') {
+          setUploadedImages((prev) => [...prev, result]);
+          antMessage.success('Upload ảnh thành công!');
+        } else {
+          setUploadedFiles((prev) => [...prev, result]);
+          antMessage.success('Upload file thành công!');
+        }
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      antMessage.error('Upload file thất bại!');
+    } finally {
+      setLoading(false);
+      // Reset input
+      event.target.value = '';
+    }
+  };
+
+  const handleRemoveFile = (index, type = 'file') => {
+    if (type === 'image') {
+      setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
   const handlePreview = () => {
+    if (!notificationData.title || !notificationData.content) {
+      antMessage.warning('Vui lòng nhập tiêu đề và nội dung thông báo!');
+      return;
+    }
     setPreviewOpen(true);
   };
 
-  const handleSend = () => {
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+  const handleSend = async () => {
+    if (!notificationData.title || !notificationData.content) {
+      antMessage.warning('Vui lòng nhập đầy đủ thông tin!');
+      return;
+    }
 
-    setNotificationData({
-      title: '',
-      content: '',
-      type: 'general',
-      recipients: 'all',
-      department: '',
-      year: '',
-      priority: 'normal',
-      sendMethod: 'system',
-    });
+    setLoading(true);
+    try {
+      // Build content with images
+      let contentWithImages = notificationData.content;
 
-    setPreviewOpen(false);
+      if (uploadedImages.length > 0) {
+        const imageLinks = uploadedImages.map((img) => img.filePath).join('\n');
+        contentWithImages += `\n\n[Ảnh đính kèm]:\n${imageLinks}`;
+      }
+
+      // Build sourceUrl with files
+      let sourceUrl = notificationData.sourceUrl || '';
+      if (uploadedFiles.length > 0) {
+        const fileLinks = uploadedFiles.map((file) => file.filePath).join('|');
+        sourceUrl = sourceUrl ? `${sourceUrl}|${fileLinks}` : fileLinks;
+      }
+
+      const payload = {
+        title: notificationData.title,
+        content: contentWithImages,
+        sourceUrl: sourceUrl || null,
+        priority: notificationData.priority,
+        type: notificationData.type,
+        targetType: notificationData.targetType,
+        targetDepartmentId: null, // Backend không dùng
+        targetYear: notificationData.targetYear
+          ? parseInt(notificationData.targetYear)
+          : null,
+        expiryDate: notificationData.expiryDate || null,
+        createdByUserId: user?.userId || 1,
+      };
+
+      const result = await announcementService.createAnnouncement(payload);
+
+      if (result) {
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+
+        // Reset form
+        setNotificationData({
+          title: '',
+          content: '',
+          type: ANNOUNCEMENT_TYPE.GENERAL,
+          targetType: ANNOUNCEMENT_TARGET_TYPE.ALL,
+          targetYear: null,
+          priority: ANNOUNCEMENT_PRIORITY.NORMAL,
+          sourceUrl: '',
+          expiryDate: null,
+        });
+        setUploadedFiles([]);
+        setUploadedImages([]);
+        setPreviewOpen(false);
+      }
+    } catch (error) {
+      console.error('Send notification error:', error);
+      antMessage.error('Gửi thông báo thất bại!');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getRecipientCount = () => {
-    switch (notificationData.recipients) {
-      case 'all':
-        return 1500;
-      case 'students':
-        return 1200;
-      case 'teachers':
-        return 80;
-      case 'department':
-        return 300;
-      case 'year':
-        return 250;
+    switch (notificationData.targetType) {
+      case ANNOUNCEMENT_TARGET_TYPE.ALL:
+        return '~1500';
+      case ANNOUNCEMENT_TARGET_TYPE.STUDENTS:
+        return '~1200';
+      case ANNOUNCEMENT_TARGET_TYPE.LECTURERS:
+        return '~80';
+      case ANNOUNCEMENT_TARGET_TYPE.ACADEMIC_YEAR:
+        return '~250';
       default:
-        return 0;
+        return '0';
     }
   };
 
-  const getTypeColor = (type) => {
-    switch (type) {
-      case 'urgent':
-        return 'error';
-      case 'academic':
-        return 'primary';
-      case 'payment':
-        return 'warning';
-      case 'event':
-        return 'info';
-      default:
-        return 'default';
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    const priorityObj = priorities.find((p) => p.value === priority);
-    return priorityObj ? priorityObj.color : 'default';
-  };
+  const years = [1, 2, 3, 4, 5];
 
   return (
     <Box sx={{ p: 3, maxWidth: '100%', overflow: 'hidden' }}>
@@ -197,9 +251,9 @@ const SendNotifications = () => {
                     onChange={(e) => handleInputChange('type', e.target.value)}
                     label="Loại thông báo"
                   >
-                    {notificationTypes.map((type) => (
+                    {TYPE_OPTIONS.map((type) => (
                       <MenuItem key={type.value} value={type.value}>
-                        {type.label}
+                        {type.icon} {type.label}
                       </MenuItem>
                     ))}
                   </Select>
@@ -216,12 +270,15 @@ const SendNotifications = () => {
                     }
                     label="Mức độ ưu tiên"
                   >
-                    {priorities.map((priority) => (
+                    {PRIORITY_OPTIONS.map((priority) => (
                       <MenuItem key={priority.value} value={priority.value}>
                         <Chip
                           label={priority.label}
-                          color={priority.color}
                           size="small"
+                          sx={{
+                            bgcolor: priority.color + '30',
+                            color: priority.color,
+                          }}
                         />
                       </MenuItem>
                     ))}
@@ -241,11 +298,135 @@ const SendNotifications = () => {
                   required
                 />
               </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Link tham khảo (tùy chọn)"
+                  value={notificationData.sourceUrl}
+                  onChange={(e) =>
+                    handleInputChange('sourceUrl', e.target.value)
+                  }
+                  placeholder="https://example.com"
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Ngày hết hạn (tùy chọn)"
+                  value={notificationData.expiryDate || ''}
+                  onChange={(e) =>
+                    handleInputChange('expiryDate', e.target.value)
+                  }
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+
+              {/* File attachments */}
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }}>
+                  <Chip label="Đính kèm" />
+                </Divider>
+
+                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<AttachFileIcon />}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={loading}
+                  >
+                    Đính kèm file
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    hidden
+                    onChange={(e) => handleFileUpload(e, 'file')}
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+                  />
+
+                  <Button
+                    variant="outlined"
+                    startIcon={<ImageIcon />}
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={loading}
+                  >
+                    Đính kèm ảnh
+                  </Button>
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    hidden
+                    onChange={(e) => handleFileUpload(e, 'image')}
+                    accept="image/*"
+                  />
+                </Box>
+
+                {/* Display uploaded files */}
+                {uploadedFiles.length > 0 && (
+                  <List dense>
+                    {uploadedFiles.map((file, index) => (
+                      <ListItem key={index}>
+                        <AttachFileIcon sx={{ mr: 1 }} />
+                        <ListItemText
+                          primary={file.fileName}
+                          secondary={`Đã upload lúc ${new Date(file.uploadedAt).toLocaleString('vi-VN')}`}
+                        />
+                        <ListItemSecondaryAction>
+                          <IconButton
+                            edge="end"
+                            onClick={() => handleRemoveFile(index, 'file')}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                    ))}
+                  </List>
+                )}
+
+                {/* Display uploaded images */}
+                {uploadedImages.length > 0 && (
+                  <Box
+                    sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 2 }}
+                  >
+                    {uploadedImages.map((img, index) => (
+                      <Box key={index} sx={{ position: 'relative' }}>
+                        <img
+                          src={img.filePath}
+                          alt={img.fileName}
+                          style={{
+                            width: 100,
+                            height: 100,
+                            objectFit: 'cover',
+                            borderRadius: 8,
+                          }}
+                        />
+                        <IconButton
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            top: -8,
+                            right: -8,
+                            bgcolor: 'error.main',
+                            color: 'white',
+                          }}
+                          onClick={() => handleRemoveFile(index, 'image')}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+              </Grid>
             </Grid>
           </Paper>
         </Grid>
 
-        {/* Recipients & Settings */}
+        {/* Recipients & Actions */}
         <Grid item xs={12} lg={4}>
           <Grid container spacing={2}>
             {/* Recipients */}
@@ -258,13 +439,13 @@ const SendNotifications = () => {
                 <FormControl fullWidth sx={{ mb: 2 }}>
                   <InputLabel>Chọn đối tượng</InputLabel>
                   <Select
-                    value={notificationData.recipients}
+                    value={notificationData.targetType}
                     onChange={(e) =>
-                      handleInputChange('recipients', e.target.value)
+                      handleInputChange('targetType', e.target.value)
                     }
                     label="Chọn đối tượng"
                   >
-                    {recipientTypes.map((type) => (
+                    {TARGET_TYPE_OPTIONS.map((type) => (
                       <MenuItem key={type.value} value={type.value}>
                         {type.label}
                       </MenuItem>
@@ -272,37 +453,19 @@ const SendNotifications = () => {
                   </Select>
                 </FormControl>
 
-                {notificationData.recipients === 'department' && (
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Chọn khoa</InputLabel>
-                    <Select
-                      value={notificationData.department}
-                      onChange={(e) =>
-                        handleInputChange('department', e.target.value)
-                      }
-                      label="Chọn khoa"
-                    >
-                      {departments.map((dept) => (
-                        <MenuItem key={dept} value={dept}>
-                          {dept}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                )}
-
-                {notificationData.recipients === 'year' && (
+                {notificationData.targetType ===
+                  ANNOUNCEMENT_TARGET_TYPE.ACADEMIC_YEAR && (
                   <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel>Chọn năm học</InputLabel>
                     <Select
-                      value={notificationData.year}
+                      value={notificationData.targetYear || ''}
                       onChange={(e) =>
-                        handleInputChange('year', e.target.value)
+                        handleInputChange('targetYear', e.target.value)
                       }
                       label="Chọn năm học"
                     >
                       {years.map((year) => (
-                        <MenuItem key={year} value={year.toString()}>
+                        <MenuItem key={year} value={year}>
                           Năm {year}
                         </MenuItem>
                       ))}
@@ -310,41 +473,12 @@ const SendNotifications = () => {
                   </FormControl>
                 )}
 
-                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <Box display="flex" alignItems="center" gap={1}>
                   <PeopleIcon color="action" />
                   <Typography variant="body2">
                     Ước tính: <strong>{getRecipientCount()}</strong> người nhận
                   </Typography>
                 </Box>
-              </Paper>
-            </Grid>
-
-            {/* Send Method */}
-            <Grid item xs={12}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Phương thức gửi
-                </Typography>
-
-                <FormControl fullWidth>
-                  <InputLabel>Chọn phương thức</InputLabel>
-                  <Select
-                    value={notificationData.sendMethod}
-                    onChange={(e) =>
-                      handleInputChange('sendMethod', e.target.value)
-                    }
-                    label="Chọn phương thức"
-                  >
-                    {sendMethods.map((method) => (
-                      <MenuItem key={method.value} value={method.value}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          {method.icon}
-                          {method.label}
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
               </Paper>
             </Grid>
 
@@ -361,7 +495,9 @@ const SendNotifications = () => {
                     startIcon={<PreviewIcon />}
                     onClick={handlePreview}
                     disabled={
-                      !notificationData.title || !notificationData.content
+                      !notificationData.title ||
+                      !notificationData.content ||
+                      loading
                     }
                   >
                     Xem trước
@@ -371,10 +507,12 @@ const SendNotifications = () => {
                     startIcon={<SendIcon />}
                     onClick={handleSend}
                     disabled={
-                      !notificationData.title || !notificationData.content
+                      !notificationData.title ||
+                      !notificationData.content ||
+                      loading
                     }
                   >
-                    Gửi thông báo
+                    {loading ? 'Đang gửi...' : 'Gửi thông báo'}
                   </Button>
                 </Box>
               </Paper>
@@ -404,52 +542,89 @@ const SendNotifications = () => {
                 <Box display="flex" gap={1}>
                   <Chip
                     label={
-                      notificationTypes.find(
+                      TYPE_OPTIONS.find(
                         (t) => t.value === notificationData.type
                       )?.label
                     }
-                    color={getTypeColor(notificationData.type)}
                     size="small"
                   />
                   <Chip
                     label={
-                      priorities.find(
+                      PRIORITY_OPTIONS.find(
                         (p) => p.value === notificationData.priority
                       )?.label
                     }
-                    color={getPriorityColor(notificationData.priority)}
                     size="small"
+                    sx={{
+                      bgcolor:
+                        PRIORITY_OPTIONS.find(
+                          (p) => p.value === notificationData.priority
+                        )?.color + '30',
+                      color: PRIORITY_OPTIONS.find(
+                        (p) => p.value === notificationData.priority
+                      )?.color,
+                    }}
                   />
                 </Box>
               </Box>
 
-              <Typography variant="body1" paragraph>
+              <Typography
+                variant="body1"
+                paragraph
+                style={{ whiteSpace: 'pre-wrap' }}
+              >
                 {notificationData.content}
               </Typography>
+
+              {uploadedImages.length > 0 && (
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                  {uploadedImages.map((img, index) => (
+                    <img
+                      key={index}
+                      src={img.filePath}
+                      alt={img.fileName}
+                      style={{
+                        width: 150,
+                        height: 150,
+                        objectFit: 'cover',
+                        borderRadius: 8,
+                      }}
+                    />
+                  ))}
+                </Box>
+              )}
+
+              {uploadedFiles.length > 0 && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    File đính kèm:
+                  </Typography>
+                  {uploadedFiles.map((file, index) => (
+                    <Typography key={index} variant="body2" color="primary">
+                      • {file.fileName}
+                    </Typography>
+                  ))}
+                </Box>
+              )}
 
               <Divider sx={{ my: 2 }} />
 
               <Typography variant="caption" color="text.secondary">
                 Gửi đến:{' '}
                 {
-                  recipientTypes.find(
-                    (r) => r.value === notificationData.recipients
+                  TARGET_TYPE_OPTIONS.find(
+                    (r) => r.value === notificationData.targetType
                   )?.label
-                }
-                ({getRecipientCount()} người) qua{' '}
-                {
-                  sendMethods.find(
-                    (m) => m.value === notificationData.sendMethod
-                  )?.label
-                }
+                }{' '}
+                ({getRecipientCount()} người)
               </Typography>
             </CardContent>
           </Card>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPreviewOpen(false)}>Chỉnh sửa</Button>
-          <Button variant="contained" onClick={handleSend}>
-            Gửi ngay
+          <Button variant="contained" onClick={handleSend} disabled={loading}>
+            {loading ? 'Đang gửi...' : 'Gửi ngay'}
           </Button>
         </DialogActions>
       </Dialog>

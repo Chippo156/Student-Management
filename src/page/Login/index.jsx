@@ -19,12 +19,14 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Grid,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 
 import { userService } from '../../service/userService';
 import { authService } from '../../service/authService';
+import PublicAnnouncementPanel from '../../component/PublicAnnouncementPanel';
 
 const Login = () => {
   const theme = useTheme();
@@ -122,123 +124,150 @@ const Login = () => {
   return (
     <Box
       sx={{
+        height: 'calc(100vh - 64px)',
+        overflow: 'hidden',
         display: 'flex',
-        justifyContent: 'center',
         alignItems: 'center',
-        minHeight: '100vh',
+        justifyContent: 'center',
         background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`,
-        padding: 3,
+        p: 3,
       }}
     >
-      <Container maxWidth="xs">
-        <Card
-          sx={{
-            boxShadow:
-              theme.palette.mode === 'dark'
-                ? '0 10px 30px rgba(0, 0, 0, 0.5)'
-                : '0 10px 30px rgba(0, 0, 0, 0.2)',
-          }}
-        >
-          <CardContent sx={{ p: 5 }}>
-            <Typography
-              variant="h4"
-              component="h2"
-              align="center"
-              gutterBottom
+      <Container
+        maxWidth="lg"
+        sx={{
+          height: '100%',
+          maxHeight: 'calc(100vh - 64px)',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        <Grid container spacing={3} sx={{ height: 'auto', maxHeight: '100%' }}>
+          {/* Login Form */}
+          <Grid item xs={12} md={5} sx={{ display: 'flex' }}>
+            <Card
               sx={{
-                mb: 4,
-                fontWeight: 'bold',
-                color: theme.palette.text.primary,
+                width: '100%',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 10px 30px rgba(0, 0, 0, 0.5)'
+                    : '0 10px 30px rgba(0, 0, 0, 0.2)',
               }}
             >
-              Đăng nhập
-            </Typography>
-
-            {error && (
-              <Alert
-                severity="error"
-                sx={{ mb: 3 }}
-                action={
-                  <IconButton
-                    aria-label="close"
-                    color="inherit"
-                    size="small"
-                    onClick={handleClearError}
-                  >
-                    <CloseIcon fontSize="inherit" />
-                  </IconButton>
-                }
-              >
-                {error}
-              </Alert>
-            )}
-
-            <Box component="form" onSubmit={handleLogin}>
-              <TextField
-                fullWidth
-                label="Tên đăng nhập"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                disabled={isLoading}
-                placeholder="Nhập tên đăng nhập"
-                sx={{ mb: 2 }}
-              />
-
-              <TextField
-                fullWidth
-                type="password"
-                label="Mật khẩu"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-                placeholder="Nhập mật khẩu"
-                sx={{ mb: 2 }}
-              />
-
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    disabled={isLoading}
-                  />
-                }
-                label="Ghi nhớ đăng nhập"
-                sx={{ mb: 3 }}
-              />
-
-              <Button
-                fullWidth
-                type="submit"
-                variant="contained"
-                size="large"
-                disabled={isLoading}
-                sx={{
-                  py: 1.5,
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  mb: 2,
-                }}
-              >
-                {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-              </Button>
-
-              <Box sx={{ textAlign: 'center' }}>
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={() => setOpenForgotPassword(true)}
-                  sx={{ textTransform: 'none' }}
+              <CardContent sx={{ p: 5 }}>
+                <Typography
+                  variant="h4"
+                  component="h2"
+                  align="center"
+                  gutterBottom
+                  sx={{
+                    mb: 4,
+                    fontWeight: 'bold',
+                    color: theme.palette.text.primary,
+                  }}
                 >
-                  Quên mật khẩu?
-                </Button>
-              </Box>
+                  Đăng nhập
+                </Typography>
+
+                {error && (
+                  <Alert
+                    severity="error"
+                    sx={{ mb: 3 }}
+                    action={
+                      <IconButton
+                        aria-label="close"
+                        color="inherit"
+                        size="small"
+                        onClick={handleClearError}
+                      >
+                        <CloseIcon fontSize="inherit" />
+                      </IconButton>
+                    }
+                  >
+                    {error}
+                  </Alert>
+                )}
+
+                <Box component="form" onSubmit={handleLogin}>
+                  <TextField
+                    fullWidth
+                    label="Tên đăng nhập"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    placeholder="Nhập tên đăng nhập"
+                    sx={{ mb: 2 }}
+                  />
+
+                  <TextField
+                    fullWidth
+                    type="password"
+                    label="Mật khẩu"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    placeholder="Nhập mật khẩu"
+                    sx={{ mb: 2 }}
+                  />
+
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        disabled={isLoading}
+                      />
+                    }
+                    label="Ghi nhớ đăng nhập"
+                    sx={{ mb: 3 }}
+                  />
+
+                  <Button
+                    fullWidth
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    disabled={isLoading}
+                    sx={{
+                      py: 1.5,
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      mb: 2,
+                    }}
+                  >
+                    {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                  </Button>
+
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Button
+                      variant="text"
+                      size="small"
+                      onClick={() => setOpenForgotPassword(true)}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      Quên mật khẩu?
+                    </Button>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Public Announcements Panel */}
+          <Grid
+            item
+            xs={12}
+            md={7}
+            sx={{ display: { xs: 'none', md: 'flex' } }}
+          >
+            <Box sx={{ width: '100%', height: '100%' }}>
+              <PublicAnnouncementPanel />
             </Box>
-          </CardContent>
-        </Card>
+          </Grid>
+        </Grid>
       </Container>
 
       {/* Forgot Password Modal */}
