@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { Table, Spin } from 'antd';
 import { CheckSquareOutlined, DeleteOutlined } from '@ant-design/icons';
 import { tableRowClassName } from './helpers';
 
-const CoursesTable = ({
+const CoursesTable = forwardRef(({
   theme,
   courses,
   selectedCourse,
   handleCourseSelect,
   loading,
-}) => {
+}, ref) => {
   const courseColumns = [
     {
       title: 'STT',
@@ -57,7 +57,7 @@ const CoursesTable = ({
   ];
 
   return (
-    <>
+    <div ref={ref}>
       <div
         style={{
           fontWeight: 600,
@@ -92,8 +92,10 @@ const CoursesTable = ({
           scroll={{ x: 1000 }}
         />
       </Spin>
-    </>
+    </div>
   );
-};
+});
+
+CoursesTable.displayName = 'CoursesTable';
 
 export default CoursesTable;

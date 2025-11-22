@@ -55,12 +55,6 @@ const menuData = [
         path: '/student/info',
       },
       {
-        label: 'Ghi chú nhắc nhở',
-        icon: <NoteIcon />,
-        key: 'note',
-        path: '/student/notes',
-      },
-      {
         label: 'Cập nhật thông tin cá nhân',
         icon: <InfoIcon />,
         key: 'edit-info',

@@ -182,37 +182,37 @@ const StudentSchedule = () => {
           </div>
         </div>
 
-      <ScheduleStatistics
+        {/* <ScheduleStatistics
         todayItems={todayItems}
         upcomingItems={upcomingItems}
         completedItems={completedItems}
         percentProgress={percentProgress}
         theme={theme}
-      />
+      /> */}
 
-      <ScheduleFilterBar
-        filterType={filterType}
-        handleFilterChange={handleFilterChange}
-        baseDate={baseDate}
-        setBaseDate={setBaseDate}
-        handleToday={handleToday}
-        handlePrint={handlePrint}
-        goPrevWeek={goPrevWeek}
-        goNextWeek={goNextWeek}
-        theme={theme}
-      />
+        <ScheduleFilterBar
+          filterType={filterType}
+          handleFilterChange={handleFilterChange}
+          baseDate={baseDate}
+          setBaseDate={setBaseDate}
+          handleToday={handleToday}
+          handlePrint={handlePrint}
+          goPrevWeek={goPrevWeek}
+          goNextWeek={goNextWeek}
+          theme={theme}
+        />
 
-      <ScheduleTable
-        dataSource={dataSource}
-        weekDays={weekDays}
-        today={today}
-        theme={theme}
-        isDark={isDark}
-        startOfWeek={startOfWeek}
-        endOfWeek={endOfWeek}
-      />
+        <ScheduleTable
+          dataSource={dataSource}
+          weekDays={weekDays}
+          today={today}
+          theme={theme}
+          isDark={isDark}
+          startOfWeek={startOfWeek}
+          endOfWeek={endOfWeek}
+        />
 
-      <ScheduleLegend theme={theme} />
+        <ScheduleLegend theme={theme} />
       </div>
     </div>
   );

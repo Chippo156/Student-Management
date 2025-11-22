@@ -45,7 +45,6 @@ import {
   EventAvailable as EventAvailableIcon, // Thêm icon mới
 } from '@mui/icons-material';
 import HeaderPage from '../Header';
-import ChatWidget from '../Chat/ChatWidget';
 
 const menuData = [
   {
@@ -72,12 +71,6 @@ const menuData = [
         key: 'create-user',
         path: '/admin/create-user',
       },
-      {
-        label: 'Quản lý profile',
-        icon: <FolderSharedIcon />,
-        key: 'user-profiles',
-        path: '/admin/user-profiles',
-      },
     ],
   },
   {
@@ -91,18 +84,6 @@ const menuData = [
         icon: <PeopleIcon />,
         key: 'students',
         path: '/admin/students',
-      },
-      {
-        label: 'Hồ sơ sinh viên',
-        icon: <FolderSharedIcon />,
-        key: 'student-profiles',
-        path: '/admin/student-profiles',
-      },
-      {
-        label: 'Thông tin cá nhân',
-        icon: <AccountBoxIcon />,
-        key: 'student-info',
-        path: '/admin/student-info',
       },
     ],
   },
@@ -135,12 +116,6 @@ const menuData = [
         icon: <SchoolIcon />,
         key: 'curriculum',
         path: '/admin/curriculum',
-      },
-      {
-        label: 'Lịch học',
-        icon: <AssignmentIcon />,
-        key: 'schedule',
-        path: '/admin/schedule',
       },
       {
         label: 'Quản lý giảng viên',
@@ -229,32 +204,6 @@ const menuData = [
     ],
   },
   {
-    label: 'Báo cáo Thống kê',
-    icon: <TrendingUpIcon />,
-    key: 'reports-statistics',
-    path: '/admin/reports-statistics',
-    children: [
-      {
-        label: 'Báo cáo sinh viên',
-        icon: <AssessmentIcon />,
-        key: 'student-reports',
-        path: '/admin/student-reports',
-      },
-      {
-        label: 'Báo cáo học tập',
-        icon: <BarChartIcon />,
-        key: 'academic-reports',
-        path: '/admin/academic-reports',
-      },
-      {
-        label: 'Thống kê hệ thống',
-        icon: <TrendingUpIcon />,
-        key: 'system-statistics',
-        path: '/admin/system-statistics',
-      },
-    ],
-  },
-  {
     label: 'Quản lý Thông báo',
     icon: <NotificationsIcon />,
     key: 'notification-management',
@@ -280,12 +229,12 @@ const menuData = [
       },
     ],
   },
-  {
-    label: 'Cài đặt hệ thống',
-    icon: <SettingsIcon />,
-    key: 'settings',
-    path: '/admin/settings',
-  },
+  // {
+  //   label: 'Cài đặt hệ thống',
+  //   icon: <SettingsIcon />,
+  //   key: 'settings',
+  //   path: '/admin/settings',
+  // },
 ];
 
 const LayoutAdmin = () => {
@@ -393,7 +342,7 @@ const LayoutAdmin = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <HeaderPage />
-      <Container maxWidth="xl" disableGutters sx={{ flexGrow: 1 }}>
+      <Box sx={{ flexGrow: 1 }}>
         <Box
           sx={{
             display: 'flex',
@@ -438,8 +387,7 @@ const LayoutAdmin = () => {
             <Outlet />
           </Box>
         </Box>
-      </Container>
-      <ChatWidget />
+      </Box>
     </Box>
   );
 };

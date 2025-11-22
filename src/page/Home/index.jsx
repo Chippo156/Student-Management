@@ -36,7 +36,6 @@ import StudentDashboard from '../Student/Dashboard';
 import StudentInfoPage from '../Student/General information/StudentInfoPage';
 import BHYTPage from '../Student/General information/BHYTPage';
 import GraduatePage from '../Student/Study/GraduatePage';
-import StudentNotes from '../Student/General information/StudentNotes';
 import BankInfo from '../Student/General information/BankInfo';
 import StudentGrades from '../Student/Study/StudentGrades';
 import StudentSchedule from '../Student/Study/StudentSchedule';
@@ -55,7 +54,6 @@ const menuData = [
     key: 'info',
     children: [
       { label: 'Thông tin sinh viên', icon: <InfoIcon />, key: 'student-info' },
-      { label: 'Ghi chú nhắc nhở', icon: <NoteIcon />, key: 'note' },
       {
         label: 'Cập nhật thông tin cá nhân',
         icon: <InfoIcon />,
@@ -186,7 +184,6 @@ function StudentManagementLayout() {
   const contentMap = {
     home: <Dashboard />,
     'student-info': <StudentInfoPage />,
-    note: <StudentNotes />,
     bank: <BankInfo />,
     bhyt: <BHYTPage />,
     graduate: <GraduatePage />,

@@ -15,9 +15,6 @@ import NotificationHistory from '../page/NotificationHistory';
 import AdminDashboard from '../page/Admin/Dashboard';
 import UserManagement from '../page/Admin/UserManagement';
 import CreateUser from '../page/Admin/UserManagement/CreateUser';
-import UserProfiles from '../page/Admin/UserManagement/UserProfiles';
-import StudentProfiles from '../page/Admin/StudentManagement/StudentProfiles';
-import AdminStudentInfo from '../page/Admin/StudentManagement/StudentInfo';
 import Classes from '../page/Admin/EducationManagement/Classes';
 import TuitionFees from '../page/Admin/TuitionManagement/TuitionFees';
 import SendNotifications from '../page/Admin/SendNotifications';
@@ -38,7 +35,6 @@ import StudentDashboard from '../page/Student/Dashboard';
 import StudentInfoPage from '../page/Student/General information/StudentInfoPage';
 import BHYTPage from '../page/Student/General information/BHYTPage';
 import GraduatePage from '../page/Student/Study/GraduatePage';
-import StudentNotes from '../page/Student/General information/StudentNotes';
 import BankInfo from '../page/Student/General information/BankInfo';
 import StudentGrades from '../page/Student/Study/StudentGrades';
 import StudentSchedule from '../page/Student/Study/StudentSchedule';
@@ -157,12 +153,9 @@ const AppRoutes = () => {
           {/* Quản lý Tài khoản */}
           <Route path="users" element={<UserManagement />} />
           <Route path="create-user" element={<CreateUser />} />
-          <Route path="user-profiles" element={<UserProfiles />} />
 
           {/* Quản lý Hồ sơ Sinh viên */}
           <Route path="students" element={<StudentList />} />
-          <Route path="student-profiles" element={<StudentProfiles />} />
-          <Route path="student-info" element={<AdminStudentInfo />} />
 
           {/* Quản lý Đào tạo */}
           <Route path="courses" element={<CourseManagement />} />
@@ -171,8 +164,6 @@ const AppRoutes = () => {
           <Route path="sections" element={<Sections />} />
           {/* Thêm router quản lý giảng viên */}
           <Route path="teacher" element={<TeacherList />} />
-
-          <Route path="schedule" element={<div>Lịch học - Coming Soon</div>} />
 
           {/* Phân quyền */}
           <Route
@@ -204,30 +195,19 @@ const AppRoutes = () => {
           <Route path="grade-sheets" element={<GradeSheet />} />
           <Route path="grade-statistics" element={<GradeStatistics />} />
 
-          {/* Báo cáo Thống kê */}
-          <Route
-            path="student-reports"
-            element={<div>Báo cáo sinh viên - Coming Soon</div>}
-          />
-          <Route
-            path="academic-reports"
-            element={<div>Báo cáo học tập - Coming Soon</div>}
-          />
-          <Route
-            path="system-statistics"
-            element={<div>Thống kê hệ thống - Coming Soon</div>}
-          />
-
           {/* Quản lý Thông báo */}
           <Route path="send-notifications" element={<SendNotifications />} />
-          <Route path="notification-history" element={<NotificationHistory />} />
+          <Route
+            path="notification-history"
+            element={<NotificationHistory />}
+          />
           <Route
             path="email-settings"
             element={<div>Cài đặt email - Coming Soon</div>}
           />
 
           {/* Cài đặt hệ thống */}
-          <Route path="settings" element={<SystemSettings />} />
+          {/* <Route path="settings" element={<SystemSettings />} /> */}
         </Route>
 
         {/* Teacher routes - Role ID 2 */}
@@ -267,7 +247,6 @@ const AppRoutes = () => {
 
           {/* Thông tin chung */}
           <Route path="info" element={<StudentInfoPage />} />
-          <Route path="notes" element={<StudentNotes />} />
           <Route path="bank" element={<BankInfo />} />
           <Route path="bhyt" element={<BHYTPage />} />
           <Route path="graduate" element={<GraduatePage />} />

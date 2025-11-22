@@ -228,6 +228,19 @@ const gradeService = {
       return null;
     }
   },
+
+  /**
+   * Lấy tất cả điểm của sinh viên hiện tại
+   */
+  getMyAllGrades: async () => {
+    try {
+      const response = await axios.get('/api/Grade/GetMyAllGrades');
+      return response.data;
+    } catch (error) {
+      message.error(error.response?.data?.message || 'Lấy điểm thất bại');
+      return null;
+    }
+  },
 };
 
 export default gradeService;

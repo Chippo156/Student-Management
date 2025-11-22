@@ -13,8 +13,18 @@ const PageHeader = ({ title, onRefresh, actions }) => {
   const theme = useTheme();
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-      <Typography variant="h4" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        mb: 3,
+      }}
+    >
+      <Typography
+        variant="h4"
+        sx={{ fontWeight: 600, color: theme.palette.text.primary }}
+      >
         {title}
       </Typography>
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -27,7 +37,10 @@ const PageHeader = ({ title, onRefresh, actions }) => {
                 bgcolor: theme.palette.background.paper,
                 color: theme.palette.primary.main,
                 '&:hover': {
-                  bgcolor: theme.palette.mode === 'light' ? theme.palette.primary.light + '20' : theme.palette.background.hover,
+                  bgcolor:
+                    theme.palette.mode === 'light'
+                      ? theme.palette.primary.light + '20'
+                      : theme.palette.background.hover,
                 },
                 boxShadow: 1,
               }}

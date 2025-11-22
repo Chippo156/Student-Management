@@ -1,17 +1,18 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { Select, Radio, Row, Col } from 'antd';
 import { alpha } from '@mui/material/styles';
 import { REGISTER_TYPES, REGISTER_TYPE_LABELS } from './constants';
 
-const SemesterFilter = ({
+const SemesterFilter = forwardRef(({
   theme,
   semesters,
   semester,
   setSemester,
   registerType,
   setRegisterType,
-}) => (
+}, ref) => (
   <div
+    ref={ref}
     style={{
       background: alpha(theme.palette.primary.main, 0.05),
       padding: 20,
@@ -54,6 +55,8 @@ const SemesterFilter = ({
       </Col>
     </Row>
   </div>
-);
+));
+
+SemesterFilter.displayName = 'SemesterFilter';
 
 export default SemesterFilter;
