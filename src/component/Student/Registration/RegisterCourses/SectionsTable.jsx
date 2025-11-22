@@ -1,119 +1,156 @@
-import React from 'react';
-import { Table, Radio, Checkbox, Spin } from 'antd';
-import { tableRowClassName } from './helpers';
+import React, { forwardRef } from 'react';
+import { Card, Table, Switch, Empty, Space } from 'antd';
+import { BookOutlined } from '@ant-design/icons';
+import { alpha } from '@mui/material/styles';
 
-const SectionsTable = ({
-  theme,
-  sections,
-  selectedSection,
-  handleSectionSelect,
-  loading,
-  selectedCourse,
-  showOnlyNonConflict,
-  setShowOnlyNonConflict,
-}) => {
-  const sectionColumns = [
+const SectionsTable = forwardRef((props, ref) => {
+  const {
+    theme,
+    sections,
+    selectedSection,
+    handleSectionSelect,
+    loading,
+    selectedCourse,
+    showOnlyNonConflict,
+    setShowOnlyNonConflict,
+  } = props;
+  console.log(selectedCourse);
+  // ✅ Luôn render Card (nhưng ẩn nếu chưa chọn môn)
+  const displaySections = showOnlyNonConflict
+    ? sections.filter((s) => !s.hasConflict)
+    : sections;
+
+  const columns = [
     {
-      title: '',
-      dataIndex: 'radio',
+      title: 'Mã lớp',
+      dataIndex: 'courseCode',
+      key: 'courseCode',
       align: 'center',
-      width: 15,
+      width: 120,
+      render: (text) => <span style={{ fontWeight: 600 }}>{text}</span>,
+    },
+    {
+      title: 'Giảng viên',
+      dataIndex: 'lecturerName',
+      align: 'center',
+      key: 'lecturerName',
+      width: 200,
+    },
+    {
+      title: 'Thời gian',
+      key: 'schedule',
+      align: 'center',
+
+      width: 150,
       render: (_, record) => (
-        <Radio
-          checked={selectedSection?.sectionId === record.sectionId}
-          onChange={() => handleSectionSelect(record)}
-        />
-      ),
-    },
-    {
-      title: 'STT',
-      dataIndex: 'index',
-      align: 'center',
-      width: 15,
-      render: (_, __, i) => i + 1,
-    },
-    { title: 'Mã LHP', dataIndex: 'sectionId', align: 'center', width: 30 },
-    {
-      title: 'Tên môn học',
-      dataIndex: 'courseName',
-      align: 'center',
-      width: 100,
-    },
-    {
-      title: 'Lớp dự kiến',
-      dataIndex: 'className',
-      align: 'center',
-      width: 40,
-    },
-    { title: 'Giảng viên', dataIndex: 'lecturerName', width: 80 },
-    {
-      title: 'Sĩ số tối đa',
-      dataIndex: 'maxCapacity',
-      align: 'center',
-      width: 30,
-    },
-    {
-      title: 'Đã đăng ký',
-      dataIndex: 'currentEnrollment',
-      align: 'center',
-      width: 30,
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'isRegistrationOpen',
-      align: 'center',
-      width: 50,
-      render: (v) => (
-        <span style={{ color: v ? 'green' : 'red', fontWeight: 500 }}>
-          {v ? 'Mở đăng ký' : 'Đã khóa'}
+        <span>
+          {record.startDate} - {record.endDate}
         </span>
       ),
     },
+    {
+      title: 'Sĩ số',
+      key: 'capacity',
+      width: 100,
+      align: 'center',
+      render: (_, record) => (
+        <span>
+          {record.totalCredits}/{record.maxCapacity}
+        </span>
+      ),
+    },
+    {
+      title: 'Trạng thái',
+      key: 'status',
+      width: 120,
+      align: 'center',
+      render: (_, record) => {
+        if (record.hasConflict) {
+          return (
+            <span style={{ color: theme.palette.error.main }}>
+              ⚠️ Trùng lịch
+            </span>
+          );
+        }
+        if (record.currentCapacity >= record.maxCapacity) {
+          return (
+            <span style={{ color: theme.palette.error.main }}>❌ Đã đầy</span>
+          );
+        }
+        return (
+          <span style={{ color: theme.palette.success.main }}>✅ Còn chỗ</span>
+        );
+      },
+    },
   ];
-
-  return selectedCourse ? (
-    <>
-      <div
-        style={{
-          fontWeight: 600,
-          color: theme.palette.warning.dark,
-          fontSize: 16,
-          margin: '24px 0 8px',
-        }}
-      >
-        LỚP HỌC PHẦN CHỜ ĐĂNG KÝ
-        <Checkbox
-          style={{
-            marginLeft: 24,
-            color: theme.palette.error.main,
-            fontWeight: 500,
-          }}
-          checked={showOnlyNonConflict}
-          onChange={(e) => setShowOnlyNonConflict(e.target.checked)}
+  console.log(displaySections);
+  return (
+    <Card
+      ref={ref} // ✅ Forward ref
+      title={
+        <Space
+          align="center"
+          style={{ width: '100%', justifyContent: 'space-between' }}
         >
-          HIỆN THỊ LỚP HỌC PHẦN KHÔNG TRÙNG LỊCH
-        </Checkbox>
-      </div>
-      <Spin spinning={loading}>
-        <Table
-          columns={sectionColumns}
-          dataSource={sections.map((s, i) => ({
-            ...s,
-            key: s.sectionId,
-            index: i + 1,
-          }))}
-          pagination={false}
-          size="small"
-          bordered
-          rowClassName={(r, i) =>
-            tableRowClassName(r, i, null, selectedSection)
-          }
-          locale={{ emptyText: 'Chưa có lớp học phần cho môn này' }}
-          scroll={{ x: 1000 }}
-        />
-      </Spin>
-    </>
-  ) : null;
-};
+          <span>
+            <BookOutlined style={{ marginRight: 8 }} />
+            Danh sách lớp học phần
+          </span>
+          <Space>
+            <span style={{ fontSize: 14, fontWeight: 400 }}>
+              Chỉ hiển thị lớp không trùng lịch:
+            </span>
+            <Switch
+              checked={showOnlyNonConflict}
+              onChange={setShowOnlyNonConflict}
+              checkedChildren="Bật"
+              unCheckedChildren="Tắt"
+            />
+          </Space>
+        </Space>
+      }
+      style={{
+        marginTop: 24,
+        borderRadius: 8,
+        background: theme.palette.background.paper,
+        borderColor: theme.palette.divider,
+        // ✅ Ẩn khi chưa chọn môn, NHƯNG VẪN render (để Tour tìm thấy)
+        visibility: selectedCourse ? 'visible' : 'hidden',
+        height: selectedCourse ? 'auto' : 0,
+        overflow: 'hidden',
+      }}
+      className="register-courses-sections-table" // ✅ Thêm class để debug
+    >
+      <Table
+        columns={columns}
+        dataSource={displaySections}
+        rowKey="sectionId"
+        loading={loading}
+        pagination={false}
+        size="middle"
+        onRow={(record) => ({
+          onClick: () => handleSectionSelect(record),
+          style: {
+            cursor: 'pointer',
+            background:
+              selectedSection?.sectionId === record.sectionId
+                ? alpha(theme.palette.warning.main, 0.15)
+                : undefined,
+          },
+        })}
+        locale={{
+          emptyText: (
+            <Empty
+              description="Không có lớp học phần nào phù hợp"
+              style={{ color: theme.palette.text.secondary }}
+            />
+          ),
+        }}
+      />
+    </Card>
+  );
+});
+
+SectionsTable.displayName = 'SectionsTable';
 
 export default SectionsTable;

@@ -31,7 +31,12 @@ import {
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
-import { PageHeader, StatsCard, DataTable, FilterSection } from '../../../component/Common';
+import {
+  PageHeader,
+  StatsCard,
+  DataTable,
+  FilterSection,
+} from '../../../component/Common';
 import * as XLSX from 'xlsx';
 import { classService } from '../../../service/classService';
 import ClassDetailModal from '../../../component/Admin/ClassManagement/ClassDetailModal';
@@ -188,7 +193,14 @@ const Classes = () => {
 
   if (loading && classes.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -229,9 +241,10 @@ const Classes = () => {
           label={classInfo.facultyName || 'N/A'}
           size="small"
           sx={{
-            bgcolor: theme.palette.mode === 'light'
-              ? theme.palette.primary.light + '30'
-              : theme.palette.primary.dark + '40',
+            bgcolor:
+              theme.palette.mode === 'light'
+                ? theme.palette.primary.light + '30'
+                : theme.palette.primary.dark + '40',
             color: theme.palette.primary.main,
           }}
         />
@@ -291,10 +304,7 @@ const Classes = () => {
       width: 80,
       align: 'center',
       renderCell: (classInfo) => (
-        <IconButton
-          size="small"
-          onClick={(e) => handleMenuOpen(e, classInfo)}
-        >
+        <IconButton size="small" onClick={(e) => handleMenuOpen(e, classInfo)}>
           <MoreVertIcon fontSize="small" />
         </IconButton>
       ),
@@ -334,13 +344,28 @@ const Classes = () => {
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={4}>
-          <StatsCard icon={<ClassIcon />} value={stats.total} label="Tổng lớp học" color="primary" />
+          <StatsCard
+            icon={<ClassIcon />}
+            value={stats.total}
+            label="Tổng lớp học"
+            color="primary"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <StatsCard icon={<People />} value={stats.totalStudents} label="Tổng sinh viên" color="info" />
+          <StatsCard
+            icon={<People />}
+            value={stats.totalStudents}
+            label="Tổng sinh viên"
+            color="info"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <StatsCard icon={<School />} value={stats.departments} label="Số chuyên ngành" color="warning" />
+          <StatsCard
+            icon={<School />}
+            value={stats.departments}
+            label="Số chuyên ngành"
+            color="warning"
+          />
         </Grid>
       </Grid>
 
@@ -363,7 +388,12 @@ const Classes = () => {
           />
         </Grid>
         <Grid item xs={12} md={2}>
-          <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={handleResetFilters}
+            sx={{ height: '40px' }}
+          >
             Đặt lại
           </Button>
         </Grid>
@@ -380,12 +410,16 @@ const Classes = () => {
         onRowsPerPageChange={handleChangeRowsPerPage}
         emptyState={
           <>
-            <ClassIcon sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }} />
+            <ClassIcon
+              sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }}
+            />
             <Typography variant="h6" color="text.secondary" gutterBottom>
               Không tìm thấy lớp học nào
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {searchTerm ? 'Thử thay đổi từ khóa tìm kiếm' : 'Chưa có lớp học nào trong hệ thống'}
+              {searchTerm
+                ? 'Thử thay đổi từ khóa tìm kiếm'
+                : 'Chưa có lớp học nào trong hệ thống'}
             </Typography>
           </>
         }

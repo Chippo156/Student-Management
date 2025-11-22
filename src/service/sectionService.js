@@ -385,6 +385,70 @@ const sectionService = {
     }
   },
 
+  // Get all sections with filters (Admin only)
+  getAllSections: async (params = {}) => {
+    try {
+      const {
+        sectionCode = '',
+        courseName = '',
+        lecturerName = '',
+        semesterId = null,
+        departmentId = null,
+        courseId = null,
+        status = null,
+        sortBy = '',
+        sortDirection = 'asc',
+        pageNumber = 1,
+        pageSize = 10,
+      } = params;
+
+      const response = await axios.get('/api/Section/GetAllSection', {
+        params: {
+          SectionCode: sectionCode,
+          CourseName: courseName,
+          LecturerName: lecturerName,
+          SemesterId: semesterId,
+          DepartmentId: departmentId,
+          CourseId: courseId,
+          Status: status,
+          SortBy: sortBy,
+          SortDirection: sortDirection,
+          PageNumber: pageNumber,
+          PageSize: pageSize,
+        },
+      });
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            response?.message || 'Lấy danh sách lớp học phần thất bại'
+          );
+        }
+        return null;
+      }
+
+      // trả về data (object với items, totalCount, ...)
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Get all sections failed'
+          );
+        }
+      } else {
+        message.error(error.message || 'Get all sections failed');
+      }
+      return null;
+    }
+  },
+
   // Get dropdown data for create/update section
   getSectionDropdownAll: async () => {
     try {

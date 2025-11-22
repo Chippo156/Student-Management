@@ -28,7 +28,12 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
-import { PageHeader, StatsCard, DataTable, FilterSection } from '../../../component/Common';
+import {
+  PageHeader,
+  StatsCard,
+  DataTable,
+  FilterSection,
+} from '../../../component/Common';
 import sectionService from '../../../service/sectionService';
 import { semesterService } from '../../../service/semesterService';
 import * as XLSX from 'xlsx';
@@ -127,11 +132,19 @@ const Sections = () => {
   };
 
   const stats = useMemo(() => {
-    const totalCapacity = sections.reduce((sum, s) => sum + (s.capacity || 0), 0);
-    const totalEnrolled = sections.reduce((sum, s) => sum + (s.enrolledCount || 0), 0);
-    const avgEnrollment = sections.length > 0
-      ? sections.reduce((sum, s) => sum + (s.enrollmentPercentage || 0), 0) / sections.length
-      : 0;
+    const totalCapacity = sections.reduce(
+      (sum, s) => sum + (s.capacity || 0),
+      0
+    );
+    const totalEnrolled = sections.reduce(
+      (sum, s) => sum + (s.enrolledCount || 0),
+      0
+    );
+    const avgEnrollment =
+      sections.length > 0
+        ? sections.reduce((sum, s) => sum + (s.enrollmentPercentage || 0), 0) /
+          sections.length
+        : 0;
 
     return {
       total: totalCount,
@@ -143,7 +156,7 @@ const Sections = () => {
 
   const handleExportExcel = () => {
     const dataToExport = sections.map((section, index) => ({
-      'STT': index + 1,
+      STT: index + 1,
       'Mã LHP': section.sectionCode,
       'Môn học': section.courseName,
       'Mã môn': section.courseCode,
@@ -153,7 +166,7 @@ const Sections = () => {
       'Sĩ số': `${section.enrolledCount}/${section.capacity}`,
       'Tỷ lệ': `${section.enrollmentPercentage.toFixed(1)}%`,
       'Lịch học': section.scheduleSummary,
-      'Phòng': section.roomSummary,
+      Phòng: section.roomSummary,
       'Trạng thái': getStatusLabel(section.status),
     }));
 
@@ -177,7 +190,10 @@ const Sections = () => {
     ];
     worksheet['!cols'] = colWidths;
 
-    XLSX.writeFile(workbook, `Danh_sach_lop_hoc_phan_${new Date().getTime()}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `Danh_sach_lop_hoc_phan_${new Date().getTime()}.xlsx`
+    );
   };
 
   // Modal handlers
@@ -229,7 +245,14 @@ const Sections = () => {
 
   if (loading && sections.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -267,9 +290,7 @@ const Sections = () => {
       width: 180,
       renderCell: (section) => (
         <Box>
-          <Typography variant="body2">
-            {section.lecturerName}
-          </Typography>
+          <Typography variant="body2">{section.lecturerName}</Typography>
           <Typography variant="caption" color="text.secondary">
             {section.lecturerEmail}
           </Typography>
@@ -285,9 +306,10 @@ const Sections = () => {
           label={section.className}
           size="small"
           sx={{
-            bgcolor: theme.palette.mode === 'light'
-              ? theme.palette.primary.light + '30'
-              : theme.palette.primary.dark + '40',
+            bgcolor:
+              theme.palette.mode === 'light'
+                ? theme.palette.primary.light + '30'
+                : theme.palette.primary.dark + '40',
             color: theme.palette.primary.main,
           }}
         />
@@ -299,9 +321,7 @@ const Sections = () => {
       width: 160,
       renderCell: (section) => (
         <Box>
-          <Typography variant="body2">
-            {section.semesterName}
-          </Typography>
+          <Typography variant="body2">{section.semesterName}</Typography>
           <Typography variant="caption" color="text.secondary">
             {section.startDate} - {section.endDate}
           </Typography>
@@ -368,7 +388,11 @@ const Sections = () => {
             </IconButton>
           </Tooltip>
           <Tooltip title="Chỉnh sửa">
-            <IconButton size="small" color="primary" onClick={() => handleEditSection(section)}>
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => handleEditSection(section)}
+            >
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -410,16 +434,36 @@ const Sections = () => {
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <StatsCard icon={<School />} value={stats.total} label="Tổng lớp học phần" color="primary" />
+          <StatsCard
+            icon={<School />}
+            value={stats.total}
+            label="Tổng lớp học phần"
+            color="primary"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatsCard icon={<Group />} value={stats.capacity} label="Tổng sĩ số" color="success" />
+          <StatsCard
+            icon={<Group />}
+            value={stats.capacity}
+            label="Tổng sĩ số"
+            color="success"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatsCard icon={<People />} value={stats.enrolled} label="Đã đăng ký" color="info" />
+          <StatsCard
+            icon={<People />}
+            value={stats.enrolled}
+            label="Đã đăng ký"
+            color="info"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatsCard icon={<Assignment />} value={`${stats.avgEnrollment}%`} label="Tỷ lệ đăng ký TB" color="warning" />
+          <StatsCard
+            icon={<Assignment />}
+            value={`${stats.avgEnrollment}%`}
+            label="Tỷ lệ đăng ký TB"
+            color="warning"
+          />
         </Grid>
       </Grid>
 
@@ -476,7 +520,12 @@ const Sections = () => {
           </FormControl>
         </Grid>
         <Grid item xs={12} md={2}>
-          <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={handleResetFilters}
+            sx={{ height: '40px' }}
+          >
             Đặt lại
           </Button>
         </Grid>
@@ -493,12 +542,16 @@ const Sections = () => {
         onRowsPerPageChange={handleChangeRowsPerPage}
         emptyState={
           <>
-            <School sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }} />
+            <School
+              sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }}
+            />
             <Typography variant="h6" color="text.secondary" gutterBottom>
               Không tìm thấy lớp học phần nào
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {searchTerm ? 'Thử thay đổi từ khóa tìm kiếm' : 'Chưa có lớp học phần nào trong hệ thống'}
+              {searchTerm
+                ? 'Thử thay đổi từ khóa tìm kiếm'
+                : 'Chưa có lớp học phần nào trong hệ thống'}
             </Typography>
           </>
         }

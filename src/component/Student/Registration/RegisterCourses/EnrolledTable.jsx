@@ -129,12 +129,20 @@ const EnrolledTable = forwardRef((props, ref) => {
       dataIndex: 'sectionStatus',
       align: 'center',
       width: 110,
-      render: (v) =>
-        v === 'Available' ? (
-          <Tag color="blue">Còn mở</Tag>
-        ) : (
-          <Tag color="red">{v}</Tag>
-        ),
+      render: (status) => {
+        const statusMap = {
+          0: { text: 'Đang chuẩn bị', color: 'orange' },
+          1: { text: 'Mở đăng ký', color: 'green' },
+          2: { text: 'Đã đóng', color: 'red' },
+          3: { text: 'Đã hủy', color: 'default' },
+          4: { text: 'Đã hoàn thành', color: 'blue' },
+        };
+        const s = statusMap[status];
+        if (s) {
+          return <Tag color={s.color}>{s.text}</Tag>;
+        }
+        return <Tag color="default">{status}</Tag>;
+      },
     },
   ];
 

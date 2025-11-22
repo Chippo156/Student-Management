@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { Card, Table, Select, Button } from 'antd';
 import {
   UnorderedListOutlined,
@@ -7,15 +7,16 @@ import {
 } from '@ant-design/icons';
 import { prepareScheduleData, scheduleRowClassName } from './helpers';
 
-const ScheduleDetail = ({
-  theme,
-  selectedSection,
-  schedule,
-  practiceGroups,
-  selectedPracticeGroup,
-  setSelectedPracticeGroup,
-  handleEnroll,
-}) => {
+const ScheduleDetail = forwardRef((props, ref) => {
+  const {
+    theme,
+    selectedSection,
+    schedule,
+    practiceGroups,
+    selectedPracticeGroup,
+    setSelectedPracticeGroup,
+    handleEnroll,
+  } = props;
   if (!selectedSection) return null;
 
   const scheduleColumns = [
@@ -58,6 +59,7 @@ const ScheduleDetail = ({
 
   return (
     <Card
+      ref={ref}
       title={
         <span
           style={{
@@ -121,6 +123,6 @@ const ScheduleDetail = ({
       </div>
     </Card>
   );
-};
+});
 
 export default ScheduleDetail;
