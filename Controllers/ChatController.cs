@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
@@ -130,6 +130,29 @@ namespace StudentManagement.Controllers
 
                 await chatService.UpdateLastSeenAsync(username, chatRoomId);
                 return Ok(ApiResponse.SuccessResponse(null, "Messages marked as read"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+        /// <summary>
+        /// Tạo hoặc lấy phòng chat với AI Assistant (EduBot)
+        /// </summary>
+        [HttpPost("room/ai")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> GetOrCreateChatRoomWithAI()
+        {
+            try
+            {
+                var username = User.FindFirstValue(ClaimTypes.Name);
+                if (string.IsNullOrEmpty(username))
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid username in token.", null));
+                }
+
+                var chatRoom = await chatService.GetOrCreateChatRoomWithAIAsync(username);
+                return Ok(ApiResponse.SuccessResponse(chatRoom, "Chat room with AI assistant created/retrieved successfully"));
             }
             catch (Exception ex)
             {

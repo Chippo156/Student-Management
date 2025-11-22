@@ -91,7 +91,11 @@ builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ITuitionService, TuitionService>();
+// Register HttpClient for GeminiAIService
+builder.Services.AddHttpClient<IGeminiAIService, GeminiAIService>();
 
+// Register other services
+builder.Services.AddScoped<IGeminiAIService, GeminiAIService>();
 // Add SignalR
 builder.Services.AddSignalR();
 

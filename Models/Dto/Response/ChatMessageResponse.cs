@@ -6,11 +6,12 @@ namespace StudentManagement.Models.Dto.Response
     {
         public int ChatMessageId { get; set; }
         public int ChatRoomId { get; set; }
-        public int SenderId { get; set; }
+        public int? SenderId { get; set; }
         public string SenderName { get; set; } = string.Empty;
         public string SenderRole { get; set; } = string.Empty;
         public bool IsCurrentUser { get; set; }
         public string Content { get; set; } = string.Empty;
+        public string? AIContent { get; set; }
         public MessageType MessageType { get; set; }
         public string MessageTypeText { get; set; } = string.Empty;
         public DateTime SentAt { get; set; }

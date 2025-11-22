@@ -10,6 +10,7 @@ namespace StudentManagement.Services.Interface
         // Thay đổi từ section-based sang teacher-based
         Task<ChatRoomResponse> GetOrCreateChatRoomWithClassTeacherAsync(string studentUsername);
         Task<ChatRoomResponse> GetOrCreateChatRoomWithAcademicStaffAsync(string studentUsername);
+        Task<ChatRoomResponse> GetOrCreateChatRoomWithAIAsync(string studentUsername); // New method
         Task<ChatMessageResponse> SendMessageAsync(SendMessageRequest request, string username);
         Task<PagedResult<ChatMessageResponse>> GetChatMessagesAsync(int chatRoomId, string username, PaginationParams pagination);
         Task<List<ChatRoomResponse>> GetUserChatRoomsAsync(string username);

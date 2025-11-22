@@ -1,6 +1,7 @@
 ﻿using StudentManagement.Enum;
-using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace StudentManagement.Models
 {
@@ -50,12 +51,14 @@ namespace StudentManagement.Models
         public int ChatMessageId { get; set; }
         public int ChatRoomId { get; set; }
         public ChatRoom ChatRoom { get; set; } = null!;
-        
-        public int SenderId { get; set; }
+
+        public int? SenderId { get; set; }  // Cho phép null
         [JsonIgnore]
-        public User Sender { get; set; } = null!;
-        
+        public User? Sender { get; set; } = null!;
+
+        [Column(TypeName = "nvarchar(max)")]
         public string Content { get; set; } = string.Empty;
+
         public MessageType MessageType { get; set; } = MessageType.Text;
         
         public DateTime SentAt { get; set; } = DateTime.UtcNow;

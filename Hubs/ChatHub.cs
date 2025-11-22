@@ -64,8 +64,10 @@ namespace StudentManagement.Hubs
                 var message = await _chatService.SendMessageAsync(request, username);
                 
                 // Send message to all users in the chat room
-                await Clients.Group($"ChatRoom_{request.ChatRoomId}")
-                    .SendAsync("ReceiveMessage", message);
+                //await Clients.Group($"ChatRoom_{request.ChatRoomId}")
+                //    .SendAsync("ReceiveMessage", message);
+
+
             }
             catch (Exception ex)
             {

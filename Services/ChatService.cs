@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Enum;
+using StudentManagement.Hubs;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
@@ -11,10 +13,14 @@ namespace StudentManagement.Services
     public class ChatService : IChatService
     {
         private readonly AppDbContext _context;
+        private readonly IGeminiAIService _geminiAIService;
+        private readonly IHubContext<ChatHub> _hubContext;
 
-        public ChatService(AppDbContext context)
+        public ChatService(AppDbContext context, IGeminiAIService geminiAIService, IHubContext<ChatHub> hubContext)
         {
             _context = context;
+            _geminiAIService = geminiAIService;
+            _hubContext = hubContext;
         }
 
         public async Task<ChatRoomResponse> GetOrCreateChatRoomWithClassTeacherAsync(string studentUsername)
@@ -35,8 +41,6 @@ namespace StudentManagement.Services
                 .Where(aa => aa.ClassId == student.Class.ClassId && aa.IsActive)
                 .FirstOrDefaultAsync()
                 ?? throw new Exception("Không tìm thấy giáo viên dạy lớp");
-
-             
 
             // Tìm room đã tồn tại
             var existingRoom = await _context.ChatRooms
@@ -129,6 +133,50 @@ namespace StudentManagement.Services
             return await MapToChatRoomResponseAsync(chatRoom, studentUsername);
         }
 
+        public async Task<ChatRoomResponse> GetOrCreateChatRoomWithAIAsync(string studentUsername)
+        {
+            // Lấy thông tin sinh viên
+            var student = await _context.Students
+                .Include(s => s.User)
+                .Include(s => s.Class)
+                    .ThenInclude(c => c.Program)
+                        .ThenInclude(p => p.Department)
+                .FirstOrDefaultAsync(s => s.User.Username == studentUsername)
+                ?? throw new Exception("Không tìm thấy sinh viên");
+
+            // Tìm room AI đã tồn tại cho sinh viên này
+            var existingRoom = await _context.ChatRooms
+                .FirstOrDefaultAsync(cr => cr.ChatType == ChatType.AI &&
+                                          cr.ChatRoomId > 0 && // AI rooms are personal
+                                          _context.ChatRoomParticipants.Any(p => p.ChatRoomId == cr.ChatRoomId && p.User.Username == studentUsername));
+
+            if (existingRoom != null)
+            {
+                return await MapToChatRoomResponseAsync(existingRoom, studentUsername);
+            }
+
+            // Tạo room AI mới cho sinh viên
+            var chatRoom = new ChatRoom
+            {
+                ChatType = ChatType.AI,
+                ClassId = null, // AI chat không liên kết với class
+                DepartmentId = null, // AI chat không liên kết với department
+                RoomName = "🤖 EduBot - Trợ lý AI",
+                Description = "Chat với trợ lý AI thông minh - Hỗ trợ học tập và giải đáp thắc mắc"
+            };
+
+            _context.ChatRooms.Add(chatRoom);
+            await _context.SaveChangesAsync();
+
+            // Add student as participant
+            await EnsureUserIsParticipantAsync(chatRoom.ChatRoomId, studentUsername);
+
+            // Send welcome message from AI
+            await SendAIWelcomeMessage(chatRoom.ChatRoomId, student.User.FullName);
+
+            return await MapToChatRoomResponseAsync(chatRoom, studentUsername);
+        }
+
         public async Task<ChatMessageResponse> SendMessageAsync(SendMessageRequest request, string username)
         {
             var user = await _context.Users
@@ -155,8 +203,195 @@ namespace StudentManagement.Services
 
             // Update participant's last seen
             await UpdateLastSeenAsync(username, request.ChatRoomId);
+            var userMessageResponse = await MapToChatMessageResponseAsync(message, username);
+            // Check if this is an AI chat room and generate AI response
+            var chatRoom = await _context.ChatRooms.FindAsync(request.ChatRoomId);
+            await _hubContext.Clients.Group($"ChatRoom_{request.ChatRoomId}").SendAsync("ReceiveMessage", userMessageResponse);
+            if (chatRoom?.ChatType == ChatType.AI)
+            {
+                await GenerateAndSendAIResponse(request.ChatRoomId, request.Content, user.FullName);
+            }
 
-            return await MapToChatMessageResponseAsync(message, username);
+            return userMessageResponse;
+        }
+
+        private async Task SendAIWelcomeMessage(int chatRoomId, string studentName)
+        {
+            var welcomeMessage = $@"👋 Xin chào {studentName}!
+
+Tôi là EduBot - trợ lý AI thông minh của Student Management System. Tôi có thể hỗ trợ bạn:
+
+🎓 **Học tập & Nghiên cứu**
+• Giải thích các khái niệm học thuật
+• Hướng dẫn phương pháp học tập hiệu quả
+• Tư vấn về nghiên cứu khoa học
+
+📋 **Thông tin trường học**
+• Quy chế, quy định của trường
+• Thông tin về chương trình đào tạo
+• Các hoạt động sinh viên
+
+💡 **Hỗ trợ khác**
+• Tư vấn định hướng nghề nghiệp
+• Động viên tinh thần học tập
+• Giải đáp thắc mắc chung
+
+Hãy đặt câu hỏi bất cứ lúc nào bạn cần hỗ trợ! 😊";
+
+            var aiMessage = new ChatMessage
+            {
+                ChatRoomId = chatRoomId,
+                SenderId = null, // Special ID for AI
+                Content = welcomeMessage,
+                MessageType = MessageType.Text,
+                SentAt = DateTime.UtcNow
+            };
+
+            _context.ChatMessages.Add(aiMessage);
+            await _context.SaveChangesAsync();
+
+            // **FIX: Send welcome message via SignalR**
+            var welcomeMessageResponse = new ChatMessageResponse
+            {
+                ChatMessageId = aiMessage.ChatMessageId,
+                ChatRoomId = aiMessage.ChatRoomId,
+                SenderId = aiMessage.SenderId,
+                SenderName = "EduBot",
+                SenderRole = "AI Assistant",
+                IsCurrentUser = false,
+                Content = aiMessage.Content,
+                MessageType = aiMessage.MessageType,
+                MessageTypeText = GetMessageTypeText(aiMessage.MessageType),
+                SentAt = aiMessage.SentAt,
+                EditedAt = aiMessage.EditedAt,
+                IsDeleted = aiMessage.IsDeleted,
+                ReplyToMessageId = aiMessage.ReplyToMessageId,
+                ReplyToMessage = null
+            };
+
+            await _hubContext.Clients.Group($"ChatRoom_{chatRoomId}").SendAsync("ReceiveMessage", welcomeMessageResponse);
+        }
+
+        private async Task GenerateAndSendAIResponse(int chatRoomId, string userMessage, string studentName)
+        {
+            try
+            {
+                //// Notify that AI is typing
+                //await _hubContext.Clients.Group($"ChatRoom_{chatRoomId}").SendAsync("UserTyping", new
+                //{
+                //    Username = "EduBot",
+                //    IsTyping = true,
+                //    ChatRoomId = chatRoomId
+                //});
+
+                // Get recent conversation context (last 5 messages)
+                var recentMessages = await _context.ChatMessages
+                    .Include(m => m.Sender)
+                    .Where(m => m.ChatRoomId == chatRoomId && !m.IsDeleted)
+                    .OrderByDescending(m => m.SentAt)
+                    .Take(5)
+                    .ToListAsync();
+
+                var conversationContext = string.Join("\n", recentMessages
+                    .OrderBy(m => m.SentAt)
+                    .Select(m => $"{(m.SenderId == null ? "EduBot" : m.Sender?.FullName ?? "Student")}: {m.Content}"));
+
+                // Generate AI response
+                var aiResponse = await _geminiAIService.GenerateEducationalResponseAsync(
+                    userMessage,
+                    $"Sinh viên: {studentName}\nCuộc trò chuyện gần đây:\n{conversationContext}");
+
+                // Stop typing notification
+                //await _hubContext.Clients.Group($"ChatRoom_{chatRoomId}").SendAsync("UserTyping", new
+                //{
+                //    Username = "EduBot",
+                //    IsTyping = false,
+                //    ChatRoomId = chatRoomId
+                //});
+
+                // Save AI response to database
+                var aiMessage = new ChatMessage
+                {
+                    ChatRoomId = chatRoomId,
+                    SenderId = null, // Special ID for AI
+                    Content = aiResponse,
+                    MessageType = MessageType.Text,
+                    SentAt = DateTime.UtcNow
+                };
+
+                _context.ChatMessages.Add(aiMessage);
+                await _context.SaveChangesAsync();
+
+
+                // **FIX: Convert to ChatMessageResponse before sending via SignalR**
+                var aiMessageResponse = new ChatMessageResponse
+                {
+                    ChatMessageId = aiMessage.ChatMessageId,
+                    ChatRoomId = aiMessage.ChatRoomId,
+                    SenderId = aiMessage.SenderId,
+                    SenderName = "EduBot",
+                    SenderRole = "AI Assistant",
+                    IsCurrentUser = false,
+                    Content = aiMessage.Content,
+                    MessageType = aiMessage.MessageType,
+                    MessageTypeText = GetMessageTypeText(aiMessage.MessageType),
+                    SentAt = aiMessage.SentAt,
+                    EditedAt = aiMessage.EditedAt,
+                    IsDeleted = aiMessage.IsDeleted,
+                    ReplyToMessageId = aiMessage.ReplyToMessageId,
+                    ReplyToMessage = null
+                };
+
+                // Send AI message to all users in the chat room
+                await _hubContext.Clients.Group($"ChatRoom_{chatRoomId}").SendAsync("ReceiveMessage", aiMessageResponse);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error generating AI response: {ex.Message}");
+                
+                //// Stop typing notification on error
+                //await _hubContext.Clients.Group($"ChatRoom_{chatRoomId}").SendAsync("UserTyping", new
+                //{
+                //    Username = "EduBot",
+                //    IsTyping = false,
+                //    ChatRoomId = chatRoomId
+                //});
+                
+                // Send error message
+                var errorMessage = new ChatMessage
+                {
+                    ChatRoomId = chatRoomId,
+                    SenderId = null,
+                    Content = "Xin lỗi, tôi đang gặp sự cố kỹ thuật. Vui lòng thử lại sau. 😅",
+                    MessageType = MessageType.Text,
+                    SentAt = DateTime.UtcNow
+                };
+
+                _context.ChatMessages.Add(errorMessage);
+                await _context.SaveChangesAsync();
+
+                // **FIX: Also send error message with correct format**
+                var errorMessageResponse = new ChatMessageResponse
+                {
+                    ChatMessageId = errorMessage.ChatMessageId,
+                    ChatRoomId = errorMessage.ChatRoomId,
+                    SenderId = errorMessage.SenderId,
+                    SenderName = "EduBot",
+                    SenderRole = "AI Assistant",
+                    IsCurrentUser = false,
+                    Content = errorMessage.Content,
+                    MessageType = errorMessage.MessageType,
+                    MessageTypeText = GetMessageTypeText(errorMessage.MessageType),
+                    SentAt = errorMessage.SentAt,
+                    EditedAt = errorMessage.EditedAt,
+                    IsDeleted = errorMessage.IsDeleted,
+                    ReplyToMessageId = errorMessage.ReplyToMessageId,
+                    ReplyToMessage = null
+                };
+
+                await _hubContext.Clients.Group($"ChatRoom_{chatRoomId}").SendAsync("ReceiveMessage", errorMessageResponse);
+            }
         }
 
         public async Task<PagedResult<ChatMessageResponse>> GetChatMessagesAsync(
@@ -376,7 +611,6 @@ namespace StudentManagement.Services
             string teacherName = "Unknown";
             if (chatRoom.ChatType == ChatType.ClassTeacher && chatRoom.ClassId.HasValue)
             {
-
                 var classTeacher = await _context.AdviserAssignments
                     .Include(aa => aa.Lecturer)
                         .ThenInclude(l => l.User)
@@ -388,6 +622,10 @@ namespace StudentManagement.Services
             else if (chatRoom.ChatType == ChatType.AcademicStaff)
             {
                 teacherName = "Giáo viên Học vụ";
+            }
+            else if (chatRoom.ChatType == ChatType.AI)
+            {
+                teacherName = "EduBot - AI Assistant";
             }
 
             return new ChatRoomResponse
@@ -421,7 +659,7 @@ namespace StudentManagement.Services
                 replyToMessage = new ChatMessageResponse
                 {
                     ChatMessageId = message.ReplyToMessage.ChatMessageId,
-                    SenderName = message.ReplyToMessage.Sender.FullName,
+                    SenderName = message.ReplyToMessage.Sender?.FullName ?? "EduBot",
                     Content = message.ReplyToMessage.Content,
                     SentAt = message.ReplyToMessage.SentAt,
                     MessageType = message.ReplyToMessage.MessageType,
@@ -433,13 +671,21 @@ namespace StudentManagement.Services
             var senderParticipant = await _context.ChatRoomParticipants
                 .FirstOrDefaultAsync(crp => crp.ChatRoomId == message.ChatRoomId && crp.UserId == message.SenderId);
 
+            string senderName = message.Sender?.FullName ?? "EduBot";
+            string senderRole = "AI Assistant";
+
+            if (message.SenderId != null) // Not AI
+            {
+                senderRole = GetParticipantRoleText(senderParticipant?.Role ?? ParticipantRole.Student);
+            }
+
             return new ChatMessageResponse
             {
                 ChatMessageId = message.ChatMessageId,
                 ChatRoomId = message.ChatRoomId,
                 SenderId = message.SenderId,
-                SenderName = message.Sender.FullName,
-                SenderRole = GetParticipantRoleText(senderParticipant?.Role ?? ParticipantRole.Student),
+                SenderName = senderName,
+                SenderRole = senderRole,
                 IsCurrentUser = currentUser?.UserId == message.SenderId,
                 Content = message.Content,
                 MessageType = message.MessageType,
@@ -448,7 +694,7 @@ namespace StudentManagement.Services
                 EditedAt = message.EditedAt,
                 IsDeleted = message.IsDeleted,
                 ReplyToMessageId = message.ReplyToMessageId,
-                ReplyToMessage = replyToMessage
+                ReplyToMessage = replyToMessage,
             };
         }
 
