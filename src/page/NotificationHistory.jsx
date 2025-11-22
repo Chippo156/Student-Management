@@ -60,6 +60,9 @@ const NotificationHistory = () => {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
+  // Check if user is admin
+  const isAdmin = localStorage.getItem('role') === '1';
+
   useEffect(() => {
     fetchAnnouncements();
   }, [currentPage, typeFilter, priorityFilter, searchTerm]);
@@ -67,14 +70,24 @@ const NotificationHistory = () => {
   const fetchAnnouncements = async () => {
     setLoading(true);
     try {
-      const result = await announcementService.getMyAnnouncements({
-        pageNumber: currentPage,
-        pageSize: pageSize,
-        search: searchTerm,
-        type: typeFilter || null,
-        priority: priorityFilter || null,
-        isActive: true,
-      });
+      // Admin uses getAllAnnouncements, other roles use getMyAnnouncements
+      const result = isAdmin
+        ? await announcementService.getAllAnnouncements({
+            pageNumber: currentPage,
+            pageSize: pageSize,
+            search: searchTerm,
+            type: typeFilter || null,
+            priority: priorityFilter || null,
+            isActive: true,
+          })
+        : await announcementService.getMyAnnouncements({
+            pageNumber: currentPage,
+            pageSize: pageSize,
+            search: searchTerm,
+            type: typeFilter || null,
+            priority: priorityFilter || null,
+            isActive: true,
+          });
 
       if (result) {
         setAnnouncements(result.items || []);

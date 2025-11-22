@@ -12,10 +12,6 @@ import {
   LinearProgress,
   Autocomplete,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Tabs,
   Tab,
   Table,
@@ -24,6 +20,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  MenuItem,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -33,6 +30,9 @@ import {
   School as SchoolIcon,
   EmojiEvents as TrophyIcon,
   Assessment as AssessmentIcon,
+  MenuBook as MenuBookIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import {
@@ -80,7 +80,9 @@ const GradeStatistics = () => {
   }, []);
 
   useEffect(() => {
-    fetchAllStudentsStats();
+    if (tabValue === 1) {
+      fetchAllStudentsStats();
+    }
   }, [selectedDepartment, selectedSemester]);
 
   const fetchStudents = async () => {
@@ -151,16 +153,22 @@ const GradeStatistics = () => {
     F: theme.palette.error.dark,
   };
 
-  const getTrendIcon = (trend) => {
-    if (!trend) return null;
+  const getTrendIcon = (trendDirection) => {
+    if (!trendDirection) return <TrendingFlatIcon color="action" />;
 
-    if (trend.trendDirection === 'Improving') {
-      return <TrendingUpIcon color="success" />;
-    } else if (trend.trendDirection === 'Declining') {
-      return <TrendingDownIcon color="error" />;
+    if (trendDirection === 'Improving') {
+      return <TrendingUpIcon color="success" sx={{ fontSize: 40 }} />;
+    } else if (trendDirection === 'Declining') {
+      return <TrendingDownIcon color="error" sx={{ fontSize: 40 }} />;
     } else {
-      return <TrendingFlatIcon color="action" />;
+      return <TrendingFlatIcon color="action" sx={{ fontSize: 40 }} />;
     }
+  };
+
+  const getTrendColor = (trendDirection) => {
+    if (trendDirection === 'Improving') return 'success.main';
+    if (trendDirection === 'Declining') return 'error.main';
+    return 'text.secondary';
   };
 
   return (
@@ -193,279 +201,591 @@ const GradeStatistics = () => {
         <>
           {/* Search Section */}
           <Paper sx={{ p: 3, mb: 3 }}>
-        <Autocomplete
-          options={students}
-          getOptionLabel={(option) =>
-            `${option.mssv} - ${option.user?.fullName || ''}`
-          }
-          value={selectedStudent}
-          onChange={handleStudentChange}
-          loading={loadingStudents}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Chọn sinh viên"
-              placeholder="Tìm theo MSSV hoặc tên..."
-              InputProps={{
-                ...params.InputProps,
-                startAdornment: (
-                  <>
-                    <SearchIcon sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />
-                    {params.InputProps.startAdornment}
-                  </>
-                ),
-                endAdornment: (
-                  <>
-                    {loadingStudents ? <CircularProgress size={20} /> : null}
-                    {params.InputProps.endAdornment}
-                  </>
-                ),
-              }}
+            <Autocomplete
+              options={students}
+              getOptionLabel={(option) =>
+                `${option.mssv} - ${option.user?.fullName || ''}`
+              }
+              value={selectedStudent}
+              onChange={handleStudentChange}
+              loading={loadingStudents}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Chọn sinh viên"
+                  placeholder="Tìm theo MSSV hoặc tên..."
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <SearchIcon
+                          sx={{ ml: 1, mr: -0.5, color: 'action.active' }}
+                        />
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                    endAdornment: (
+                      <>
+                        {loadingStudents ? (
+                          <CircularProgress size={20} />
+                        ) : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              renderOption={(props, option) => (
+                <li {...props}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                    <Typography variant="body1">{option.mssv}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {option.user?.fullName || ''}
+                    </Typography>
+                  </Box>
+                </li>
+              )}
             />
-          )}
-          renderOption={(props, option) => (
-            <li {...props}>
-              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="body1">{option.mssv}</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {option.user?.fullName || ''}
-                </Typography>
-              </Box>
-            </li>
-          )}
-        />
-      </Paper>
+          </Paper>
 
-      {/* Statistics Content */}
-      {statsData && (
-        <>
-          {/* Overview Cards */}
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={3}>
-              <Card>
+          {/* Statistics Content */}
+          {statsData && (
+            <>
+              {/* Student Info Card */}
+              <Card sx={{ mb: 3 }}>
                 <CardContent>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Box>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={3}>
                       <Typography variant="body2" color="text.secondary">
-                        GPA Tích lũy (10)
+                        Mã số sinh viên
                       </Typography>
-                      <Typography variant="h4" fontWeight={700} color="primary">
-                        {statsData.overallGPA?.toFixed(2) || '0.00'}
+                      <Typography variant="h6" fontWeight={600}>
+                        {statsData.mssv}
                       </Typography>
-                    </Box>
-                    <TrophyIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Tổng tín chỉ
-                  </Typography>
-                  <Typography variant="h4" fontWeight={700}>
-                    {statsData.totalCreditsEarned || 0}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Xếp loại
-                  </Typography>
-                  <Chip
-                    label={statsData.academicRank || 'Chưa xếp loại'}
-                    color={
-                      statsData.academicRank === 'Giỏi'
-                        ? 'success'
-                        : statsData.academicRank === 'Khá'
-                        ? 'info'
-                        : 'default'
-                    }
-                    sx={{ fontSize: '1rem', height: 32, mt: 1 }}
-                  />
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Box>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
                       <Typography variant="body2" color="text.secondary">
-                        Xu hướng
+                        Họ và tên
                       </Typography>
-                      <Typography variant="subtitle1" fontWeight={600}>
-                        {statsData.performanceTrend?.trendDirection || 'Stable'}
+                      <Typography variant="h6" fontWeight={600}>
+                        {statsData.studentName}
                       </Typography>
-                    </Box>
-                    {getTrendIcon(statsData.performanceTrend)}
-                  </Box>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <Typography variant="body2" color="text.secondary">
+                        Lớp
+                      </Typography>
+                      <Typography variant="h6" fontWeight={600}>
+                        {statsData.className}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <Typography variant="body2" color="text.secondary">
+                        Chương trình đào tạo
+                      </Typography>
+                      <Typography variant="h6" fontWeight={600}>
+                        {statsData.programName}
+                      </Typography>
+                    </Grid>
+                  </Grid>
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
 
-          {/* Charts */}
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            {/* Grade Distribution */}
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 3, height: '100%' }}>
-                <Typography variant="h6" fontWeight={600} gutterBottom>
-                  Phân bố điểm chữ
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                {statsData.gradeDistribution && (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={statsData.gradeDistribution}
-                        dataKey="count"
-                        nameKey="gradeLetter"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        label={(entry) => `${entry.gradeLetter}: ${entry.count}`}
+              {/* Overview Cards */}
+              <Grid container spacing={3} sx={{ mb: 3 }}>
+                <Grid item xs={12} md={2.4}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                        }}
                       >
-                        {statsData.gradeDistribution.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={GRADE_COLORS[entry.gradeLetter] || '#999'}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </Paper>
-            </Grid>
-
-            {/* GPA Trend */}
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 3, height: '100%' }}>
-                <Typography variant="h6" fontWeight={600} gutterBottom>
-                  Xu hướng GPA theo học kỳ
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                {statsData.performanceTrend?.semesterTrends && (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart
-                      data={statsData.performanceTrend.semesterTrends}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="semesterName" />
-                      <YAxis domain={[0, 10]} />
-                      <Tooltip />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="gpa"
-                        stroke={theme.palette.primary.main}
-                        strokeWidth={2}
-                        name="GPA"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
-              </Paper>
-            </Grid>
-          </Grid>
-
-          {/* Semester Details */}
-          {statsData.semesterStatistics?.map((semester) => (
-            <Paper key={semester.semesterId} sx={{ p: 3, mb: 3 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 2,
-                }}
-              >
-                <Typography variant="h6" fontWeight={600}>
-                  {semester.semesterName}
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Chip label={`GPA: ${semester.gpa?.toFixed(2) || '0.00'}`} color="primary" />
-                  <Chip label={semester.rank || 'Chưa xếp loại'} color="secondary" />
-                </Box>
-              </Box>
-
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={4}>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Tín chỉ đăng ký
-                    </Typography>
-                    <Typography variant="h6">
-                      {semester.creditsRegistered || 0} TC
-                    </Typography>
-                  </Box>
+                        <TrophyIcon
+                          sx={{ fontSize: 40, color: 'primary.main', mb: 1 }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          GPA (Hệ 10)
+                        </Typography>
+                        <Typography
+                          variant="h4"
+                          fontWeight={700}
+                          color="primary"
+                        >
+                          {statsData.overallStats?.currentGPA10?.toFixed(2) ||
+                            '0.00'}
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
                 </Grid>
-                <Grid item xs={12} md={4}>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Tín chỉ đạt
-                    </Typography>
-                    <Typography variant="h6">
-                      {semester.creditsEarned || 0} TC
-                    </Typography>
-                  </Box>
+
+                <Grid item xs={12} md={2.4}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <TrophyIcon
+                          sx={{ fontSize: 40, color: 'secondary.main', mb: 1 }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          GPA (Hệ 4)
+                        </Typography>
+                        <Typography
+                          variant="h4"
+                          fontWeight={700}
+                          color="secondary"
+                        >
+                          {statsData.overallStats?.currentGPA4?.toFixed(2) ||
+                            '0.00'}
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
                 </Grid>
-                <Grid item xs={12} md={4}>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Tỷ lệ hoàn thành
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={
-                          semester.creditsRegistered > 0
-                            ? (semester.creditsEarned / semester.creditsRegistered) * 100
-                            : 0
-                        }
-                        sx={{ flex: 1, height: 8, borderRadius: 4 }}
-                      />
-                      <Typography variant="body2" fontWeight={600}>
-                        {semester.creditsRegistered > 0
-                          ? ((semester.creditsEarned / semester.creditsRegistered) * 100).toFixed(
-                              0
-                            )
-                          : 0}
-                        %
-                      </Typography>
-                    </Box>
-                  </Box>
+
+                <Grid item xs={12} md={2.4}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <MenuBookIcon
+                          sx={{ fontSize: 40, color: 'info.main', mb: 1 }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          Tổng môn học
+                        </Typography>
+                        <Typography variant="h4" fontWeight={700}>
+                          {statsData.overallStats?.totalSubjects || 0}
+                        </Typography>
+                        <Typography variant="caption" color="success.main">
+                          <CheckCircleIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                          Đạt: {statsData.overallStats?.passedSubjects || 0}
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                <Grid item xs={12} md={2.4}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <SchoolIcon
+                          sx={{ fontSize: 40, color: 'success.main', mb: 1 }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          Tín chỉ tích lũy
+                        </Typography>
+                        <Typography variant="h4" fontWeight={700}>
+                          {statsData.overallStats?.totalCreditsEarned || 0}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          /{' '}
+                          {statsData.overallStats?.totalCreditsRegistered || 0}{' '}
+                          TC
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                <Grid item xs={12} md={2.4}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {getTrendIcon(
+                          statsData.performanceTrend?.trendDirection
+                        )}
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mt: 1 }}
+                        >
+                          Xu hướng
+                        </Typography>
+                        <Typography
+                          variant="subtitle1"
+                          fontWeight={600}
+                          color={getTrendColor(
+                            statsData.performanceTrend?.trendDirection
+                          )}
+                        >
+                          {statsData.performanceTrend?.trendDirection ===
+                          'Improving'
+                            ? 'Tiến bộ'
+                            : statsData.performanceTrend?.trendDirection ===
+                                'Declining'
+                              ? 'Giảm sút'
+                              : 'Ổn định'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {statsData.performanceTrend
+                            ?.gpaChangeFromFirstSemester >= 0
+                            ? '+'
+                            : ''}
+                          {statsData.performanceTrend?.gpaChangeFromFirstSemester?.toFixed(
+                            2
+                          ) || 0}{' '}
+                          điểm
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
                 </Grid>
               </Grid>
-            </Paper>
-          ))}
-        </>
-      )}
 
-      {/* Empty State */}
+              {/* Additional Stats Cards */}
+              <Grid container spacing={3} sx={{ mb: 3 }}>
+                <Grid item xs={12} md={3}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        gutterBottom
+                      >
+                        Điểm trung bình
+                      </Typography>
+                      <Typography variant="h5" fontWeight={700}>
+                        {statsData.overallStats?.averageScore?.toFixed(2) ||
+                          '0.00'}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        gutterBottom
+                      >
+                        Điểm cao nhất
+                      </Typography>
+                      <Typography
+                        variant="h5"
+                        fontWeight={700}
+                        color="success.main"
+                      >
+                        {statsData.overallStats?.highestScore?.toFixed(2) ||
+                          '0.00'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {statsData.overallStats?.highestScoreSubject}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        gutterBottom
+                      >
+                        Điểm thấp nhất
+                      </Typography>
+                      <Typography
+                        variant="h5"
+                        fontWeight={700}
+                        color="error.main"
+                      >
+                        {statsData.overallStats?.lowestScore?.toFixed(2) ||
+                          '0.00'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {statsData.overallStats?.lowestScoreSubject}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        gutterBottom
+                      >
+                        Tỷ lệ đạt
+                      </Typography>
+                      <Typography
+                        variant="h5"
+                        fontWeight={700}
+                        color="success.main"
+                      >
+                        {statsData.overallStats?.passingRate?.toFixed(1) || '0'}
+                        %
+                      </Typography>
+                      <LinearProgress
+                        variant="determinate"
+                        value={statsData.overallStats?.passingRate || 0}
+                        sx={{ mt: 1, height: 8, borderRadius: 4 }}
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+
+              {/* Charts */}
+              <Grid container spacing={3} sx={{ mb: 3 }}>
+                {/* Grade Distribution */}
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 3, height: '100%' }}>
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                      Phân bố điểm chữ
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    {statsData.gradeDistribution && (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={statsData.gradeDistribution.filter(
+                              (item) => item.count > 0
+                            )}
+                            dataKey="count"
+                            nameKey="gradeLetter"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            label={(entry) =>
+                              `${entry.gradeLetter}: ${entry.count} (${entry.percentage}%)`
+                            }
+                          >
+                            {statsData.gradeDistribution
+                              .filter((item) => item.count > 0)
+                              .map((entry, index) => (
+                                <Cell
+                                  key={`cell-${index}`}
+                                  fill={
+                                    GRADE_COLORS[entry.gradeLetter] || '#999'
+                                  }
+                                />
+                              ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
+                  </Paper>
+                </Grid>
+
+                {/* GPA Trend */}
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 3, height: '100%' }}>
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                      Xu hướng GPA theo học kỳ
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 2 }}
+                    >
+                      {statsData.performanceTrend?.trendDescription}
+                    </Typography>
+                    {statsData.performanceTrend?.trendPoints && (
+                      <ResponsiveContainer width="100%" height={250}>
+                        <LineChart
+                          data={statsData.performanceTrend.trendPoints}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="semesterName" />
+                          <YAxis domain={[0, 4]} />
+                          <Tooltip />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="gpa"
+                            stroke={theme.palette.primary.main}
+                            strokeWidth={2}
+                            name="GPA (Hệ 4)"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
+                  </Paper>
+                </Grid>
+              </Grid>
+
+              {/* Semester Statistics Table */}
+              {statsData.semesterStats &&
+                statsData.semesterStats.length > 0 && (
+                  <Paper sx={{ p: 3, mb: 3 }}>
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                      Thống kê theo học kỳ
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Học kỳ</TableCell>
+                            <TableCell align="center">Số môn</TableCell>
+                            <TableCell align="center">
+                              Đạt / Không đạt
+                            </TableCell>
+                            <TableCell align="center">GPA (Hệ 4)</TableCell>
+                            <TableCell align="center">GPA (Hệ 10)</TableCell>
+                            <TableCell align="center">Điểm TB</TableCell>
+                            <TableCell align="center">TC Đăng ký</TableCell>
+                            <TableCell align="center">TC Đạt</TableCell>
+                            <TableCell align="center">Xếp loại</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {statsData.semesterStats.map((semester) => (
+                            <TableRow key={semester.semesterId}>
+                              <TableCell>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {semester.semesterName}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                {semester.subjectsCount}
+                              </TableCell>
+                              <TableCell align="center">
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    gap: 1,
+                                    justifyContent: 'center',
+                                  }}
+                                >
+                                  <Chip
+                                    label={semester.passedCount}
+                                    size="small"
+                                    color="success"
+                                  />
+                                  <Chip
+                                    label={semester.failedCount}
+                                    size="small"
+                                    color="error"
+                                  />
+                                </Box>
+                              </TableCell>
+                              <TableCell align="center">
+                                <Typography fontWeight={600} color="primary">
+                                  {semester.semesterGPA4?.toFixed(2)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                <Typography fontWeight={600} color="secondary">
+                                  {semester.semesterGPA10?.toFixed(2)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                {semester.averageScore?.toFixed(2)}
+                              </TableCell>
+                              <TableCell align="center">
+                                {semester.creditsRegistered}
+                              </TableCell>
+                              <TableCell align="center">
+                                {semester.creditsEarned}
+                              </TableCell>
+                              <TableCell align="center">
+                                <Chip
+                                  label={semester.academicRank}
+                                  color={
+                                    semester.academicRank === 'Xuất sắc'
+                                      ? 'error'
+                                      : semester.academicRank === 'Giỏi'
+                                        ? 'success'
+                                        : semester.academicRank === 'Khá'
+                                          ? 'info'
+                                          : 'default'
+                                  }
+                                  size="small"
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                )}
+
+              {/* Subject Type Statistics */}
+              {statsData.subjectTypeStats &&
+                statsData.subjectTypeStats.length > 0 && (
+                  <Paper sx={{ p: 3, mb: 3 }}>
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                      Thống kê theo loại môn học
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Loại môn học</TableCell>
+                            <TableCell align="center">Số môn</TableCell>
+                            <TableCell align="center">Điểm TB</TableCell>
+                            <TableCell align="center">Tỷ lệ đạt (%)</TableCell>
+                            <TableCell align="center">Tổng tín chỉ</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {statsData.subjectTypeStats.map((type, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{type.subjectType}</TableCell>
+                              <TableCell align="center">
+                                {type.subjectsCount}
+                              </TableCell>
+                              <TableCell align="center">
+                                {type.averageScore?.toFixed(2)}
+                              </TableCell>
+                              <TableCell align="center">
+                                {type.passingRate?.toFixed(1)}%
+                              </TableCell>
+                              <TableCell align="center">
+                                {type.totalCredits}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                )}
+            </>
+          )}
+
+          {/* Empty State */}
           {!statsData && !loading && (
             <Paper
               sx={{
@@ -474,7 +794,9 @@ const GradeStatistics = () => {
                 bgcolor: alpha(theme.palette.primary.main, 0.02),
               }}
             >
-              <SchoolIcon sx={{ fontSize: 80, color: 'text.disabled', mb: 2 }} />
+              <SchoolIcon
+                sx={{ fontSize: 80, color: 'text.disabled', mb: 2 }}
+              />
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 Chọn sinh viên để xem thống kê điểm
               </Typography>
@@ -493,39 +815,43 @@ const GradeStatistics = () => {
         </>
       ) : (
         <>
-          {/* Overall Statistics Filters */}
+          {/* Filters */}
           <Paper sx={{ p: 3, mb: 3 }}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={4}>
-                <FormControl fullWidth>
-                  <InputLabel>Khoa</InputLabel>
-                  <Select
-                    value={selectedDepartment}
-                    label="Khoa"
-                    onChange={(e) => setSelectedDepartment(e.target.value)}
-                  >
-                    <MenuItem value="">Tất cả các khoa</MenuItem>
-                    <MenuItem value="1">Công nghệ thông tin</MenuItem>
-                    <MenuItem value="2">Kinh tế</MenuItem>
-                    <MenuItem value="3">Kỹ thuật</MenuItem>
-                    <MenuItem value="4">Khoa học cơ bản</MenuItem>
-                  </Select>
-                </FormControl>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Lọc theo khoa"
+                  value={selectedDepartment}
+                  onChange={(e) => setSelectedDepartment(e.target.value)}
+                >
+                  <MenuItem value="">Tất cả các khoa</MenuItem>
+                  {allStudentsStats?.departmentStats?.map((dept) => (
+                    <MenuItem key={dept.departmentId} value={dept.departmentId}>
+                      {dept.departmentName}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
-              <Grid item xs={12} md={4}>
-                <FormControl fullWidth>
-                  <InputLabel>Học kỳ</InputLabel>
-                  <Select
-                    value={selectedSemester}
-                    label="Học kỳ"
-                    onChange={(e) => setSelectedSemester(e.target.value)}
-                  >
-                    <MenuItem value="">Tất cả học kỳ</MenuItem>
-                    <MenuItem value="1">HK1 2024-2025</MenuItem>
-                    <MenuItem value="2">HK2 2024-2025</MenuItem>
-                    <MenuItem value="3">HK1 2025-2026</MenuItem>
-                  </Select>
-                </FormControl>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Lọc theo học kỳ"
+                  value={selectedSemester}
+                  onChange={(e) => setSelectedSemester(e.target.value)}
+                >
+                  <MenuItem value="">Tất cả học kỳ</MenuItem>
+                  {allStudentsStats?.semesterStats?.map((semester) => (
+                    <MenuItem
+                      key={semester.semesterId}
+                      value={semester.semesterId}
+                    >
+                      {semester.semesterName}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
             </Grid>
           </Paper>
@@ -535,71 +861,177 @@ const GradeStatistics = () => {
             <>
               {/* Overall Overview Cards */}
               <Grid container spacing={3} sx={{ mb: 3 }}>
-                <Grid item xs={12} md={3}>
-                  <Card>
+                <Grid item xs={12} md={2.4}>
+                  <Card sx={{ height: '100%' }}>
                     <CardContent>
                       <Box
                         sx={{
                           display: 'flex',
+                          flexDirection: 'column',
                           alignItems: 'center',
-                          justifyContent: 'space-between',
+                          textAlign: 'center',
                         }}
                       >
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">
-                            Tổng số sinh viên
-                          </Typography>
-                          <Typography variant="h4" fontWeight={700}>
-                            {allStudentsStats.totalStudents || 0}
-                          </Typography>
-                        </Box>
-                        <AssessmentIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+                        <AssessmentIcon
+                          sx={{ fontSize: 40, color: 'primary.main', mb: 1 }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          Tổng số sinh viên
+                        </Typography>
+                        <Typography variant="h4" fontWeight={700}>
+                          {allStudentsStats.overallStats?.totalStudents || 0}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Có điểm:{' '}
+                          {allStudentsStats.overallStats?.studentsWithGrades ||
+                            0}
+                        </Typography>
                       </Box>
                     </CardContent>
                   </Card>
                 </Grid>
 
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} md={2.4}>
                   <Card>
                     <CardContent>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        GPA trung bình
-                      </Typography>
-                      <Typography variant="h4" fontWeight={700} color="primary">
-                        {allStudentsStats.averageGPA?.toFixed(2) || '0.00'}
-                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <TrophyIcon
+                          sx={{ fontSize: 40, color: 'primary.main', mb: 1 }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          GPA trung bình
+                        </Typography>
+                        <Typography
+                          variant="h4"
+                          fontWeight={700}
+                          color="primary"
+                        >
+                          {allStudentsStats.overallStats?.systemWideGPA?.toFixed(
+                            2
+                          ) || '0.00'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Điểm TB:{' '}
+                          {allStudentsStats.overallStats?.averageScore?.toFixed(
+                            2
+                          )}
+                        </Typography>
+                      </Box>
                     </CardContent>
                   </Card>
                 </Grid>
 
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} md={2.4}>
                   <Card>
                     <CardContent>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Sinh viên đạt
-                      </Typography>
-                      <Typography variant="h4" fontWeight={700} color="success.main">
-                        {allStudentsStats.passingStudents || 0}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {allStudentsStats.passingRate?.toFixed(1) || '0'}%
-                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <MenuBookIcon
+                          sx={{ fontSize: 40, color: 'info.main', mb: 1 }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          Tổng môn học
+                        </Typography>
+                        <Typography variant="h4" fontWeight={700}>
+                          {allStudentsStats.overallStats?.totalSubjects || 0}
+                        </Typography>
+                        <Typography variant="caption" color="success.main">
+                          Đạt:{' '}
+                          {allStudentsStats.overallStats?.totalPassedSubjects ||
+                            0}
+                        </Typography>
+                      </Box>
                     </CardContent>
                   </Card>
                 </Grid>
 
-                <Grid item xs={12} md={3}>
-                  <Card>
+                <Grid item xs={12} md={2.4}>
+                  <Card sx={{ height: '100%' }}>
                     <CardContent>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Sinh viên không đạt
-                      </Typography>
-                      <Typography variant="h4" fontWeight={700} color="error.main">
-                        {allStudentsStats.failingStudents || 0}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {allStudentsStats.failingRate?.toFixed(1) || '0'}%
-                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <CheckCircleIcon
+                          sx={{ fontSize: 40, color: 'success.main', mb: 1 }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          Tỷ lệ đạt
+                        </Typography>
+                        <Typography
+                          variant="h4"
+                          fontWeight={700}
+                          color="success.main"
+                        >
+                          {allStudentsStats.overallStats?.overallPassingRate?.toFixed(
+                            1
+                          ) || '0'}
+                          %
+                        </Typography>
+                        <LinearProgress
+                          variant="determinate"
+                          value={
+                            allStudentsStats.overallStats?.overallPassingRate ||
+                            0
+                          }
+                          sx={{
+                            mt: 1,
+                            width: '100%',
+                            height: 8,
+                            borderRadius: 4,
+                          }}
+                        />
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                <Grid item xs={12} md={2.4}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <CancelIcon
+                          sx={{ fontSize: 40, color: 'error.main', mb: 1 }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          Môn không đạt
+                        </Typography>
+                        <Typography
+                          variant="h4"
+                          fontWeight={700}
+                          color="error.main"
+                        >
+                          {allStudentsStats.overallStats?.totalFailedSubjects ||
+                            0}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Tổng số môn thi
+                        </Typography>
+                      </Box>
                     </CardContent>
                   </Card>
                 </Grid>
@@ -614,23 +1046,31 @@ const GradeStatistics = () => {
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
                     {allStudentsStats.gradeDistribution && (
-                      <ResponsiveContainer width="100%" height={300}>
+                      <ResponsiveContainer width="100%" height={350}>
                         <PieChart>
                           <Pie
-                            data={allStudentsStats.gradeDistribution}
+                            data={allStudentsStats.gradeDistribution.filter(
+                              (item) => item.count > 0
+                            )}
                             dataKey="count"
                             nameKey="gradeLetter"
                             cx="50%"
                             cy="50%"
                             outerRadius={100}
-                            label={(entry) => `${entry.gradeLetter}: ${entry.count}`}
+                            label={(entry) =>
+                              `${entry.gradeLetter}: ${entry.count} (${entry.percentage}%)`
+                            }
                           >
-                            {allStudentsStats.gradeDistribution.map((entry, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={GRADE_COLORS[entry.gradeLetter] || '#999'}
-                              />
-                            ))}
+                            {allStudentsStats.gradeDistribution
+                              .filter((item) => item.count > 0)
+                              .map((entry, index) => (
+                                <Cell
+                                  key={`cell-${index}`}
+                                  fill={
+                                    GRADE_COLORS[entry.gradeLetter] || '#999'
+                                  }
+                                />
+                              ))}
                           </Pie>
                           <Tooltip />
                           <Legend />
@@ -643,64 +1083,213 @@ const GradeStatistics = () => {
                 <Grid item xs={12} md={6}>
                   <Paper sx={{ p: 3, height: '100%' }}>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
-                      Phân loại học lực
+                      Phân bố điểm chữ (Bảng thống kê)
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
-                    {allStudentsStats.academicRanking && (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart
-                          data={allStudentsStats.academicRanking}
-                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="rank" />
-                          <YAxis />
-                          <Tooltip />
-                          <Bar dataKey="count" fill={theme.palette.primary.main} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    )}
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Loại điểm</TableCell>
+                            <TableCell>Mô tả</TableCell>
+                            <TableCell align="center">Số lượng</TableCell>
+                            <TableCell align="center">Tỷ lệ</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {allStudentsStats.gradeDistribution
+                            ?.filter((item) => item.count > 0)
+                            .map((grade, index) => (
+                              <TableRow key={index}>
+                                <TableCell>
+                                  <Chip
+                                    label={grade.gradeLetter}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: alpha(
+                                        GRADE_COLORS[grade.gradeLetter] ||
+                                          '#999',
+                                        0.2
+                                      ),
+                                      color:
+                                        GRADE_COLORS[grade.gradeLetter] ||
+                                        '#999',
+                                      fontWeight: 600,
+                                    }}
+                                  />
+                                </TableCell>
+                                <TableCell>{grade.description}</TableCell>
+                                <TableCell align="center">
+                                  {grade.count}
+                                </TableCell>
+                                <TableCell align="center">
+                                  {grade.percentage}%
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   </Paper>
                 </Grid>
               </Grid>
 
-              {/* Department Statistics Table */}
-              {allStudentsStats.departmentStats && (
-                <Paper sx={{ p: 3, mb: 3 }}>
-                  <Typography variant="h6" fontWeight={600} gutterBottom>
-                    Thống kê theo khoa
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Khoa</TableCell>
-                          <TableCell align="center">Số SV</TableCell>
-                          <TableCell align="center">GPA TB</TableCell>
-                          <TableCell align="center">Đạt (%)</TableCell>
-                          <TableCell align="center">Xuất sắc</TableCell>
-                          <TableCell align="center">Giỏi</TableCell>
-                          <TableCell align="center">Khá</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {allStudentsStats.departmentStats.map((dept) => (
-                          <TableRow key={dept.departmentId}>
-                            <TableCell>{dept.departmentName}</TableCell>
-                            <TableCell align="center">{dept.totalStudents}</TableCell>
-                            <TableCell align="center">{dept.averageGPA?.toFixed(2)}</TableCell>
-                            <TableCell align="center">{dept.passingRate?.toFixed(1)}%</TableCell>
-                            <TableCell align="center">{dept.excellentCount || 0}</TableCell>
-                            <TableCell align="center">{dept.goodCount || 0}</TableCell>
-                            <TableCell align="center">{dept.fairCount || 0}</TableCell>
+              {/* Department Statistics */}
+              {allStudentsStats.departmentStats &&
+                allStudentsStats.departmentStats.length > 0 && (
+                  <Paper sx={{ p: 3, mb: 3 }}>
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                      Thống kê theo khoa
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Khoa</TableCell>
+                            <TableCell align="center">Số sinh viên</TableCell>
+                            <TableCell align="center">GPA trung bình</TableCell>
+                            <TableCell align="center">Tỷ lệ đạt</TableCell>
+                            <TableCell align="center">Tổng môn học</TableCell>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Paper>
-              )}
+                        </TableHead>
+                        <TableBody>
+                          {allStudentsStats.departmentStats.map((dept) => (
+                            <TableRow key={dept.departmentId}>
+                              <TableCell>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {dept.departmentName}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                {dept.studentsCount}
+                              </TableCell>
+                              <TableCell align="center">
+                                <Typography fontWeight={600} color="primary">
+                                  {dept.averageGPA?.toFixed(2)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                <Chip
+                                  label={`${dept.passingRate?.toFixed(1)}%`}
+                                  size="small"
+                                  color="success"
+                                />
+                              </TableCell>
+                              <TableCell align="center">
+                                {dept.totalSubjects}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                )}
+
+              {/* Program Statistics */}
+              {allStudentsStats.programStats &&
+                allStudentsStats.programStats.length > 0 && (
+                  <Paper sx={{ p: 3, mb: 3 }}>
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                      Thống kê theo chương trình đào tạo
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Chương trình</TableCell>
+                            <TableCell>Khoa</TableCell>
+                            <TableCell align="center">Số sinh viên</TableCell>
+                            <TableCell align="center">GPA trung bình</TableCell>
+                            <TableCell align="center">Tỷ lệ đạt</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {allStudentsStats.programStats.map((program) => (
+                            <TableRow key={program.programId}>
+                              <TableCell>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {program.programName}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>{program.departmentName}</TableCell>
+                              <TableCell align="center">
+                                {program.studentsCount}
+                              </TableCell>
+                              <TableCell align="center">
+                                <Typography fontWeight={600} color="primary">
+                                  {program.averageGPA?.toFixed(2)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                <Chip
+                                  label={`${program.passingRate?.toFixed(1)}%`}
+                                  size="small"
+                                  color="success"
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                )}
+
+              {/* Semester Statistics */}
+              {allStudentsStats.semesterStats &&
+                allStudentsStats.semesterStats.length > 0 && (
+                  <Paper sx={{ p: 3, mb: 3 }}>
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                      Thống kê theo học kỳ
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Học kỳ</TableCell>
+                            <TableCell align="center">Số sinh viên</TableCell>
+                            <TableCell align="center">GPA trung bình</TableCell>
+                            <TableCell align="center">Tỷ lệ đạt</TableCell>
+                            <TableCell align="center">Tổng môn học</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {allStudentsStats.semesterStats.map((semester) => (
+                            <TableRow key={semester.semesterId}>
+                              <TableCell>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {semester.semesterName}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                {semester.studentsCount}
+                              </TableCell>
+                              <TableCell align="center">
+                                <Typography fontWeight={600} color="primary">
+                                  {semester.averageGPA?.toFixed(2)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                <Chip
+                                  label={`${semester.passingRate?.toFixed(1)}%`}
+                                  size="small"
+                                  color="success"
+                                />
+                              </TableCell>
+                              <TableCell align="center">
+                                {semester.totalSubjects}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                )}
             </>
           )}
 
@@ -713,7 +1302,9 @@ const GradeStatistics = () => {
                 bgcolor: alpha(theme.palette.primary.main, 0.02),
               }}
             >
-              <AssessmentIcon sx={{ fontSize: 80, color: 'text.disabled', mb: 2 }} />
+              <AssessmentIcon
+                sx={{ fontSize: 80, color: 'text.disabled', mb: 2 }}
+              />
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 Không có dữ liệu thống kê
               </Typography>
@@ -730,13 +1321,6 @@ const GradeStatistics = () => {
             </Box>
           )}
         </>
-      )}
-
-      {/* Loading State */}
-      {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
       )}
     </Box>
   );

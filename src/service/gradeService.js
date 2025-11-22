@@ -8,7 +8,9 @@ const gradeService = {
    */
   getAllGradesByStudentCode: async (mssv) => {
     try {
-      const response = await axios.get(`/api/Grade/GetAllGradesByStudentCode/${mssv}`);
+      const response = await axios.get(
+        `/api/Grade/GetAllGradesByStudentCode/${mssv}`
+      );
 
       if (response?.success === false) {
         const errData = response?.data;
@@ -100,9 +102,7 @@ const gradeService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(
-            error.response.data.message || 'C�p nh�t i�m th�t b�i'
-          );
+          message.error(error.response.data.message || 'C�p nh�t i�m th�t b�i');
         }
       } else {
         message.error(error.message || 'C�p nh�t i�m th�t b�i');
@@ -153,7 +153,10 @@ const gradeService = {
    */
   createBulkGrades: async (assessmentId, studentGrades) => {
     try {
-      const response = await axios.post(`/api/Grade/CreateBulkGrades/${assessmentId}`, studentGrades);
+      const response = await axios.post(
+        `/api/Grade/CreateBulkGrades/${assessmentId}`,
+        studentGrades
+      );
 
       if (response?.success === false) {
         const errData = response?.data;
@@ -172,7 +175,9 @@ const gradeService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'Tạo điểm hàng loạt thất bại');
+          message.error(
+            error.response.data.message || 'Tạo điểm hàng loạt thất bại'
+          );
         }
       } else {
         message.error(error.message || 'Tạo điểm hàng loạt thất bại');
@@ -187,14 +192,18 @@ const gradeService = {
    */
   getAllStudentGradesBySection: async (sectionId) => {
     try {
-      const response = await axios.get(`/api/Grade/GetAllStudentGradesBySection/${sectionId}`);
+      const response = await axios.get(
+        `/api/Grade/GetAllStudentGradesBySection/${sectionId}`
+      );
 
       if (response?.success === false) {
         const errData = response?.data;
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'Lấy điểm sinh viên theo học phần thất bại');
+          message.error(
+            response?.message || 'Lấy điểm sinh viên theo học phần thất bại'
+          );
         }
         return null;
       }
@@ -206,43 +215,15 @@ const gradeService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'Lấy điểm sinh viên theo học phần thất bại');
+          message.error(
+            error.response.data.message ||
+              'Lấy điểm sinh viên theo học phần thất bại'
+          );
         }
       } else {
-        message.error(error.message || 'Lấy điểm sinh viên theo học phần thất bại');
-      }
-      return null;
-    }
-  },
-
-  /**
-   * Lấy danh sách tất cả sections/học phần
-   */
-  getAllSections: async () => {
-    try {
-      const response = await axios.get('/api/Section/get-all-sections');
-
-      if (response?.success === false) {
-        const errData = response?.data;
-        if (Array.isArray(errData) && errData.length > 0) {
-          message.error(errData[0]);
-        } else {
-          message.error(response?.message || 'Lấy danh sách học phần thất bại');
-        }
-        return null;
-      }
-
-      return response.data;
-    } catch (error) {
-      if (error.response && error.response.data) {
-        const errData = error.response.data.data;
-        if (Array.isArray(errData) && errData.length > 0) {
-          message.error(errData[0]);
-        } else {
-          message.error(error.response.data.message || 'Lấy danh sách học phần thất bại');
-        }
-      } else {
-        message.error(error.message || 'Lấy danh sách học phần thất bại');
+        message.error(
+          error.message || 'Lấy điểm sinh viên theo học phần thất bại'
+        );
       }
       return null;
     }

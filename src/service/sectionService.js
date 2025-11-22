@@ -33,60 +33,13 @@ const sectionService = {
     }
   },
 
-  // New method for admin
-  getAllSections: async (params = {}) => {
-    try {
-      const {
-        pageNumber = 1,
-        pageSize = 10,
-        sectionCode = '',
-        courseName = '',
-        status = null,
-        semesterId = null,
-      } = params;
-
-      const response = await axios.get('/api/Section/GetAllSection', {
-        params: {
-          PageNumber: pageNumber,
-          PageSize: pageSize,
-          sectionCode,
-          courseName,
-          status,
-          semesterId,
-        },
-      });
-
-      if (response?.success === false) {
-        const errData = response?.data;
-        if (Array.isArray(errData) && errData.length > 0) {
-          message.error(errData[0]);
-        } else {
-          message.error(
-            response?.message || 'Lấy danh sách lớp học phần thất bại'
-          );
-        }
-        return null;
-      }
-      return response.data;
-    } catch (error) {
-      if (error.response && error.response.data) {
-        const errData = error.response.data.data;
-        if (Array.isArray(errData) && errData.length > 0) {
-          message.error(errData[0]);
-        } else {
-          message.error(error.response.data.message || 'Get sections failed');
-        }
-      } else {
-        message.error(error.message || 'Get sections failed');
-      }
-      return null;
-    }
-  },
-
   // Create new section (Admin only)
   createSection: async (sectionData) => {
     try {
-      const response = await axios.post('/api/Section/CreateSection', sectionData);
+      const response = await axios.post(
+        '/api/Section/CreateSection',
+        sectionData
+      );
 
       if (response?.success === false) {
         const errData = response?.data;
@@ -150,7 +103,9 @@ const sectionService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'Lấy danh sách lớp học phần thất bại');
+          message.error(
+            response?.message || 'Lấy danh sách lớp học phần thất bại'
+          );
         }
         return null;
       }
@@ -163,7 +118,9 @@ const sectionService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'Get sections by lecturer failed');
+          message.error(
+            error.response.data.message || 'Get sections by lecturer failed'
+          );
         }
       } else {
         message.error(error.message || 'Get sections by lecturer failed');
@@ -173,16 +130,21 @@ const sectionService = {
   },
   getSectionDropdownForLecturer: async (semesterId = null) => {
     try {
-      const response = await axios.get('/api/Section/GetSectionDropdownForLecturer', {
-        params: { semesterId },
-      });
+      const response = await axios.get(
+        '/api/Section/GetSectionDropdownForLecturer',
+        {
+          params: { semesterId },
+        }
+      );
 
       if (response?.success === false) {
         const errData = response?.data;
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'Lấy danh sách dropdown lớp học phần thất bại');
+          message.error(
+            response?.message || 'Lấy danh sách dropdown lớp học phần thất bại'
+          );
         }
         return null;
       }
@@ -195,7 +157,9 @@ const sectionService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'Get section dropdown failed');
+          message.error(
+            error.response.data.message || 'Get section dropdown failed'
+          );
         }
       } else {
         message.error(error.message || 'Get section dropdown failed');
@@ -206,14 +170,19 @@ const sectionService = {
 
   getSectionsIsStartingByLecturer: async () => {
     try {
-      const response = await axios.get('/api/Section/GetSectionsIsStartingByLecturer');
+      const response = await axios.get(
+        '/api/Section/GetSectionsIsStartingByLecturer'
+      );
 
       if (response?.success === false) {
         const errData = response?.data;
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'Lấy danh sách lớp học phần đang hoạt động thất bại');
+          message.error(
+            response?.message ||
+              'Lấy danh sách lớp học phần đang hoạt động thất bại'
+          );
         }
         return null;
       }
@@ -226,7 +195,9 @@ const sectionService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'Get starting sections failed');
+          message.error(
+            error.response.data.message || 'Get starting sections failed'
+          );
         }
       } else {
         message.error(error.message || 'Get starting sections failed');
@@ -238,14 +209,18 @@ const sectionService = {
   // Lấy chi tiết lớp học phần lý thuyết
   getSectionTheoryDetail: async (sectionId) => {
     try {
-      const response = await axios.get(`/api/Section/GetSectionTheoryDetail/${sectionId}`);
+      const response = await axios.get(
+        `/api/Section/GetSectionTheoryDetail/${sectionId}`
+      );
 
       if (response?.success === false) {
         const errData = response?.data;
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'Lấy chi tiết lớp học phần lý thuyết thất bại');
+          message.error(
+            response?.message || 'Lấy chi tiết lớp học phần lý thuyết thất bại'
+          );
         }
         return null;
       }
@@ -257,7 +232,9 @@ const sectionService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'Get section theory detail failed');
+          message.error(
+            error.response.data.message || 'Get section theory detail failed'
+          );
         }
       } else {
         message.error(error.message || 'Get section theory detail failed');
@@ -280,7 +257,9 @@ const sectionService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'Lấy chi tiết lớp học phần thực hành thất bại');
+          message.error(
+            response?.message || 'Lấy chi tiết lớp học phần thực hành thất bại'
+          );
         }
         return null;
       }
@@ -292,7 +271,9 @@ const sectionService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'Get section practice detail failed');
+          message.error(
+            error.response.data.message || 'Get section practice detail failed'
+          );
         }
       } else {
         message.error(error.message || 'Get section practice detail failed');
@@ -304,7 +285,10 @@ const sectionService = {
   // Update section (Admin only)
   updateSection: async (sectionId, sectionData) => {
     try {
-      const response = await axios.put(`/api/Section/UpdateSection/${sectionId}`, sectionData);
+      const response = await axios.put(
+        `/api/Section/UpdateSection/${sectionId}`,
+        sectionData
+      );
 
       if (response?.success === false) {
         const errData = response?.data;
@@ -335,7 +319,9 @@ const sectionService = {
   // Delete section (Admin only)
   deleteSection: async (sectionId) => {
     try {
-      const response = await axios.delete(`/api/Section/DeleteSection/${sectionId}`);
+      const response = await axios.delete(
+        `/api/Section/DeleteSection/${sectionId}`
+      );
 
       if (response?.success === false) {
         const errData = response?.data;
@@ -366,14 +352,18 @@ const sectionService = {
   // Get section by ID
   getSectionById: async (sectionId) => {
     try {
-      const response = await axios.get(`/api/Section/GetSectionById/${sectionId}`);
+      const response = await axios.get(
+        `/api/Section/GetSectionById/${sectionId}`
+      );
 
       if (response?.success === false) {
         const errData = response?.data;
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'Lấy thông tin lớp học phần thất bại');
+          message.error(
+            response?.message || 'Lấy thông tin lớp học phần thất bại'
+          );
         }
         return null;
       }
@@ -384,7 +374,9 @@ const sectionService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'Get section by ID failed');
+          message.error(
+            error.response.data.message || 'Get section by ID failed'
+          );
         }
       } else {
         message.error(error.message || 'Get section by ID failed');
@@ -414,7 +406,9 @@ const sectionService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'Get dropdown data failed');
+          message.error(
+            error.response.data.message || 'Get dropdown data failed'
+          );
         }
       } else {
         message.error(error.message || 'Get dropdown data failed');
