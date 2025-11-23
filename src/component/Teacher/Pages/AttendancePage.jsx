@@ -29,6 +29,7 @@ import {
   EventBusy,
   TrendingUp,
   CalendarToday,
+  BarChart as BarChartIcon,
 } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import {
@@ -42,6 +43,7 @@ import {
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
 import { exportAttendanceExcel } from '../../../until/exportAttendanceExcel';
+import AttendanceStatistics from '../Components/AttendanceStatistics';
 const AttendancePage = () => {
   const theme = useTheme();
   const [courses, setCourses] = useState([]);
@@ -74,6 +76,7 @@ const AttendancePage = () => {
     message: '',
     severity: 'success',
   });
+  const [showStatistics, setShowStatistics] = useState(false);
 
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
@@ -286,20 +289,14 @@ const AttendancePage = () => {
           // Map status API sang status UI cũ
           let status = null;
           switch (record.status) {
-            case 1:
+            case 1: // Present
               status = 'present';
               break;
-            case 2:
-              status = 'absent';
+            case 2: // Absent
+              status = 'late'; // Map to "Không phép" button
               break;
-            case 3:
-              status = 'late';
-              break;
-            case 4:
-              status = 'excused';
-              break;
-            case 5:
-              status = 'left';
+            case 4: // Excused
+              status = 'absent'; // Map to "Có phép" button
               break;
             default:
               status = null;
@@ -370,22 +367,16 @@ const AttendancePage = () => {
         let apiStatus = null;
         switch (currentStatus) {
           case 'present':
-            apiStatus = 1;
+            apiStatus = 1; // Present
             break;
-          case 'absent':
-            apiStatus = 2;
+          case 'absent': // UI "Có phép" button
+            apiStatus = 4; // Excused
             break;
-          case 'late':
-            apiStatus = 3;
-            break;
-          case 'excused':
-            apiStatus = 4;
-            break;
-          case 'left':
-            apiStatus = 5;
+          case 'late': // UI "Không phép" button
+            apiStatus = 2; // Absent
             break;
           default:
-            apiStatus = 0;
+            apiStatus = 0; // Unknown
         }
 
         if (originalStatus === null || originalStatus === undefined) {
@@ -575,9 +566,13 @@ const AttendancePage = () => {
       }
     } catch (error) {
       console.error('Error exporting Excel:', error);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Lỗi không xác định khi xuất Excel';
       setSnackbar({
         open: true,
-        message: 'Lỗi khi xuất Excel: ' + (error.message || 'Unknown error'),
+        message: 'Lỗi khi xuất Excel: ' + errorMessage,
         severity: 'error',
       });
     } finally {
@@ -651,18 +646,18 @@ const AttendancePage = () => {
       ),
     },
     {
-      title: 'Vắng',
+      title: 'Không phép',
       dataIndex: 'absentCount',
       key: 'absentCount',
       width: 60,
-      render: (count) => <span style={{ color: colors.error }}>{count}</span>,
+      render: (count) => <span style={{ color: colors.warning }}>{count}</span>,
     },
     {
-      title: 'Đi muộn',
-      dataIndex: 'lateCount',
-      key: 'lateCount',
+      title: 'Có phép',
+      dataIndex: 'excusedCount',
+      key: 'excusedCount',
       width: 80,
-      render: (count) => <span style={{ color: colors.warning }}>{count}</span>,
+      render: (count) => <span style={{ color: colors.error }}>{count}</span>,
     },
     {
       title: 'Thao tác',
@@ -745,7 +740,7 @@ const AttendancePage = () => {
               size="small"
               onClick={() => handleAttendanceChange(record.studentId, 'late')}
             >
-              Đi muộn
+              Không phép
             </Button>
             <Button
               variant={status === 'absent' ? 'contained' : 'outlined'}
@@ -753,7 +748,7 @@ const AttendancePage = () => {
               size="small"
               onClick={() => handleAttendanceChange(record.studentId, 'absent')}
             >
-              Vắng
+              Có phép
             </Button>
           </Space>
         );
@@ -769,8 +764,8 @@ const AttendancePage = () => {
 
         const statusConfig = {
           present: { label: 'Có mặt', color: 'success' },
-          late: { label: 'Đi muộn', color: 'warning' },
-          absent: { label: 'Vắng', color: 'error' },
+          late: { label: 'Không phép', color: 'warning' },
+          absent: { label: 'Có phép', color: 'error' },
         };
         const config = statusConfig[status];
         return <Tag color={config.color}>{config.label}</Tag>;
@@ -778,15 +773,15 @@ const AttendancePage = () => {
     },
   ];
 
-  // Calculate statistics
+  // Calculate statistics - updated for new button mappings
   const presentCount = Object.values(attendance).filter(
     (s) => s === 'present'
   ).length;
-  const absentCount = Object.values(attendance).filter(
-    (s) => s === 'absent'
+  const excusedCount = Object.values(attendance).filter(
+    (s) => s === 'absent' // UI "Có phép" button maps to API Excused (4)
   ).length;
-  const lateCount = Object.values(attendance).filter(
-    (s) => s === 'late'
+  const absentCount = Object.values(attendance).filter(
+    (s) => s === 'late' // UI "Không phép" button maps to API Absent (2)
   ).length;
   const attendanceRate = students.length
     ? ((presentCount / students.length) * 100).toFixed(1)
@@ -943,6 +938,16 @@ const AttendancePage = () => {
                     flexWrap: 'wrap',
                   }}
                 >
+                  {selectedCourse && (
+                    <Button
+                      variant={showStatistics ? 'contained' : 'outlined'}
+                      color="secondary"
+                      onClick={() => setShowStatistics(!showStatistics)}
+                      startIcon={<BarChartIcon />}
+                    >
+                      {showStatistics ? 'Ẩn thống kê' : 'Xem thống kê'}
+                    </Button>
+                  )}
                   <Button
                     variant="contained"
                     color="primary"
@@ -962,14 +967,14 @@ const AttendancePage = () => {
                       >
                         Có mặt tất cả
                       </Button>
-                      <Button
+                      {/* <Button
                         variant="outlined"
-                        color="error"
-                        onClick={() => handleMarkAll('absent')}
+                        color="warning"
+                        onClick={() => handleMarkAll('late')}
                         disabled={students.length === 0 || loading}
                       >
                         Vắng tất cả
-                      </Button>
+                      </Button> */}
                       <Button
                         variant="contained"
                         color="primary"
@@ -1000,6 +1005,23 @@ const AttendancePage = () => {
           </CardContent>
         </Card>
       </Fade>
+
+      {/* Phần 2.5: Thống kê điểm danh (nếu được bật) */}
+      {showStatistics && selectedCourse && (
+        <Fade in={true} timeout={1100}>
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <AttendanceStatistics
+                sectionId={selectedCourse}
+                sectionName={
+                  courses.find((c) => c.sectionId === selectedCourse)
+                    ?.courseName
+                }
+              />
+            </CardContent>
+          </Card>
+        </Fade>
+      )}
 
       {/* Phần 3: Danh sách phiên điểm danh */}
       <Fade in={true} timeout={1200}>
@@ -1199,10 +1221,10 @@ const AttendancePage = () => {
               - Có mặt: {presentCount} sinh viên
             </Typography>
             <Typography variant="body2">
-              - Vắng: {absentCount} sinh viên
+              - Có phép: {excusedCount} sinh viên
             </Typography>
             <Typography variant="body2">
-              - Đi muộn: {lateCount} sinh viên
+              - Không phép: {absentCount} sinh viên
             </Typography>
           </Box>
         </DialogContent>

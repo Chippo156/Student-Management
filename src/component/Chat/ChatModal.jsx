@@ -28,12 +28,16 @@ import {
   Search as SearchIcon,
   Circle as CircleIcon,
   Person as PersonIcon,
+  SmartToy as SmartToyIcon,
+  School as SchoolIcon,
+  DeleteSweep as DeleteSweepIcon,
 } from '@mui/icons-material';
 import { useChat } from '../../context/ChatContext';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Button, useTheme } from '@mui/material';
 import { useSelector } from 'react-redux';
+import { chatApi } from '../../service/chatService';
 
 const ChatModal = ({ open, onClose }) => {
   const theme = useTheme();
@@ -133,9 +137,53 @@ const ChatModal = ({ open, onClose }) => {
     setTabValue(1); // Chuyển sang tab chat
   };
 
+  const handleOpenAIChat = async () => {
+    try {
+      const response = await chatApi.createAIRoom();
+      if (response?.data) {
+        await openChatRoom(response.data);
+        setTabValue(1); // Chuyển sang tab chat
+      }
+    } catch (error) {
+      console.error('Failed to create AI chat room:', error);
+    }
+  };
+
+  const handleOpenAcademicStaffChat = async () => {
+    try {
+      const response = await chatApi.createAcademicStaffRoom();
+      if (response?.data) {
+        await openChatRoom(response.data);
+        setTabValue(1); // Chuyển sang tab chat
+      }
+    } catch (error) {
+      console.error('Failed to create academic staff chat room:', error);
+    }
+  };
+
   const handleBack = () => {
     closeChatRoom();
     setTabValue(0); // Quay về tab danh sách
+  };
+
+  const handleClearHistory = async () => {
+    if (!currentRoom?.chatRoomId) return;
+
+    if (!window.confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử tin nhắn trong phòng chat này?')) {
+      return;
+    }
+
+    try {
+      const success = await chatApi.clearHistory(currentRoom.chatRoomId);
+      if (success) {
+        // Refresh messages by closing and reopening the room
+        await closeChatRoom();
+        await openChatRoom(currentRoom);
+      }
+    } catch (error) {
+      console.error('Failed to clear chat history:', error);
+      alert('Không thể xóa lịch sử chat. Vui lòng thử lại.');
+    }
   };
 
   const formatMessageTime = (timestamp) => {
@@ -283,7 +331,18 @@ const ChatModal = ({ open, onClose }) => {
               )}
             </Box>
           </Box>
-          <Box>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {currentRoom && currentRoom.roomName?.toLowerCase().includes('ai') && (
+              <Tooltip title="Xóa lịch sử chat">
+                <IconButton
+                  size="small"
+                  sx={{ color: 'white' }}
+                  onClick={handleClearHistory}
+                >
+                  <DeleteSweepIcon />
+                </IconButton>
+              </Tooltip>
+            )}
             <Tooltip title="Đóng">
               <IconButton
                 size="small"
@@ -338,8 +397,8 @@ const ChatModal = ({ open, onClose }) => {
                 />
               </Box>
 
-              {/* Quick action: Chat với giảng viên chủ nhiệm */}
-              <Box sx={{ px: 2, pb: 1 }}>
+              {/* Quick actions */}
+              <Box sx={{ px: 2, pb: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Button
                   fullWidth
                   variant="outlined"
@@ -349,6 +408,28 @@ const ChatModal = ({ open, onClose }) => {
                   size="small"
                 >
                   Chat với giảng viên chủ nhiệm
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<SmartToyIcon />}
+                  onClick={handleOpenAIChat}
+                  disabled={!isConnected || isLoading}
+                  size="small"
+                  color="secondary"
+                >
+                  Chat với AI
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<SchoolIcon />}
+                  onClick={handleOpenAcademicStaffChat}
+                  disabled={!isConnected || isLoading}
+                  size="small"
+                  color="info"
+                >
+                  Chat với Học vụ
                 </Button>
               </Box>
 

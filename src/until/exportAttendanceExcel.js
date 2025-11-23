@@ -1,74 +1,5 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import dayjs from 'dayjs';
-
-/**
- * Chuyển đổi giờ học sang Tiết theo bảng quy định
- */
-const convertTimeToTiet = (timeSlot) => {
-  if (!timeSlot) return '';
-
-  // Bảng quy đổi giờ sang tiết
-  const timeToTietMap = {
-    '6:30 - 7:20': 'Tiết 1',
-    '06:30 - 07:20': 'Tiết 1',
-    '7:20 - 8:10': 'Tiết 2',
-    '07:20 - 08:10': 'Tiết 2',
-    '8:10 - 9:00': 'Tiết 3',
-    '08:10 - 09:00': 'Tiết 3',
-    '9:10 - 10:00': 'Tiết 4',
-    '09:10 - 10:00': 'Tiết 4',
-    '10:00 - 10:50': 'Tiết 5',
-    '10:50 - 11:40': 'Tiết 6',
-    '12:30 - 13:20': 'Tiết 7',
-    '13:20 - 14:10': 'Tiết 8',
-    '14:10 - 15:00': 'Tiết 9',
-    '15:10 - 16:00': 'Tiết 10',
-    '16:00 - 16:50': 'Tiết 11',
-    '16:50 - 17:40': 'Tiết 12',
-    '18:00 - 18:50': 'Tiết 13',
-    '18:50 - 19:40': 'Tiết 14',
-    '19:50 - 20:40': 'Tiết 15',
-    '20:40 - 21:30': 'Tiết 16',
-  };
-
-  // Loại bỏ khoảng trắng và chuẩn hóa
-  const normalized = timeSlot.trim().replace(/\s+/g, ' ');
-
-  // Nếu có trong bảng map
-  if (timeToTietMap[normalized]) {
-    return timeToTietMap[normalized];
-  }
-
-  // Nếu là khoảng giờ nhiều tiết (ví dụ: 15:00 - 18:00)
-  const parts = normalized.split(' - ');
-  if (parts.length === 2) {
-    const startTime = parts[0].trim();
-    const endTime = parts[1].trim();
-
-    // Tìm tiết bắt đầu và kết thúc
-    let startTiet = null;
-    let endTiet = null;
-
-    for (const [time, tiet] of Object.entries(timeToTietMap)) {
-      const timeStart = time.split(' - ')[0];
-      const timeEnd = time.split(' - ')[1];
-
-      if (timeStart === startTime || timeStart === startTime.padStart(5, '0')) {
-        startTiet = tiet;
-      }
-      if (timeEnd === endTime || timeEnd === endTime.padStart(5, '0')) {
-        endTiet = tiet;
-      }
-    }
-
-    if (startTiet && endTiet) {
-      return `${startTiet} - ${endTiet}`;
-    }
-  }
-
-  // Nếu không tìm thấy, trả về giờ gốc
-  return timeSlot;
-};
 
 /**
  * Tạo danh sách các ngày học dựa vào lịch học
@@ -78,23 +9,17 @@ const generateScheduleDates = (startDate, endDate, schedules) => {
   let current = dayjs(startDate);
   const end = dayjs(endDate);
 
-  // Lấy danh sách các ngày trong tuần có lịch học
   const scheduleDays = schedules.map((s) => s.dayOfWeek);
 
   while (current.isBefore(end) || current.isSame(end, 'day')) {
-    const dayOfWeek = current.day(); // 0 = CN, 1 = T2, ..., 6 = T7
+    const dayOfWeek = current.day();
 
     if (scheduleDays.includes(dayOfWeek)) {
       const schedule = schedules.find((s) => s.dayOfWeek === dayOfWeek);
-      const tietText = convertTimeToTiet(schedule.timeSlot || '');
-
       dates.push({
         date: current.format('DD/MM/YYYY'),
-        dayText:
-          schedule.dayOfWeekText ||
-          `Thứ ${dayOfWeek === 0 ? 'CN' : dayOfWeek + 1}`,
-        timeSlot: tietText,
-        fullText: `[${schedule.dayOfWeekText || `Thứ ${dayOfWeek === 0 ? 'CN' : dayOfWeek + 1}`}] - [${tietText}] - ${current.format('DD/MM/YYYY')}`,
+        dayText: schedule.dayOfWeekText,
+        timeSlot: schedule.timeSlot,
       });
     }
 
@@ -105,114 +30,114 @@ const generateScheduleDates = (startDate, endDate, schedules) => {
 };
 
 /**
- * Export attendance to Excel with school format
- * @param {Object} sectionData - Section and course data with startDate, endDate, schedules
- * @param {Array} students - Student attendance data
+ * Convert column number to Excel column letter (A, B, C, ..., Z, AA, AB, ...)
  */
-export const exportAttendanceExcel = (sectionData, students) => {
+const numberToColumnLetter = (num) => {
+  let letter = '';
+  while (num > 0) {
+    const remainder = (num - 1) % 26;
+    letter = String.fromCharCode(65 + remainder) + letter;
+    num = Math.floor((num - 1) / 26);
+  }
+  return letter;
+};
+
+/**
+ * Export attendance to Excel with full styling like the image
+ */
+export const exportAttendanceExcel = async (sectionData, students) => {
   try {
-    // Create new workbook
-    const wb = XLSX.utils.book_new();
+    // Create new workbook with ExcelJS
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Danh sách điểm danh');
 
-    // Prepare header info
-    const schoolName = 'TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TP.HCM';
-    const courseName = sectionData?.courseName || 'Tên môn học';
-    const sectionCode = sectionData?.sectionCode || 'Mã lớp';
-    const semester = sectionData?.semester || 'HK1';
-    const academicYear = sectionData?.academicYear || '2025-2026';
-    const className = sectionData?.className || 'DHHTTT19DTT';
+    // Prepare info
+    const courseName = sectionData?.courseName || '';
+    const sectionCode = sectionData?.sectionCode || '';
+    const className = sectionData?.className || '';
 
-    // Create worksheet data array
-    const wsData = [];
-
-    // Row 1: School name (left) and motto (right)
-    const row1 = ['BỘ CÔNG THƯƠNG'];
-    for (let i = 1; i < 5; i++) row1.push('');
-    row1.push('CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM');
-    wsData.push(row1);
-
-    // Row 2: School full name and motto continuation
-    const row2 = [schoolName];
-    for (let i = 1; i < 5; i++) row2.push('');
-    row2.push('Độc lập - Tự do - Hạnh phúc');
-    wsData.push(row2);
-
-    // Row 3: Separator line
-    const row3 = ['_______________'];
-    for (let i = 1; i < 5; i++) row3.push('');
-    row3.push('_______________');
-    wsData.push(row3);
-
-    // Row 4: Empty
-    wsData.push([]);
-
-    // Row 5: Title
-    wsData.push(['DANH SÁCH IMPORT ĐIỂM DANH LỚP HỌC PHẦN']);
-
-    // Row 6: Empty
-    wsData.push([]);
-
-    // Row 7-10: Course info
-    const row7 = [
-      'Đvt:',
-      `${semester} (${academicYear})`,
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-    ];
-    wsData.push(row7);
-
-    const row8 = [
-      'Cơ sở:',
-      `Cơ sở 1 (Thành phố Hồ Chí Minh)`,
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-    ];
-    wsData.push(row8);
-
-    const row9 = [
-      'Mã lớp học phần:',
-      sectionCode,
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-    ];
-    wsData.push(row9);
-
-    const row10 = ['Tên môn học:', courseName, '', '', '', '', '', '', '', ''];
-    wsData.push(row10);
-
-    const row11 = ['Lớp học', className, 'Nhóm', '', '', '', '', '', '', ''];
-    wsData.push(row11);
-
-    // Row 12: Empty
-    wsData.push([]);
-
-    // Generate sessions from start/end dates and schedules
+    // Generate schedule dates
     const sessions = generateScheduleDates(
       sectionData.startDate,
       sectionData.endDate,
       sectionData.schedules || []
     );
 
-    // Row 13: Table header row 1 - Main headers with session info
-    const header1 = [
+    // === ROW 1: Title ===
+    const row1 = worksheet.getRow(1);
+    row1.getCell(1).value = 'DANH SÁCH IMPORT ĐIỂM DANH LỚP HỌC PHẦN';
+    row1.getCell(1).font = { bold: true, size: 16 };
+    row1.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+    row1.height = 25;
+
+    // Merge row 1 (6 base columns + sessions + 5 summary columns)
+    const totalCols = 6 + sessions.length + 5;
+    worksheet.mergeCells(1, 1, 1, totalCols);
+
+    // === ROW 2-6: Info - mỗi dòng 1 row riêng, merge theo column (không có border) ===
+
+    // Row 2: Đợt
+    const row2 = worksheet.getRow(2);
+    row2.getCell(1).value = { richText: [{ font: { bold: true }, text: 'Đợt:' }] };
+    row2.getCell(2).value = 'HK1 (2025 - 2026)';
+    worksheet.mergeCells(2, 2, 2, totalCols);
+    row2.height = 20;
+
+    // Row 3: Cơ sở
+    const row3 = worksheet.getRow(3);
+    row3.getCell(1).value = { richText: [{ font: { bold: true }, text: 'Cơ sở:' }] };
+    row3.getCell(2).value = 'Cơ sở 1 (Thành phố Hồ Chí Minh)';
+    worksheet.mergeCells(3, 2, 3, totalCols);
+    row3.height = 20;
+
+    // Row 4: Mã lớp học phần
+    const row4 = worksheet.getRow(4);
+    row4.getCell(1).value = { richText: [{ font: { bold: true }, text: 'Mã lớp học phần:' }] };
+    row4.getCell(2).value = sectionCode;
+    worksheet.mergeCells(4, 2, 4, totalCols);
+    row4.height = 20;
+
+    // Row 5: Tên môn học
+    const row5 = worksheet.getRow(5);
+    row5.getCell(1).value = { richText: [{ font: { bold: true }, text: 'Tên môn học:' }] };
+    row5.getCell(2).value = `${courseName} (${sectionCode} - ${className})`;
+    worksheet.mergeCells(5, 2, 5, totalCols);
+    row5.height = 20;
+
+    // Row 6: Lớp học và Nhóm
+    const row6 = worksheet.getRow(6);
+    row6.getCell(1).value = { richText: [{ font: { bold: true }, text: 'Lớp học:' }] };
+    row6.getCell(2).value = className;
+    row6.getCell(3).value = { richText: [{ font: { bold: true }, text: 'Nhóm' }] };
+    row6.height = 20;
+
+    // Set alignment và font cho tất cả rows info
+    [row2, row3, row4, row5, row6].forEach(row => {
+      for (let c = 1; c <= totalCols; c++) {
+        const cell = row.getCell(c);
+        if (!cell.value) cell.value = '';
+        cell.alignment = { horizontal: 'left', vertical: 'middle' };
+        cell.font = { size: 12 };
+      }
+    });
+
+    // Xóa border cho tất cả cells trong phần info (rows 1-6)
+    for (let r = 1; r <= 6; r++) {
+      for (let c = 1; c <= totalCols; c++) {
+        const cell = worksheet.getRow(r).getCell(c);
+        cell.border = {}; // Xóa border
+      }
+    }
+
+    // === ROW 7: Empty ===
+
+    // === ROW 8-10: Table Header (3 rows) ===
+    const headerRow1 = worksheet.getRow(8);
+    const headerRow2 = worksheet.getRow(9);
+    const headerRow3 = worksheet.getRow(10);
+
+    // Base columns
+    const baseHeaders = [
       'STT',
       'Mã sinh viên',
       'Họ đệm',
@@ -221,291 +146,281 @@ export const exportAttendanceExcel = (sectionData, students) => {
       'Ngày sinh',
     ];
 
-    // Add session headers (each session gets 1 column with day/time info)
+    baseHeaders.forEach((header, idx) => {
+      const cell = headerRow1.getCell(idx + 1);
+      cell.value = header;
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' },
+      };
+      cell.alignment = {
+        horizontal: 'center',
+        vertical: 'middle',
+        wrapText: true,
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+
+      // Merge 3 rows for base columns
+      worksheet.mergeCells(8, idx + 1, 10, idx + 1);
+    });
+
+    // Session columns
+    let colIndex = 7;
     sessions.forEach((session) => {
-      header1.push(`[${session.dayText}] - [${session.timeSlot}]`);
+      // Row 1: Day + Time
+      const cell1 = headerRow1.getCell(colIndex);
+      cell1.value = `[${session.dayText}] - [${session.timeSlot}]`;
+      cell1.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell1.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' },
+      };
+      cell1.alignment = {
+        horizontal: 'center',
+        vertical: 'middle',
+        wrapText: true,
+      };
+      cell1.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+
+      // Row 2: Date
+      const cell2 = headerRow2.getCell(colIndex);
+      cell2.value = session.date;
+      cell2.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell2.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' },
+      };
+      cell2.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell2.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+
+      // Row 3: (P/K)
+      const cell3 = headerRow3.getCell(colIndex);
+      cell3.value = '(C/P/K)';
+      cell3.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell3.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' },
+      };
+      cell3.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell3.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+
+      colIndex++;
     });
 
-    // Add final columns
-    header1.push('Tổng cộng');
-    header1.push('');
-    header1.push('');
-    header1.push('');
+    // Summary columns
+    const summaryStartCol = 6 + sessions.length + 1;
 
-    wsData.push(header1);
+    // "Tổng cộng" header - merge 5 columns (thêm cột Có mặt)
+    const tongCongCell = headerRow1.getCell(summaryStartCol);
+    tongCongCell.value = 'Tổng cộng';
+    tongCongCell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    tongCongCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4472C4' },
+    };
+    tongCongCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    tongCongCell.border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' },
+    };
+    worksheet.mergeCells(8, summaryStartCol, 8, summaryStartCol + 4);
 
-    // Row 14: Table header row 2 - Session dates
-    const header2 = ['', '', '', '', '', ''];
+    const summaryHeaders = [
+      { text: 'Có mặt', merge: true },
+      { text: 'Vắng có\nphép', merge: true },
+      { text: 'Vắng\nkhông', merge: true },
+      { text: 'Tổng số\ntiết', merge: true },
+      { text: '(%) vắng', merge: true },
+    ];
 
-    sessions.forEach((session) => {
-      header2.push(session.date);
+    summaryHeaders.forEach((header, idx) => {
+      const col = summaryStartCol + idx;
+
+      const cell2 = headerRow2.getCell(col);
+      cell2.value = header.text;
+      cell2.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell2.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' },
+      };
+      cell2.alignment = {
+        horizontal: 'center',
+        vertical: 'middle',
+        wrapText: true,
+      };
+      cell2.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+
+      if (header.merge) {
+        worksheet.mergeCells(9, col, 10, col);
+      }
     });
 
-    header2.push('Vắng có');
-    header2.push('Vắng');
-    header2.push('Tổng số');
-    header2.push('(%) Vắng');
+    headerRow1.height = 30;
+    headerRow2.height = 25;
+    headerRow3.height = 20;
 
-    wsData.push(header2);
-
-    // Row 15: Table header row 3 - C/P/K columns
-    const header3 = ['', '', '', '', '', ''];
-
-    sessions.forEach(() => {
-      header3.push('C/P/K'); // Có mặt / Phép / Không phép
-    });
-
-    header3.push('nhận');
-    header3.push('không');
-    header3.push('tiết');
-    header3.push('');
-
-    wsData.push(header3);
-
-    // Add student rows
+    // === DATA ROWS: Students ===
+    let rowNum = 11;
     students.forEach((student, index) => {
-      const row = [
-        index + 1,
-        student.studentCode || '',
-        student.lastName || '',
-        student.firstName || student.fullName?.split(' ').pop() || '',
-        student.gender || 'Nam',
-        student.dateOfBirth
-          ? new Date(student.dateOfBirth).toLocaleDateString('vi-VN')
-          : '',
-      ];
+      const dataRow = worksheet.getRow(rowNum);
 
-      // Add attendance status for each session (single C/P/K column)
+      const nameParts = (student.fullName || '').trim().split(' ');
+      const lastName = nameParts[nameParts.length - 1] || '';
+      const firstName = nameParts.slice(0, -1).join(' ') || '';
+
+      const gender =
+        student.gender === 'MALE'
+          ? 'Nam'
+          : student.gender === 'FEMALE'
+            ? 'Nữ'
+            : 'Khác';
+      const dob = student.dateOfBirth
+        ? dayjs(student.dateOfBirth).format('DD/MM/YYYY')
+        : '';
+
+      // Base columns
+      dataRow.getCell(1).value = index + 1;
+      dataRow.getCell(2).value = student.mssv || student.studentCode || '';
+      dataRow.getCell(3).value = firstName;
+      dataRow.getCell(4).value = lastName;
+      dataRow.getCell(5).value = gender;
+      dataRow.getCell(6).value = dob;
+
+      // Session columns - để trống NHƯNG VẪN CÓ BORDER
+      let sessionCol = 7;
+      const sessionStartCol = 7;
+      const sessionEndCol = 6 + sessions.length;
+
       sessions.forEach((session) => {
-        const attendance = student.attendances?.find(
-          (a) =>
-            a.sessionDate === session.date ||
-            new Date(a.sessionDate).toLocaleDateString('vi-VN') === session.date
-        );
-
-        // Single column: C (Có mặt), P (Phép), K (Không phép)
-        let status = '';
-        if (attendance) {
-          if (
-            attendance.status === 'Present' ||
-            attendance.status === 'Có mặt'
-          ) {
-            status = 'C';
-          } else if (
-            attendance.status === 'Absent' ||
-            attendance.status === 'Vắng'
-          ) {
-            status = attendance.isExcused ? 'P' : 'K';
-          }
-        }
-        row.push(status);
+        const cell = dataRow.getCell(sessionCol);
+        cell.value = ''; // Để trống để user nhập C/P/K
+        sessionCol++;
       });
 
-      // Calculate totals
-      const totalExcused = student.totalExcusedAbsences || 0;
-      const totalUnexcused = student.totalUnexcusedAbsences || 0;
+      // Summary columns với công thức Excel
       const totalSessions = sessions.length;
-      const absencePercentage = totalSessions
-        ? (((totalExcused + totalUnexcused) / totalSessions) * 100).toFixed(0)
-        : 0;
+      const firstSessionCol = numberToColumnLetter(sessionStartCol);
+      const lastSessionCol = numberToColumnLetter(sessionEndCol);
 
-      row.push(totalExcused); // Vắng có nhận
-      row.push(totalUnexcused); // Vắng không
-      row.push(totalSessions * 2); // Tổng số tiết (assuming 2 periods per session)
-      row.push(absencePercentage); // % vắng
+      // Cột "Có mặt" - đếm số ô có chữ "C"
+      const coMatFormula = `COUNTIF(${firstSessionCol}${rowNum}:${lastSessionCol}${rowNum},"C")`;
+      dataRow.getCell(summaryStartCol).value = { formula: coMatFormula };
 
-      wsData.push(row);
-    });
+      // Cột "Vắng có phép" - đếm số ô có chữ "P"
+      const vangCoPhepFormula = `COUNTIF(${firstSessionCol}${rowNum}:${lastSessionCol}${rowNum},"P")`;
+      dataRow.getCell(summaryStartCol + 1).value = {
+        formula: vangCoPhepFormula,
+      };
 
-    // Create worksheet from array
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
+      // Cột "Vắng không phép" - đếm số ô có chữ "K"
+      const vangKhongPhepFormula = `COUNTIF(${firstSessionCol}${rowNum}:${lastSessionCol}${rowNum},"K")`;
+      dataRow.getCell(summaryStartCol + 2).value = {
+        formula: vangKhongPhepFormula,
+      };
 
-    // Set column widths
-    const colWidths = [
-      { wch: 5 }, // STT
-      { wch: 12 }, // Mã sinh viên
-      { wch: 15 }, // Họ đệm
-      { wch: 10 }, // Tên
-      { wch: 10 }, // Giới tính
-      { wch: 12 }, // Ngày sinh
-    ];
+      // Cột "Tổng số tiết"
+      dataRow.getCell(summaryStartCol + 3).value = totalSessions * 2 || 60;
 
-    // Add widths for each session (1 column per session)
-    sessions.forEach(() => {
-      colWidths.push({ wch: 12 }); // C/P/K (increased width for date display)
-    });
+      // Cột "(%) vắng" - tính phần trăm vắng
+      const tongTietCol = numberToColumnLetter(summaryStartCol + 3);
+      const vangCoPhepCol = numberToColumnLetter(summaryStartCol + 1);
+      const vangKhongCol = numberToColumnLetter(summaryStartCol + 2);
+      const phanTramVangFormula = `IF(${tongTietCol}${rowNum}=0,0,ROUND((${vangCoPhepCol}${rowNum}+${vangKhongCol}${rowNum})/${tongTietCol}${rowNum}*100,2))`;
+      dataRow.getCell(summaryStartCol + 4).value = {
+        formula: phanTramVangFormula,
+      };
 
-    // Add widths for summary columns
-    colWidths.push({ wch: 10 }); // Vắng có nhận
-    colWidths.push({ wch: 10 }); // Vắng không
-    colWidths.push({ wch: 10 }); // Tổng số tiết
-    colWidths.push({ wch: 10 }); // (%) Vắng
+      // Apply borders and alignment cho TẤT CẢ các cells
+      for (let c = 1; c <= totalCols; c++) {
+        const cell = dataRow.getCell(c);
 
-    ws['!cols'] = colWidths;
+        // TẤT CẢ cells đều có border
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' },
+        };
 
-    // Calculate total columns for proper merging
-    const totalColumns = 6 + sessions.length + 4;
-    const lastCol = totalColumns - 1;
-
-    // Merge cells for headers
-    const merges = [
-      // Row 1: BỘ CÔNG THƯƠNG
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
-      // Row 1: CỘNG HÒA XÃ HỘI...
-      { s: { r: 0, c: 5 }, e: { r: 0, c: lastCol } },
-
-      // Row 2: School name
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },
-      // Row 2: Độc lập...
-      { s: { r: 1, c: 5 }, e: { r: 1, c: lastCol } },
-
-      // Row 3: Separator lines
-      { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } },
-      { s: { r: 2, c: 5 }, e: { r: 2, c: lastCol } },
-
-      // Row 5: Title
-      { s: { r: 4, c: 0 }, e: { r: 4, c: lastCol } },
-
-      // Row 7-11: Course info merges
-      { s: { r: 6, c: 1 }, e: { r: 6, c: lastCol } }, // Đvt value
-      { s: { r: 7, c: 1 }, e: { r: 7, c: lastCol } }, // Cơ sở value
-      { s: { r: 8, c: 1 }, e: { r: 8, c: lastCol } }, // Mã lớp value
-      { s: { r: 9, c: 1 }, e: { r: 9, c: lastCol } }, // Tên môn value
-      { s: { r: 10, c: 1 }, e: { r: 10, c: 2 } }, // Lớp học value
-      { s: { r: 10, c: 3 }, e: { r: 10, c: lastCol } }, // Nhóm value
-
-      // Table header merges (rows 12, 13, 14 - 3 header rows)
-      { s: { r: 12, c: 0 }, e: { r: 14, c: 0 } }, // STT
-      { s: { r: 12, c: 1 }, e: { r: 14, c: 1 } }, // Mã sinh viên
-      { s: { r: 12, c: 2 }, e: { r: 14, c: 2 } }, // Họ đệm
-      { s: { r: 12, c: 3 }, e: { r: 14, c: 3 } }, // Tên
-      { s: { r: 12, c: 4 }, e: { r: 14, c: 4 } }, // Giới tính
-      { s: { r: 12, c: 5 }, e: { r: 14, c: 5 } }, // Ngày sinh
-    ];
-
-    let currentCol = 6; // Start after Ngày sinh
-
-    // No merges needed for session columns (single column per session)
-    currentCol += sessions.length;
-
-    // Merge Tổng cộng header (row 12, 4 columns)
-    merges.push({
-      s: { r: 12, c: currentCol },
-      e: { r: 12, c: currentCol + 3 },
-    });
-
-    // Individual merges for summary columns in row 13
-    // Vắng có nhận
-    merges.push({
-      s: { r: 13, c: currentCol },
-      e: { r: 14, c: currentCol },
-    });
-    currentCol++;
-
-    // Vắng không
-    merges.push({
-      s: { r: 13, c: currentCol },
-      e: { r: 14, c: currentCol },
-    });
-    currentCol++;
-
-    // Tổng số tiết
-    merges.push({
-      s: { r: 13, c: currentCol },
-      e: { r: 14, c: currentCol },
-    });
-    currentCol++;
-
-    // (%) Vắng
-    merges.push({
-      s: { r: 13, c: currentCol },
-      e: { r: 14, c: currentCol },
-    });
-
-    ws['!merges'] = merges;
-
-    // Add styling
-    const range = XLSX.utils.decode_range(ws['!ref']);
-
-    const thinBorder = {
-      top: { style: 'thin', color: { rgb: '000000' } },
-      bottom: { style: 'thin', color: { rgb: '000000' } },
-      left: { style: 'thin', color: { rgb: '000000' } },
-      right: { style: 'thin', color: { rgb: '000000' } },
-    };
-
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-        if (!ws[cellAddress]) {
-          ws[cellAddress] = { v: '', t: 's' };
-        }
-
-        const cell = ws[cellAddress];
-
-        // Header section (rows 0-11)
-        if (R <= 11) {
-          cell.s = {
-            alignment: {
-              horizontal:
-                R === 0 || R === 1 || R === 2 || R === 4 ? 'center' : 'left',
-              vertical: 'center',
-              wrapText: true,
-            },
-            font: {
-              bold: R === 0 || R === 1 || R === 4,
-              size: R === 4 ? 14 : 11,
-            },
-          };
-        }
-
-        // Table header rows (12-14) - 3 rows of headers
-        if (R >= 12 && R <= 14) {
-          cell.s = {
-            alignment: {
-              horizontal: 'center',
-              vertical: 'center',
-              wrapText: true,
-            },
-            font: { bold: true, size: 11, color: { rgb: 'FFFFFF' } },
-            fill: { fgColor: { rgb: '4472C4' } },
-            border: thinBorder,
-          };
-        }
-
-        // Data rows (15+)
-        if (R > 14) {
-          cell.s = {
-            alignment: {
-              horizontal: C === 0 || C === 1 || C >= 6 ? 'center' : 'left',
-              vertical: 'center',
-            },
-            border: thinBorder,
-          };
-        }
+        cell.alignment = {
+          horizontal: c <= 2 || c >= summaryStartCol ? 'center' : 'left',
+          vertical: 'middle',
+        };
       }
+
+      rowNum++;
+    });
+
+    // === SET COLUMN WIDTHS ===
+    worksheet.getColumn(1).width = 5; // STT
+    worksheet.getColumn(2).width = 12; // Mã SV
+    worksheet.getColumn(3).width = 20; // Họ đệm
+    worksheet.getColumn(4).width = 12; // Tên
+    worksheet.getColumn(5).width = 10; // Giới tính
+    worksheet.getColumn(6).width = 12; // Ngày sinh
+
+    // Session columns
+    for (let i = 0; i < sessions.length; i++) {
+      worksheet.getColumn(7 + i).width = 12;
     }
 
-    // Set row heights
-    const rowHeights = [];
-    for (let i = 0; i < 12; i++) {
-      rowHeights.push({ hpt: 18 });
-    }
-    // Header rows (3 rows)
-    rowHeights.push({ hpt: 25 }); // Row 12
-    rowHeights.push({ hpt: 20 }); // Row 13
-    rowHeights.push({ hpt: 20 }); // Row 14
+    // Summary columns (5 cột)
+    worksheet.getColumn(summaryStartCol).width = 10; // Có mặt
+    worksheet.getColumn(summaryStartCol + 1).width = 10; // Vắng có phép
+    worksheet.getColumn(summaryStartCol + 2).width = 10; // Vắng không
+    worksheet.getColumn(summaryStartCol + 3).width = 10; // Tổng số tiết
+    worksheet.getColumn(summaryStartCol + 4).width = 10; // (%) vắng
 
-    ws['!rows'] = rowHeights;
+    // === EXPORT FILE ===
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
 
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'Điểm danh');
+    const fileName = `Diem_danh_${sectionCode}_${className}_${dayjs().format('YYYYMMDDHHmmss')}.xlsx`;
 
-    // Generate file name
-    const fileName = `diem-danh-${sectionCode}-${new Date().getTime()}.xlsx`;
-
-    // Export file
-    XLSX.writeFile(wb, fileName);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
 
     return { success: true, fileName };
   } catch (error) {

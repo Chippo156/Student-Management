@@ -1,5 +1,4 @@
-import * as XLSX from 'xlsx';
-import logoPath from '../assets/images/logo.png';
+import ExcelJS from 'exceljs';
 
 /**
  * Export grades to Excel with school format
@@ -7,51 +6,24 @@ import logoPath from '../assets/images/logo.png';
  * @param {Array} assessmentHeaders - Assessment column headers
  * @param {Array} students - Student grades data
  */
-export const exportGradesExcel = (sectionData, assessmentHeaders, students) => {
+export const exportGradesExcel = async (
+  sectionData,
+  assessmentHeaders,
+  students
+) => {
   try {
     // Create new workbook
-    const wb = XLSX.utils.book_new();
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Điểm');
 
     // Prepare header info
-    const schoolName = 'TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TP.HCM';
     const courseName = sectionData?.courseName || 'Tên môn học';
     const sectionCode = sectionData?.sectionCode || 'Mã lớp';
     const semester = sectionData?.semester || 'HK1';
     const academicYear = sectionData?.academicYear || '2025-2026';
     const className = sectionData?.className || 'DHHTTT19BTT';
 
-    // Create worksheet data array
-    const wsData = [];
-
-    // Row 1: School name (left) and motto (right)
-    const row1 = ['BỘ CÔNG THƯƠNG'];
-    // Fill with empty cells
-    for (let i = 1; i < 5; i++) row1.push('');
-    row1.push('CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM');
-    wsData.push(row1);
-
-    // Row 2: School full name and motto continuation
-    const row2 = [schoolName];
-    for (let i = 1; i < 5; i++) row2.push('');
-    row2.push('Độc lập - Tự do - Hạnh phúc');
-    wsData.push(row2);
-
-    // Row 3: Separator line
-    const row3 = ['_______________'];
-    for (let i = 1; i < 5; i++) row3.push('');
-    row3.push('_______________');
-    wsData.push(row3);
-
-    // Row 4: Empty
-    wsData.push([]);
-
-    // Row 5: Title - "DANH SÁCH ĐIỂM SINH VIÊN" (centered across full table)
-    wsData.push(['DANH SÁCH ĐIỂM SINH VIÊN']);
-
-    // Row 6: Empty
-    wsData.push([]);
-
-    // Group assessments by type (need this before creating course info rows)
+    // Group assessments by type
     const ltAssessments = assessmentHeaders.filter(
       (a) => a.assessmentTypeId === 1
     );
@@ -66,400 +38,359 @@ export const exportGradesExcel = (sectionData, assessmentHeaders, students) => {
     );
     const totalAssessments = ltAssessments.length + thAssessments.length;
 
-    // Row 7-8: Course info (simplified structure without Phòng and Ngày thi)
-    const row7 = [
-      'Môn thi',
-      courseName,
-      '',
-      '',
-      'Học kỳ',
-      `${semester} (${academicYear})`,
-      '',
-      '',
-      'Lớp học phần',
-      sectionCode,
-    ];
-    wsData.push(row7);
-
-    const row8 = [
-      'Lớp học',
-      className,
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      'Niên học',
-      academicYear,
-    ];
-    wsData.push(row8);
-
-    // Row 11: Empty
-    wsData.push([]);
-
-    // Row 12: Table header row 1 (merged cells for assessment groups)
-    const header1 = ['STT', 'Mã số', 'Họ đệm', 'Tên', 'Lớp học'];
-
-    // Add "Điểm GKTH" header if there are regular assessments
-    if (ltAssessments.length > 0 || thAssessments.length > 0) {
-      header1.push('Điểm GKTH');
-      // Add empty cells for sub-columns
-      for (let i = 1; i < ltAssessments.length + thAssessments.length; i++) {
-        header1.push('');
-      }
-    }
-
-    if (giuaKyAssessment) {
-      header1.push('Điểm thi GK');
-    }
-
-    if (cuoiKyAssessment) {
-      header1.push('Điểm thi CK');
-    }
-
-    header1.push('Điểm TB');
-    header1.push('Xếp loại');
-
-    wsData.push(header1);
-
-    // Row 13: Table header row 2 (sub-columns for LT and TH)
-    const header2 = ['', '', '', '', ''];
-
-    if (ltAssessments.length > 0 || thAssessments.length > 0) {
-      // Add "Lý thuyết" header
-      if (ltAssessments.length > 0) {
-        header2.push('Lý thuyết');
-        for (let i = 1; i < ltAssessments.length; i++) {
-          header2.push('');
-        }
-      }
-
-      // Add "Thực hành" header
-      if (thAssessments.length > 0) {
-        header2.push('Thực hành');
-        for (let i = 1; i < thAssessments.length; i++) {
-          header2.push('');
-        }
-      }
-    }
-
-    if (giuaKyAssessment) {
-      header2.push('');
-    }
-
-    if (cuoiKyAssessment) {
-      header2.push('');
-    }
-
-    header2.push('');
-    header2.push('');
-
-    wsData.push(header2);
-
-    // Row 14: Table header row 3 (column numbers: 1, 2, 3 for LT/TH)
-    const header3 = ['', '', '', '', ''];
-
-    // Add LT column numbers
-    for (let i = 0; i < ltAssessments.length; i++) {
-      header3.push(`${i + 1}`);
-    }
-
-    // Add TH column numbers
-    for (let i = 0; i < thAssessments.length; i++) {
-      header3.push(`${i + 1}`);
-    }
-
-    if (giuaKyAssessment) {
-      header3.push('');
-    }
-
-    if (cuoiKyAssessment) {
-      header3.push('');
-    }
-
-    header3.push('');
-    header3.push('');
-    header3.push('');
-
-    wsData.push(header3);
-
-    // Add student rows
-    students.forEach((student, index) => {
-      const row = [
-        index + 1,
-        student.studentCode || '',
-        student.lastName || '', // Họ đệm
-        student.firstName || student.fullName?.split(' ').pop() || '', // Tên
-        student.className || sectionCode,
-      ];
-
-      // Add all assessment scores in order (LT first, then TH)
-      ltAssessments.forEach((assessment) => {
-        const grade = student.assessmentGrades?.find(
-          (g) => g.assessmentId === assessment.assessmentId
-        );
-        row.push(
-          grade?.score !== null && grade?.score !== undefined
-            ? parseFloat(grade.score).toFixed(2)
-            : ''
-        );
-      });
-
-      thAssessments.forEach((assessment) => {
-        const grade = student.assessmentGrades?.find(
-          (g) => g.assessmentId === assessment.assessmentId
-        );
-        row.push(
-          grade?.score !== null && grade?.score !== undefined
-            ? parseFloat(grade.score).toFixed(2)
-            : ''
-        );
-      });
-
-      // Add Giữa kỳ score
-      if (giuaKyAssessment) {
-        const grade = student.assessmentGrades?.find(
-          (g) => g.assessmentId === giuaKyAssessment.assessmentId
-        );
-        row.push(
-          grade?.score !== null && grade?.score !== undefined
-            ? parseFloat(grade.score).toFixed(2)
-            : ''
-        );
-      }
-
-      // Add Cuối kỳ score
-      if (cuoiKyAssessment) {
-        const grade = student.assessmentGrades?.find(
-          (g) => g.assessmentId === cuoiKyAssessment.assessmentId
-        );
-        row.push(
-          grade?.score !== null && grade?.score !== undefined
-            ? parseFloat(grade.score).toFixed(2)
-            : ''
-        );
-      }
-
-      // Add final score and grade letter
-      row.push(
-        student.finalScore !== null && student.finalScore !== undefined
-          ? parseFloat(student.finalScore).toFixed(2)
-          : ''
-      );
-      row.push(student.gradeLetter || '');
-
-      wsData.push(row);
-    });
-
-    // Create worksheet from array
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-    // Set column widths
-    const colWidths = [
-      { wch: 5 }, // STT
-      { wch: 12 }, // Mã số
-      { wch: 15 }, // Họ đệm
-      { wch: 10 }, // Tên
-      { wch: 40 }, // Lớp học
-    ];
-
-    // Add widths for assessment columns (Lần 1, Lần 2, ...)
-    for (let i = 0; i < totalAssessments; i++) {
-      colWidths.push({ wch: 8 });
-    }
-
-    if (giuaKyAssessment) colWidths.push({ wch: 10 }); // Điểm thi GK
-    if (cuoiKyAssessment) colWidths.push({ wch: 10 }); // Điểm thi CK
-    colWidths.push({ wch: 10 }); // Điểm TB
-    colWidths.push({ wch: 10 }); // Xếp loại
-
-    ws['!cols'] = colWidths;
-
-    // Calculate total columns for proper merging
-    const totalColumns =
-      5 +
+    // Calculate total columns
+    const totalCols =
+      5 + // STT, Mã số, Họ đệm, Tên, Lớp học
       totalAssessments +
       (giuaKyAssessment ? 1 : 0) +
       (cuoiKyAssessment ? 1 : 0) +
-      2; // STT + Mã số + Họ đệm + Tên + Lớp học + assessments + GK + CK + ĐTB + Xếp loại
-    const lastCol = totalColumns - 1;
+      2; // Điểm TB, Xếp loại
 
-    // Merge cells for headers
-    const merges = [
-      // Row 1: BỘ CÔNG THƯƠNG (merge to column 4 - Lớp học)
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
-      // Row 1: CỘNG HÒA XÃ HỘI... (merge from column 5 to end)
-      { s: { r: 0, c: 5 }, e: { r: 0, c: lastCol } },
+    // === ROW 1-4: Header truyền thống ===
+    // Row 1: Bộ Công Thương và CHXHCNVN
+    const row1 = worksheet.getRow(1);
+    row1.getCell(1).value = 'BỘ CÔNG THƯƠNG';
+    const midCol = Math.ceil(totalCols / 2);
+    row1.getCell(midCol).value = 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM';
+    worksheet.mergeCells(1, 1, 1, midCol - 1);
+    worksheet.mergeCells(1, midCol, 1, totalCols);
+    row1.height = 20;
+    row1.alignment = { horizontal: 'center', vertical: 'middle' };
+    row1.font = { bold: true, size: 11 };
 
-      // Row 2: School name (merge to column 4 - Lớp học)
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },
-      // Row 2: Độc lập... (merge from column 5 to end)
-      { s: { r: 1, c: 5 }, e: { r: 1, c: lastCol } },
+    // Row 2: Tên trường và khẩu hiệu
+    const row2 = worksheet.getRow(2);
+    row2.getCell(1).value = 'TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TP.HCM';
+    row2.getCell(midCol).value = 'Độc lập - Tự do - Hạnh phúc';
+    worksheet.mergeCells(2, 1, 2, midCol - 1);
+    worksheet.mergeCells(2, midCol, 2, totalCols);
+    row2.height = 20;
+    row2.alignment = { horizontal: 'center', vertical: 'middle' };
+    row2.font = { bold: true, size: 11 };
 
-      // Row 3: Separator lines
-      { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } },
-      { s: { r: 2, c: 5 }, e: { r: 2, c: lastCol } },
+    // Row 3: Dòng gạch dưới
+    const row3 = worksheet.getRow(3);
+    row3.getCell(1).value = '_______________';
+    row3.getCell(midCol).value = '_______________';
+    worksheet.mergeCells(3, 1, 3, midCol - 1);
+    worksheet.mergeCells(3, midCol, 3, totalCols);
+    row3.height = 20;
+    row3.alignment = { horizontal: 'center', vertical: 'middle' };
 
-      // Row 5: Title - DANH SÁCH ĐIỂM SINH VIÊN (merge across full table)
-      { s: { r: 4, c: 0 }, e: { r: 4, c: lastCol } },
+    // Row 4: Empty
+    worksheet.getRow(4).height = 15;
 
-      // Row 7: Course info merges
-      { s: { r: 6, c: 1 }, e: { r: 6, c: 3 } }, // Môn thi value
-      { s: { r: 6, c: 5 }, e: { r: 6, c: 7 } }, // Học kỳ value
-      { s: { r: 6, c: 9 }, e: { r: 6, c: lastCol } }, // Lớp học phần value
+    // === ROW 5: Title ===
+    const row5 = worksheet.getRow(5);
+    row5.getCell(1).value = 'DANH SÁCH ĐIỂM SINH VIÊN';
+    row5.getCell(1).font = { bold: true, size: 16 };
+    row5.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+    row5.height = 25;
+    worksheet.mergeCells(5, 1, 5, totalCols);
 
-      // Row 8: Class info merges
-      { s: { r: 7, c: 1 }, e: { r: 7, c: 3 } }, // Lớp học value
-      { s: { r: 7, c: 8 }, e: { r: 7, c: lastCol } }, // Niên học value,
+    // === ROW 6-9: Info - mỗi dòng 1 row riêng, merge theo column (không có border) ===
 
-      // Table header merges (rows 9, 10, 11 - 3 header rows)
-      { s: { r: 9, c: 0 }, e: { r: 11, c: 0 } }, // STT
-      { s: { r: 9, c: 1 }, e: { r: 11, c: 1 } }, // Mã số
-      { s: { r: 9, c: 2 }, e: { r: 11, c: 2 } }, // Họ đệm
-      { s: { r: 9, c: 3 }, e: { r: 11, c: 3 } }, // Tên
-      { s: { r: 9, c: 4 }, e: { r: 11, c: 4 } }, // Lớp học
+    // Row 6: Môn thi
+    const row6 = worksheet.getRow(6);
+    row6.getCell(1).value = {
+      richText: [{ font: { bold: true }, text: 'Môn thi:' }],
+    };
+    row6.getCell(2).value = courseName;
+    worksheet.mergeCells(6, 2, 6, totalCols);
+    row6.height = 20;
+
+    // Row 7: Học kỳ
+    const row7 = worksheet.getRow(7);
+    row7.getCell(1).value = {
+      richText: [{ font: { bold: true }, text: 'Học kỳ:' }],
+    };
+    row7.getCell(2).value = `${semester} (${academicYear})`;
+    worksheet.mergeCells(7, 2, 7, totalCols);
+    row7.height = 20;
+
+    // Row 8: Lớp học phần
+    const row8 = worksheet.getRow(8);
+    row8.getCell(1).value = {
+      richText: [{ font: { bold: true }, text: 'Lớp học phần:' }],
+    };
+    row8.getCell(2).value = sectionCode;
+    worksheet.mergeCells(8, 2, 8, totalCols);
+    row8.height = 20;
+
+    // Row 9: Lớp học và Niên học
+    const row9 = worksheet.getRow(9);
+    row9.getCell(1).value = {
+      richText: [{ font: { bold: true }, text: 'Lớp học:' }],
+    };
+    row9.getCell(2).value = className;
+    row9.getCell(3).value = {
+      richText: [{ font: { bold: true }, text: 'Niên học:' }],
+    };
+    row9.getCell(4).value = academicYear;
+    row9.height = 20;
+
+    // Set alignment và font cho tất cả rows info
+    [row6, row7, row8, row9].forEach((row) => {
+      for (let c = 1; c <= totalCols; c++) {
+        const cell = row.getCell(c);
+        if (!cell.value) cell.value = '';
+        cell.alignment = { horizontal: 'left', vertical: 'middle' };
+        cell.font = { size: 12 };
+      }
+    });
+
+    // Xóa border cho tất cả cells trong phần info (rows 1-9)
+    for (let r = 1; r <= 9; r++) {
+      for (let c = 1; c <= totalCols; c++) {
+        const cell = worksheet.getRow(r).getCell(c);
+        cell.border = {}; // Xóa border
+      }
+    }
+
+    // Row 10-12: Table headers (3 rows)
+    const headerRow1 = worksheet.getRow(10);
+    const headerRow2 = worksheet.getRow(11);
+    const headerRow3 = worksheet.getRow(12);
+
+    // Basic headers (merged across 3 rows)
+    const basicHeaders = [
+      { text: 'STT', col: 1 },
+      { text: 'Mã số', col: 2 },
+      { text: 'Họ đệm', col: 3 },
+      { text: 'Tên', col: 4 },
+      { text: 'Lớp học', col: 5 },
     ];
 
-    let currentCol = 5; // Bắt đầu sau cột "Lớp học"
+    basicHeaders.forEach((header) => {
+      headerRow1.getCell(header.col).value = header.text;
+      worksheet.mergeCells(10, header.col, 12, header.col);
+    });
 
-    // Merge "Điểm GKTH" nếu có
+    let currentCol = 6; // Start after "Lớp học"
+
+    // Điểm GKTH header (if there are assessments)
     if (ltAssessments.length > 0 || thAssessments.length > 0) {
-      const totalCols = ltAssessments.length + thAssessments.length;
-      // Merge header "Điểm GKTH" ở row 9
-      merges.push({
-        s: { r: 9, c: currentCol },
-        e: { r: 9, c: currentCol + totalCols - 1 },
-      });
+      const totalSubCols = ltAssessments.length + thAssessments.length;
+      headerRow1.getCell(currentCol).value = 'Điểm GKTH';
+      worksheet.mergeCells(10, currentCol, 10, currentCol + totalSubCols - 1);
 
-      // Merge "Lý thuyết" header ở row 10
+      // Lý thuyết sub-header
       if (ltAssessments.length > 0) {
-        merges.push({
-          s: { r: 10, c: currentCol },
-          e: { r: 10, c: currentCol + ltAssessments.length - 1 },
-        });
+        headerRow2.getCell(currentCol).value = 'Lý thuyết';
+        worksheet.mergeCells(
+          11,
+          currentCol,
+          11,
+          currentCol + ltAssessments.length - 1
+        );
+
+        // Column numbers for LT
+        for (let i = 0; i < ltAssessments.length; i++) {
+          headerRow3.getCell(currentCol + i).value = `${i + 1}`;
+        }
         currentCol += ltAssessments.length;
       }
 
-      // Merge "Thực hành" header ở row 10
+      // Thực hành sub-header
       if (thAssessments.length > 0) {
-        merges.push({
-          s: { r: 10, c: currentCol },
-          e: { r: 10, c: currentCol + thAssessments.length - 1 },
-        });
+        headerRow2.getCell(currentCol).value = 'Thực hành';
+        worksheet.mergeCells(
+          11,
+          currentCol,
+          11,
+          currentCol + thAssessments.length - 1
+        );
+
+        // Column numbers for TH
+        for (let i = 0; i < thAssessments.length; i++) {
+          headerRow3.getCell(currentCol + i).value = `${i + 1}`;
+        }
         currentCol += thAssessments.length;
       }
     }
 
-    // Merge Điểm thi GK (3 rows)
+    // Điểm thi GK (merged across 3 rows)
     if (giuaKyAssessment) {
-      merges.push({ s: { r: 9, c: currentCol }, e: { r: 11, c: currentCol } });
+      headerRow1.getCell(currentCol).value = 'Điểm thi GK';
+      worksheet.mergeCells(10, currentCol, 12, currentCol);
       currentCol++;
     }
 
-    // Merge Điểm thi CK (3 rows)
+    // Điểm thi CK (merged across 3 rows)
     if (cuoiKyAssessment) {
-      merges.push({ s: { r: 9, c: currentCol }, e: { r: 11, c: currentCol } });
+      headerRow1.getCell(currentCol).value = 'Điểm thi CK';
+      worksheet.mergeCells(10, currentCol, 12, currentCol);
       currentCol++;
     }
 
-    // Merge Điểm TB (3 rows)
-    merges.push({ s: { r: 9, c: currentCol }, e: { r: 11, c: currentCol } });
+    // Điểm TB (merged across 3 rows)
+    headerRow1.getCell(currentCol).value = 'Điểm TB';
+    worksheet.mergeCells(10, currentCol, 12, currentCol);
     currentCol++;
 
-    // Merge Xếp loại (3 rows)
-    merges.push({ s: { r: 9, c: currentCol }, e: { r: 11, c: currentCol } });
-    ws['!merges'] = merges;
+    // Xếp loại (merged across 3 rows)
+    headerRow1.getCell(currentCol).value = 'Xếp loại';
+    worksheet.mergeCells(10, currentCol, 12, currentCol);
 
-    // Add styling (borders, alignment, etc.) using cell properties
-    const range = XLSX.utils.decode_range(ws['!ref']);
-
-    // Define border style
-    const thinBorder = {
-      top: { style: 'thin', color: { rgb: '000000' } },
-      bottom: { style: 'thin', color: { rgb: '000000' } },
-      left: { style: 'thin', color: { rgb: '000000' } },
-      right: { style: 'thin', color: { rgb: '000000' } },
-    };
-
-    const thickBorder = {
-      top: { style: 'medium', color: { rgb: '000000' } },
-      bottom: { style: 'medium', color: { rgb: '000000' } },
-      left: { style: 'medium', color: { rgb: '000000' } },
-      right: { style: 'medium', color: { rgb: '000000' } },
-    };
-
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-        if (!ws[cellAddress]) {
-          ws[cellAddress] = { v: '', t: 's' };
-        }
-
-        const cell = ws[cellAddress];
-
-        // Header section (rows 0-9)
-        if (R <= 9) {
-          cell.s = {
-            alignment: {
-              horizontal: R === 0 || R === 1 || R === 2 ? 'center' : 'left',
-              vertical: 'center',
-              wrapText: true,
-            },
-            font: {
-              bold: R === 0 || R === 1 || R === 4,
-              size: R === 4 ? 14 : 11,
-            },
+    // Style header rows
+    [headerRow1, headerRow2, headerRow3].forEach((row) => {
+      row.height = 25;
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        if (colNumber <= totalCols) {
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF4472C4' },
+          };
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' },
           };
         }
+      });
+    });
 
-        // Table header rows (9-11) - 3 rows of headers
-        if (R >= 9 && R <= 11) {
-          cell.s = {
-            alignment: {
-              horizontal: 'center',
-              vertical: 'center',
-              wrapText: true,
-            },
-            font: { bold: true, size: 11, color: { rgb: 'FFFFFF' } },
-            fill: { fgColor: { rgb: '4472C4' } }, // Blue theme color
-            border: thinBorder,
-          };
-        }
+    // Add student data rows
+    students.forEach((student, index) => {
+      const rowNum = 13 + index;
+      const dataRow = worksheet.getRow(rowNum);
 
-        // Data rows (12+)
-        if (R > 11) {
-          cell.s = {
-            alignment: {
-              horizontal: C === 0 || C === 1 || C >= 5 ? 'center' : 'left', // STT, MSSV, scores centered
-              vertical: 'center',
-            },
-            border: thinBorder,
-          };
-        }
+      // Basic info
+      dataRow.getCell(1).value = index + 1;
+      dataRow.getCell(2).value = student.studentCode || '';
+      dataRow.getCell(3).value = student.lastName || '';
+      dataRow.getCell(4).value =
+        student.firstName || student.fullName?.split(' ').pop() || '';
+      dataRow.getCell(5).value = student.className || sectionCode;
+
+      let col = 6;
+
+      // LT assessment scores
+      ltAssessments.forEach((assessment) => {
+        const grade = student.assessmentGrades?.find(
+          (g) => g.assessmentId === assessment.assessmentId
+        );
+        dataRow.getCell(col).value =
+          grade?.score !== null && grade?.score !== undefined
+            ? parseFloat(grade.score)
+            : '';
+        col++;
+      });
+
+      // TH assessment scores
+      thAssessments.forEach((assessment) => {
+        const grade = student.assessmentGrades?.find(
+          (g) => g.assessmentId === assessment.assessmentId
+        );
+        dataRow.getCell(col).value =
+          grade?.score !== null && grade?.score !== undefined
+            ? parseFloat(grade.score)
+            : '';
+        col++;
+      });
+
+      // Giữa kỳ score
+      if (giuaKyAssessment) {
+        const grade = student.assessmentGrades?.find(
+          (g) => g.assessmentId === giuaKyAssessment.assessmentId
+        );
+        dataRow.getCell(col).value =
+          grade?.score !== null && grade?.score !== undefined
+            ? parseFloat(grade.score)
+            : '';
+        col++;
       }
+
+      // Cuối kỳ score
+      if (cuoiKyAssessment) {
+        const grade = student.assessmentGrades?.find(
+          (g) => g.assessmentId === cuoiKyAssessment.assessmentId
+        );
+        dataRow.getCell(col).value =
+          grade?.score !== null && grade?.score !== undefined
+            ? parseFloat(grade.score)
+            : '';
+        col++;
+      }
+
+      // Final score
+      dataRow.getCell(col).value =
+        student.finalScore !== null && student.finalScore !== undefined
+          ? parseFloat(student.finalScore)
+          : '';
+      col++;
+
+      // Grade letter
+      dataRow.getCell(col).value = student.gradeLetter || '';
+
+      // Style data row
+      dataRow.height = 20;
+      dataRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        if (colNumber <= totalCols) {
+          // Number formatting
+          if (colNumber >= 6 && colNumber <= totalCols - 1 && cell.value) {
+            cell.numFmt = '0.00';
+          }
+
+          cell.alignment = {
+            horizontal:
+              colNumber === 1 || colNumber === 2 || colNumber >= 6
+                ? 'center'
+                : 'left',
+            vertical: 'middle',
+          };
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' },
+          };
+        }
+      });
+    });
+
+    // Set column widths
+    const colWidths = [
+      5, // STT
+      12, // Mã số
+      15, // Họ đệm
+      10, // Tên
+      15, // Lớp học
+    ];
+
+    // Add widths for assessment columns
+    for (let i = 0; i < totalAssessments; i++) {
+      colWidths.push(8);
     }
 
-    // Set row heights
-    const rowHeights = [];
-    for (let i = 0; i < 9; i++) {
-      rowHeights.push({ hpt: 18 });
-    }
-    // Header rows (3 rows)
-    rowHeights.push({ hpt: 25 }); // Row 9 - Điểm GKTH, Điểm thi GK/CK, etc.
-    rowHeights.push({ hpt: 20 }); // Row 10 - Lý thuyết, Thực hành
-    rowHeights.push({ hpt: 20 }); // Row 11 - 1, 2, 3...
+    if (giuaKyAssessment) colWidths.push(10);
+    if (cuoiKyAssessment) colWidths.push(10);
+    colWidths.push(10); // Điểm TB
+    colWidths.push(10); // Xếp loại
 
-    ws['!rows'] = rowHeights;
-
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'Điểm');
+    colWidths.forEach((width, index) => {
+      worksheet.getColumn(index + 1).width = width;
+    });
 
     // Generate file name
     const fileName = `diem-${sectionCode}-${new Date().getTime()}.xlsx`;
 
     // Export file
-    XLSX.writeFile(wb, fileName);
+    await workbook.xlsx.writeBuffer().then((buffer) => {
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    });
 
     return { success: true, fileName };
   } catch (error) {

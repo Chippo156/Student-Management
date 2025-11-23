@@ -360,11 +360,16 @@ const GradesPage = () => {
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-        // New format has 3 header rows (rows 9, 10, 11 = index 9, 10, 11)
-        // Data starts at row 12 (index 12)
-        // Row 9: Main headers (STT, Mã số, Họ đệm, Tên, Lớp học, Điểm GKTH, ...)
-        // Row 10: Sub-headers (Lý thuyết, Thực hành)
-        // Row 11: Assessment numbers (1, 2, 3...)
+        // New format with traditional header:
+        // Row 1-3: Bộ Công Thương, Trường ĐH, gạch dưới
+        // Row 4: Empty
+        // Row 5: Title "DANH SÁCH ĐIỂM SINH VIÊN"
+        // Row 6-9: Course info (Môn thi, Học kỳ, Lớp học phần, Lớp học + Niên học)
+        // Row 10-12: Table headers (3 rows - index 9, 10, 11)
+        //   Row 10: Main headers (STT, Mã số, Họ đệm, Tên, Lớp học, Điểm GKTH, ...)
+        //   Row 11: Sub-headers (Lý thuyết, Thực hành)
+        //   Row 12: Assessment numbers (1, 2, 3...)
+        // Data starts at row 13 (index 12)
 
         if (jsonData.length < 13) {
           setSnackbar({

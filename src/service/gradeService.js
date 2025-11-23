@@ -153,10 +153,10 @@ const gradeService = {
    */
   createBulkGrades: async (assessmentId, studentGrades) => {
     try {
-      const response = await axios.post(
-        `/api/Grade/CreateBulkGrades/${assessmentId}`,
-        studentGrades
-      );
+      const response = await axios.post('/api/Grade/CreateBulkGrades', {
+        assessmentId,
+        studentGrades,
+      });
 
       if (response?.success === false) {
         const errData = response?.data;

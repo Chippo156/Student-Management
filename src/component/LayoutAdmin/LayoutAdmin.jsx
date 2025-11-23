@@ -45,6 +45,7 @@ import {
   EventAvailable as EventAvailableIcon, // Thêm icon mới
 } from '@mui/icons-material';
 import HeaderPage from '../Header';
+import ChatWidget from '../Chat/ChatWidget';
 
 const menuData = [
   {
@@ -388,6 +389,7 @@ const LayoutAdmin = () => {
           </Box>
         </Box>
       </Box>
+      <ChatWidget />
     </Box>
   );
 };

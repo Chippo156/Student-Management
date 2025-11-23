@@ -335,6 +335,46 @@ const chatApi = {
   },
 
   /**
+   * Tạo chat room với AI
+   */
+  createAIRoom: async () => {
+    try {
+      const response = await axios.post('/api/v1/Chat/room/ai');
+      return response;
+    } catch (error) {
+      console.error('Failed to create AI chat room:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Xóa lịch sử tin nhắn trong room
+   * @param {number} chatRoomId - ID của chat room
+   */
+  clearHistory: async (chatRoomId) => {
+    try {
+      await axios.delete(`/api/v1/Chat/rooms/${chatRoomId}/history`);
+      return true;
+    } catch (error) {
+      console.error('Failed to clear chat history:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Tạo chat room với giảng viên học vụ (admin)
+   */
+  createAcademicStaffRoom: async () => {
+    try {
+      const response = await axios.post('/api/v1/Chat/academic-staff');
+      return response;
+    } catch (error) {
+      console.error('Failed to create academic staff chat room:', error);
+      return null;
+    }
+  },
+
+  /**
    * Legacy - Lấy danh sách chat rooms (giữ để tương thích ngược)
    * @deprecated Use getMyChatRooms instead
    */
