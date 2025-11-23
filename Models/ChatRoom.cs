@@ -61,7 +61,7 @@ namespace StudentManagement.Models
 
         public MessageType MessageType { get; set; } = MessageType.Text;
         
-        public DateTime SentAt { get; set; } = DateTime.UtcNow;
+        public DateTime SentAt { get; set; } = DateTime.Now;
         public DateTime? EditedAt { get; set; }
         public bool IsDeleted { get; set; } = false;
         

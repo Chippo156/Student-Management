@@ -114,18 +114,11 @@ namespace StudentManagement.Services
             _context.ChatRooms.Add(chatRoom);
             await _context.SaveChangesAsync();
 
-            // Add academic staff as participants (all lecturers with AcademicStaff role in this department)
-            var academicStaffs = await _context.Lecturers
-                .Include(l => l.User)
-                    .ThenInclude(u => u.Role)
-                .Where(l => l.Department.DepartmentId == student.Class.Program.Department.DepartmentId &&
-                           l.User.Role.RoleName == "AcademicStaff")
-                .ToListAsync();
-
-            foreach (var staff in academicStaffs)
-            {
-                await AddParticipantAsync(chatRoom.ChatRoomId, staff.User.Username, ParticipantRole.Lecturer);
-            }
+            var admin = await _context.Users
+                .Where(u => u.Role.RoleName == "Admin")
+                .FirstOrDefaultAsync();
+            
+            await AddParticipantAsync(chatRoom.ChatRoomId, admin.Username, ParticipantRole.Assistant);
 
             // Add requesting student as participant
             await EnsureUserIsParticipantAsync(chatRoom.ChatRoomId, studentUsername);
@@ -215,6 +208,40 @@ namespace StudentManagement.Services
             return userMessageResponse;
         }
 
+        public async Task<bool> ClearChatHistoryAsync(int chatRoomId, string username)
+        {
+            // Verify user has access to chat room
+            var hasAccess = await VerifyUserAccessToChatRoomAsync(username, chatRoomId);
+            if (!hasAccess)
+                return false;
+
+            // Soft delete all messages in the chat room
+            var messages = await _context.ChatMessages
+                .Where(m => m.ChatRoomId == chatRoomId)
+                .ToListAsync();
+
+            foreach (var message in messages)
+            {
+                message.IsDeleted = true;
+            }
+
+            _context.ChatMessages.UpdateRange(messages);
+            var result = await _context.SaveChangesAsync() > 0;
+
+            if (result)
+            {
+                // Notify all participants that chat history was cleared
+                await _hubContext.Clients.Group($"ChatRoom_{chatRoomId}").SendAsync("ChatHistoryCleared", new
+                {
+                    ChatRoomId = chatRoomId,
+                    ClearedBy = username,
+                    ClearedAt = DateTime.Now
+                });
+            }
+
+            return result;
+        }
+
         private async Task SendAIWelcomeMessage(int chatRoomId, string studentName)
         {
             var welcomeMessage = $@"👋 Xin chào {studentName}!
@@ -244,7 +271,7 @@ Hãy đặt câu hỏi bất cứ lúc nào bạn cần hỗ trợ! 😊";
                 SenderId = null, // Special ID for AI
                 Content = welcomeMessage,
                 MessageType = MessageType.Text,
-                SentAt = DateTime.UtcNow
+                SentAt = DateTime.Now
             };
 
             _context.ChatMessages.Add(aiMessage);
@@ -316,7 +343,7 @@ Hãy đặt câu hỏi bất cứ lúc nào bạn cần hỗ trợ! 😊";
                     SenderId = null, // Special ID for AI
                     Content = aiResponse,
                     MessageType = MessageType.Text,
-                    SentAt = DateTime.UtcNow
+                    SentAt = DateTime.Now
                 };
 
                 _context.ChatMessages.Add(aiMessage);
@@ -365,8 +392,7 @@ Hãy đặt câu hỏi bất cứ lúc nào bạn cần hỗ trợ! 😊";
                     SenderId = null,
                     Content = "Xin lỗi, tôi đang gặp sự cố kỹ thuật. Vui lòng thử lại sau. 😅",
                     MessageType = MessageType.Text,
-                    SentAt = DateTime.UtcNow
-                };
+                    SentAt = DateTime.Now            };
 
                 _context.ChatMessages.Add(errorMessage);
                 await _context.SaveChangesAsync();
@@ -482,7 +508,7 @@ Hãy đặt câu hỏi bất cứ lúc nào bạn cần hỗ trợ! 😊";
 
             if (participant != null)
             {
-                participant.LastSeenAt = DateTime.UtcNow;
+                participant.LastSeenAt = DateTime.Now;
                 _context.ChatRoomParticipants.Update(participant);
                 await _context.SaveChangesAsync();
             }
@@ -501,7 +527,7 @@ Hãy đặt câu hỏi bất cứ lúc nào bạn cần hỗ trợ! 😊";
 
             foreach (var participant in participants)
             {
-                participant.LastSeenAt = DateTime.UtcNow;
+                participant.LastSeenAt = DateTime.Now;
             }
 
             _context.ChatRoomParticipants.UpdateRange(participants);
@@ -600,7 +626,7 @@ Hãy đặt câu hỏi bất cứ lúc nào bạn cần hỗ trợ! 😊";
                 .CountAsync(crp => crp.ChatRoomId == chatRoom.ChatRoomId && crp.IsActive);
 
             // Get online count (users who were active in last 5 minutes)
-            var onlineThreshold = DateTime.UtcNow.AddMinutes(-5);
+            var onlineThreshold = DateTime.Now.AddMinutes(-5);
             var onlineCount = await _context.ChatRoomParticipants
                 .CountAsync(crp => crp.ChatRoomId == chatRoom.ChatRoomId &&
                                   crp.IsActive &&
@@ -698,6 +724,7 @@ Hãy đặt câu hỏi bất cứ lúc nào bạn cần hỗ trợ! 😊";
             };
         }
 
+       
         private static string GetMessageTypeText(MessageType messageType)
         {
             return messageType switch

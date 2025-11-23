@@ -159,5 +159,25 @@ namespace StudentManagement.Controllers
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
+
+        [HttpDelete("rooms/{chatRoomId}/history")]
+        public async Task<IActionResult> ClearChatHistory(int chatRoomId)
+        {
+            try
+            {
+                var username = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+                
+                var result = await chatService.ClearChatHistoryAsync(chatRoomId, username);
+                
+                if (!result)
+                    return BadRequest(new { message = "Không thể xóa lịch sử chat hoặc không có quyền truy cập" });
+
+                return Ok(new { message = "Đã xóa lịch sử chat thành công" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

@@ -35,7 +35,7 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(grades, "Section-student grades retrieved successfully"));
         }
 
-        [HttpGet("GetAllStudentGrades/section/{sectionId}")]
+        [HttpGet("GetAllStudentGradesBySection/{sectionId}")]
         [Authorize(Roles = "Lecturer")]
         public async Task<IActionResult> GetAllGradesByStudentAndSection(int sectionId)
         {

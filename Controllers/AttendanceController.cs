@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
+using StudentManagement.Services;
 using StudentManagement.Services.Interface;
 using System.Security.Claims;
 
@@ -158,6 +159,35 @@ namespace StudentManagement.Controllers
                 }
 
                 return Ok(ApiResponse.SuccessResponse(null, "Attendance session deleted successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+
+        [HttpGet("section/{sectionId}/statistics")]
+        [Authorize(Roles = "Lecturer,AcademicStaff,Admin")]
+        public async Task<IActionResult> GetSectionAttendanceStatistics(int sectionId)
+        {
+            try
+            {
+                var statistics = await attendanceService.GetSectionAttendanceStatisticsAsync(sectionId);
+                return Ok(ApiResponse.SuccessResponse(statistics, "Lấy thống kê điểm danh lớp học phần thành công"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+        [HttpGet("section/{sectionId}/export")]
+        [Authorize(Roles = "Lecturer,AcademicStaff,Admin")]
+        public async Task<IActionResult> ExportSectionAttendance(int sectionId)
+        {
+            try
+            {
+                var exportData = await attendanceService.GetSectionAttendanceExportAsync(sectionId);
+                return Ok(ApiResponse.SuccessResponse(exportData, "Xuất danh sách điểm danh thành công"));
             }
             catch (Exception ex)
             {

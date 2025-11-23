@@ -411,9 +411,496 @@ namespace StudentManagement.Services
             return await context.SaveChangesAsync() > 0;
         }
 
-        public Task<StudentAttendanceStatisticsResponse> GetStudentAttendanceStatisticsAsync(int studentId, int sectionId)
+        public async Task<StudentAttendanceStatisticsResponse> GetStudentAttendanceStatisticsAsync(int studentId, int sectionId)
         {
-            throw new NotImplementedException();
+            // Lấy thông tin sinh viên
+            var student = await context.Students
+                .Include(s => s.User)
+                .Include(s => s.Class)
+                .FirstOrDefaultAsync(s => s.Id == studentId)
+                ?? throw new Exception($"Student with ID {studentId} not found");
+
+            // Lấy thông tin section
+            var section = await context.Sections
+                .Include(s => s.CurriculumCourse)
+                    .ThenInclude(cc => cc.Course)
+                .FirstOrDefaultAsync(s => s.SectionId == sectionId)
+                ?? throw new Exception($"Section with ID {sectionId} not found");
+
+            // Kiểm tra xem sinh viên có đăng ký học phần này không
+            var enrollment = await context.Enrollments
+                .FirstOrDefaultAsync(e => e.Student.Id == studentId &&
+                                         e.Section.SectionId == sectionId &&
+                                         e.enrollmentStatus == EnrollmentStatus.Enrolled);
+
+            if (enrollment == null)
+            {
+                throw new Exception("Student is not enrolled in this section");
+            }
+
+            // Lấy tất cả attendance records của sinh viên trong section này
+            var attendanceRecords = await context.Attendances
+                .Include(a => a.AttendanceSession)
+                .Where(a => a.StudentId == studentId && a.SectionId == sectionId)
+                .OrderBy(a => a.AttendanceSession.SessionDate)
+                .ToListAsync();
+
+            // Lấy tất cả attendance sessions của section để biết tổng số buổi học
+            var allSessions = await context.AttendanceSessions
+                .Where(ats => ats.SectionId == sectionId && ats.IsActive)
+                .CountAsync();
+
+            // Tính toán thống kê
+            var totalSessions = allSessions;
+            var presentCount = attendanceRecords.Count(a => a.Status == AttendanceStatus.Present);
+            var absentCount = attendanceRecords.Count(a => a.Status == AttendanceStatus.Absent);
+            var lateCount = attendanceRecords.Count(a => a.Status == AttendanceStatus.Late);
+            var excusedCount = attendanceRecords.Count(a => a.Status == AttendanceStatus.Excused);
+            var leftEarlyCount = attendanceRecords.Count(a => a.Status == AttendanceStatus.Left);
+
+            // Tính tỷ lệ điểm danh (Present + Late được coi là có mặt)
+            var attendanceRate = totalSessions > 0 ?
+                Math.Round((double)(presentCount + lateCount) / totalSessions * 100, 2) : 0.0;
+
+            // Tạo danh sách chi tiết attendance records
+            var attendanceDetailRecords = attendanceRecords.Select(a => new Models.Dto.Response.StudentAttendanceRecord
+            {
+                AttendanceSessionId = a.AttendanceSessionId,
+                SessionDate = a.AttendanceSession.SessionDate,
+                SessionName = a.AttendanceSession.SessionName,
+                Status = a.Status,
+                StatusVietnamese = GetAttendanceStatusInVietnamese(a.Status),
+                Note = a.Note
+            }).ToList();
+
+            return new StudentAttendanceStatisticsResponse
+            {
+                StudentId = student.Id,
+                MSSV = student.MSSV,
+                StudentName = student.User.FullName,
+                ClassName = student.Class.ClassName,
+                SectionId = section.SectionId,
+                SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
+                CourseName = section.CurriculumCourse.Course.CourseName,
+                TotalSessions = totalSessions,
+                PresentCount = presentCount,
+                AbsentCount = absentCount,
+                LateCount = lateCount,
+                ExcusedCount = excusedCount,
+                AttendanceRate = attendanceRate,
+                AttendanceRecords = attendanceDetailRecords
+            };
+        }
+
+        public async Task<SectionAllAttendanceStatisticsResponse> GetSectionAttendanceStatisticsAsync(int sectionId)
+        {
+            // Kiểm tra section tồn tại
+            var section = await context.Sections
+                .Include(s => s.CurriculumCourse)
+                    .ThenInclude(cc => cc.Course)
+                .Include(s => s.Semester)
+                .Include(s => s.Lecturer)
+                    .ThenInclude(l => l.User)
+                .FirstOrDefaultAsync(s => s.SectionId == sectionId)
+                ?? throw new Exception($"Section with ID {sectionId} not found");
+
+            // Lấy tất cả sinh viên đăng ký section này
+            var enrolledStudents = await context.Enrollments
+                .Include(e => e.Student)
+                    .ThenInclude(s => s.User)
+                .Include(e => e.Student)
+                    .ThenInclude(s => s.Class)
+                .Where(e => e.Section.SectionId == sectionId &&
+                           e.enrollmentStatus == EnrollmentStatus.Enrolled)
+                .Select(e => e.Student)
+                .OrderBy(s => s.MSSV)
+                .ToListAsync();
+
+            if (!enrolledStudents.Any())
+            {
+                throw new Exception("No students enrolled in this section");
+            }
+
+            // Lấy tất cả attendance sessions của section
+            var attendanceSessions = await context.AttendanceSessions
+                .Where(ats => ats.SectionId == sectionId && ats.IsActive)
+                .OrderBy(ats => ats.SessionDate)
+                .ToListAsync();
+
+            // Lấy tất cả attendance records của section này
+            var studentIds = enrolledStudents.Select(s => s.Id).ToList();
+            var allAttendanceRecords = await context.Attendances
+                .Include(a => a.AttendanceSession)
+                .Include(a => a.Student)
+                .Where(a => a.SectionId == sectionId && studentIds.Contains(a.StudentId))
+                .ToListAsync();
+
+            // Tính thống kê cho từng sinh viên
+            var studentAttendanceDetails = new List<StudentAttendanceDetail>();
+
+            foreach (var student in enrolledStudents)
+            {
+                var studentAttendances = allAttendanceRecords
+                    .Where(a => a.StudentId == student.Id)
+                    .ToList();
+
+                var presentCount = studentAttendances.Count(a => a.Status == AttendanceStatus.Present);
+                var absentCount = studentAttendances.Count(a => a.Status == AttendanceStatus.Absent);
+                var lateCount = studentAttendances.Count(a => a.Status == AttendanceStatus.Late);
+                var excusedCount = studentAttendances.Count(a => a.Status == AttendanceStatus.Excused);
+                var leftEarlyCount = studentAttendances.Count(a => a.Status == AttendanceStatus.Left);
+
+                var totalSessions = attendanceSessions.Count;
+                var attendanceRate = totalSessions > 0 ?
+                    Math.Round((double)(presentCount + lateCount) / totalSessions * 100, 2) : 0;
+                var presentRate = totalSessions > 0 ?
+                    Math.Round((double)presentCount / totalSessions * 100, 2) : 0;
+
+                // Chi tiết từng buổi học
+                var sessionDetails = new List<StudentSessionDetail>();
+                foreach (var session in attendanceSessions)
+                {
+                    var attendance = studentAttendances.FirstOrDefault(a => a.AttendanceSessionId == session.AttendanceSessionId);
+
+                    sessionDetails.Add(new StudentSessionDetail
+                    {
+                        AttendanceSessionId = session.AttendanceSessionId,
+                        SessionDate = session.SessionDate,
+                        SessionName = session.SessionName,
+                        Status = attendance?.Status.ToString() ?? "Unknown",
+                        StatusVietnamese = attendance != null ? GetAttendanceStatusInVietnamese(attendance.Status) : "Chưa điểm danh",
+                        Note = attendance?.Note
+                    });
+                }
+
+                var studentDetail = new StudentAttendanceDetail
+                {
+                    StudentId = student.Id,
+                    MSSV = student.MSSV,
+                    StudentName = student.User.FullName,
+                    ClassName = student.Class.ClassName,
+                    TotalSessions = totalSessions,
+                    PresentCount = presentCount,
+                    AbsentCount = absentCount,
+                    LateCount = lateCount,
+                    ExcusedCount = excusedCount,
+                    LeftEarlyCount = leftEarlyCount,
+                    AttendanceRate = attendanceRate,
+                    PresentRate = presentRate,
+                    AttendanceLevel = GetAttendanceLevel(attendanceRate),
+                    SessionDetails = sessionDetails
+                };
+
+                studentAttendanceDetails.Add(studentDetail);
+            }
+
+            // Tính thống kê theo buổi học
+            var sessionAttendanceDetails = new List<SessionAttendanceDetail>();
+            int sessionNumber = 1;
+
+            foreach (var session in attendanceSessions)
+            {
+                var sessionAttendances = allAttendanceRecords
+                    .Where(a => a.AttendanceSessionId == session.AttendanceSessionId)
+                    .ToList();
+
+                var presentCount = sessionAttendances.Count(a => a.Status == AttendanceStatus.Present);
+                var absentCount = sessionAttendances.Count(a => a.Status == AttendanceStatus.Absent);
+                var lateCount = sessionAttendances.Count(a => a.Status == AttendanceStatus.Late);
+                var excusedCount = sessionAttendances.Count(a => a.Status == AttendanceStatus.Excused);
+                var leftEarlyCount = sessionAttendances.Count(a => a.Status == AttendanceStatus.Left);
+
+                var totalStudents = enrolledStudents.Count;
+                var attendanceRate = totalStudents > 0 ?
+                    Math.Round((double)(presentCount + lateCount) / totalStudents * 100, 2) : 0;
+
+                var sessionDetail = new SessionAttendanceDetail
+                {
+                    AttendanceSessionId = session.AttendanceSessionId,
+                    SessionDate = session.SessionDate,
+                    SessionName = session.SessionName,
+                    SessionNumber = sessionNumber++,
+                    TotalStudents = totalStudents,
+                    PresentCount = presentCount,
+                    AbsentCount = absentCount,
+                    LateCount = lateCount,
+                    ExcusedCount = excusedCount,
+                    LeftEarlyCount = leftEarlyCount,
+                    AttendanceRate = attendanceRate
+                };
+
+                sessionAttendanceDetails.Add(sessionDetail);
+            }
+
+            // Tính tổng thống kê
+            var totalAttendanceRecords = allAttendanceRecords.Count;
+            var totalPresentRecords = allAttendanceRecords.Count(a => a.Status == AttendanceStatus.Present);
+            var totalAbsentRecords = allAttendanceRecords.Count(a => a.Status == AttendanceStatus.Absent);
+            var totalLateRecords = allAttendanceRecords.Count(a => a.Status == AttendanceStatus.Late);
+            var totalExcusedRecords = allAttendanceRecords.Count(a => a.Status == AttendanceStatus.Excused);
+            var totalLeftEarlyRecords = allAttendanceRecords.Count(a => a.Status == AttendanceStatus.Left);
+
+            var overallAttendanceRate = totalAttendanceRecords > 0 ?
+                Math.Round((double)(totalPresentRecords + totalLateRecords) / totalAttendanceRecords * 100, 2) : 0;
+
+            var attendanceSummary = new AttendanceStatusSummary
+            {
+                TotalPresentRecords = totalPresentRecords,
+                TotalAbsentRecords = totalAbsentRecords,
+                TotalLateRecords = totalLateRecords,
+                TotalExcusedRecords = totalExcusedRecords,
+                TotalLeftEarlyRecords = totalLeftEarlyRecords,
+                PresentPercentage = totalAttendanceRecords > 0 ?
+                    Math.Round((double)totalPresentRecords / totalAttendanceRecords * 100, 2) : 0,
+                AbsentPercentage = totalAttendanceRecords > 0 ?
+                    Math.Round((double)totalAbsentRecords / totalAttendanceRecords * 100, 2) : 0,
+                LatePercentage = totalAttendanceRecords > 0 ?
+                    Math.Round((double)totalLateRecords / totalAttendanceRecords * 100, 2) : 0,
+                ExcusedPercentage = totalAttendanceRecords > 0 ?
+                    Math.Round((double)totalExcusedRecords / totalAttendanceRecords * 100, 2) : 0,
+                LeftEarlyPercentage = totalAttendanceRecords > 0 ?
+                    Math.Round((double)totalLeftEarlyRecords / totalAttendanceRecords * 100, 2) : 0
+            };
+
+            return new SectionAllAttendanceStatisticsResponse
+            {
+                SectionId = section.SectionId,
+                SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
+                CourseCode = section.CurriculumCourse.Course.CourseCode,
+                CourseName = section.CurriculumCourse.Course.CourseName,
+                SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
+                LecturerName = section.Lecturer?.User?.FullName ?? "Not Assigned",
+                TotalStudents = enrolledStudents.Count,
+                TotalSessions = attendanceSessions.Count,
+                OverallAttendanceRate = overallAttendanceRate,
+                StudentAttendanceDetails = studentAttendanceDetails,
+                SessionAttendanceDetails = sessionAttendanceDetails,
+                AttendanceSummary = attendanceSummary
+            };
+        }
+
+        public async Task<SectionAttendanceExportResponse> GetSectionAttendanceExportAsync(int sectionId)
+        {
+            // Kiểm tra section tồn tại
+            var section = await context.Sections
+                .Include(s => s.CurriculumCourse)
+                    .ThenInclude(cc => cc.Course)
+                .Include(s => s.Semester)
+                .Include(s => s.Lecturer)
+                    .ThenInclude(l => l.User)
+                .FirstOrDefaultAsync(s => s.SectionId == sectionId)
+                ?? throw new Exception($"Section with ID {sectionId} not found");
+
+            // Lấy tất cả sinh viên đăng ký section này
+            var enrolledStudents = await context.Enrollments
+                .Include(e => e.Student)
+                    .ThenInclude(s => s.User)
+                .Include(e => e.Student)
+                    .ThenInclude(s => s.Class)
+                .Where(e => e.Section.SectionId == sectionId &&
+                           e.enrollmentStatus == EnrollmentStatus.Enrolled)
+                .OrderBy(e => e.Student.MSSV)
+                .ToListAsync();
+
+            if (!enrolledStudents.Any())
+            {
+                throw new Exception("No students enrolled in this section");
+            }
+
+            // Lấy tất cả attendance sessions của section (đã có điểm danh)
+            var attendanceSessions = await context.AttendanceSessions
+                .Where(ats => ats.SectionId == sectionId && ats.IsActive)
+                .OrderBy(ats => ats.SessionDate)
+                .ToListAsync();
+
+            // Lấy tất cả attendance records
+            var studentIds = enrolledStudents.Select(e => e.Student.Id).ToList();
+            var sessionIds = attendanceSessions.Select(s => s.AttendanceSessionId).ToList();
+
+            var allAttendanceRecords = await context.Attendances
+                .Include(a => a.AttendanceSession)
+                .Where(a => studentIds.Contains(a.StudentId) && sessionIds.Contains(a.AttendanceSessionId))
+                .ToListAsync();
+
+            // Tạo session headers
+            var sessionHeaders = attendanceSessions.Select((session, index) => new AttendanceSessionHeader
+            {
+                AttendanceSessionId = session.AttendanceSessionId,
+                SessionName = session.SessionName,
+                SessionDate = session.SessionDate,
+                SessionNumber = index + 1
+            }).ToList();
+
+            // Tạo ma trận điểm danh cho từng sinh viên
+            var studentRows = new List<StudentAttendanceRow>();
+
+            foreach (var enrollment in enrolledStudents)
+            {
+                var student = enrollment.Student;
+                var studentAttendances = allAttendanceRecords
+                    .Where(a => a.StudentId == student.Id)
+                    .ToList();
+
+                // Tạo attendance matrix
+                var attendanceMatrix = new Dictionary<int, AttendanceCell>();
+
+                foreach (var session in attendanceSessions)
+                {
+                    var attendance = studentAttendances.FirstOrDefault(a => a.AttendanceSessionId == session.AttendanceSessionId);
+
+                    var cell = new AttendanceCell();
+
+                    if (attendance != null)
+                    {
+                        cell.Status = attendance.Status.ToString();
+                        cell.StatusSymbol = GetStatusSymbol(attendance.Status);
+                        cell.StatusVietnamese = GetAttendanceStatusInVietnamese(attendance.Status);
+                        cell.Note = attendance.Note;
+                        cell.CellColor = GetStatusColor(attendance.Status);
+                    }
+                    else
+                    {
+                        // Chưa điểm danh hoặc không có dữ liệu
+                        cell.Status = "Unknown";
+                        cell.StatusSymbol = "?";
+                        cell.StatusVietnamese = "Chưa điểm danh";
+                        cell.Note = null;
+                        cell.CellColor = "#f0f0f0"; // Gray
+                    }
+
+                    attendanceMatrix[session.AttendanceSessionId] = cell;
+                }
+
+                // Tính thống kê cho sinh viên
+                var presentCount = studentAttendances.Count(a => a.Status == AttendanceStatus.Present);
+                var absentCount = studentAttendances.Count(a => a.Status == AttendanceStatus.Absent);
+                var lateCount = studentAttendances.Count(a => a.Status == AttendanceStatus.Late);
+                var excusedCount = studentAttendances.Count(a => a.Status == AttendanceStatus.Excused);
+
+                var totalSessions = attendanceSessions.Count;
+                var attendanceRate = totalSessions > 0 ?
+                    Math.Round((double)(presentCount + lateCount) / totalSessions * 100, 2) : 0;
+
+                var studentRow = new StudentAttendanceRow
+                {
+                    StudentId = student.Id,
+                    MSSV = student.MSSV,
+                    StudentName = student.User.FullName,
+                    ClassName = student.Class.ClassName,
+                    AttendanceMatrix = attendanceMatrix,
+                    TotalPresent = presentCount,
+                    TotalAbsent = absentCount,
+                    TotalLate = lateCount,
+                    TotalExcused = excusedCount,
+                    AttendanceRate = attendanceRate,
+                    AttendanceLevel = GetAttendanceLevel(attendanceRate)
+                };
+
+                studentRows.Add(studentRow);
+            }
+
+            // Tạo thống kê cho từng buổi học
+            var sessionSummaries = new List<SessionStatisticsSummary>();
+
+            foreach (var (session, index) in attendanceSessions.Select((s, i) => (s, i)))
+            {
+                var sessionAttendances = allAttendanceRecords
+                    .Where(a => a.AttendanceSessionId == session.AttendanceSessionId)
+                    .ToList();
+
+                var presentCount = sessionAttendances.Count(a => a.Status == AttendanceStatus.Present);
+                var absentCount = sessionAttendances.Count(a => a.Status == AttendanceStatus.Absent);
+                var lateCount = sessionAttendances.Count(a => a.Status == AttendanceStatus.Late);
+                var excusedCount = sessionAttendances.Count(a => a.Status == AttendanceStatus.Excused);
+                var leftEarlyCount = sessionAttendances.Count(a => a.Status == AttendanceStatus.Left);
+
+                var totalStudents = enrolledStudents.Count;
+                var recordedCount = sessionAttendances.Count;
+                var unknownCount = totalStudents - recordedCount;
+
+                var attendanceRate = totalStudents > 0 ?
+                    Math.Round((double)(presentCount + lateCount) / totalStudents * 100, 2) : 0;
+
+                var summary = new SessionStatisticsSummary
+                {
+                    AttendanceSessionId = session.AttendanceSessionId,
+                    SessionName = session.SessionName,
+                    SessionDate = session.SessionDate,
+                    SessionNumber = index + 1,
+                    PresentCount = presentCount,
+                    AbsentCount = absentCount,
+                    LateCount = lateCount,
+                    ExcusedCount = excusedCount,
+                    LeftEarlyCount = leftEarlyCount,
+                    UnknownCount = unknownCount,
+                    AttendanceRate = attendanceRate,
+                    PresentPercentage = totalStudents > 0 ? Math.Round((double)presentCount / totalStudents * 100, 2) : 0,
+                    AbsentPercentage = totalStudents > 0 ? Math.Round((double)absentCount / totalStudents * 100, 2) : 0
+                };
+
+                sessionSummaries.Add(summary);
+            }
+
+            // Tính thống kê tổng
+            var totalAttendanceRecords = allAttendanceRecords.Count;
+            var totalPossibleRecords = enrolledStudents.Count * attendanceSessions.Count;
+            var overallAttendanceRate = totalPossibleRecords > 0 ?
+                Math.Round((double)allAttendanceRecords.Count(a => a.Status == AttendanceStatus.Present || a.Status == AttendanceStatus.Late) / totalPossibleRecords * 100, 2) : 0;
+
+            return new SectionAttendanceExportResponse
+            {
+                SectionId = section.SectionId,
+                SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
+                CourseCode = section.CurriculumCourse.Course.CourseCode,
+                CourseName = section.CurriculumCourse.Course.CourseName,
+                SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
+                LecturerName = section.Lecturer?.User?.FullName ?? "Not Assigned",
+                ExportedAt = DateTime.UtcNow,
+                TotalStudents = enrolledStudents.Count,
+                TotalSessions = attendanceSessions.Count,
+                OverallAttendanceRate = overallAttendanceRate,
+                SessionHeaders = sessionHeaders,
+                StudentRows = studentRows,
+                SessionSummaries = sessionSummaries
+            };
+        }
+
+        private static string GetStatusSymbol(AttendanceStatus status)
+        {
+            return status switch
+            {
+                AttendanceStatus.Present => "P",
+                AttendanceStatus.Absent => "A",
+                AttendanceStatus.Late => "L",
+                AttendanceStatus.Excused => "E",
+                AttendanceStatus.Left => "X",
+                _ => "?"
+            };
+        }
+
+        private static string GetStatusColor(AttendanceStatus status)
+        {
+            return status switch
+            {
+                AttendanceStatus.Present => "#4CAF50",     // Green
+                AttendanceStatus.Absent => "#F44336",      // Red  
+                AttendanceStatus.Late => "#FF9800",        // Orange
+                AttendanceStatus.Excused => "#2196F3",     // Blue
+                AttendanceStatus.Left => "#9C27B0",        // Purple
+                _ => "#f0f0f0"                             // Gray
+            };
+        }
+
+        private static string GetAttendanceLevel(double attendanceRate)
+        {
+            return attendanceRate switch
+            {
+                >= 90 => "Excellent", // Xuất sắc
+                >= 80 => "Good",      // Tốt
+                >= 70 => "Average",   // Trung bình
+                >= 60 => "Warning",   // Cảnh báo
+                _ => "Poor"           // Kém
+            };
         }
     }
 }

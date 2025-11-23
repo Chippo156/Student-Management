@@ -18,5 +18,6 @@ namespace StudentManagement.Services.Interface
         Task UpdateLastSeenAsync(string username, int chatRoomId);
         Task UpdateUserOfflineStatusAsync(string username);
         Task MarkMessageAsReadAsync(string username, int messageId);
+        Task<bool> ClearChatHistoryAsync(int chatRoomId, string username);
     }
 }

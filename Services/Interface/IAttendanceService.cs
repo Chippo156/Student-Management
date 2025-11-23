@@ -19,5 +19,7 @@ namespace StudentManagement.Services.Interface
         Task<StudentAttendanceStatisticsResponse> GetStudentAttendanceStatisticsAsync(int studentId, int sectionId);
         Task<bool> UpdateAttendanceAsync(int attendanceId, UpdateAttendanceRequest request, string lecturerCode);
         Task<bool> DeleteAttendanceSessionAsync(int attendanceSessionId, string lecturerCode);
+        Task<SectionAllAttendanceStatisticsResponse> GetSectionAttendanceStatisticsAsync(int sectionId);
+        Task<SectionAttendanceExportResponse> GetSectionAttendanceExportAsync(int sectionId);
     }
 }
