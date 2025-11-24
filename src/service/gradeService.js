@@ -66,10 +66,10 @@ const gradeService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'T�o i�m th�t b�i');
+          message.error(error.response.data.message || 'Tạo điểm thất bại');
         }
       } else {
-        message.error(error.message || 'T�o i�m th�t b�i');
+        message.error(error.message || 'Tạo điểm thất bại');
       }
       return null;
     }
@@ -89,7 +89,7 @@ const gradeService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'C�p nh�t i�m th�t b�i');
+          message.error(response?.message || 'Cập nhật điểm thất bại');
         }
         return null;
       }
@@ -102,10 +102,10 @@ const gradeService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'C�p nh�t i�m th�t b�i');
+          message.error(error.response.data.message || 'Cập nhật điểm thất bại');
         }
       } else {
-        message.error(error.message || 'C�p nh�t i�m th�t b�i');
+        message.error(error.message || 'Cập nhật điểm thất bại');
       }
       return null;
     }
@@ -124,12 +124,12 @@ const gradeService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'X�a i�m th�t b�i');
+          message.error(response?.message || 'Xóa điểm thất bại');
         }
         return null;
       }
 
-      message.success('X�a i�m th�nh c�ng');
+      message.success('Xóa điểm thành công');
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
@@ -137,10 +137,10 @@ const gradeService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'X�a i�m th�t b�i');
+          message.error(error.response.data.message || 'Xóa điểm thất bại');
         }
       } else {
-        message.error(error.message || 'X�a i�m th�t b�i');
+        message.error(error.message || 'Xóa điểm thất bại');
       }
       return null;
     }

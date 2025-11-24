@@ -46,7 +46,7 @@ const DAY_OF_WEEK = [
   { value: 7, label: 'Chủ nhật' },
 ];
 
-const SectionScheduleTab = ({ sectionId }) => {
+const SectionScheduleTab = ({ sectionId, section }) => {
   const theme = useTheme();
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -87,7 +87,17 @@ const SectionScheduleTab = ({ sectionId }) => {
     }
   };
 
+  // Calculate capacity per practice group
+  const calculatePracticeGroupCapacity = () => {
+    if (!section || !section.capacity || !section.practiceGroupCount) {
+      return 30; // Default
+    }
+    return Math.ceil(section.capacity / section.practiceGroupCount);
+  };
+
   const handleOpenDialog = (schedule = null) => {
+    const defaultPracticeCapacity = calculatePracticeGroupCapacity();
+
     if (schedule) {
       setEditingSchedule(schedule);
       setFormData({
@@ -99,7 +109,7 @@ const SectionScheduleTab = ({ sectionId }) => {
         room: schedule.room || '',
         onlineLink: schedule.onlineLink || null,
         groupName: schedule.practiceGroupName || '',
-        maxCapacity: schedule.practiceGroupCapacity || 30,
+        maxCapacity: schedule.practiceGroupCapacity || defaultPracticeCapacity,
         description: '',
       });
     } else {
@@ -113,7 +123,7 @@ const SectionScheduleTab = ({ sectionId }) => {
         room: '',
         onlineLink: null,
         groupName: '',
-        maxCapacity: 30,
+        maxCapacity: defaultPracticeCapacity,
         description: '',
       });
     }
@@ -370,7 +380,13 @@ const SectionScheduleTab = ({ sectionId }) => {
                   }
                   disabled={!!editingSchedule}
                 >
-                  {SCHEDULE_TYPES.map((type) => (
+                  {SCHEDULE_TYPES.filter((type) => {
+                    // Hide practice option if no lab credits
+                    if (type.value === 2 && section?.creditsLab === 0) {
+                      return false;
+                    }
+                    return true;
+                  }).map((type) => (
                     <MenuItem key={type.value} value={type.value}>
                       {type.label}
                     </MenuItem>
@@ -454,7 +470,7 @@ const SectionScheduleTab = ({ sectionId }) => {
             </Grid>
 
             {/* Practice Group Fields */}
-            {formData.scheduleTypeId === 2 && !editingSchedule && (
+            {formData.scheduleTypeId === 2 && (
               <>
                 <Grid item xs={12} md={8}>
                   <TextField
@@ -465,6 +481,7 @@ const SectionScheduleTab = ({ sectionId }) => {
                       setFormData({ ...formData, groupName: e.target.value })
                     }
                     placeholder="VD: Nhóm 1, Nhóm A"
+                    disabled={!!editingSchedule}
                   />
                 </Grid>
                 <Grid item xs={12} md={4}>
@@ -476,22 +493,25 @@ const SectionScheduleTab = ({ sectionId }) => {
                     onChange={(e) =>
                       setFormData({ ...formData, maxCapacity: e.target.value })
                     }
-                    inputProps={{ min: 1, max: 50 }}
+                    inputProps={{ min: 1, max: 100 }}
+                    disabled={!!editingSchedule}
                   />
                 </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Mô tả (tùy chọn)"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    multiline
-                    rows={2}
-                    placeholder="Ghi chú thêm về nhóm thực hành..."
-                  />
-                </Grid>
+                {!editingSchedule && (
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Mô tả (tùy chọn)"
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({ ...formData, description: e.target.value })
+                      }
+                      multiline
+                      rows={2}
+                      placeholder="Ghi chú thêm về nhóm thực hành..."
+                    />
+                  </Grid>
+                )}
               </>
             )}
           </Grid>

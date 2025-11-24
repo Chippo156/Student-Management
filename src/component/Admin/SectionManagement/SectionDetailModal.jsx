@@ -611,7 +611,7 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
           )}
 
           {activeTab === 1 && (
-            <SectionScheduleTab sectionId={section.sectionId} />
+            <SectionScheduleTab sectionId={section.sectionId} section={section} />
           )}
 
           {activeTab === 2 && (
