@@ -116,7 +116,7 @@ const GradeEntry = () => {
 
     try {
       const gradeData = {
-        studentId:selectedStudent.user.userId,
+        studentId:selectedStudent.id,
         assessmentId: assessment.assessmentId,
         score,
       };

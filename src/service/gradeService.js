@@ -53,12 +53,12 @@ const gradeService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'T�o i�m th�t b�i');
+          message.error(response?.message || 'Tạo điểm thất bại');
         }
         return null;
       }
 
-      message.success('T�o i�m th�nh c�ng');
+      message.success('Tạo điểm thành công');
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
@@ -94,7 +94,7 @@ const gradeService = {
         return null;
       }
 
-      message.success('C�p nh�t i�m th�nh c�ng');
+      message.success('Cập nhật điểm thành công');
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
