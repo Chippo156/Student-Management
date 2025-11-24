@@ -66,11 +66,11 @@ namespace StudentManagement.Services
                     throw new Exception("Không tìm thấy lớp học");
                 }
 
-                // Validate that the class program matches the curriculum course program
-                if (classSection.Program.AcademicProgramId != curriculumCourse.Program.AcademicProgramId)
-                {
-                    throw new Exception("Chương trình của lớp học không phù hợp với chương trình học");
-                }
+                //// Validate that the class program matches the curriculum course program
+                //if (classSection.Program.AcademicProgramId != curriculumCourse.Program.AcademicProgramId)
+                //{
+                //    throw new Exception("Chương trình của lớp học không phù hợp với chương trình học");
+                //}
 
                 // Validate capacity
                 if (request.Capacity <= 0)
@@ -1281,6 +1281,8 @@ namespace StudentManagement.Services
                     .Include(s => s.Lecturer)
                     .Include(s => s.Semester)
                     .Include(s => s.Class)
+                    .Include(s => s.CurriculumCourse.Program)
+                       .ThenInclude(p => p.Department)
                     .FirstOrDefaultAsync(s => s.SectionId == sectionId);
 
                 if (section == null)

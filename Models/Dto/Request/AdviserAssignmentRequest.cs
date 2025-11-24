@@ -1,16 +1,16 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace StudentManagement.Models.Dto.Request
 {
     public class AdviserAssignmentRequest
     {
-        [Required(ErrorMessage = "Lecturer ID is required")]
+        [Required(ErrorMessage = "Tên giảng viên là bắt buộc")]
         public int LecturerId { get; set; }
         
-        [Required(ErrorMessage = "Class ID is required")]
+        [Required(ErrorMessage = "Id class là bắt buộc")]
         public int ClassId { get; set; }
         
-        [Required(ErrorMessage = "Start date is required")]
+        [Required(ErrorMessage = "Ngày bắt đầu là bắt buộc")]
         public DateOnly StartDate { get; set; }
         
         public DateOnly? EndDate { get; set; }

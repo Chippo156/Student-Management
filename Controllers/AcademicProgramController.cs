@@ -107,7 +107,7 @@ namespace StudentManagement.Controllers
                     return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, "Student not found.", null));
                 }
 
-                var curriculum = await programService.GetProgramCurriculumAsync(student.ProgramId);
+                var curriculum = await programService.GetProgramCurriculumAsync(student.ProgramId, student.MSSV);
                 return Ok(ApiResponse.SuccessResponse(curriculum, "Your program curriculum retrieved successfully"));
             }
             catch (Exception ex)

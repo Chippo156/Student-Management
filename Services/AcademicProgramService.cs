@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
+using StudentManagement.Enum;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
@@ -154,7 +155,7 @@ namespace StudentManagement.Services
             return program;
         }
 
-        public async Task<ProgramCurriculumResponse> GetProgramCurriculumAsync(int programId)
+        public async Task<ProgramCurriculumResponse> GetProgramCurriculumAsync(int programId, string? mssv = null)
         {
             // Get program information
             var program = await context.Programs
@@ -180,6 +181,13 @@ namespace StudentManagement.Services
                 .Where(p => courseIds.Contains(p.CourseId))
                 .ToListAsync();
 
+            // **NEW: Get student progress if MSSV is provided**
+            Dictionary<int, StudentCourseProgress>? studentProgress = null;
+            if (!string.IsNullOrEmpty(mssv))
+            {
+                studentProgress = await GetStudentProgressAsync(mssv, courseIds);
+            }
+
             // Create the main response object
             var response = new ProgramCurriculumResponse
             {
@@ -188,7 +196,8 @@ namespace StudentManagement.Services
                 DegreeLevel = program.DegreeLevel,
                 TotalCreditsRequired = program.CreditsRequired,
                 DepartmentName = program.Department.DepartmentName,
-                FacultyName = program.Department.Faculty.FacultyName
+                FacultyName = program.Department.Faculty.FacultyName,
+                StudentMSSV = mssv
             };
 
             // Process each curriculum course
@@ -208,6 +217,9 @@ namespace StudentManagement.Services
                     })
                     .ToList();
 
+                // **NEW: Get student progress for this course**
+                var progress = studentProgress?.GetValueOrDefault(curriculumCourse.Course.CourseId);
+
                 var courseDetail = new CurriculumCourseDetail
                 {
                     CurriculumCourseId = curriculumCourse.Id,
@@ -219,7 +231,10 @@ namespace StudentManagement.Services
                     TotalCredits = curriculumCourse.Course.CreditsTheory + curriculumCourse.Course.CreditsLab,
                     IsRequired = curriculumCourse.isRequired,
                     SemesterSuggested = curriculumCourse.SemeterSuggested,
-                    Prerequisites = coursePrerequisites
+                    Prerequisites = coursePrerequisites,
+                    
+                    // **NEW: Student progress information**
+                    StudentProgress = progress
                 };
 
                 courseDetails.Add(courseDetail);
@@ -236,6 +251,26 @@ namespace StudentManagement.Services
                 
             response.RequiredCourseCount = courseDetails.Count(c => c.IsRequired);
             response.OptionalCourseCount = courseDetails.Count(c => !c.IsRequired);
+
+            // **NEW: Calculate student completion statistics**
+            if (studentProgress != null)
+            {
+                var completedRequiredCredits = courseDetails
+                    .Where(c => c.IsRequired && c.StudentProgress?.IsCompleted == true)
+                    .Sum(c => c.TotalCredits);
+                    
+                var completedOptionalCredits = courseDetails
+                    .Where(c => !c.IsRequired && c.StudentProgress?.IsCompleted == true)
+                    .Sum(c => c.TotalCredits);
+
+                response.StudentCompletedRequiredCredits = completedRequiredCredits;
+                response.StudentCompletedOptionalCredits = completedOptionalCredits;
+                response.StudentTotalCompletedCredits = completedRequiredCredits + completedOptionalCredits;
+                response.StudentCompletionRate = Math.Round((double)response.StudentTotalCompletedCredits / response.TotalCreditsRequired * 100, 2);
+                
+                response.StudentCompletedRequiredCourses = courseDetails.Count(c => c.IsRequired && c.StudentProgress?.IsCompleted == true);
+                response.StudentCompletedOptionalCourses = courseDetails.Count(c => !c.IsRequired && c.StudentProgress?.IsCompleted == true);
+            }
 
             // Group courses by type
             response.RequiredCourses = courseDetails
@@ -266,13 +301,146 @@ namespace StudentManagement.Services
                     TotalCredits = semesterCourses.Sum(c => c.TotalCredits),
                     RequiredCredits = semesterCourses.Where(c => c.IsRequired).Sum(c => c.TotalCredits),
                     OptionalCredits = semesterCourses.Where(c => !c.IsRequired).Sum(c => c.TotalCredits),
-                    Courses = semesterCourses.OrderBy(c => c.CourseCode).ToList()
+                    Courses = semesterCourses.OrderBy(c => c.CourseCode).ToList(),
+                    
+                    // **NEW: Student progress for semester**
+                    StudentCompletedCredits = studentProgress != null ? 
+                        semesterCourses.Where(c => c.StudentProgress?.IsCompleted == true).Sum(c => c.TotalCredits) : 0,
+                    StudentCompletedCourses = studentProgress != null ?
+                        semesterCourses.Count(c => c.StudentProgress?.IsCompleted == true) : 0
                 };
 
                 response.SemesterCourses.Add(semesterDetail);
             }
 
             return response;
+        }
+
+        // **NEW: Helper method to get student progress**
+        private async Task<Dictionary<int, StudentCourseProgress>> GetStudentProgressAsync(string mssv, List<int> courseIds)
+        {
+            var progressDict = new Dictionary<int, StudentCourseProgress>();
+
+            // Get student's final results
+            var finalResults = await context.FinalResults
+                .Include(fr => fr.Section)
+                    .ThenInclude(s => s.CurriculumCourse)
+                        .ThenInclude(cc => cc.Course)
+                .Include(fr => fr.Section.Semester)
+                .Where(fr => fr.Student.MSSV == mssv && 
+                            courseIds.Contains(fr.Section.CurriculumCourse.Course.CourseId))
+                .ToListAsync();
+
+            // Get student's current enrollments
+            var currentEnrollments = await context.Enrollments
+                .Include(e => e.Section)
+                    .ThenInclude(s => s.CurriculumCourse)
+                        .ThenInclude(cc => cc.Course)
+                .Include(e => e.Section.Semester)
+                .Where(e => e.Student.MSSV == mssv && 
+                        courseIds.Contains(e.Section.CurriculumCourse.Course.CourseId) &&
+                        e.enrollmentStatus == EnrollmentStatus.Enrolled)
+                .ToListAsync();
+
+            // Process final results
+            foreach (var result in finalResults)
+            {
+                var courseId = result.Section.CurriculumCourse.Course.CourseId;
+                var credits = result.Section.CurriculumCourse.Course.CreditsTheory + 
+                            result.Section.CurriculumCourse.Course.CreditsLab;
+
+                if (!progressDict.ContainsKey(courseId))
+                {
+                    progressDict[courseId] = new StudentCourseProgress
+                    {
+                        CourseId = courseId,
+                        HasTaken = true,
+                        IsCompleted = result.GradePoint >= 1.0, // D trở lên là đạt
+                        FinalScore = result.FinalScore,
+                        GradeLetter = result.GradeLetter,
+                        GradePoint = result.GradePoint,
+                        SemesterTaken = $"{result.Section.Semester.Year} - {result.Section.Semester.Term}",
+                        Status = result.GradePoint >= 1.0 ? "Đã đạt" : "Chưa đạt",
+                        CreditsEarned = result.GradePoint >= 1.0 ? credits : 0,
+                        AttemptCount = 1,
+                        CanRetake = result.GradePoint < 1.0,
+                        CanImprove = result.GradePoint >= 1.0 && result.GradePoint < 3.0
+                    };
+                }
+                else
+                {
+                    // Nếu đã có record (sinh viên học lại), cập nhật với kết quả tốt nhất
+                    var existing = progressDict[courseId];
+                    existing.AttemptCount++;
+                    
+                    if (result.GradePoint > existing.GradePoint)
+                    {
+                        existing.IsCompleted = result.GradePoint >= 1.0;
+                        existing.FinalScore = result.FinalScore;
+                        existing.GradeLetter = result.GradeLetter;
+                        existing.GradePoint = result.GradePoint;
+                        existing.SemesterTaken = $"{result.Section.Semester.Year} - {result.Section.Semester.Term}";
+                        existing.Status = result.GradePoint >= 1.0 ? "Đã đạt" : "Chưa đạt";
+                        existing.CreditsEarned = result.GradePoint >= 1.0 ? credits : 0;
+                    }
+                    
+                    existing.CanRetake = existing.GradePoint < 1.0;
+                    existing.CanImprove = existing.GradePoint >= 1.0 && existing.GradePoint < 3.0;
+                }
+            }
+
+            // Process current enrollments (for courses without final results yet)
+            foreach (var enrollment in currentEnrollments)
+            {
+                var courseId = enrollment.Section.CurriculumCourse.Course.CourseId;
+                
+                if (!progressDict.ContainsKey(courseId))
+                {
+                    progressDict[courseId] = new StudentCourseProgress
+                    {
+                        CourseId = courseId,
+                        HasTaken = true,
+                        IsCompleted = false,
+                        Status = "Đang học",
+                        SemesterTaken = $"{enrollment.Section.Semester.Year} - {enrollment.Section.Semester.Term}",
+                        AttemptCount = 1,
+                        CreditsEarned = 0,
+                        CanRetake = false,
+                        CanImprove = false
+                    };
+                }
+                else
+                {
+                    // Nếu đã có final result nhưng đang học lại
+                    var existing = progressDict[courseId];
+                    if (existing.Status != "Đang học")
+                    {
+                        existing.Status = $"{existing.Status} (Đang học lại)";
+                        existing.SemesterTaken += $" | Đang học: {enrollment.Section.Semester.Year} - {enrollment.Section.Semester.Term}";
+                    }
+                }
+            }
+
+            // Add courses that haven't been taken yet
+            foreach (var courseId in courseIds)
+            {
+                if (!progressDict.ContainsKey(courseId))
+                {
+                    progressDict[courseId] = new StudentCourseProgress
+                    {
+                        CourseId = courseId,
+                        HasTaken = false,
+                        IsCompleted = false,
+                        Status = "Chưa học",
+                        AttemptCount = 0,
+                        CreditsEarned = 0,
+                        CanRetake = false,
+                        CanImprove = false
+                    };
+                }
+            }
+
+            return progressDict;
         }
     }
 }

@@ -17,6 +17,6 @@ namespace StudentManagement.Services.Interface
         Task<AcademicProgram?> UpdateProgramAsync(int programId, AcademicProgramRequest request);
         Task<bool> DeleteProgramAsync(int programId);
         Task<IEnumerable<AcademicProgram>> GetProgramsByDepartmentAsync(int departmentId);
-        Task<ProgramCurriculumResponse> GetProgramCurriculumAsync(int programId);
+        Task<ProgramCurriculumResponse> GetProgramCurriculumAsync(int programId, string? mssv);
     }
 }

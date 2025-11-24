@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using StudentManagement.Enum;
+using System.Reflection;
 
 namespace StudentManagement.Models
 {
@@ -10,5 +11,6 @@ namespace StudentManagement.Models
         public Department Department { get; set; } = null!;
         public String Position { get; set; } = string.Empty;
         public String AcademicTitle { get; set; } = string.Empty;
+        public LecturerStatus LecturerStatus { get; set; } = LecturerStatus.Active;
     }
 }

@@ -42,37 +42,37 @@ namespace StudentManagement.Services
                 .FirstOrDefaultAsync()
                 ?? throw new Exception("Không tìm thấy giáo viên dạy lớp");
 
-            // Tìm room đã tồn tại
+            // **CHANGED: Tìm room riêng của sinh viên này với giảng viên chủ nhiệm**
             var existingRoom = await _context.ChatRooms
                 .Include(cr => cr.Class)
                 .FirstOrDefaultAsync(cr => cr.ChatType == ChatType.ClassTeacher &&
-                                          cr.ClassId == student.Class.ClassId);
+                                          cr.ClassId == student.Class.ClassId &&
+                                          _context.ChatRoomParticipants.Any(p =>
+                                              p.ChatRoomId == cr.ChatRoomId &&
+                                              p.User.Username == studentUsername &&
+                                              p.IsActive));
 
             if (existingRoom != null)
             {
-                // Ensure user is participant
-                await EnsureUserIsParticipantAsync(existingRoom.ChatRoomId, studentUsername);
                 return await MapToChatRoomResponseAsync(existingRoom, studentUsername);
             }
 
-            // Tạo room mới
+            // **CHANGED: Tạo room riêng cho sinh viên này**
             var chatRoom = new ChatRoom
             {
                 ChatType = ChatType.ClassTeacher,
                 ClassId = student.Class.ClassId,
                 Class = student.Class,
-                RoomName = $"Lớp {student.Class.ClassName} - GV Chủ nhiệm",
-                Description = $"Chat với giảng viên chủ nhiệm lớp {student.Class.ClassName}"
+                RoomName = $"Chat với GV Chủ nhiệm - {student.User.FullName}",
+                Description = $"Chat riêng giữa {student.User.FullName} và giảng viên chủ nhiệm lớp {student.Class.ClassName}"
             };
 
             _context.ChatRooms.Add(chatRoom);
             await _context.SaveChangesAsync();
 
-            // Add class teacher as participant
+            // **CHANGED: Chỉ thêm giảng viên và sinh viên này vào room**
             await AddParticipantAsync(chatRoom.ChatRoomId, classTeacher.Lecturer.User.Username, ParticipantRole.Lecturer);
-
-            // Add requesting student as participant
-            await EnsureUserIsParticipantAsync(chatRoom.ChatRoomId, studentUsername);
+            await AddParticipantAsync(chatRoom.ChatRoomId, studentUsername, ParticipantRole.Student);
 
             return await MapToChatRoomResponseAsync(chatRoom, studentUsername);
         }
@@ -90,9 +90,13 @@ namespace StudentManagement.Services
 
             // Tìm room đã tồn tại cho department
             var existingRoom = await _context.ChatRooms
-                .Include(cr => cr.Department)
+                .Include(cr => cr.Class)
                 .FirstOrDefaultAsync(cr => cr.ChatType == ChatType.AcademicStaff &&
-                                          cr.DepartmentId == student.Class.Program.Department.DepartmentId);
+                                          cr.ClassId == student.Class.ClassId &&
+                                          _context.ChatRoomParticipants.Any(p =>
+                                              p.ChatRoomId == cr.ChatRoomId &&
+                                              p.User.Username == studentUsername &&
+                                              p.IsActive));
 
             if (existingRoom != null)
             {

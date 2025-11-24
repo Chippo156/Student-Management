@@ -1,19 +1,19 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace StudentManagement.Models.Dto.Request
 {
     public class AcademicProgramRequest
     {
-        [Required(ErrorMessage = "Program name is required")]
+        [Required(ErrorMessage = "Tên chương trình đào tạo là bắt buộc")]
         public string ProgramName { get; set; } = string.Empty;
-        
-        [Required(ErrorMessage = "Degree level is required")]
+
+        [Required(ErrorMessage = "Trình độ đào tạo là bắt buộc")]
         public string DegreeLevel { get; set; } = string.Empty;
-        
-        [Required(ErrorMessage = "Department ID is required")]
+
+        [Required(ErrorMessage = "Mã khoa là bắt buộc")]
         public int DepartmentId { get; set; }
-        [Required(ErrorMessage = "CreditsRequired is required")]
-        
+
+        [Required(ErrorMessage = "Số tín chỉ yêu cầu là bắt buộc")]
         public int CreditsRequired { get; set; }
     }
 }

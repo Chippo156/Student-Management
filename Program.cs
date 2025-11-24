@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using StudentManagement.Data;
+using StudentManagement.Exceptions;
 using StudentManagement.Hubs;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
@@ -103,7 +105,25 @@ builder.Services.AddSignalR();
 builder.Services.AddScoped<IChatService, ChatService>();
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(x => x.Value.Errors.Count > 0)
+            .SelectMany(x => x.Value.Errors)
+            .Select(x => x.ErrorMessage)
+            .ToList();
 
+        var apiResponse = ApiResponse.ErrorResponse(
+            ErrorCodes.BadRequest,
+            "Validation failed",
+            errors
+        );
+
+        return new BadRequestObjectResult(apiResponse);
+    };
+});
 // Restrict origins and allow credentials for SignalR negotiate with credentials: 'include'
 builder.Services.AddCors(options =>
 {
