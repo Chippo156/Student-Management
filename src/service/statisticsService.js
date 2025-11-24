@@ -30,7 +30,9 @@ const statisticsService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'Lấy thống kê tổng quan thất bại');
+          message.error(
+            error.response.data.message || 'Lấy thống kê tổng quan thất bại'
+          );
         }
       } else {
         message.error(error.message || 'Lấy thống kê tổng quan thất bại');
@@ -44,8 +46,12 @@ const statisticsService = {
    */
   getStudentStatus: async () => {
     try {
-      console.log('🔍 Calling API: /api/v1/Statistics/statistics/student-status');
-      const response = await axios.get('/api/v1/Statistics/statistics/student-status');
+      console.log(
+        '🔍 Calling API: /api/v1/Statistics/statistics/student-status'
+      );
+      const response = await axios.get(
+        '/api/v1/Statistics/statistics/student-status'
+      );
       console.log('✅ Student status API response:', response);
 
       if (response?.success === false) {
@@ -53,7 +59,9 @@ const statisticsService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'Lấy thống kê trạng thái sinh viên thất bại');
+          message.error(
+            response?.message || 'Lấy thống kê trạng thái sinh viên thất bại'
+          );
         }
         return null;
       }
@@ -66,10 +74,15 @@ const statisticsService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'Lấy thống kê trạng thái sinh viên thất bại');
+          message.error(
+            error.response.data.message ||
+              'Lấy thống kê trạng thái sinh viên thất bại'
+          );
         }
       } else {
-        message.error(error.message || 'Lấy thống kê trạng thái sinh viên thất bại');
+        message.error(
+          error.message || 'Lấy thống kê trạng thái sinh viên thất bại'
+        );
       }
       return null;
     }
@@ -81,7 +94,9 @@ const statisticsService = {
    */
   getYearlyGrowth: async (years = 7) => {
     try {
-      console.log(`🔍 Calling API: /api/v1/Statistics/Yearly-growth?years=${years}`);
+      console.log(
+        `🔍 Calling API: /api/v1/Statistics/Yearly-growth?years=${years}`
+      );
       const response = await axios.get('/api/v1/Statistics/Yearly-growth', {
         params: { years },
       });
@@ -92,7 +107,9 @@ const statisticsService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'Lấy thống kê tăng trưởng thất bại');
+          message.error(
+            response?.message || 'Lấy thống kê tăng trưởng thất bại'
+          );
         }
         return null;
       }
@@ -105,7 +122,9 @@ const statisticsService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'Lấy thống kê tăng trưởng thất bại');
+          message.error(
+            error.response.data.message || 'Lấy thống kê tăng trưởng thất bại'
+          );
         }
       } else {
         message.error(error.message || 'Lấy thống kê tăng trưởng thất bại');
@@ -128,7 +147,9 @@ const statisticsService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'Lấy thống kê tốt nghiệp thất bại');
+          message.error(
+            response?.message || 'Lấy thống kê tốt nghiệp thất bại'
+          );
         }
         return null;
       }
@@ -141,7 +162,9 @@ const statisticsService = {
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(error.response.data.message || 'Lấy thống kê tốt nghiệp thất bại');
+          message.error(
+            error.response.data.message || 'Lấy thống kê tốt nghiệp thất bại'
+          );
         }
       } else {
         message.error(error.message || 'Lấy thống kê tốt nghiệp thất bại');
@@ -318,7 +341,93 @@ const statisticsService = {
       return null;
     }
   },
-};
 
+  /**
+   * Lấy thống kê điểm của một sinh viên theo MSSV
+   */
+  getStudentGrades: async (mssv) => {
+    try {
+      const response = await axios.get(
+        `/api/v1/Statistics/student-grades/${mssv}`
+      );
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            response?.message || 'Lấy thống kê điểm sinh viên thất bại'
+          );
+        }
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ Student grades API error:', error);
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message ||
+              'Lấy thống kê điểm sinh viên thất bại'
+          );
+        }
+      } else {
+        message.error(error.message || 'Lấy thống kê điểm sinh viên thất bại');
+      }
+      return null;
+    }
+  },
+
+  /**
+   * Lấy thống kê điểm của tất cả sinh viên
+   */
+  getAllStudentsGrades: async (params = {}) => {
+    try {
+      const response = await axios.get(
+        '/api/v1/Statistics/all-students-grades',
+        {
+          params,
+        }
+      );
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            response?.message || 'Lấy thống kê điểm tất cả sinh viên thất bại'
+          );
+        }
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ All students grades API error:', error);
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message ||
+              'Lấy thống kê điểm tất cả sinh viên thất bại'
+          );
+        }
+      } else {
+        message.error(
+          error.message || 'Lấy thống kê điểm tất cả sinh viên thất bại'
+        );
+      }
+      return null;
+    }
+  },
+};
 
 export default statisticsService;

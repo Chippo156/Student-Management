@@ -251,6 +251,25 @@ const GradeStatistics = () => {
           {/* Statistics Content */}
           {statsData && (
             <>
+              {/* Empty State Warning */}
+              {statsData.overallStats?.totalSubjects === 0 && (
+                <Card sx={{ mb: 3, bgcolor: 'warning.lighter', borderLeft: 4, borderColor: 'warning.main' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <AssessmentIcon sx={{ fontSize: 40, color: 'warning.main' }} />
+                      <Box>
+                        <Typography variant="h6" fontWeight={600} color="warning.dark">
+                          Chưa có dữ liệu điểm
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Sinh viên này chưa có điểm môn học nào trong hệ thống.
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Student Info Card */}
               <Card sx={{ mb: 3 }}>
                 <CardContent>
