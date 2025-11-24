@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(echo:*)",
-      "Bash(\"d:\\study\\hk1 nam 5\\Khóa luận\\fe\\Student-Management\\src\\service\\gradeService.js\")"
+      "Bash(\"d:\\study\\hk1 nam 5\\Khóa luận\\fe\\Student-Management\\src\\service\\gradeService.js\")",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
