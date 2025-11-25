@@ -418,6 +418,8 @@ namespace StudentManagement.Services
             var studentEnrollments = await context.Enrollments
                 .Include(e => e.Section)
                     .ThenInclude(s => s.CurriculumCourse.Course)
+                .Include(e => e.Section.Semester)
+
                 .Where(e => e.Student.MSSV == mssv)
                 .ToListAsync();
 
@@ -458,6 +460,12 @@ namespace StudentManagement.Services
                 }
                 else if (hasFailed)
                 {
+                    var hasEnrolledInCurrentSemester = studentEnrollments.Any(e => e.Section.CurriculumCourse.Course.CourseId == course.CourseId && e.Section.Semester.SemesterId == semesterId);
+                    if (hasEnrolledInCurrentSemester)
+                    {
+                        // Skip courses already enrolled in current semester
+                        continue;
+                    }
                     courseStatus = CourseFilterType.Retake;
                 }
                 else if (hasPassed)
@@ -470,6 +478,7 @@ namespace StudentManagement.Services
                     continue;
 
                 }
+
 
                 // Apply filter if specified
                 if (filterType.HasValue && courseStatus != filterType.Value)
