@@ -31,7 +31,7 @@ import {
   FilterSection,
 } from '../../../component/Common';
 import { courseService } from '../../../service/courseService';
-import * as XLSX from 'xlsx';
+import { exportCoursesExcel } from '../../../until/exportCoursesExcel';
 
 const CourseManagement = () => {
   const theme = useTheme();
@@ -97,44 +97,14 @@ const CourseManagement = () => {
     setSearchTerm('');
   };
 
-  const handleExportExcel = () => {
-    const dataToExport = courses.map((course, index) => ({
-      STT: index + 1,
-      'Mã MH': course.courseCode,
-      'Tên môn học': course.courseName,
-      'Giảng viên': course.lecturerName || course.instructor || 'N/A',
-      'Tín chỉ': course.credits || course.totalCredits,
-      Khoa: course.departmentName || course.department || 'N/A',
-      'Học kỳ': course.semester || 'N/A',
-      Năm: course.year || 'N/A',
-      'SV đăng ký':
-        course.currentStudents && course.maxStudents
-          ? `${course.currentStudents}/${course.maxStudents}`
-          : 'N/A',
-      'Trạng thái': getStatusText(
-        course.status || (course.isActive ? 'active' : 'inactive')
-      ),
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Môn học');
-
-    const colWidths = [
-      { wch: 5 },
-      { wch: 10 },
-      { wch: 25 },
-      { wch: 20 },
-      { wch: 8 },
-      { wch: 25 },
-      { wch: 10 },
-      { wch: 8 },
-      { wch: 15 },
-      { wch: 15 },
-    ];
-    worksheet['!cols'] = colWidths;
-
-    XLSX.writeFile(workbook, `Danh_sach_mon_hoc_${new Date().getTime()}.xlsx`);
+  const handleExportExcel = async () => {
+    const filterInfo = searchTerm ? `Tìm kiếm: "${searchTerm}"` : '';
+    const result = await exportCoursesExcel(courses, filterInfo);
+    if (result.success) {
+      message.success('Xuất file Excel thành công');
+    } else {
+      message.error('Xuất file Excel thất bại');
+    }
   };
 
   const getStatusText = (status) => {

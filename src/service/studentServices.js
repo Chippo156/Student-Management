@@ -35,7 +35,7 @@ export const studentServices = {
     }
   },
 
-  getAllStudents: async (pageNumber, pageSize, search = '') => {
+  getAllStudents: async (pageNumber, pageSize, search = '', filters = {}) => {
     try {
       const params = {
         PageNumber: pageNumber,
@@ -44,6 +44,14 @@ export const studentServices = {
 
       if (search && search.trim() !== '') {
         params.search = search.trim();
+      }
+
+      // Add filter parameters
+      if (filters.departmentId) params.departmentId = filters.departmentId;
+      if (filters.className) params.className = filters.className;
+      if (filters.yearOfAdmission) params.yearOfAdmission = filters.yearOfAdmission;
+      if (filters.studentStatus !== undefined && filters.studentStatus !== '') {
+        params.studentStatus = filters.studentStatus;
       }
 
       const response = await customizeAxios.get('/api/Student/GetAllStudents', {

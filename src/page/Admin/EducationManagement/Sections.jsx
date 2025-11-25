@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { message } from 'antd';
 import {
   Box,
   Typography,
@@ -36,7 +37,7 @@ import {
 } from '../../../component/Common';
 import sectionService from '../../../service/sectionService';
 import { semesterService } from '../../../service/semesterService';
-import * as XLSX from 'xlsx';
+import { exportSectionsExcel } from '../../../until/exportSectionsExcel';
 import SectionDetailModal from '../../../component/Admin/SectionManagement/SectionDetailModal';
 import SectionCreateModal from '../../../component/Admin/SectionManagement/SectionCreateModal';
 import SectionEditModal from '../../../component/Admin/SectionManagement/SectionEditModal';
@@ -60,11 +61,11 @@ const Sections = () => {
   const [selectedSection, setSelectedSection] = useState(null);
 
   const statusOptions = [
-    { value: 0, label: 'Chưa mở', color: 'default' },
-    { value: 1, label: 'Đang chuẩn bị', color: 'warning' },
-    { value: 2, label: 'Đang mở đăng ký', color: 'info' },
-    { value: 3, label: 'Đang diễn ra', color: 'success' },
-    { value: 4, label: 'Đã kết thúc', color: 'error' },
+    { value: 0, label: 'Đang chuẩn bị', color: 'warning' },      // IsPreparing
+    { value: 1, label: 'Đang mở đăng ký', color: 'info' },       // IsOpening
+    { value: 2, label: 'Đã đóng', color: 'default' },            // IsClosed
+    { value: 3, label: 'Đã hủy', color: 'error' },               // IsCancelled
+    { value: 4, label: 'Đã hoàn thành', color: 'success' },      // IsCompleted
   ];
 
   useEffect(() => {
@@ -154,46 +155,24 @@ const Sections = () => {
     };
   }, [sections, totalCount]);
 
-  const handleExportExcel = () => {
-    const dataToExport = sections.map((section, index) => ({
-      STT: index + 1,
-      'Mã LHP': section.sectionCode,
-      'Môn học': section.courseName,
-      'Mã môn': section.courseCode,
-      'Giảng viên': section.lecturerName,
-      'Lớp dự kiến': section.className,
-      'Học kỳ': section.semesterName,
-      'Sĩ số': `${section.enrolledCount}/${section.capacity}`,
-      'Tỷ lệ': `${section.enrollmentPercentage.toFixed(1)}%`,
-      'Lịch học': section.scheduleSummary,
-      Phòng: section.roomSummary,
-      'Trạng thái': getStatusLabel(section.status),
-    }));
+  const handleExportExcel = async () => {
+    let filterInfo = '';
+    if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
+    if (filterSemester) {
+      const semester = semesters.find(s => s.semesterId === filterSemester);
+      filterInfo += (filterInfo ? ', ' : '') + `Học kỳ: ${semester?.semesterName || ''}`;
+    }
+    if (filterStatus !== '') {
+      const status = statusOptions.find(s => s.value === filterStatus);
+      filterInfo += (filterInfo ? ', ' : '') + `Trạng thái: ${status?.label || ''}`;
+    }
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Lớp học phần');
-
-    const colWidths = [
-      { wch: 5 },
-      { wch: 12 },
-      { wch: 30 },
-      { wch: 12 },
-      { wch: 25 },
-      { wch: 15 },
-      { wch: 20 },
-      { wch: 15 },
-      { wch: 10 },
-      { wch: 30 },
-      { wch: 20 },
-      { wch: 15 },
-    ];
-    worksheet['!cols'] = colWidths;
-
-    XLSX.writeFile(
-      workbook,
-      `Danh_sach_lop_hoc_phan_${new Date().getTime()}.xlsx`
-    );
+    const result = await exportSectionsExcel(sections, filterInfo);
+    if (result.success) {
+      message.success('Xuất file Excel thành công');
+    } else {
+      message.error('Xuất file Excel thất bại');
+    }
   };
 
   // Modal handlers

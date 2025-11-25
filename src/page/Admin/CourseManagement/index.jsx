@@ -35,7 +35,9 @@ import {
 } from '../../../component/Common';
 import curriculumCourseService from '../../../service/curriculumCourseService';
 import academicProgramService from '../../../service/academicProgramService';
-import * as XLSX from 'xlsx';
+import { departmentService } from '../../../service/departmentService';
+import { exportCoursesExcel } from '../../../until/exportCoursesExcel';
+import { message } from 'antd';
 import CourseDetailModal from '../../../component/Admin/CourseManagement/CourseDetailModal';
 import CourseEditModal from '../../../component/Admin/CourseManagement/CourseEditModal';
 import CourseCreateModal from '../../../component/Admin/CourseManagement/CourseCreateModal';
@@ -44,6 +46,7 @@ const CourseManagement = () => {
   const theme = useTheme();
   const [courses, setCourses] = useState([]);
   const [programs, setPrograms] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterProgram, setFilterProgram] = useState('');
@@ -71,6 +74,19 @@ const CourseManagement = () => {
       }
     };
     fetchPrograms();
+  }, []);
+
+  // Fetch departments for filter
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      const result = await departmentService.getDepartmentsDropdown();
+      if (result && Array.isArray(result)) {
+        setDepartments(result);
+      } else {
+        setDepartments([]);
+      }
+    };
+    fetchDepartments();
   }, []);
 
   // Fetch courses
@@ -127,51 +143,29 @@ const CourseManagement = () => {
     setFilterCourseType('');
   };
 
-  const handleExportExcel = () => {
-    const exportData = filteredCourses.map((course, index) => ({
-      STT: index + 1,
-      'Mã môn học': course.courseCode,
-      'Tên môn học': course.courseName,
-      'Chương trình': course.programName,
-      'Bậc đào tạo': course.degreeLevel,
-      'Chuyên ngành': course.departmentName,
-      'Tổng tín chỉ': course.totalCredits,
-      'Tín chỉ lý thuyết': course.creditsTheory,
-      'Tín chỉ thực hành': course.creditsLab,
-      'Học kỳ đề xuất': course.semesterSuggested,
-      'Loại môn học': course.courseType,
-      'Môn tiên quyết': course.prerequisites
-        .map((p) => p.courseCode)
-        .join(', '),
-    }));
+  const handleExportExcel = async () => {
+    let filterInfo = '';
+    if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
+    if (filterProgram) {
+      const program = programs.find(p => p.academicProgramId === filterProgram);
+      filterInfo += (filterInfo ? ', ' : '') + `Chương trình: ${program?.programName || ''}`;
+    }
+    if (filterDepartment) {
+      const dept = departments.find(d => d.departmentId === filterDepartment);
+      filterInfo += (filterInfo ? ', ' : '') + `Chuyên ngành: ${dept?.departmentName || ''}`;
+    }
+    if (filterCourseType) {
+      const typeLabel = filterCourseType === 'required' ? 'Bắt buộc' : 'Tự chọn';
+      filterInfo += (filterInfo ? ', ' : '') + `Loại: ${typeLabel}`;
+    }
 
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách môn học');
-
-    const colWidths = [
-      { wch: 5 },
-      { wch: 12 },
-      { wch: 30 },
-      { wch: 25 },
-      { wch: 15 },
-      { wch: 20 },
-      { wch: 10 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 12 },
-      { wch: 15 },
-      { wch: 20 },
-    ];
-    worksheet['!cols'] = colWidths;
-
-    XLSX.writeFile(workbook, `Danh_sach_mon_hoc_${new Date().getTime()}.xlsx`);
+    const result = await exportCoursesExcel(filteredCourses, filterInfo);
+    if (result.success) {
+      message.success('Xuất file Excel thành công');
+    } else {
+      message.error('Xuất file Excel thất bại');
+    }
   };
-
-  const uniqueDepartments = useMemo(() => {
-    const depts = new Set(courses.map((c) => c.departmentName));
-    return Array.from(depts);
-  }, [courses]);
 
   // Modal handlers
   const handleViewCourse = (course) => {
@@ -201,13 +195,16 @@ const CourseManagement = () => {
   };
 
   const stats = useMemo(() => {
+    const uniqueDepts = new Set(
+      courses.map((c) => c.department?.departmentId).filter(Boolean)
+    ).size;
     return {
       total: totalCount,
       required: courses.filter((c) => c.isRequired).length,
       elective: courses.filter((c) => !c.isRequired).length,
-      departments: uniqueDepartments.length,
+      departments: uniqueDepts,
     };
-  }, [courses, totalCount, uniqueDepartments]);
+  }, [courses, totalCount]);
 
   if (loading && courses.length === 0) {
     return (
@@ -337,9 +334,9 @@ const CourseManagement = () => {
               onChange={(e) => setFilterDepartment(e.target.value)}
             >
               <MenuItem value="">Tất cả</MenuItem>
-              {uniqueDepartments.map((dept) => (
-                <MenuItem key={dept} value={dept}>
-                  {dept}
+              {departments.map((dept) => (
+                <MenuItem key={dept.departmentId} value={dept.departmentId}>
+                  {dept.departmentName}
                 </MenuItem>
               ))}
             </Select>

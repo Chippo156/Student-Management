@@ -30,7 +30,7 @@ export const classService = {
         }
         return null;
       }
-      return response;
+      return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
         const errData = error.response.data.data;
@@ -62,7 +62,7 @@ export const classService = {
         return null;
       }
       message.success('Tạo lớp học thành công!');
-      return response;
+      return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
         const errData = error.response.data.data;
@@ -99,7 +99,7 @@ export const classService = {
         return null;
       }
       message.success('Cập nhật lớp học thành công!');
-      return response;
+      return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
         const errData = error.response.data.data;
@@ -166,7 +166,42 @@ export const classService = {
         }
         return null;
       }
-      return response;
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Lấy danh sách lớp thất bại'
+          );
+        }
+      } else {
+        message.error(error.message || 'Lấy danh sách lớp thất bại');
+      }
+      return null;
+    }
+  },
+
+  // Lấy danh sách lớp theo chương trình cho dropdown
+  getClassesDropdownByProgram: async (programId) => {
+    try {
+      const response = await axios.get(
+        `/api/Class/dropdown/program/${programId}`
+      );
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            response?.message || 'Lấy danh sách lớp thất bại'
+          );
+        }
+        return null;
+      }
+      return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
         const errData = error.response.data.data;

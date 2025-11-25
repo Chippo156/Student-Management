@@ -37,7 +37,7 @@ import {
   DataTable,
   FilterSection,
 } from '../../../component/Common';
-import * as XLSX from 'xlsx';
+import { exportClassesExcel } from '../../../until/exportClassesExcel';
 import { classService } from '../../../service/classService';
 import ClassDetailModal from '../../../component/Admin/ClassManagement/ClassDetailModal';
 import ClassCreateModal from '../../../component/Admin/ClassManagement/ClassCreateModal';
@@ -78,9 +78,9 @@ const Classes = () => {
         rowsPerPage,
         searchTerm
       );
-      if (response?.data) {
-        setClasses(response.data.items || []);
-        setTotalCount(response.data.totalCount || 0);
+      if (response) {
+        setClasses(response.items || []);
+        setTotalCount(response.totalCount || 0);
       }
     } catch (error) {
       console.error('Error loading classes:', error);
@@ -154,41 +154,14 @@ const Classes = () => {
     setSelectedRowForMenu(null);
   };
 
-  const handleExportExcel = () => {
-    const exportData = classes.map((classInfo, index) => ({
-      STT: index + 1,
-      'Mã lớp': classInfo.classCode || '',
-      'Tên lớp': classInfo.className,
-      Khoa: classInfo.facultyName || '',
-      'Chuyên ngành': classInfo.departmentName || '',
-      'Chương trình': classInfo.programName || '',
-      'Trình độ': classInfo.degreeLevel || '',
-      'Giảng viên chủ nhiệm': classInfo.adviserName || 'Chưa phân công',
-      'Mã GV': classInfo.adviserCode || '',
-      'Số sinh viên': classInfo.studentCount || 0,
-      'Tín chỉ yêu cầu': classInfo.requiredCredits || 0,
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách lớp học');
-
-    const colWidths = [
-      { wch: 5 },
-      { wch: 12 },
-      { wch: 25 },
-      { wch: 25 },
-      { wch: 20 },
-      { wch: 30 },
-      { wch: 15 },
-      { wch: 25 },
-      { wch: 12 },
-      { wch: 12 },
-      { wch: 15 },
-    ];
-    worksheet['!cols'] = colWidths;
-
-    XLSX.writeFile(workbook, `Danh_sach_lop_hoc_${new Date().getTime()}.xlsx`);
+  const handleExportExcel = async () => {
+    const filterInfo = searchTerm ? `Tìm kiếm: "${searchTerm}"` : '';
+    const result = await exportClassesExcel(classes, filterInfo);
+    if (result.success) {
+      message.success('Xuất file Excel thành công');
+    } else {
+      message.error('Xuất file Excel thất bại');
+    }
   };
 
   if (loading && classes.length === 0) {

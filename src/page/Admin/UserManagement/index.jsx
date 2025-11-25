@@ -46,7 +46,7 @@ import { useNavigate } from 'react-router-dom';
 import { userService } from '../../../service/userService';
 import UserDetailModal from '../../../component/Admin/UserManagementPage/UserDetailModal';
 import UserEditModal from '../../../component/Admin/UserManagementPage/UserEditModal';
-import * as XLSX from 'xlsx';
+import { exportUsersExcel } from '../../../until/exportUsersExcel';
 
 const UserManagement = () => {
   const navigate = useNavigate();
@@ -134,36 +134,17 @@ const UserManagement = () => {
     setFilterRole('all');
   };
 
-  const handleExportExcel = () => {
-    const dataToExport = users.map((user, index) => ({
-      STT: index + 1,
-      'Tên người dùng': user.username,
-      'Họ và tên': user.fullName || '',
-      Email: user.email || '',
-      'Số điện thoại': user.phone || '',
-      'Vai trò': user.role?.roleName || '',
-      'Trạng thái': user.accountStatus === 1 ? 'Hoạt động' : 'Bị khóa',
-    }));
+  const handleExportExcel = async () => {
+    let filterInfo = '';
+    if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
+    if (filterRole !== 'all') filterInfo += (filterInfo ? ', ' : '') + `Vai trò: ${filterRole}`;
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Người dùng');
-
-    const colWidths = [
-      { wch: 5 },
-      { wch: 20 },
-      { wch: 25 },
-      { wch: 30 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 12 },
-    ];
-    worksheet['!cols'] = colWidths;
-
-    XLSX.writeFile(
-      workbook,
-      `Danh_sach_nguoi_dung_${new Date().getTime()}.xlsx`
-    );
+    const result = await exportUsersExcel(users, filterInfo);
+    if (result.success) {
+      message.success('Xuất file Excel thành công');
+    } else {
+      message.error('Xuất file Excel thất bại');
+    }
   };
 
   const getRoleChip = (roleName) => {

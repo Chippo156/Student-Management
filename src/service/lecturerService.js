@@ -2,7 +2,7 @@ import customizeAxios from '../until/customize-axios';
 import { message } from 'antd';
 
 export const lecturerService = {
-  getAllLecturers: async (pageNumber, pageSize, search = '') => {
+  getAllLecturers: async (pageNumber, pageSize, search = '', filters = {}) => {
     try {
       const params = {
         PageNumber: pageNumber,
@@ -11,6 +11,14 @@ export const lecturerService = {
 
       if (search && search.trim() !== '') {
         params.search = search.trim();
+      }
+
+      // Add filter parameters
+      if (filters.departmentId) params.departmentId = filters.departmentId;
+      if (filters.position) params.position = filters.position;
+      if (filters.academicTitle) params.academicTitle = filters.academicTitle;
+      if (filters.lecturerStatus !== undefined && filters.lecturerStatus !== '') {
+        params.lecturerStatus = filters.lecturerStatus;
       }
 
       const response = await customizeAxios.get('/api/Lecturer/GetAllLecturers', { params });

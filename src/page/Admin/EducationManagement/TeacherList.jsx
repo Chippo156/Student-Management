@@ -12,6 +12,10 @@ import {
   CircularProgress,
   IconButton,
   Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   School,
@@ -27,10 +31,11 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { PageHeader, StatsCard, DataTable, FilterSection } from '../../../component/Common';
 import { lecturerService } from '../../../service/lecturerService';
-import * as XLSX from 'xlsx';
+import { departmentService } from '../../../service/departmentService';
 import TeacherDetailModal from '../../../component/Admin/TeacherManagement/TeacherDetailModal';
 import TeacherEditModal from '../../../component/Admin/TeacherManagement/TeacherEditModal';
 import TeacherCreateModal from '../../../component/Admin/TeacherManagement/TeacherCreateModal';
+import { exportLecturersExcel } from '../../../until/exportLecturersExcel';
 
 const TeacherList = () => {
   const theme = useTheme();
@@ -41,6 +46,13 @@ const TeacherList = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Filter states
+  const [filterDepartment, setFilterDepartment] = useState('');
+  const [filterPosition, setFilterPosition] = useState('');
+  const [filterAcademicTitle, setFilterAcademicTitle] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [departments, setDepartments] = useState([]);
+
   // Modal states
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -50,7 +62,13 @@ const TeacherList = () => {
 
   const fetchLecturers = async () => {
     setLoading(true);
-    const res = await lecturerService.getAllLecturers(page + 1, rowsPerPage, searchTerm);
+    const filters = {
+      departmentId: filterDepartment || undefined,
+      position: filterPosition || undefined,
+      academicTitle: filterAcademicTitle || undefined,
+      lecturerStatus: filterStatus !== '' ? filterStatus : undefined,
+    };
+    const res = await lecturerService.getAllLecturers(page + 1, rowsPerPage, searchTerm, filters);
     if (res && res.items) {
       setLecturers(res.items);
       setTotalCount(res.totalCount || 0);
@@ -61,13 +79,26 @@ const TeacherList = () => {
     setLoading(false);
   };
 
+  // Fetch departments for filter
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      const result = await departmentService.getDepartmentsDropdown();
+      if (result && Array.isArray(result)) {
+        setDepartments(result);
+      } else {
+        setDepartments([]);
+      }
+    };
+    fetchDepartments();
+  }, []);
+
   useEffect(() => {
     fetchLecturers();
     // eslint-disable-next-line
-  }, [page, rowsPerPage, searchTerm]);
+  }, [page, rowsPerPage, searchTerm, filterDepartment, filterPosition, filterAcademicTitle, filterStatus]);
 
   const stats = useMemo(() => {
-    const activeLecturers = lecturers.filter((l) => l.user?.accountStatus === 0).length;
+    const activeLecturers = lecturers.filter((l) => l.user?.accountStatus === 1).length;
     const uniqueDepartments = new Set(
       lecturers.map((l) => l.department?.departmentName).filter(Boolean)
     ).size;
@@ -89,43 +120,40 @@ const TeacherList = () => {
 
   const handleResetFilters = () => {
     setSearchTerm('');
+    setFilterDepartment('');
+    setFilterPosition('');
+    setFilterAcademicTitle('');
+    setFilterStatus('');
   };
 
-  const handleExportExcel = () => {
-    const dataToExport = lecturers.map((lecturer, index) => ({
-      'STT': index + 1,
-      'Mã GV': lecturer.lecturerCode,
-      'Họ và tên': lecturer.user?.fullName || '',
-      'Email': lecturer.user?.email || '',
-      'Số điện thoại': lecturer.user?.phone || '',
-      'Khoa': lecturer.department?.departmentName || '',
-      'Chức vụ': lecturer.position || '',
-      'Học hàm': lecturer.academicTitle || '',
-      'Trạng thái': getStatusText(lecturer.user?.accountStatus),
-    }));
+  const handleExportExcel = async () => {
+    let filterInfo = '';
+    if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
+    if (filterDepartment) {
+      const dept = departments.find(d => d.departmentId === filterDepartment);
+      filterInfo += (filterInfo ? ', ' : '') + `Khoa: ${dept?.departmentName || ''}`;
+    }
+    if (filterPosition) filterInfo += (filterInfo ? ', ' : '') + `Chức vụ: ${filterPosition}`;
+    if (filterAcademicTitle) filterInfo += (filterInfo ? ', ' : '') + `Học hàm: ${filterAcademicTitle}`;
+    if (filterStatus !== '') {
+      const statusLabel = filterStatus === 1 ? 'Đang công tác' : 'Không hoạt động';
+      filterInfo += (filterInfo ? ', ' : '') + `Trạng thái: ${statusLabel}`;
+    }
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Giảng viên');
-
-    const colWidths = [
-      { wch: 5 },
-      { wch: 12 },
-      { wch: 25 },
-      { wch: 30 },
-      { wch: 15 },
-      { wch: 25 },
-      { wch: 20 },
-      { wch: 20 },
-      { wch: 15 },
-    ];
-    worksheet['!cols'] = colWidths;
-
-    XLSX.writeFile(workbook, `Danh_sach_giang_vien_${new Date().getTime()}.xlsx`);
+    const result = await exportLecturersExcel(lecturers, filterInfo);
+    if (result.success) {
+      message.success('Xuất file Excel thành công');
+    } else {
+      message.error('Xuất file Excel thất bại');
+    }
   };
 
   const getStatusText = (status) => {
-    return status === 0 ? 'Đang công tác' : 'Nghỉ việc';
+    const statusMap = {
+      1: 'Đang công tác',      // Active
+      2: 'Không hoạt động',    // Inactive
+    };
+    return statusMap[status] || 'Không xác định';
   };
 
   // Modal handlers
@@ -156,11 +184,12 @@ const TeacherList = () => {
   };
 
   const getStatusChip = (status) => {
-    return status === 0 ? (
-      <Chip label="Đang công tác" color="success" size="small" />
-    ) : (
-      <Chip label="Nghỉ việc" color="error" size="small" />
-    );
+    const statusConfig = {
+      1: { label: 'Đang công tác', color: 'success' },       // Active
+      2: { label: 'Không hoạt động', color: 'error' },       // Inactive
+    };
+    const config = statusConfig[status] || { label: 'Không xác định', color: 'default' };
+    return <Chip label={config.label} color={config.color} size="small" />;
   };
 
   if (loading && lecturers.length === 0) {
@@ -326,7 +355,7 @@ const TeacherList = () => {
 
       {/* Filter Section */}
       <FilterSection resultCount={lecturers.length}>
-        <Grid item xs={12} md={10}>
+        <Grid item xs={12} md={3}>
           <TextField
             fullWidth
             placeholder="Tìm kiếm theo mã GV, tên, email..."
@@ -343,6 +372,69 @@ const TeacherList = () => {
           />
         </Grid>
         <Grid item xs={12} md={2}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Khoa</InputLabel>
+            <Select
+              value={filterDepartment}
+              label="Khoa"
+              onChange={(e) => setFilterDepartment(e.target.value)}
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              {departments.map((dept) => (
+                <MenuItem key={dept.departmentId} value={dept.departmentId}>
+                  {dept.departmentName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={2}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Chức vụ</InputLabel>
+            <Select
+              value={filterPosition}
+              label="Chức vụ"
+              onChange={(e) => setFilterPosition(e.target.value)}
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              <MenuItem value="Giảng viên">Giảng viên</MenuItem>
+              <MenuItem value="Trưởng khoa">Trưởng khoa</MenuItem>
+              <MenuItem value="Phó khoa">Phó khoa</MenuItem>
+              <MenuItem value="Trưởng bộ môn">Trưởng bộ môn</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={2}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Học hàm</InputLabel>
+            <Select
+              value={filterAcademicTitle}
+              label="Học hàm"
+              onChange={(e) => setFilterAcademicTitle(e.target.value)}
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              <MenuItem value="Giáo sư">Giáo sư</MenuItem>
+              <MenuItem value="Phó giáo sư">Phó giáo sư</MenuItem>
+              <MenuItem value="Tiến sĩ">Tiến sĩ</MenuItem>
+              <MenuItem value="Thạc sĩ">Thạc sĩ</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={1.5}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Trạng thái</InputLabel>
+            <Select
+              value={filterStatus}
+              label="Trạng thái"
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              <MenuItem value={1}>Đang công tác</MenuItem>
+              <MenuItem value={2}>Không hoạt động</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={1.5}>
           <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
             Đặt lại
           </Button>

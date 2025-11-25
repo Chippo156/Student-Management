@@ -12,6 +12,10 @@ import {
   IconButton,
   Tooltip,
   Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   School,
@@ -26,11 +30,13 @@ import {
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { studentServices } from '../../../service/studentServices';
-import * as XLSX from 'xlsx';
+import { departmentService } from '../../../service/departmentService';
+import { classService } from '../../../service/classService';
 import { PageHeader, StatsCard, DataTable, FilterSection } from '../../../component/Common';
 import StudentDetailModal from '../../../component/Admin/StudentManagement/StudentDetailModal';
 import StudentEditModal from '../../../component/Admin/StudentManagement/StudentEditModal';
 import StudentCreateModal from '../../../component/Admin/StudentManagement/StudentCreateModal';
+import { exportStudentsExcel } from '../../../until/exportStudentsExcel';
 
 const StudentList = () => {
   const theme = useTheme();
@@ -41,6 +47,14 @@ const StudentList = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Filter states
+  const [filterDepartment, setFilterDepartment] = useState('');
+  const [filterClass, setFilterClass] = useState('');
+  const [filterYearOfAdmission, setFilterYearOfAdmission] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [departments, setDepartments] = useState([]);
+  const [classes, setClasses] = useState([]);
+
   // Modal states
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -50,7 +64,13 @@ const StudentList = () => {
 
   const fetchStudents = async () => {
     setLoading(true);
-    const res = await studentServices.getAllStudents(page + 1, rowsPerPage, searchTerm);
+    const filters = {
+      departmentId: filterDepartment || undefined,
+      className: filterClass || undefined,
+      yearOfAdmission: filterYearOfAdmission || undefined,
+      studentStatus: filterStatus !== '' ? filterStatus : undefined,
+    };
+    const res = await studentServices.getAllStudents(page + 1, rowsPerPage, searchTerm, filters);
     if (res && res.items) {
       setStudents(res.items);
       setTotalCount(res.totalCount || 0);
@@ -58,14 +78,54 @@ const StudentList = () => {
     setLoading(false);
   };
 
+  // Fetch departments for filter
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      const result = await departmentService.getDepartmentsDropdown();
+      if (result && Array.isArray(result)) {
+        setDepartments(result);
+      } else {
+        setDepartments([]);
+      }
+    };
+    fetchDepartments();
+  }, []);
+
+  // Fetch all classes for filter dropdown
+  useEffect(() => {
+    const fetchClasses = async () => {
+      if (filterDepartment) {
+        // Fetch classes by department
+        const result = await classService.getClassesDropdownByDepartment(filterDepartment);
+        console.log(result)
+        if (result && Array.isArray(result)) {
+          setClasses(result);
+        } else {
+          setClasses([]);
+        }
+        // Reset class filter when department changes
+        setFilterClass('');
+      } else {
+        // Fetch all classes
+        const result = await classService.getAllClasses(1, 1000, '');
+        if (result && result.items && Array.isArray(result.items)) {
+          setClasses(result.items);
+        } else {
+          setClasses([]);
+        }
+      }
+    };
+    fetchClasses();
+  }, [filterDepartment]);
+
   useEffect(() => {
     fetchStudents();
     // eslint-disable-next-line
-  }, [page, rowsPerPage, searchTerm]);
+  }, [page, rowsPerPage, searchTerm, filterDepartment, filterClass, filterYearOfAdmission, filterStatus]);
 
   const stats = useMemo(() => {
-    const activeStudents = students.filter((s) => s.studentStatus === 0).length;
-    const graduatedStudents = students.filter((s) => s.studentStatus === 2).length;
+    const activeStudents = students.filter((s) => s.studentStatus === 1).length;
+    const graduatedStudents = students.filter((s) => s.studentStatus === 3).length;
     const uniqueDepartments = new Set(
       students
         .map((s) => s.class?.program?.department?.departmentName)
@@ -90,55 +150,58 @@ const StudentList = () => {
 
   const handleResetFilters = () => {
     setSearchTerm('');
+    setFilterDepartment('');
+    setFilterClass('');
+    setFilterYearOfAdmission('');
+    setFilterStatus('');
   };
 
-  const handleExportExcel = () => {
-    const dataToExport = students.map((student, index) => ({
-      'STT': index + 1,
-      'MSSV': student.mssv,
-      'Họ và tên': student.user?.fullName || '',
-      'Email': student.user?.email || '',
-      'Số điện thoại': student.user?.phone || '',
-      'Lớp': student.class?.className || '',
-      'Khoa': student.class?.program?.department?.departmentName || '',
-      'Năm nhập học': student.yearOfAdmission || '',
-      'Trạng thái': getStatusText(student.studentStatus),
-    }));
+  const handleExportExcel = async () => {
+    let filterInfo = '';
+    if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
+    if (filterDepartment) {
+      const dept = departments.find(d => d.departmentId === filterDepartment);
+      filterInfo += (filterInfo ? ', ' : '') + `Chuyên ngành: ${dept?.departmentName || ''}`;
+    }
+    if (filterClass) filterInfo += (filterInfo ? ', ' : '') + `Lớp: ${filterClass}`;
+    if (filterYearOfAdmission) filterInfo += (filterInfo ? ', ' : '') + `Năm nhập học: ${filterYearOfAdmission}`;
+    if (filterStatus !== '') {
+      const statusMap = {
+        1: 'Đang học',
+        2: 'Không hoạt động',
+        3: 'Đã tốt nghiệp',
+        4: 'Đình chỉ',
+        5: 'Bảo lưu',
+      };
+      filterInfo += (filterInfo ? ', ' : '') + `Trạng thái: ${statusMap[filterStatus] || ''}`;
+    }
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sinh viên');
-
-    const colWidths = [
-      { wch: 5 },
-      { wch: 12 },
-      { wch: 25 },
-      { wch: 30 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 25 },
-      { wch: 15 },
-      { wch: 15 },
-    ];
-    worksheet['!cols'] = colWidths;
-
-    XLSX.writeFile(workbook, `Danh_sach_sinh_vien_${new Date().getTime()}.xlsx`);
+    const result = await exportStudentsExcel(students, filterInfo);
+    if (result.success) {
+      message.success('Xuất file Excel thành công');
+    } else {
+      message.error('Xuất file Excel thất bại');
+    }
   };
 
   const getStatusText = (status) => {
     const statusMap = {
-      0: 'Đang học',
-      1: 'Tạm nghỉ',
-      2: 'Đã tốt nghiệp',
+      1: 'Đang học',           // Active
+      2: 'Không hoạt động',    // Inactive
+      3: 'Đã tốt nghiệp',      // Graduated
+      4: 'Đình chỉ',           // Suspended
+      5: 'Bảo lưu',            // Reserved
     };
     return statusMap[status] || 'Không xác định';
   };
 
   const getStatusChip = (status) => {
     const statusConfig = {
-      0: { label: 'Đang học', color: 'success' },
-      1: { label: 'Tạm nghỉ', color: 'error' },
-      2: { label: 'Đã tốt nghiệp', color: 'primary' },
+      1: { label: 'Đang học', color: 'success' },           // Active
+      2: { label: 'Không hoạt động', color: 'default' },    // Inactive
+      3: { label: 'Đã tốt nghiệp', color: 'primary' },      // Graduated
+      4: { label: 'Đình chỉ', color: 'error' },             // Suspended
+      5: { label: 'Bảo lưu', color: 'warning' },            // Reserved
     };
     const config = statusConfig[status] || { label: 'Không xác định', color: 'default' };
     return <Chip label={config.label} color={config.color} size="small" />;
@@ -235,7 +298,7 @@ const StudentList = () => {
     },
     {
       field: 'department',
-      headerName: 'Khoa',
+      headerName: 'Chuyên ngành',
       width: 200,
       renderCell: (student) => (
         <Typography variant="body2">
@@ -333,13 +396,13 @@ const StudentList = () => {
           <StatsCard icon={<School />} value={stats.graduated} label="Đã tốt nghiệp" color="info" />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatsCard icon={<Business />} value={stats.departments} label="Khoa" color="warning" />
+          <StatsCard icon={<Business />} value={stats.departments} label="Chuyên ngành" color="warning" />
         </Grid>
       </Grid>
 
       {/* Filter Section */}
       <FilterSection resultCount={students.length}>
-        <Grid item xs={12} md={10}>
+        <Grid item xs={12} md={3}>
           <TextField
             fullWidth
             placeholder="Tìm kiếm theo MSSV, tên, email..."
@@ -356,6 +419,75 @@ const StudentList = () => {
           />
         </Grid>
         <Grid item xs={12} md={2}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Chuyên ngành</InputLabel>
+            <Select
+              value={filterDepartment}
+              label="Chuyên ngành"
+              onChange={(e) => setFilterDepartment(e.target.value)}
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              {departments.map((dept) => (
+                <MenuItem key={dept.departmentId} value={dept.departmentId}>
+                  {dept.departmentName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={2}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Lớp</InputLabel>
+            <Select
+              value={filterClass}
+              label="Lớp"
+              onChange={(e) => setFilterClass(e.target.value)}
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              {classes.map((cls) => (
+                <MenuItem key={cls.classId} value={cls.className}>
+                  {cls.className}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={1.5}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Năm</InputLabel>
+            <Select
+              value={filterYearOfAdmission}
+              label="Năm"
+              onChange={(e) => setFilterYearOfAdmission(e.target.value)}
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              <MenuItem value="2024">2024</MenuItem>
+              <MenuItem value="2023">2023</MenuItem>
+              <MenuItem value="2022">2022</MenuItem>
+              <MenuItem value="2021">2021</MenuItem>
+              <MenuItem value="2020">2020</MenuItem>
+              <MenuItem value="2019">2019</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={2}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Trạng thái</InputLabel>
+            <Select
+              value={filterStatus}
+              label="Trạng thái"
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              <MenuItem value={1}>Đang học</MenuItem>
+              <MenuItem value={2}>Không hoạt động</MenuItem>
+              <MenuItem value={3}>Đã tốt nghiệp</MenuItem>
+              <MenuItem value={4}>Đình chỉ</MenuItem>
+              <MenuItem value={5}>Bảo lưu</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={1.5}>
           <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
             Đặt lại
           </Button>

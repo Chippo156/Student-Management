@@ -17,7 +17,7 @@ export const departmentService = {
         }
         return null;
       }
-      return response;
+      return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
         const errData = error.response.data.data;

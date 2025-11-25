@@ -92,25 +92,30 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 1:
+      case 0:  // IsPreparing
+        return {
+          bg: alpha(theme.palette.warning.main, 0.1),
+          color: theme.palette.warning.main,
+        };
+      case 1:  // IsOpening
         return {
           bg: alpha(theme.palette.info.main, 0.1),
           color: theme.palette.info.main,
         };
-      case 2:
+      case 2:  // IsClosed
         return {
-          bg: alpha(theme.palette.success.main, 0.1),
-          color: theme.palette.success.main,
+          bg: alpha(theme.palette.grey[500], 0.1),
+          color: theme.palette.grey[700],
         };
-      case 3:
-        return {
-          bg: alpha(theme.palette.secondary.main, 0.1),
-          color: theme.palette.secondary.main,
-        };
-      case 4:
+      case 3:  // IsCancelled
         return {
           bg: alpha(theme.palette.error.main, 0.1),
           color: theme.palette.error.main,
+        };
+      case 4:  // IsCompleted
+        return {
+          bg: alpha(theme.palette.success.main, 0.1),
+          color: theme.palette.success.main,
         };
       default:
         return {
