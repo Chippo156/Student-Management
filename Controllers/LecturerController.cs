@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using StudentManagement.Enum;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
@@ -15,11 +16,33 @@ namespace StudentManagement.Controllers
     {
         [HttpGet("GetAllLecturers")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IEnumerable<Lecturer>>> GetAllLecturers([FromQuery] PaginationParams pagination, [FromQuery] string? search)
+        public async Task<ActionResult<PagedResult<Lecturer>>> GetAllLecturers(
+            [FromQuery] PaginationParams pagination,
+            [FromQuery] string? search = null,
+            [FromQuery] int? departmentId = null,
+            [FromQuery] string? position = null,
+            [FromQuery] string? academicTitle = null,
+            [FromQuery] LecturerStatus? lecturerStatus = null)
         {
-            var lecturers = await lecturerService.GetAllLecturersAsync(pagination, search);
-            return Ok(ApiResponse.SuccessResponse(lecturers, "Lecturers retrieved successfully"));
+            try
+            {
+                var result = await lecturerService.GetAllLecturersAsync(
+                    pagination, 
+                    search, 
+                    departmentId, 
+                    position, 
+                    academicTitle,
+                    lecturerStatus);
+                    
+                return Ok(ApiResponse.SuccessResponse(result, "Lecturers retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving lecturers", new List<string> { ex.Message }));
+            }
         }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<Lecturer>> GetLecturerById(int id)
         {

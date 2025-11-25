@@ -11,7 +11,7 @@ namespace StudentManagement.Services.Interface
         Task<PagedResult<Student>> GetAllStudentsAsync(PaginationParams pagination,
     string? search = null,
     string? className = null,
-    int? programId = null,
+    int? departmentId = null,
     int? yearOfAdmission = null,
     StudentStatus? studentStatus = null);
 

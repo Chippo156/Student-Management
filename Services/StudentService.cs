@@ -46,7 +46,7 @@ namespace StudentManagement.Services
     PaginationParams pagination,
     string? search = null,
     string? className = null,
-    int? programId = null,
+    int? departmentId = null,
     int? yearOfAdmission = null,
     StudentStatus? studentStatus = null)
         {
@@ -75,9 +75,9 @@ namespace StudentManagement.Services
             }
 
             // Filter by program (chuyên ngành)
-            if (programId.HasValue)
+            if (departmentId.HasValue)
             {
-                query = query.Where(s => s.Class.Program.AcademicProgramId == programId.Value);
+                query = query.Where(s => s.Class.Program.Department.DepartmentId == departmentId.Value);
             }
 
             // Filter by year of admission (năm nhập học)

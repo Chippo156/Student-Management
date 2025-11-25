@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
+using StudentManagement.Enum;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
@@ -82,8 +83,82 @@ namespace StudentManagement.Services
                 PageSize = pagination.PageSize
             };
         }
-        public async Task<LecturerDetailResponse?> GetLecturerDetailByCodeAsync(string lecturerCode)
 
+        public async Task<PagedResult<Lecturer>> GetAllLecturersAsync(
+            PaginationParams pagination, 
+            string? search = null,
+            int? departmentId = null,
+            string? position = null,
+            string? academicTitle = null,
+            LecturerStatus? lecturerStatus = null)
+        {
+            var query = context.Lecturers
+                .Include(l => l.User)
+                .Include(l => l.Department)
+                    .ThenInclude(d => d.Faculty)
+                .AsQueryable();
+
+            // Apply search filter - tìm kiếm theo tên, email, mã giảng viên, số điện thoại
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchTerm = search.Trim().ToLower();
+                query = query.Where(l =>
+                    l.User.FullName.ToLower().Contains(searchTerm) ||
+                    (l.User.Email != null && l.User.Email.ToLower().Contains(searchTerm)) ||
+                    l.LecturerCode.ToLower().Contains(searchTerm) ||
+                    (l.User.Phone != null && l.User.Phone.ToLower().Contains(searchTerm)) ||
+                    l.Department.DepartmentName.ToLower().Contains(searchTerm));
+            }
+
+            // Filter by department (khoa)
+            if (departmentId.HasValue)
+            {
+                query = query.Where(l => l.Department.DepartmentId == departmentId.Value);
+            }
+
+            // Filter by position (chức vụ)
+            if (!string.IsNullOrWhiteSpace(position))
+            {
+                var positionTerm = position.Trim().ToLower();
+                query = query.Where(l => l.Position.ToLower().Contains(positionTerm));
+            }
+
+            // Filter by academic title (học hàm)
+            if (!string.IsNullOrWhiteSpace(academicTitle))
+            {
+                var titleTerm = academicTitle.Trim().ToLower();
+                query = query.Where(l => l.AcademicTitle.ToLower().Contains(titleTerm));
+            }
+
+            // Filter by account status (trạng thái tài khoản)
+            if (lecturerStatus.HasValue)
+            {
+                query = query.Where(l => l.LecturerStatus == lecturerStatus.Value);
+            }
+
+            // Tổng số bản ghi sau khi apply filter
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination và sắp xếp
+            var lecturers = await query
+                .OrderBy(l => l.Department.DepartmentName)
+                .ThenBy(l => l.Position)
+                .ThenBy(l => l.User.FullName)
+                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+
+            // Gói kết quả vào PagedResult
+            return new PagedResult<Lecturer>
+            {
+                Items = lecturers,
+                TotalCount = totalCount,
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize
+            };
+        }
+
+        public async Task<LecturerDetailResponse?> GetLecturerDetailByCodeAsync(string lecturerCode)
         {
             try
             {

@@ -21,7 +21,7 @@ namespace StudentManagement.Controllers
     [FromQuery] PaginationParams pagination,
     [FromQuery] string? search = null,
     [FromQuery] string? className = null,
-    [FromQuery] int? programId = null,
+    [FromQuery] int? departmentId = null,
     [FromQuery] int? yearOfAdmission = null,
     [FromQuery] StudentStatus? studentStatus = null)
         {
@@ -31,7 +31,7 @@ namespace StudentManagement.Controllers
                     pagination,
                     search,
                     className,
-                    programId,
+                    departmentId,
                     yearOfAdmission,
                     studentStatus);
 
