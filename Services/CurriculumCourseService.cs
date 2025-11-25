@@ -410,8 +410,6 @@ namespace StudentManagement.Services
                 // Học kỳ hiện tại -> tiếp tục xử lý bình thường
             }
 
-
-
             var curriculumCourses = await curriculumCoursesQuery.ToListAsync();
 
             // Get student's enrollment history

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using StudentManagement.Enum;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
@@ -14,14 +15,33 @@ namespace StudentManagement.Controllers
     public class StudentController(IStudentService studentService) : BaseController
     {
         public static Student student = new Student();
-        
+
         [HttpGet("GetAllStudents")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IEnumerable<Student>>> GetAllStudents([FromQuery] PaginationParams pagination,
-            [FromQuery] string? search = null)
+        public async Task<ActionResult<PagedResult<Student>>> GetAllStudents(
+    [FromQuery] PaginationParams pagination,
+    [FromQuery] string? search = null,
+    [FromQuery] string? className = null,
+    [FromQuery] int? programId = null,
+    [FromQuery] int? yearOfAdmission = null,
+    [FromQuery] StudentStatus? studentStatus = null)
         {
-            var students = await studentService.GetAllStudentsAsync(pagination, search);
-            return Ok(ApiResponse.SuccessResponse(students, "Students retrieved successfully"));
+            try
+            {
+                var result = await studentService.GetAllStudentsAsync(
+                    pagination,
+                    search,
+                    className,
+                    programId,
+                    yearOfAdmission,
+                    studentStatus);
+
+                return Ok(ApiResponse.SuccessResponse(result, "Students retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while retrieving students", new List<string> { ex.Message }));
+            }
         }
 
         [HttpGet("{id}")]

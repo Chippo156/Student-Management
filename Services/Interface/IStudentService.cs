@@ -1,4 +1,5 @@
-﻿using StudentManagement.Models;
+﻿using StudentManagement.Enum;
+using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
 
@@ -7,7 +8,12 @@ namespace StudentManagement.Services.Interface
     public interface IStudentService
     {
         Task<StudentDetailDto?> GetStudentByIdAsync(int studentId);
-        Task<PagedResult<Student>> GetAllStudentsAsync(PaginationParams pagination, string? search = null);
+        Task<PagedResult<Student>> GetAllStudentsAsync(PaginationParams pagination,
+    string? search = null,
+    string? className = null,
+    int? programId = null,
+    int? yearOfAdmission = null,
+    StudentStatus? studentStatus = null);
 
         Task<Student> CreateStudentAsync(StudentRequest student);
         Task<bool> DeleteStudentAsync(int studentId);

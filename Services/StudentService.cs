@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
+using StudentManagement.Enum;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
@@ -41,33 +42,66 @@ namespace StudentManagement.Services
             return Task.FromResult(context.SaveChanges() > 0);
         }
 
-        public async Task<PagedResult<Student>> GetAllStudentsAsync(PaginationParams pagination, string? search = null)
+        public async Task<PagedResult<Student>> GetAllStudentsAsync(
+    PaginationParams pagination,
+    string? search = null,
+    string? className = null,
+    int? programId = null,
+    int? yearOfAdmission = null,
+    StudentStatus? studentStatus = null)
         {
-
             var query = context.Students
                 .Include(s => s.User)
                 .Include(s => s.Class)
                     .ThenInclude(c => c.Program)
                         .ThenInclude(p => p.Department)
                 .AsQueryable();
+
+            // Apply search filter - tìm kiếm theo tên, email, MSSV
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var searchTerm = search.Trim().ToLower();
-                query = query.Where(u =>
-                    u.User.FullName.ToLower().Contains(searchTerm) ||
-                    (u.User.Email != null && u.User.Email.ToLower().Contains(searchTerm)) ||
-                    u.MSSV.ToLower().Contains(searchTerm) || u.Class.ClassName.ToLower().Contains(searchTerm));
+                query = query.Where(s =>
+                    s.User.FullName.ToLower().Contains(searchTerm) ||
+                    (s.User.Email != null && s.User.Email.ToLower().Contains(searchTerm)) ||
+                    s.MSSV.ToLower().Contains(searchTerm));
             }
-            // Tổng số bản ghi
+
+            // Filter by class name
+            if (!string.IsNullOrWhiteSpace(className))
+            {
+                var classNameTerm = className.Trim().ToLower();
+                query = query.Where(s => s.Class.ClassName.ToLower().Contains(classNameTerm));
+            }
+
+            // Filter by program (chuyên ngành)
+            if (programId.HasValue)
+            {
+                query = query.Where(s => s.Class.Program.AcademicProgramId == programId.Value);
+            }
+
+            // Filter by year of admission (năm nhập học)
+            if (yearOfAdmission.HasValue)
+            {
+                query = query.Where(s => s.YearOfAdmission == yearOfAdmission.Value);
+            }
+
+            // Filter by student status (trạng thái)
+            if (studentStatus.HasValue)
+            {
+                query = query.Where(s => s.StudentStatus == studentStatus.Value);
+            }
+
+            // Tổng số bản ghi sau khi apply filter
             var totalCount = await query.CountAsync();
 
-            // Lấy trang hiện tại
+            // Apply pagination và sắp xếp
             var students = await query
+                .OrderBy(s => s.Class.ClassName)
+                .ThenBy(s => s.MSSV)
                 .Skip((pagination.PageNumber - 1) * pagination.PageSize)
                 .Take(pagination.PageSize)
                 .ToListAsync();
-
-            
 
             // Gói kết quả vào PagedResult
             return new PagedResult<Student>
