@@ -136,6 +136,98 @@ const getColumns = (theme) => [
         <Text type="secondary">-</Text>
       ),
   },
+  {
+    title: <Tooltip title="Trạng thái học tập">Tình Trạng</Tooltip>,
+    dataIndex: 'studentProgress',
+    align: 'center',
+    width: 100,
+    render: (progress) => {
+      if (!progress || !progress.hasTaken) {
+        return <Tag color="default" style={{ fontSize: '11px' }}>Chưa học</Tag>;
+      }
+
+      if (progress.isCompleted) {
+        return <Tag color="success" style={{ fontSize: '11px' }}>Đã đạt</Tag>;
+      } else {
+        return <Tag color="warning" style={{ fontSize: '11px' }}>Chưa đạt</Tag>;
+      }
+    },
+  },
+  {
+    title: <Tooltip title="Điểm cuối kỳ">Điểm CK</Tooltip>,
+    dataIndex: 'studentProgress',
+    align: 'center',
+    width: 70,
+    render: (progress) => {
+      if (!progress || !progress.hasTaken) {
+        return <Text type="secondary" style={{ fontSize: '12px' }}>-</Text>;
+      }
+      return (
+        <span style={{ fontWeight: 600, color: theme.palette.primary.main, fontSize: '12px' }}>
+          {progress.finalScore?.toFixed(1) || '0.0'}
+        </span>
+      );
+    },
+  },
+  {
+    title: <Tooltip title="Điểm chữ">Điểm chữ</Tooltip>,
+    dataIndex: 'studentProgress',
+    align: 'center',
+    width: 70,
+    render: (progress) => {
+      if (!progress || !progress.hasTaken) {
+        return <Text type="secondary" style={{ fontSize: '12px' }}>-</Text>;
+      }
+      const colorMap = {
+        'A+': '#52c41a',
+        'A': '#52c41a',
+        'B+': '#1890ff',
+        'B': '#1890ff',
+        'C+': '#faad14',
+        'C': '#faad14',
+        'D+': '#ff7a45',
+        'D': '#ff7a45',
+        'F': '#ff4d4f',
+      };
+      return (
+        <span
+          style={{
+            fontWeight: 600,
+            color: colorMap[progress.gradeLetter] || theme.palette.text.primary,
+            fontSize: '12px'
+          }}
+        >
+          {progress.gradeLetter || '-'}
+        </span>
+      );
+    },
+  },
+  {
+    title: <Tooltip title="Học kỳ đã học">Học kỳ</Tooltip>,
+    dataIndex: 'studentProgress',
+    align: 'center',
+    width: 120,
+    render: (progress) => {
+      if (!progress || !progress.hasTaken) {
+        return <Text type="secondary" style={{ fontSize: '11px' }}>-</Text>;
+      }
+
+      // Xử lý hiển thị học kỳ, chỉ hiển thị một khi có trùng lặp
+      let semesterDisplay = progress.semesterTaken;
+      if (semesterDisplay && semesterDisplay.includes(' | Đang học: ')) {
+        const parts = semesterDisplay.split(' | Đang học: ');
+        if (parts[0] === parts[1]) {
+          semesterDisplay = parts[0]; // Chỉ hiển thị một phần khi trùng nhau
+        }
+      }
+
+      return (
+        <Text style={{ fontSize: '10px', maxWidth: '120px', display: 'block', wordBreak: 'break-all' }}>
+          {semesterDisplay}
+        </Text>
+      );
+    },
+  },
 ];
 
 const CurriculumPage = () => {
@@ -154,12 +246,12 @@ const CurriculumPage = () => {
     fetchCurriculum();
   }, []);
 
-  // Mock data for completed credits (this should come from actual student progress)
-  const mockCompletedCredits = curriculum
-    ? Math.floor(curriculum.totalCreditsRequired * 0.6)
+  // Use actual student data from API response
+  const completedCredits = curriculum
+    ? curriculum.studentTotalCompletedCredits
     : 0;
   const completionRate = curriculum
-    ? Math.round((mockCompletedCredits / curriculum.totalCreditsRequired) * 100)
+    ? curriculum.studentCompletionRate
     : 0;
 
   return (
@@ -204,7 +296,7 @@ const CurriculumPage = () => {
         {curriculum ? (
           <>
             {/* Quick Stats */}
-            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
               <Col xs={24} sm={12} lg={6}>
                 <Card
                   bordered={false}
@@ -243,7 +335,7 @@ const CurriculumPage = () => {
                         TC đã hoàn thành
                       </span>
                     }
-                    value={mockCompletedCredits}
+                    value={completedCredits}
                     prefix={
                       <CheckCircleOutlined
                         style={{ color: theme.palette.success.main }}
@@ -268,7 +360,7 @@ const CurriculumPage = () => {
                       </span>
                     }
                     value={
-                      curriculum.totalCreditsRequired - mockCompletedCredits
+                      curriculum.totalCreditsRequired - completedCredits
                     }
                     prefix={
                       <ClockCircleOutlined
@@ -306,7 +398,8 @@ const CurriculumPage = () => {
               </Col>
             </Row>
 
-            {/* Program Information */}
+
+            {/* Student Progress Details */}
             <Card
               bordered={false}
               style={{
@@ -358,6 +451,54 @@ const CurriculumPage = () => {
                 </Col>
               </Row>
               <Divider />
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={8}>
+                  <Statistic
+                    title="TC Bắt buộc đã đạt"
+                    value={curriculum.studentCompletedRequiredCredits}
+                    suffix={`/${curriculum.totalRequiredCredits}`}
+                    valueStyle={{ color: theme.palette.success.main }}
+                  />
+                  <Progress
+                    percent={Math.round((curriculum.studentCompletedRequiredCredits / curriculum.totalRequiredCredits) * 100)}
+                    strokeColor={theme.palette.success.main}
+                    showInfo={false}
+                    size="small"
+                    style={{ marginTop: 8 }}
+                  />
+                </Col>
+                <Col xs={24} sm={8}>
+                  <Statistic
+                    title="TC Tự chọn đã đạt"
+                    value={curriculum.studentCompletedOptionalCredits}
+                    suffix={`/${curriculum.totalOptionalCredits}`}
+                    valueStyle={{ color: theme.palette.secondary.main }}
+                  />
+                  <Progress
+                    percent={Math.round((curriculum.studentCompletedOptionalCredits / curriculum.totalOptionalCredits) * 100)}
+                    strokeColor={theme.palette.secondary.main}
+                    showInfo={false}
+                    size="small"
+                    style={{ marginTop: 8 }}
+                  />
+                </Col>
+                <Col xs={24} sm={8}>
+                  <Statistic
+                    title="Môn học đã hoàn thành"
+                    value={curriculum.studentCompletedRequiredCourses + curriculum.studentCompletedOptionalCourses}
+                    suffix={`/${curriculum.requiredCourseCount + curriculum.optionalCourseCount}`}
+                    valueStyle={{ color: theme.palette.primary.main }}
+                  />
+                  <Progress
+                    percent={Math.round(((curriculum.studentCompletedRequiredCourses + curriculum.studentCompletedOptionalCourses) / (curriculum.requiredCourseCount + curriculum.optionalCourseCount)) * 100)}
+                    strokeColor={theme.palette.primary.main}
+                    showInfo={false}
+                    size="small"
+                    style={{ marginTop: 8 }}
+                  />
+                </Col>
+              </Row>
+              <Divider />
               <div>
                 <Text
                   strong
@@ -367,7 +508,7 @@ const CurriculumPage = () => {
                     marginBottom: 8,
                   }}
                 >
-                  Tiến độ hoàn thành chương trình
+                  Tiến độ hoàn thành tổng thể
                 </Text>
                 <Progress
                   percent={completionRate}
@@ -376,6 +517,7 @@ const CurriculumPage = () => {
                     '100%': theme.palette.success.main,
                   }}
                   status="active"
+                  // format={(percent) => `${percent}% (${completedCredits}/${curriculum.totalCreditsRequired} TC)`}
                 />
               </div>
             </Card>
@@ -465,7 +607,7 @@ const CurriculumPage = () => {
                     pagination={false}
                     size="small"
                     bordered
-                    scroll={{ x: 900 }}
+                    scroll={{ x: 1000 }}
                   />
                 </Panel>
               ))}
@@ -580,10 +722,11 @@ const CurriculumPage = () => {
               <Divider />
               <Paragraph type="secondary">
                 <b>Ghi chú:</b> <br />
-                <Tag color="green" style={{ fontWeight: 500 }} /> Môn học/Học
-                phần đã (hoặc đang) học &nbsp;
-                <Tag color="red" style={{ fontWeight: 500 }} /> Môn học sinh
-                viên chưa đăng ký học tập
+                <Tag color="green" style={{ fontWeight: 500 }}>Đã đạt</Tag> Môn học đã hoàn thành &nbsp;
+                <Tag color="warning" style={{ fontWeight: 500 }}>Chưa đạt</Tag> Môn học đã học nhưng không đạt yêu cầu &nbsp;
+                <Tag color="default" style={{ fontWeight: 500 }}>Chưa học</Tag> Môn học chưa đăng ký học tập
+                <br /><br />
+                <b>Trạng thái học tập:</b> Hiển thị tiến độ học tập thực tế của sinh viên bao gồm điểm số, điểm chữ và học kỳ đã hoàn thành.
               </Paragraph>
             </Card>
           </>
