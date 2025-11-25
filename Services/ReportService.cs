@@ -915,5 +915,21 @@ namespace StudentManagement.Services
                 _ => "Kém"
             };
         }
+
+        // Method đơn giản chỉ trả về tên ngành và số lượng
+        public async Task<List<SimpleDepartmentStat>> GetSimpleStudentStatisticsByProgramAsync()
+        {
+            return await _context.Students
+                .Include(s => s.Class)
+                    .ThenInclude(c => c.Program)
+                .GroupBy(s => s.Class.Program.Department.DepartmentName)
+                .Select(g => new SimpleDepartmentStat
+                {
+                    DepartmentName = g.Key,
+                    StudentCount = g.Count()
+                })
+                .OrderByDescending(p => p.StudentCount)
+                .ToListAsync();
+        }
     }
 }

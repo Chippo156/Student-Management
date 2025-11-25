@@ -111,5 +111,19 @@ namespace StudentManagement.Controllers
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
+        [HttpGet("students-by-department")]
+        [Authorize(Roles = "Admin,AcademicStaff")]
+        public async Task<IActionResult> GetSimpleStudentStatisticsByProgram()
+        {
+            try
+            {
+                var statistics = await _reportService.GetSimpleStudentStatisticsByProgramAsync();
+                return Ok(ApiResponse.SuccessResponse(statistics, "Lấy thống kê đơn giản sinh viên theo chuyên ngành thành công"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
     }
 }

@@ -91,6 +91,5 @@ namespace StudentManagement.Controllers
             }
         }
 
-        
     }
 }
