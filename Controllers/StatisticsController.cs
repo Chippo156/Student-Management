@@ -125,5 +125,19 @@ namespace StudentManagement.Controllers
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
+        [HttpGet("students-by-year")]
+        [Authorize(Roles = "Admin,AcademicStaff")]
+        public async Task<IActionResult> GetStudentYearDistribution()
+        {
+            try
+            {
+                var statistics = await _reportService.GetStudentYearDistributionAsync();
+                return Ok(ApiResponse.SuccessResponse(statistics, "Thống kê sinh viên theo năm học thành công"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
     }
 }

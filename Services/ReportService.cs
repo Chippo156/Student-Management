@@ -721,6 +721,100 @@ namespace StudentManagement.Services
             };
         }
 
+        public async Task<StudentYearDistributionResponse> GetStudentYearDistributionAsync()
+        {
+            var currentYear = DateTime.Now.Year;
+            var currentMonth = DateTime.Now.Month;
+            
+            // Xác định năm học hiện tại (tháng 9 -> bắt đầu năm học mới)
+            var academicYear = currentMonth >= 8 ? currentYear : currentYear - 1;
+
+            // Lấy tất cả sinh viên đang học (Active)
+            var activeStudents = await _context.Students
+                //.Where(s => s.StudentStatus == StudentStatus.Active)
+                .ToListAsync();
+
+            // Tính năm học cho từng sinh viên và nhóm theo năm
+            var yearDistribution = new List<YearDistributionStat>();
+            
+            var studentsByYear = activeStudents
+                .Select(s => CalculateYearLevel(s.YearOfAdmission, academicYear))
+                .Where(yearLevel => yearLevel > 0 && yearLevel <= 6) // Lọc năm hợp lệ (1-6)
+                .GroupBy(yearLevel => yearLevel)
+                .OrderBy(g => g.Key);
+
+            var studentYear = 0;
+            foreach (var yearGroup in studentsByYear)
+            {
+                var yearStat = new YearDistributionStat();
+                var yearLevel = yearGroup.Key;
+                var studentCount = yearGroup.Count();
+                if (yearLevel >= 5)
+                {
+                    studentYear += studentCount;
+                }
+                else
+                {
+                    yearStat = new YearDistributionStat
+                    {
+                        YearLevel = yearLevel,
+                        YearName = GetYearName(yearLevel),
+                        StudentCount = studentCount,
+                        Percentage = 0 // Sẽ tính sau
+                    };
+                    yearDistribution.Add(yearStat);
+                }
+
+            }
+            // Thêm năm thứ 5 trở lên nếu có
+            if (studentYear > 0)
+            {
+                yearDistribution.Add(new YearDistributionStat
+                {
+                    YearLevel = 5,
+                    YearName = "Năm thứ 5 trở lên",
+                    StudentCount = studentYear,
+                    Percentage = 0 // Sẽ tính sau
+                });
+            }
+
+            // Tính phần trăm
+            var totalStudents = yearDistribution.Sum(y => y.StudentCount);
+            foreach (var yearStat in yearDistribution)
+            {
+                yearStat.Percentage = totalStudents > 0 ? 
+                    Math.Round((double)yearStat.StudentCount / totalStudents * 100, 2) : 0;
+            }
+
+            return new StudentYearDistributionResponse
+            {
+                YearDistribution = yearDistribution,
+                TotalStudents = totalStudents,
+                GeneratedAt = DateTime.UtcNow
+            };
+        }
+
+        // Helper method: Tính năm học dựa trên năm nhập học
+        private static int CalculateYearLevel(int yearOfAdmission, int currentAcademicYear)
+        {
+            return currentAcademicYear - yearOfAdmission + 1;
+        }
+
+        // Helper method: Chuyển đổi số năm thành tên
+        private static string GetYearName(int yearLevel)
+        {
+            return yearLevel switch
+            {
+                1 => "Năm nhất",
+                2 => "Năm hai", 
+                3 => "Năm ba",
+                4 => "Năm tư",
+                5 => "Năm thứ năm",
+                6 => "Năm thứ sáu",
+                _ => $"Năm thứ {yearLevel}"
+            };
+        }
+
         // Helper methods
         private GradeOverallStats CalculateOverallStats(List<FinalResult> finalResults)
         {

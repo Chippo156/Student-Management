@@ -15,5 +15,7 @@ namespace StudentManagement.Services.Interface
         Task<AllStudentsGradeStatisticsResponse> GetAllStudentsGradeStatisticsAsync(int? departmentId = null, int? semesterId = null);
         Task<GraduationYearlyStatisticsResponse> GetGraduationYearlyStatisticsAsync(int? startYear = null, int? endYear = null);
         Task<List<SimpleDepartmentStat>> GetSimpleStudentStatisticsByProgramAsync();
+        Task<StudentYearDistributionResponse> GetStudentYearDistributionAsync();
+
     }
 }
