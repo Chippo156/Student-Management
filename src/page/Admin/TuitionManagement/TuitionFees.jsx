@@ -40,6 +40,7 @@ import * as XLSX from 'xlsx';
 import { tuitionService } from '../../../service/tuitionService';
 import TuitionDetailModal from '../../../component/Admin/TuitionManagement/TuitionDetailModal';
 import StudentTuitionSummaryModal from '../../../component/Admin/TuitionManagement/StudentTuitionSummaryModal';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const TuitionFees = () => {
   const theme = useTheme();
@@ -49,6 +50,9 @@ const TuitionFees = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [totalCount, setTotalCount] = useState(0);
+
+  // ✅ Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState('');
@@ -66,7 +70,7 @@ const TuitionFees = () => {
 
   useEffect(() => {
     loadTuitions();
-  }, [page, rowsPerPage, searchTerm, statusFilter, overdueFilter]);
+  }, [page, rowsPerPage, debouncedSearchTerm, statusFilter, overdueFilter]); // ✅ Dùng debouncedSearchTerm
 
   const loadTuitions = async () => {
     setLoading(true);
@@ -74,7 +78,7 @@ const TuitionFees = () => {
       const response = await tuitionService.getAllTuitionFees(
         page + 1,
         rowsPerPage,
-        searchTerm,
+        debouncedSearchTerm, // ✅ Dùng debounced value
         null,
         statusFilter,
         overdueFilter
@@ -414,6 +418,11 @@ const TuitionFees = () => {
                 </InputAdornment>
               ),
             }}
+            helperText={
+              searchTerm !== debouncedSearchTerm && searchTerm ? (
+                <span style={{ fontSize: '0.75rem' }}>Đang tìm kiếm...</span>
+              ) : null
+            }
           />
         </Grid>
         <Grid item xs={12} md={3}>

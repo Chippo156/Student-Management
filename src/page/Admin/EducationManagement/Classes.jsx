@@ -44,6 +44,7 @@ import ClassCreateModal from '../../../component/Admin/ClassManagement/ClassCrea
 import ClassEditModal from '../../../component/Admin/ClassManagement/ClassEditModal';
 import AdviserAssignmentModal from '../../../component/Admin/ClassManagement/AdviserAssignmentModal';
 import { message, Modal as AntModal } from 'antd';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const Classes = () => {
   const theme = useTheme();
@@ -53,6 +54,9 @@ const Classes = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [totalCount, setTotalCount] = useState(0);
+
+  // ✅ Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // Modal states
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -68,7 +72,7 @@ const Classes = () => {
   // Load classes on mount and when pagination changes
   useEffect(() => {
     loadClasses();
-  }, [page, rowsPerPage, searchTerm]);
+  }, [page, rowsPerPage, debouncedSearchTerm]); // ✅ Dùng debouncedSearchTerm
 
   const loadClasses = async () => {
     setLoading(true);
@@ -76,7 +80,7 @@ const Classes = () => {
       const response = await classService.getAllClasses(
         page + 1,
         rowsPerPage,
-        searchTerm
+        debouncedSearchTerm // ✅ Dùng debounced value
       );
       if (response) {
         setClasses(response.items || []);
@@ -358,6 +362,11 @@ const Classes = () => {
               ),
             }}
             size="small"
+            helperText={
+              searchTerm !== debouncedSearchTerm && searchTerm ? (
+                <span style={{ fontSize: '0.75rem' }}>Đang tìm kiếm...</span>
+              ) : null
+            }
           />
         </Grid>
         <Grid item xs={12} md={2}>

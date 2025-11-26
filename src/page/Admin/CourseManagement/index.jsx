@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -41,6 +41,7 @@ import { message } from 'antd';
 import CourseDetailModal from '../../../component/Admin/CourseManagement/CourseDetailModal';
 import CourseEditModal from '../../../component/Admin/CourseManagement/CourseEditModal';
 import CourseCreateModal from '../../../component/Admin/CourseManagement/CourseCreateModal';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const CourseManagement = () => {
   const theme = useTheme();
@@ -55,6 +56,9 @@ const CourseManagement = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
+
+  // ✅ Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // Modal states
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -89,10 +93,18 @@ const CourseManagement = () => {
     fetchDepartments();
   }, []);
 
-  // Fetch courses
+  // Fetch courses khi debounced search term thay đổi
   useEffect(() => {
     fetchCourses();
-  }, [page, rowsPerPage, searchTerm, filterProgram, filterDepartment]);
+    // eslint-disable-next-line
+  }, [
+    page,
+    rowsPerPage,
+    debouncedSearchTerm,
+    filterProgram,
+    filterDepartment,
+    filterCourseType,
+  ]);
 
   const fetchCourses = async () => {
     setLoading(true);
@@ -100,8 +112,8 @@ const CourseManagement = () => {
       const result = await curriculumCourseService.getAllCurriculumCourses({
         pageNumber: page + 1,
         pageSize: rowsPerPage,
-        courseCode: searchTerm,
-        courseName: searchTerm,
+        courseCode: debouncedSearchTerm, // ✅ Dùng debounced value
+        courseName: debouncedSearchTerm, // ✅ Dùng debounced value
         programId: filterProgram || null,
         departmentId: filterDepartment || null,
       });
@@ -147,15 +159,22 @@ const CourseManagement = () => {
     let filterInfo = '';
     if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
     if (filterProgram) {
-      const program = programs.find(p => p.academicProgramId === filterProgram);
-      filterInfo += (filterInfo ? ', ' : '') + `Chương trình: ${program?.programName || ''}`;
+      const program = programs.find(
+        (p) => p.academicProgramId === filterProgram
+      );
+      filterInfo +=
+        (filterInfo ? ', ' : '') +
+        `Chương trình: ${program?.programName || ''}`;
     }
     if (filterDepartment) {
-      const dept = departments.find(d => d.departmentId === filterDepartment);
-      filterInfo += (filterInfo ? ', ' : '') + `Chuyên ngành: ${dept?.departmentName || ''}`;
+      const dept = departments.find((d) => d.departmentId === filterDepartment);
+      filterInfo +=
+        (filterInfo ? ', ' : '') +
+        `Chuyên ngành: ${dept?.departmentName || ''}`;
     }
     if (filterCourseType) {
-      const typeLabel = filterCourseType === 'required' ? 'Bắt buộc' : 'Tự chọn';
+      const typeLabel =
+        filterCourseType === 'required' ? 'Bắt buộc' : 'Tự chọn';
       filterInfo += (filterInfo ? ', ' : '') + `Loại: ${typeLabel}`;
     }
 
@@ -205,21 +224,6 @@ const CourseManagement = () => {
       departments: uniqueDepts,
     };
   }, [courses, totalCount]);
-
-  if (loading && courses.length === 0) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '400px',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   return (
     <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
@@ -303,6 +307,11 @@ const CourseManagement = () => {
               ),
             }}
             size="small"
+            helperText={
+              searchTerm !== debouncedSearchTerm && searchTerm ? (
+                <span style={{ fontSize: '0.75rem' }}>Đang tìm kiếm...</span>
+              ) : null
+            }
           />
         </Grid>
         <Grid item xs={12} md={2}>
@@ -481,12 +490,19 @@ const CourseManagement = () => {
             renderCell: (course) => (
               <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                 <Tooltip title="Xem chi tiết">
-                  <IconButton size="small" onClick={() => handleViewCourse(course)}>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleViewCourse(course)}
+                  >
                     <VisibilityIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Chỉnh sửa">
-                  <IconButton size="small" color="primary" onClick={() => handleEditCourse(course)}>
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={() => handleEditCourse(course)}
+                  >
                     <EditIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>

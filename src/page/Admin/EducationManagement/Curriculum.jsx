@@ -30,6 +30,7 @@ import { useTheme } from '@mui/material/styles';
 import { PageHeader, StatsCard, DataTable, FilterSection } from '../../../component/Common';
 import academicProgramService from '../../../service/academicProgramService';
 import * as XLSX from 'xlsx';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const Curriculum = () => {
   const theme = useTheme();
@@ -42,9 +43,12 @@ const Curriculum = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
 
+  // ✅ Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   useEffect(() => {
     fetchPrograms();
-  }, [page, rowsPerPage, searchTerm, filterDegree, filterDepartment]);
+  }, [page, rowsPerPage, debouncedSearchTerm, filterDegree, filterDepartment]); // ✅ Dùng debouncedSearchTerm
 
   const fetchPrograms = async () => {
     setLoading(true);
@@ -52,7 +56,7 @@ const Curriculum = () => {
       const result = await academicProgramService.getAllPrograms({
         pageNumber: page + 1,
         pageSize: rowsPerPage,
-        programName: searchTerm,
+        programName: debouncedSearchTerm, // ✅ Dùng debounced value
         degreeLevel: filterDegree || '',
       });
 
@@ -297,6 +301,11 @@ const Curriculum = () => {
               ),
             }}
             size="small"
+            helperText={
+              searchTerm !== debouncedSearchTerm && searchTerm ? (
+                <span style={{ fontSize: '0.75rem' }}>Đang tìm kiếm...</span>
+              ) : null
+            }
           />
         </Grid>
         <Grid item xs={12} md={2}>

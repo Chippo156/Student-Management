@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { message, Popconfirm } from 'antd';
 import {
   Box,
@@ -47,6 +47,7 @@ import { userService } from '../../../service/userService';
 import UserDetailModal from '../../../component/Admin/UserManagementPage/UserDetailModal';
 import UserEditModal from '../../../component/Admin/UserManagementPage/UserEditModal';
 import { exportUsersExcel } from '../../../until/exportUsersExcel';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const UserManagement = () => {
   const navigate = useNavigate();
@@ -62,6 +63,9 @@ const UserManagement = () => {
   const [openEdit, setOpenEdit] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
 
+  // ✅ Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   const fetchUsers = async () => {
     setLoading(true);
     const roleId = filterRole !== 'all' ? getRoleIdFromName(filterRole) : null;
@@ -69,7 +73,7 @@ const UserManagement = () => {
       page + 1,
       rowsPerPage,
       roleId,
-      searchTerm
+      debouncedSearchTerm // ✅ Dùng debounced value
     );
     if (res) {
       setUsers(res.items || []);
@@ -87,10 +91,11 @@ const UserManagement = () => {
     return roleMap[roleName.toLowerCase()] || null;
   };
 
+  // ✅ Fetch users khi debounced search term thay đổi
   useEffect(() => {
     fetchUsers();
     // eslint-disable-next-line
-  }, [page, rowsPerPage, searchTerm, filterRole]);
+  }, [page, rowsPerPage, debouncedSearchTerm, filterRole]);
 
   const stats = useMemo(() => {
     const activeUsers = users.filter((u) => u.accountStatus === 1).length;
@@ -137,7 +142,8 @@ const UserManagement = () => {
   const handleExportExcel = async () => {
     let filterInfo = '';
     if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
-    if (filterRole !== 'all') filterInfo += (filterInfo ? ', ' : '') + `Vai trò: ${filterRole}`;
+    if (filterRole !== 'all')
+      filterInfo += (filterInfo ? ', ' : '') + `Vai trò: ${filterRole}`;
 
     const result = await exportUsersExcel(users, filterInfo);
     if (result.success) {
@@ -375,6 +381,11 @@ const UserManagement = () => {
                   ),
                 }}
                 size="small"
+                helperText={
+                  searchTerm !== debouncedSearchTerm && searchTerm
+                    ? 'Đang tìm kiếm...'
+                    : null
+                }
               />
             </Grid>
             <Grid item xs={12} md={4}>

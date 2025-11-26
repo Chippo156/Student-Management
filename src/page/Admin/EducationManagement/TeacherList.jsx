@@ -29,13 +29,19 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
-import { PageHeader, StatsCard, DataTable, FilterSection } from '../../../component/Common';
+import {
+  PageHeader,
+  StatsCard,
+  DataTable,
+  FilterSection,
+} from '../../../component/Common';
 import { lecturerService } from '../../../service/lecturerService';
 import { departmentService } from '../../../service/departmentService';
 import TeacherDetailModal from '../../../component/Admin/TeacherManagement/TeacherDetailModal';
 import TeacherEditModal from '../../../component/Admin/TeacherManagement/TeacherEditModal';
 import TeacherCreateModal from '../../../component/Admin/TeacherManagement/TeacherCreateModal';
 import { exportLecturersExcel } from '../../../until/exportLecturersExcel';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const TeacherList = () => {
   const theme = useTheme();
@@ -45,6 +51,9 @@ const TeacherList = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // ✅ Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // Filter states
   const [filterDepartment, setFilterDepartment] = useState('');
@@ -68,7 +77,12 @@ const TeacherList = () => {
       academicTitle: filterAcademicTitle || undefined,
       lecturerStatus: filterStatus !== '' ? filterStatus : undefined,
     };
-    const res = await lecturerService.getAllLecturers(page + 1, rowsPerPage, searchTerm, filters);
+    const res = await lecturerService.getAllLecturers(
+      page + 1,
+      rowsPerPage,
+      debouncedSearchTerm,
+      filters
+    ); // ✅ Dùng debounced value
     if (res && res.items) {
       setLecturers(res.items);
       setTotalCount(res.totalCount || 0);
@@ -95,10 +109,20 @@ const TeacherList = () => {
   useEffect(() => {
     fetchLecturers();
     // eslint-disable-next-line
-  }, [page, rowsPerPage, searchTerm, filterDepartment, filterPosition, filterAcademicTitle, filterStatus]);
+  }, [
+    page,
+    rowsPerPage,
+    debouncedSearchTerm,
+    filterDepartment,
+    filterPosition,
+    filterAcademicTitle,
+    filterStatus,
+  ]); // ✅ Dùng debouncedSearchTerm
 
   const stats = useMemo(() => {
-    const activeLecturers = lecturers.filter((l) => l.user?.accountStatus === 1).length;
+    const activeLecturers = lecturers.filter(
+      (l) => l.user?.accountStatus === 1
+    ).length;
     const uniqueDepartments = new Set(
       lecturers.map((l) => l.department?.departmentName).filter(Boolean)
     ).size;
@@ -130,13 +154,18 @@ const TeacherList = () => {
     let filterInfo = '';
     if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
     if (filterDepartment) {
-      const dept = departments.find(d => d.departmentId === filterDepartment);
-      filterInfo += (filterInfo ? ', ' : '') + `Khoa: ${dept?.departmentName || ''}`;
+      const dept = departments.find((d) => d.departmentId === filterDepartment);
+      filterInfo +=
+        (filterInfo ? ', ' : '') + `Khoa: ${dept?.departmentName || ''}`;
     }
-    if (filterPosition) filterInfo += (filterInfo ? ', ' : '') + `Chức vụ: ${filterPosition}`;
-    if (filterAcademicTitle) filterInfo += (filterInfo ? ', ' : '') + `Học hàm: ${filterAcademicTitle}`;
+    if (filterPosition)
+      filterInfo += (filterInfo ? ', ' : '') + `Chức vụ: ${filterPosition}`;
+    if (filterAcademicTitle)
+      filterInfo +=
+        (filterInfo ? ', ' : '') + `Học hàm: ${filterAcademicTitle}`;
     if (filterStatus !== '') {
-      const statusLabel = filterStatus === 1 ? 'Đang công tác' : 'Không hoạt động';
+      const statusLabel =
+        filterStatus === 1 ? 'Đang công tác' : 'Không hoạt động';
       filterInfo += (filterInfo ? ', ' : '') + `Trạng thái: ${statusLabel}`;
     }
 
@@ -150,8 +179,8 @@ const TeacherList = () => {
 
   const getStatusText = (status) => {
     const statusMap = {
-      1: 'Đang công tác',      // Active
-      2: 'Không hoạt động',    // Inactive
+      1: 'Đang công tác', // Active
+      2: 'Không hoạt động', // Inactive
     };
     return statusMap[status] || 'Không xác định';
   };
@@ -185,16 +214,26 @@ const TeacherList = () => {
 
   const getStatusChip = (status) => {
     const statusConfig = {
-      1: { label: 'Đang công tác', color: 'success' },       // Active
-      2: { label: 'Không hoạt động', color: 'error' },       // Inactive
+      1: { label: 'Đang công tác', color: 'success' }, // Active
+      2: { label: 'Không hoạt động', color: 'error' }, // Inactive
     };
-    const config = statusConfig[status] || { label: 'Không xác định', color: 'default' };
+    const config = statusConfig[status] || {
+      label: 'Không xác định',
+      color: 'default',
+    };
     return <Chip label={config.label} color={config.color} size="small" />;
   };
 
   if (loading && lecturers.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -221,9 +260,10 @@ const TeacherList = () => {
             sx={{
               width: 40,
               height: 40,
-              bgcolor: theme.palette.mode === 'light'
-                ? theme.palette.primary.light + '40'
-                : theme.palette.primary.dark,
+              bgcolor:
+                theme.palette.mode === 'light'
+                  ? theme.palette.primary.light + '40'
+                  : theme.palette.primary.dark,
               color: theme.palette.primary.main,
             }}
           >
@@ -241,7 +281,11 @@ const TeacherList = () => {
       width: 220,
       renderCell: (lecturer) => (
         <Typography variant="body2">
-          {lecturer.user?.email || <span style={{ color: theme.palette.text.disabled }}>Chưa cập nhật</span>}
+          {lecturer.user?.email || (
+            <span style={{ color: theme.palette.text.disabled }}>
+              Chưa cập nhật
+            </span>
+          )}
         </Typography>
       ),
     },
@@ -254,9 +298,10 @@ const TeacherList = () => {
           label={lecturer.department?.departmentName || 'N/A'}
           size="small"
           sx={{
-            bgcolor: theme.palette.mode === 'light'
-              ? theme.palette.primary.light + '30'
-              : theme.palette.primary.dark + '40',
+            bgcolor:
+              theme.palette.mode === 'light'
+                ? theme.palette.primary.light + '30'
+                : theme.palette.primary.dark + '40',
             color: theme.palette.primary.main,
           }}
         />
@@ -268,7 +313,11 @@ const TeacherList = () => {
       width: 150,
       renderCell: (lecturer) => (
         <Typography variant="body2">
-          {lecturer.position || <span style={{ color: theme.palette.text.disabled }}>Chưa cập nhật</span>}
+          {lecturer.position || (
+            <span style={{ color: theme.palette.text.disabled }}>
+              Chưa cập nhật
+            </span>
+          )}
         </Typography>
       ),
     },
@@ -278,7 +327,11 @@ const TeacherList = () => {
       width: 150,
       renderCell: (lecturer) => (
         <Typography variant="body2">
-          {lecturer.academicTitle || <span style={{ color: theme.palette.text.disabled }}>Chưa cập nhật</span>}
+          {lecturer.academicTitle || (
+            <span style={{ color: theme.palette.text.disabled }}>
+              Chưa cập nhật
+            </span>
+          )}
         </Typography>
       ),
     },
@@ -296,12 +349,19 @@ const TeacherList = () => {
       renderCell: (lecturer) => (
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
           <Tooltip title="Xem chi tiết">
-            <IconButton size="small" onClick={() => handleViewTeacher(lecturer)}>
+            <IconButton
+              size="small"
+              onClick={() => handleViewTeacher(lecturer)}
+            >
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Chỉnh sửa">
-            <IconButton size="small" color="primary" onClick={() => handleEditTeacher(lecturer)}>
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => handleEditTeacher(lecturer)}
+            >
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -343,13 +403,28 @@ const TeacherList = () => {
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={4}>
-          <StatsCard icon={<People />} value={stats.total} label="Tổng giảng viên" color="primary" />
+          <StatsCard
+            icon={<People />}
+            value={stats.total}
+            label="Tổng giảng viên"
+            color="primary"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <StatsCard icon={<CheckCircle />} value={stats.active} label="Đang công tác" color="success" />
+          <StatsCard
+            icon={<CheckCircle />}
+            value={stats.active}
+            label="Đang công tác"
+            color="success"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <StatsCard icon={<Business />} value={stats.departments} label="Khoa" color="warning" />
+          <StatsCard
+            icon={<Business />}
+            value={stats.departments}
+            label="Khoa"
+            color="warning"
+          />
         </Grid>
       </Grid>
 
@@ -369,6 +444,11 @@ const TeacherList = () => {
               ),
             }}
             size="small"
+            helperText={
+              searchTerm !== debouncedSearchTerm && searchTerm ? (
+                <span style={{ fontSize: '0.75rem' }}>Đang tìm kiếm...</span>
+              ) : null
+            }
           />
         </Grid>
         <Grid item xs={12} md={2}>
@@ -435,7 +515,12 @@ const TeacherList = () => {
           </FormControl>
         </Grid>
         <Grid item xs={12} md={1.5}>
-          <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={handleResetFilters}
+            sx={{ height: '40px' }}
+          >
             Đặt lại
           </Button>
         </Grid>
@@ -452,12 +537,16 @@ const TeacherList = () => {
         onRowsPerPageChange={handleChangeRowsPerPage}
         emptyState={
           <>
-            <School sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }} />
+            <School
+              sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }}
+            />
             <Typography variant="h6" color="text.secondary" gutterBottom>
               Không tìm thấy giảng viên nào
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {searchTerm ? 'Thử thay đổi từ khóa tìm kiếm' : 'Chưa có giảng viên nào trong hệ thống'}
+              {searchTerm
+                ? 'Thử thay đổi từ khóa tìm kiếm'
+                : 'Chưa có giảng viên nào trong hệ thống'}
             </Typography>
           </>
         }

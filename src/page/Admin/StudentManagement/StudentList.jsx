@@ -32,50 +32,69 @@ import { useTheme } from '@mui/material/styles';
 import { studentServices } from '../../../service/studentServices';
 import { departmentService } from '../../../service/departmentService';
 import { classService } from '../../../service/classService';
-import { PageHeader, StatsCard, DataTable, FilterSection } from '../../../component/Common';
+import {
+  PageHeader,
+  StatsCard,
+  DataTable,
+  FilterSection,
+} from '../../../component/Common';
 import StudentDetailModal from '../../../component/Admin/StudentManagement/StudentDetailModal';
 import StudentEditModal from '../../../component/Admin/StudentManagement/StudentEditModal';
 import StudentCreateModal from '../../../component/Admin/StudentManagement/StudentCreateModal';
 import { exportStudentsExcel } from '../../../until/exportStudentsExcel';
+import { useDebounce } from '../../../hooks/useDebounce'; // ✅ Import hook
 
 const StudentList = () => {
   const theme = useTheme();
   const [students, setStudents] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
 
   // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('');
   const [filterClass, setFilterClass] = useState('');
   const [filterYearOfAdmission, setFilterYearOfAdmission] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [departments, setDepartments] = useState([]);
-  const [classes, setClasses] = useState([]);
+
+  // ✅ Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // Modal states
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
 
+  // Fetch students
   const fetchStudents = async () => {
     setLoading(true);
-    const filters = {
-      departmentId: filterDepartment || undefined,
-      className: filterClass || undefined,
-      yearOfAdmission: filterYearOfAdmission || undefined,
-      studentStatus: filterStatus !== '' ? filterStatus : undefined,
-    };
-    const res = await studentServices.getAllStudents(page + 1, rowsPerPage, searchTerm, filters);
-    if (res && res.items) {
-      setStudents(res.items);
-      setTotalCount(res.totalCount || 0);
+    try {
+      const response = await studentServices.getAllStudents(
+        page + 1,
+        rowsPerPage,
+        debouncedSearchTerm, // ✅ Dùng debounced value
+        filterDepartment || undefined,
+        filterClass || undefined,
+        filterYearOfAdmission || undefined,
+        filterStatus || undefined
+      );
+
+      if (response) {
+        setStudents(response.items || []);
+        setTotalCount(response.totalCount || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch students:', error);
+      message.error('Không thể tải danh sách sinh viên');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // Fetch departments for filter
@@ -95,18 +114,15 @@ const StudentList = () => {
   useEffect(() => {
     const fetchClasses = async () => {
       if (filterDepartment) {
-        // Fetch classes by department
-        const result = await classService.getClassesDropdownByDepartment(filterDepartment);
-        console.log(result)
+        const result =
+          await classService.getClassesDropdownByDepartment(filterDepartment);
         if (result && Array.isArray(result)) {
           setClasses(result);
         } else {
           setClasses([]);
         }
-        // Reset class filter when department changes
         setFilterClass('');
       } else {
-        // Fetch all classes
         const result = await classService.getAllClasses(1, 1000, '');
         if (result && result.items && Array.isArray(result.items)) {
           setClasses(result.items);
@@ -118,14 +134,25 @@ const StudentList = () => {
     fetchClasses();
   }, [filterDepartment]);
 
+  // ✅ Fetch students khi debounced search term thay đổi
   useEffect(() => {
     fetchStudents();
     // eslint-disable-next-line
-  }, [page, rowsPerPage, searchTerm, filterDepartment, filterClass, filterYearOfAdmission, filterStatus]);
+  }, [
+    page,
+    rowsPerPage,
+    debouncedSearchTerm,
+    filterDepartment,
+    filterClass,
+    filterYearOfAdmission,
+    filterStatus,
+  ]);
 
   const stats = useMemo(() => {
     const activeStudents = students.filter((s) => s.studentStatus === 1).length;
-    const graduatedStudents = students.filter((s) => s.studentStatus === 3).length;
+    const graduatedStudents = students.filter(
+      (s) => s.studentStatus === 3
+    ).length;
     const uniqueDepartments = new Set(
       students
         .map((s) => s.class?.program?.department?.departmentName)
@@ -160,11 +187,16 @@ const StudentList = () => {
     let filterInfo = '';
     if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
     if (filterDepartment) {
-      const dept = departments.find(d => d.departmentId === filterDepartment);
-      filterInfo += (filterInfo ? ', ' : '') + `Chuyên ngành: ${dept?.departmentName || ''}`;
+      const dept = departments.find((d) => d.departmentId === filterDepartment);
+      filterInfo +=
+        (filterInfo ? ', ' : '') +
+        `Chuyên ngành: ${dept?.departmentName || ''}`;
     }
-    if (filterClass) filterInfo += (filterInfo ? ', ' : '') + `Lớp: ${filterClass}`;
-    if (filterYearOfAdmission) filterInfo += (filterInfo ? ', ' : '') + `Năm nhập học: ${filterYearOfAdmission}`;
+    if (filterClass)
+      filterInfo += (filterInfo ? ', ' : '') + `Lớp: ${filterClass}`;
+    if (filterYearOfAdmission)
+      filterInfo +=
+        (filterInfo ? ', ' : '') + `Năm nhập học: ${filterYearOfAdmission}`;
     if (filterStatus !== '') {
       const statusMap = {
         1: 'Đang học',
@@ -173,7 +205,9 @@ const StudentList = () => {
         4: 'Đình chỉ',
         5: 'Bảo lưu',
       };
-      filterInfo += (filterInfo ? ', ' : '') + `Trạng thái: ${statusMap[filterStatus] || ''}`;
+      filterInfo +=
+        (filterInfo ? ', ' : '') +
+        `Trạng thái: ${statusMap[filterStatus] || ''}`;
     }
 
     const result = await exportStudentsExcel(students, filterInfo);
@@ -186,24 +220,27 @@ const StudentList = () => {
 
   const getStatusText = (status) => {
     const statusMap = {
-      1: 'Đang học',           // Active
-      2: 'Không hoạt động',    // Inactive
-      3: 'Đã tốt nghiệp',      // Graduated
-      4: 'Đình chỉ',           // Suspended
-      5: 'Bảo lưu',            // Reserved
+      1: 'Đang học', // Active
+      2: 'Không hoạt động', // Inactive
+      3: 'Đã tốt nghiệp', // Graduated
+      4: 'Đình chỉ', // Suspended
+      5: 'Bảo lưu', // Reserved
     };
     return statusMap[status] || 'Không xác định';
   };
 
   const getStatusChip = (status) => {
     const statusConfig = {
-      1: { label: 'Đang học', color: 'success' },           // Active
-      2: { label: 'Không hoạt động', color: 'default' },    // Inactive
-      3: { label: 'Đã tốt nghiệp', color: 'primary' },      // Graduated
-      4: { label: 'Đình chỉ', color: 'error' },             // Suspended
-      5: { label: 'Bảo lưu', color: 'warning' },            // Reserved
+      1: { label: 'Đang học', color: 'success' }, // Active
+      2: { label: 'Không hoạt động', color: 'default' }, // Inactive
+      3: { label: 'Đã tốt nghiệp', color: 'primary' }, // Graduated
+      4: { label: 'Đình chỉ', color: 'error' }, // Suspended
+      5: { label: 'Bảo lưu', color: 'warning' }, // Reserved
     };
-    const config = statusConfig[status] || { label: 'Không xác định', color: 'default' };
+    const config = statusConfig[status] || {
+      label: 'Không xác định',
+      color: 'default',
+    };
     return <Chip label={config.label} color={config.color} size="small" />;
   };
 
@@ -255,9 +292,10 @@ const StudentList = () => {
             sx={{
               width: 40,
               height: 40,
-              bgcolor: theme.palette.mode === 'light'
-                ? theme.palette.primary.light + '40'
-                : theme.palette.primary.dark,
+              bgcolor:
+                theme.palette.mode === 'light'
+                  ? theme.palette.primary.light + '40'
+                  : theme.palette.primary.dark,
               color: theme.palette.primary.main,
             }}
           >
@@ -275,7 +313,11 @@ const StudentList = () => {
       width: 220,
       renderCell: (student) => (
         <Typography variant="body2">
-          {student.user?.email || <span style={{ color: theme.palette.text.disabled }}>Chưa cập nhật</span>}
+          {student.user?.email || (
+            <span style={{ color: theme.palette.text.disabled }}>
+              Chưa cập nhật
+            </span>
+          )}
         </Typography>
       ),
     },
@@ -288,9 +330,10 @@ const StudentList = () => {
           label={student.class?.className || 'N/A'}
           size="small"
           sx={{
-            bgcolor: theme.palette.mode === 'light'
-              ? theme.palette.primary.light + '30'
-              : theme.palette.primary.dark + '40',
+            bgcolor:
+              theme.palette.mode === 'light'
+                ? theme.palette.primary.light + '30'
+                : theme.palette.primary.dark + '40',
             color: theme.palette.primary.main,
           }}
         />
@@ -337,7 +380,11 @@ const StudentList = () => {
             </IconButton>
           </Tooltip>
           <Tooltip title="Chỉnh sửa">
-            <IconButton size="small" color="primary" onClick={() => handleEditStudent(student)}>
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => handleEditStudent(student)}
+            >
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -348,7 +395,14 @@ const StudentList = () => {
 
   if (loading && students.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -387,26 +441,46 @@ const StudentList = () => {
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <StatsCard icon={<People />} value={stats.total} label="Tổng sinh viên" color="primary" />
+          <StatsCard
+            icon={<People />}
+            value={stats.total}
+            label="Tổng sinh viên"
+            color="primary"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatsCard icon={<CheckCircle />} value={stats.active} label="Đang học" color="success" />
+          <StatsCard
+            icon={<CheckCircle />}
+            value={stats.active}
+            label="Đang học"
+            color="success"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatsCard icon={<School />} value={stats.graduated} label="Đã tốt nghiệp" color="info" />
+          <StatsCard
+            icon={<School />}
+            value={stats.graduated}
+            label="Đã tốt nghiệp"
+            color="info"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatsCard icon={<Business />} value={stats.departments} label="Chuyên ngành" color="warning" />
+          <StatsCard
+            icon={<Business />}
+            value={stats.departments}
+            label="Chuyên ngành"
+            color="warning"
+          />
         </Grid>
       </Grid>
 
       {/* Filter Section */}
-      <FilterSection resultCount={students.length}>
+      <FilterSection resultCount={totalCount}>
         <Grid item xs={12} md={3}>
           <TextField
             fullWidth
             placeholder="Tìm kiếm theo MSSV, tên, email..."
-            value={searchTerm}
+            value={searchTerm} // ✅ Vẫn dùng searchTerm để input responsive
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
               startAdornment: (
@@ -416,6 +490,18 @@ const StudentList = () => {
               ),
             }}
             size="small"
+            helperText={
+              searchTerm !== debouncedSearchTerm && searchTerm ? (
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    color: theme.palette.text.secondary,
+                  }}
+                >
+                  Đang tìm kiếm...
+                </span>
+              ) : null
+            }
           />
         </Grid>
         <Grid item xs={12} md={2}>
@@ -488,7 +574,12 @@ const StudentList = () => {
           </FormControl>
         </Grid>
         <Grid item xs={12} md={1.5}>
-          <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={handleResetFilters}
+            sx={{ height: '40px' }}
+          >
             Đặt lại
           </Button>
         </Grid>
@@ -505,12 +596,16 @@ const StudentList = () => {
         onRowsPerPageChange={handleChangeRowsPerPage}
         emptyState={
           <>
-            <School sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }} />
+            <School
+              sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }}
+            />
             <Typography variant="h6" color="text.secondary" gutterBottom>
               Không tìm thấy sinh viên nào
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {searchTerm ? 'Thử thay đổi từ khóa tìm kiếm' : 'Chưa có sinh viên nào trong hệ thống'}
+              {searchTerm
+                ? 'Thử thay đổi từ khóa tìm kiếm'
+                : 'Chưa có sinh viên nào trong hệ thống'}
             </Typography>
           </>
         }

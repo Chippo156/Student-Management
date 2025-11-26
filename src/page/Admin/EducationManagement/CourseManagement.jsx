@@ -32,6 +32,7 @@ import {
 } from '../../../component/Common';
 import { courseService } from '../../../service/courseService';
 import { exportCoursesExcel } from '../../../until/exportCoursesExcel';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const CourseManagement = () => {
   const theme = useTheme();
@@ -42,9 +43,12 @@ const CourseManagement = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // ✅ Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   useEffect(() => {
     fetchCourses();
-  }, [page, rowsPerPage, searchTerm]);
+  }, [page, rowsPerPage, debouncedSearchTerm]); // ✅ Dùng debouncedSearchTerm
 
   const fetchCourses = async () => {
     setLoading(true);
@@ -52,7 +56,7 @@ const CourseManagement = () => {
       const result = await courseService.getAllCourses(
         page + 1,
         rowsPerPage,
-        searchTerm
+        debouncedSearchTerm // ✅ Dùng debounced value
       );
       if (result) {
         setCourses(result.items || []);
@@ -364,6 +368,11 @@ const CourseManagement = () => {
               ),
             }}
             size="small"
+            helperText={
+              searchTerm !== debouncedSearchTerm && searchTerm ? (
+                <span style={{ fontSize: '0.75rem' }}>Đang tìm kiếm...</span>
+              ) : null
+            }
           />
         </Grid>
         <Grid item xs={12} md={2}>

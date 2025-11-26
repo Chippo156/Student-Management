@@ -41,6 +41,7 @@ import { exportSectionsExcel } from '../../../until/exportSectionsExcel';
 import SectionDetailModal from '../../../component/Admin/SectionManagement/SectionDetailModal';
 import SectionCreateModal from '../../../component/Admin/SectionManagement/SectionCreateModal';
 import SectionEditModal from '../../../component/Admin/SectionManagement/SectionEditModal';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const Sections = () => {
   const theme = useTheme();
@@ -54,6 +55,9 @@ const Sections = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
 
+  // ✅ Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   // Modal states
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -61,11 +65,11 @@ const Sections = () => {
   const [selectedSection, setSelectedSection] = useState(null);
 
   const statusOptions = [
-    { value: 0, label: 'Đang chuẩn bị', color: 'warning' },      // IsPreparing
-    { value: 1, label: 'Đang mở đăng ký', color: 'info' },       // IsOpening
-    { value: 2, label: 'Đã đóng', color: 'default' },            // IsClosed
-    { value: 3, label: 'Đã hủy', color: 'error' },               // IsCancelled
-    { value: 4, label: 'Đã hoàn thành', color: 'success' },      // IsCompleted
+    { value: 0, label: 'Đang chuẩn bị', color: 'warning' }, // IsPreparing
+    { value: 1, label: 'Đang mở đăng ký', color: 'info' }, // IsOpening
+    { value: 2, label: 'Đã đóng', color: 'default' }, // IsClosed
+    { value: 3, label: 'Đã hủy', color: 'error' }, // IsCancelled
+    { value: 4, label: 'Đã hoàn thành', color: 'success' }, // IsCompleted
   ];
 
   useEffect(() => {
@@ -82,7 +86,7 @@ const Sections = () => {
 
   useEffect(() => {
     fetchSections();
-  }, [page, rowsPerPage, searchTerm, filterSemester, filterStatus]);
+  }, [page, rowsPerPage, debouncedSearchTerm, filterSemester, filterStatus]); // ✅ Dùng debouncedSearchTerm
 
   const fetchSections = async () => {
     setLoading(true);
@@ -90,8 +94,8 @@ const Sections = () => {
       const result = await sectionService.getAllSections({
         pageNumber: page + 1,
         pageSize: rowsPerPage,
-        sectionCode: searchTerm,
-        courseName: searchTerm,
+        sectionCode: debouncedSearchTerm, // ✅ Dùng debounced value
+        courseName: debouncedSearchTerm, // ✅ Dùng debounced value
         status: filterStatus !== '' ? filterStatus : null,
         semesterId: filterSemester || null,
       });
@@ -159,12 +163,14 @@ const Sections = () => {
     let filterInfo = '';
     if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
     if (filterSemester) {
-      const semester = semesters.find(s => s.semesterId === filterSemester);
-      filterInfo += (filterInfo ? ', ' : '') + `Học kỳ: ${semester?.semesterName || ''}`;
+      const semester = semesters.find((s) => s.semesterId === filterSemester);
+      filterInfo +=
+        (filterInfo ? ', ' : '') + `Học kỳ: ${semester?.semesterName || ''}`;
     }
     if (filterStatus !== '') {
-      const status = statusOptions.find(s => s.value === filterStatus);
-      filterInfo += (filterInfo ? ', ' : '') + `Trạng thái: ${status?.label || ''}`;
+      const status = statusOptions.find((s) => s.value === filterStatus);
+      filterInfo +=
+        (filterInfo ? ', ' : '') + `Trạng thái: ${status?.label || ''}`;
     }
 
     const result = await exportSectionsExcel(sections, filterInfo);
@@ -462,6 +468,11 @@ const Sections = () => {
               ),
             }}
             size="small"
+            helperText={
+              searchTerm !== debouncedSearchTerm && searchTerm ? (
+                <span style={{ fontSize: '0.75rem' }}>Đang tìm kiếm...</span>
+              ) : null
+            }
           />
         </Grid>
         <Grid item xs={12} md={3}>
