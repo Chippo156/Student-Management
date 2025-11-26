@@ -28,12 +28,14 @@ import {
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { sectionService, gradeService } from '../../../service';
 import { exportGradesExcel } from '../../../until/exportGradesExcel';
 
 const GradesPage = () => {
   const theme = useTheme();
+  const location = useLocation();
   const colors = useMemo(
     () => ({
       bgCard: theme.palette.background.paper,
@@ -85,6 +87,12 @@ const GradesPage = () => {
         const response = await sectionService.getSectionDropdownForLecturer();
         if (response) {
           setSections(response || []);
+
+          // Auto-select section from navigation state
+          if (location.state?.selectedSection) {
+            const navSection = location.state.selectedSection;
+            setSelectedSection(navSection.sectionId);
+          }
         }
       } catch (error) {
         console.error('Error fetching sections:', error);
@@ -101,7 +109,7 @@ const GradesPage = () => {
     if (lecturerId) {
       fetchSections();
     }
-  }, [lecturerId]);
+  }, [lecturerId, location.state]);
 
   useEffect(() => {
     const fetchStudentsAndGrades = async () => {

@@ -34,11 +34,14 @@ import {
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import sectionService from '../../../service/sectionService';
+import CourseDetailModal from '../Components/CourseDetailModal';
 import * as XLSX from 'xlsx';
 
 const CoursesPage = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const colors = useMemo(() => ({
     bgCard: theme.palette.background.paper,
     bgPage: theme.palette.background.default,
@@ -60,6 +63,8 @@ const CoursesPage = () => {
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [semesterFilter, setSemesterFilter] = useState('all');
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
 
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
@@ -154,6 +159,15 @@ const CoursesPage = () => {
     setSearchText('');
     setStatusFilter('all');
     setSemesterFilter('all');
+  };
+
+  const handleViewDetail = (section) => {
+    setSelectedCourse(section);
+    setDetailModalOpen(true);
+  };
+
+  const handleGradeEntry = (section) => {
+    navigate('/teacher/grades', { state: { selectedSection: section } });
   };
 
   const getStatusText = (status) => {
@@ -451,9 +465,7 @@ const CoursesPage = () => {
                           textTransform: 'none',
                           minWidth: '90px',
                         }}
-                        onClick={() => {
-                          /* Navigate to course detail */
-                        }}
+                        onClick={() => handleViewDetail(section)}
                       >
                         Chi tiết
                       </Button>
@@ -465,9 +477,7 @@ const CoursesPage = () => {
                           textTransform: 'none',
                           minWidth: '90px',
                         }}
-                        onClick={() => {
-                          /* Navigate to gradebook */
-                        }}
+                        onClick={() => handleGradeEntry(section)}
                       >
                         Chấm điểm
                       </Button>
@@ -493,6 +503,13 @@ const CoursesPage = () => {
           </Box>
         )}
       </Paper>
+
+      {/* Course Detail Modal */}
+      <CourseDetailModal
+        open={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+        section={selectedCourse}
+      />
     </Box>
   );
 };

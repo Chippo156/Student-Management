@@ -84,6 +84,8 @@ const CreateUser = () => {
           await departmentService.getDepartmentsDropdownByFaculty(
             selectedFaculty
           );
+        console.log(res);
+
         if (res && Array.isArray(res)) {
           setDepartments(res);
         } else {
@@ -105,6 +107,7 @@ const CreateUser = () => {
       const fetchClasses = async () => {
         const res =
           await classService.getClassesDropdownByDepartment(selectedDepartment);
+
         if (res && Array.isArray(res)) {
           setClasses(res);
         } else {
@@ -483,14 +486,14 @@ const CreateUser = () => {
                       </Select>
                     </Form.Item>
                   </Col>
-                  <Col xs={24} md={8}>
+                  {/* <Col xs={24} md={8}>
                     <Form.Item
                       label="Trạng thái sinh viên"
                       name="studentStatus"
                     >
                       <Input placeholder="Nhập trạng thái" />
                     </Form.Item>
-                  </Col>
+                  </Col> */}
                   <Col xs={24} md={8}>
                     <Form.Item label="Ngày nhập học" name="admissionDate">
                       <DatePicker

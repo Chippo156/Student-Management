@@ -101,10 +101,10 @@ const DebtPage = () => {
   const statistics = useMemo(() => {
     if (!debtData || !debtData.semesterDebts) return null;
     const totalPaid = debtData.semesterDebts.reduce(
-      (sum, s) => sum + (s.tuitionFee?.paidAmount || 0), 0
+      (sum, s) => sum + (s.paidAmount || 0), 0
     );
     const totalAmount = debtData.semesterDebts.reduce(
-      (sum, s) => sum + (s.tuitionFee?.totalAmount || 0), 0
+      (sum, s) => sum + (s.totalAmount || 0), 0
     );
     return { totalPaid, totalAmount };
   }, [debtData]);

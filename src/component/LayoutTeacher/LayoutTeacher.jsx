@@ -36,7 +36,7 @@ const menuData = [
     path: '/teacher',
   },
   {
-    label: 'Quản lý môn học',
+    label: 'Quản lý lớp học phần',
     icon: <SchoolIcon />,
     key: 'courses',
     path: '/teacher/courses',
