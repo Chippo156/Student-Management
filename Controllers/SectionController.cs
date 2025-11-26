@@ -1,10 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Enum;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
+using StudentManagement.Services;
 using StudentManagement.Services.Interface;
 using System.Security.Claims;
 
@@ -439,6 +440,20 @@ namespace StudentManagement.Controllers
             {
                 return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
                     "An error occurred while retrieving dropdown data", new List<string> { ex.Message }));
+            }
+        }
+        [HttpGet("{sectionId}/exam-list")]
+        [Authorize(Roles = "Lecturer,Admin")]
+        public async Task<IActionResult> GetSectionExamList(int sectionId)
+        {
+            try
+            {
+                var examList = await sectionService.GetSectionExamListAsync(sectionId);
+                return Ok(ApiResponse.SuccessResponse(examList, "Lấy danh sách dự thi thành công"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
     }

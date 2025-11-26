@@ -33,5 +33,7 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<SemesterDropdownResponse>> GetSemestersDropdownAsync();
         Task<IEnumerable<ClassDropdownResponse>> GetClassesDropdownAsync();
         Task<IEnumerable<ClassDropdownResponse>> GetClassesByProgramDropdownAsync(int programId);
+
+        Task<SectionExamListResponse> GetSectionExamListAsync(int sectionId);
     }
 }

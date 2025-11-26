@@ -1579,5 +1579,292 @@ namespace StudentManagement.Services
                 .OrderBy(c => c.ClassCode)
                 .ToListAsync();
         }
+
+        public async Task<SectionExamListResponse> GetSectionExamListAsync(int sectionId)
+        {
+            // Lấy thông tin section
+            var section = await context.Sections
+                .Include(s => s.CurriculumCourse)
+                    .ThenInclude(cc => cc.Course)
+                .Include(s => s.Semester)
+                .Include(s => s.Lecturer)
+                    .ThenInclude(l => l.User)
+                .FirstOrDefaultAsync(s => s.SectionId == sectionId)
+                ?? throw new Exception($"Section with ID {sectionId} not found");
+
+            // Lấy lịch thi (schedule type = 3)
+            var examSchedule = await  context.Schedules
+                .Include(s => s.ScheduleType)
+                .Where(s => s.Section.SectionId == sectionId && s.ScheduleType.ScheduleTypeId == 3) // Lịch thi
+                .FirstOrDefaultAsync();
+
+            // Lấy danh sách sinh viên đăng ký
+            var enrollments = await context.Enrollments
+                .Include(e => e.Student)
+                    .ThenInclude(s => s.User)
+                .Include(e => e.Student)
+                    .ThenInclude(s => s.Class)
+                .Where(e => e.Section.SectionId == sectionId &&
+                       e.enrollmentStatus == EnrollmentStatus.Enrolled)
+                .OrderBy(e => e.Student.MSSV)
+                .ToListAsync();
+
+            if (!enrollments.Any())
+            {
+                return new SectionExamListResponse
+                {
+                    SectionId = section.SectionId,
+                    SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
+                    CourseCode = section.CurriculumCourse.Course.CourseCode,
+                    CourseName = section.CurriculumCourse.Course.CourseName,
+                    SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
+                    LecturerName = section.Lecturer?.User?.FullName ?? "Not Assigned",
+                    ExamSchedule = examSchedule != null ? new ExamScheduleInfo
+                    {
+                        ScheduleId = examSchedule.ScheduleId,
+                        ExamDate = examSchedule.Date!.Value.ToDateTime(examSchedule.StartTime),
+                        StartTime = examSchedule.StartTime,
+                        EndTime = examSchedule.EndTime,
+                        Room = examSchedule.Room,
+                        OnlineLink = examSchedule.OnlineLink,
+                        ScheduleTypeName = examSchedule.ScheduleType.Name
+                    } : null,
+                    Students = new List<StudentExamInfo>(),
+                    TotalStudents = 0,
+                    EligibleStudents = 0,
+                    IneligibleStudents = 0,
+                    GeneratedAt = DateTime.UtcNow
+                };
+            }
+
+            var studentIds = enrollments.Select(e => e.Student.Id).ToList();
+
+            // Lấy thông tin điểm danh
+            var attendanceStats = await GetStudentAttendanceStatsAsync(sectionId, studentIds);
+
+            // Lấy thông tin học phí
+            var tuitionStatuses = await GetStudentTuitionStatusesAsync(studentIds, section.Semester.SemesterId);
+
+            // Lấy điểm số hiện tại
+            var currentGrades = await GetStudentCurrentGradesAsync(sectionId, studentIds);
+
+            // Tạo danh sách sinh viên dự thi
+            var studentExamList = new List<StudentExamInfo>();
+
+            foreach (var enrollment in enrollments)
+            {
+                var student = enrollment.Student;
+
+                // Kiểm tra trạng thái học phí
+                //var tuitionPaid = tuitionStatuses.GetValueOrDefault(student.Id, false);
+
+                // Lấy điểm số hiện tại
+                var studentGrades = currentGrades.GetValueOrDefault(student.Id, new List<GradeInfo>());
+
+                // Xác định tình trạng dự thi
+                var eligibilityResult = DetermineExamEligibility(studentGrades);
+
+                var studentExamInfo = new StudentExamInfo
+                {
+                    StudentId = student.Id,
+                    MSSV = student.MSSV,
+                    StudentName = student.User.FullName,
+                    ClassName = student.Class.ClassName,
+                    Email = student.User.Email ?? "",
+                    Phone = student.User.Phone ?? "",
+
+                    IsEligible = eligibilityResult.IsEligible,
+                    EligibilityReason = eligibilityResult.Reason,
+
+                    //HasPaidTuition = tuitionPaid,
+                    EnrollmentStatus = enrollment.enrollmentStatus.ToString(),
+
+                    CurrentGrades = studentGrades,
+                };
+
+                studentExamList.Add(studentExamInfo);
+            }
+
+            var eligibleCount = studentExamList.Count(s => s.IsEligible);
+            var ineligibleCount = studentExamList.Count - eligibleCount;
+
+            return new SectionExamListResponse
+            {
+                SectionId = section.SectionId,
+                SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
+                CourseCode = section.CurriculumCourse.Course.CourseCode,
+                CourseName = section.CurriculumCourse.Course.CourseName,
+                SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
+                LecturerName = section.Lecturer?.User?.FullName ?? "Not Assigned",
+
+                ExamSchedule = examSchedule != null ? new ExamScheduleInfo
+                {
+                    ScheduleId = examSchedule.ScheduleId,
+                    ExamDate = examSchedule.Date!.Value.ToDateTime(examSchedule.StartTime),
+                    StartTime = examSchedule.StartTime,
+                    EndTime = examSchedule.EndTime,
+                    Room = examSchedule.Room,
+                    OnlineLink = examSchedule.OnlineLink,
+                    ScheduleTypeName = examSchedule.ScheduleType.Name
+                } : null,
+
+                Students = studentExamList,
+                TotalStudents = studentExamList.Count,
+                EligibleStudents = eligibleCount,
+                IneligibleStudents = ineligibleCount,
+                GeneratedAt = DateTime.UtcNow
+            };
+        }
+
+        // Helper methods
+        private async Task<Dictionary<int, AttendanceStatInfo>> GetStudentAttendanceStatsAsync(int sectionId, List<int> studentIds)
+        {
+            var attendanceStats = new Dictionary<int, AttendanceStatInfo>();
+
+            // Lấy tổng số buổi học của section
+            var totalSessions = await context.AttendanceSessions
+                .CountAsync(a => a.SectionId == sectionId && a.IsActive);
+
+            if (totalSessions == 0)
+            {
+                // Nếu không có buổi nào được tạo, trả về 100% cho tất cả sinh viên
+                foreach (var studentId in studentIds)
+                {
+                    attendanceStats[studentId] = new AttendanceStatInfo { AttendanceRate = 100.0 };
+                }
+                return attendanceStats;
+            }
+
+            // Lấy thông tin điểm danh của tất cả sinh viên
+            var attendanceRecords = await context.Attendances
+                .Where(a => studentIds.Contains(a.StudentId) && a.SectionId == sectionId)
+                .GroupBy(a => a.StudentId)
+                .ToListAsync();
+
+            foreach (var studentId in studentIds)
+            {
+                var studentAttendances = attendanceRecords.FirstOrDefault(g => g.Key == studentId)?.ToList() ?? new List<Attendance>();
+
+                var presentCount = studentAttendances.Count(a => a.Status == AttendanceStatus.Present);
+                var lateCount = studentAttendances.Count(a => a.Status == AttendanceStatus.Late);
+
+                var attendanceRate = totalSessions > 0 ?
+                    (double)(presentCount + lateCount) / totalSessions * 100 : 0;
+
+                attendanceStats[studentId] = new AttendanceStatInfo
+                {
+                    AttendanceRate = attendanceRate,
+                    PresentCount = presentCount,
+                    LateCount = lateCount,
+                    TotalSessions = totalSessions
+                };
+            }
+
+            return attendanceStats;
+        }
+
+        private async Task<Dictionary<int, bool>> GetStudentTuitionStatusesAsync(List<int> studentIds, int semesterId)
+        {
+            var tuitionStatuses = new Dictionary<int, bool>();
+
+            var tuitionFees = await context.TuitionFees
+                .Where(tf => studentIds.Contains(tf.Student.Id) && tf.Semester.SemesterId == semesterId)
+                .ToListAsync();
+
+            foreach (var studentId in studentIds)
+            {
+                var tuitionFee = tuitionFees.FirstOrDefault(tf => tf.Student.Id == studentId);
+                var isPaid = tuitionFee?.Status == TuitionStatus.FullyPaid ||
+                             tuitionFee?.RemainingAmount <= 0;
+
+                tuitionStatuses[studentId] = isPaid;
+            }
+
+            return tuitionStatuses;
+        }
+
+        private async Task<Dictionary<int, List<GradeInfo>>> GetStudentCurrentGradesAsync(int sectionId, List<int> studentIds)
+        {
+            var gradesDict = new Dictionary<int, List<GradeInfo>>();
+
+            var grades = await context.Grades
+                .Include(g => g.Assessment)
+                  .ThenInclude(g=> g.AssessmentType)
+                .Where(g => studentIds.Contains(g.Student.Id) &&
+                       g.Assessment.Section.SectionId == sectionId)
+                .ToListAsync();
+
+            var groupedGrades = grades.GroupBy(g => g.Student.Id);
+
+            foreach (var group in groupedGrades)
+            {
+                var studentGrades = group.Select(g => new GradeInfo
+                {
+                    AssessmentId = g.Assessment.AssessmentId,
+                    AssessmentType = g.Assessment.AssessmentType.Title,
+                    Score = g.Score,
+                    Weight = g.Assessment.Weight,
+                }).ToList();
+
+                gradesDict[group.Key] = studentGrades;
+            }
+
+            // Đảm bảo tất cả sinh viên đều có entry
+            foreach (var studentId in studentIds)
+            {
+                if (!gradesDict.ContainsKey(studentId))
+                {
+                    gradesDict[studentId] = new List<GradeInfo>();
+                }
+            }
+
+            return gradesDict;
+        }
+
+        private static (bool IsEligible, string Reason) DetermineExamEligibility(
+            List<GradeInfo> grades)
+        {
+            var reasons = new List<string>();
+
+            // Kiểm tra học phí
+            //if (!hasPaidTuition)
+            //{
+            //    reasons.Add("Chưa thanh toán học phí");
+            //}
+
+            // Kiểm tra điểm giữa kỳ (nếu có)
+            var midtermGrade = grades.FirstOrDefault(g => g.AssessmentType.Contains("Giữa kỳ"));
+            if (midtermGrade != null && midtermGrade.Score < 3.0) // Điểm giữa kỳ < 3.0/10
+            {
+                reasons.Add($"Điểm giữa kỳ thấp ({midtermGrade.Score:F1}/10)");
+            }
+
+            var isEligible = !reasons.Any();
+            var reasonText = isEligible ? "Đủ điều kiện dự thi" : string.Join("; ", reasons);
+
+            return (isEligible, reasonText);
+        }
+
+        private static string? GetSpecialNote(bool hasPaidTuition, List<GradeInfo> grades)
+        {
+            var notes = new List<string>();
+
+            var midtermGrade = grades.FirstOrDefault(g => g.AssessmentType.Contains("Giữa kỳ"));
+            if (midtermGrade?.Score >= 9.0)
+            {
+                notes.Add("Điểm giữa kỳ xuất sắc");
+            }
+
+            return notes.Any() ? string.Join("; ", notes) : null;
+        }
+
+        // Helper class
+        private class AttendanceStatInfo
+        {
+            public double AttendanceRate { get; set; }
+            public int PresentCount { get; set; }
+            public int LateCount { get; set; }
+            public int TotalSessions { get; set; }
+        }
     }
 }

@@ -94,6 +94,11 @@ namespace StudentManagement.Services
                 .Include(pg => pg.PracticeGroupEnrollments)
                     .ThenInclude(pge => pge.Student)
                         .ThenInclude(s => s.Class)
+                .Include(pg => pg.PracticeGroupEnrollments)
+                    .ThenInclude(pge => pge.Student)
+                       .ThenInclude(s => s.User)
+
+
                 .Where(pg => pg.SectionId == sectionId && pg.IsActive)
                 .ToListAsync();
 

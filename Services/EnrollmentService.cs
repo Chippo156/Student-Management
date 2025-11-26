@@ -121,7 +121,6 @@ namespace StudentManagement.Services
                     .Include(s => s.Schedules)
                     .FirstOrDefaultAsync(s => s.SectionId == request.SectionId);
 
-
                 if (section == null)
                 {
                     return new EnrollmentResultResponse
@@ -141,9 +140,20 @@ namespace StudentManagement.Services
                         Errors = { "Lớp học phần đã đầy!" }
                     };
                 }
-
-                // Validation checks
-                var validationResult = await ValidateEnrollmentAsync(student, section);
+                var sectionStudentEnrolled = await context.Enrollments
+                    .Where(e => section.Semester.SemesterId == e.Section.Semester.SemesterId && e.Student.MSSV == mssv && e.enrollmentStatus == EnrollmentStatus.Enrolled)
+                    .CountAsync();
+                if (sectionStudentEnrolled > 30)
+                {
+                    return new EnrollmentResultResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Exceeded maximum enrolled sections",
+                        Errors = { "Sinh viên đã đăng ký vượt quá số lượng học phần tối đa trong học kỳ này!" }
+                    };
+                }
+                    // Validation checks
+                    var validationResult = await ValidateEnrollmentAsync(student, section);
                 if (!validationResult.IsValid)
                 {
                     return new EnrollmentResultResponse
