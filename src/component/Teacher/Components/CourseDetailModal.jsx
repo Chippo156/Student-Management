@@ -21,23 +21,29 @@ import {
   Tooltip,
   CircularProgress,
   Alert,
+  Collapse,
 } from '@mui/material';
 import {
   Close as CloseIcon,
   FileDownload as FileDownloadIcon,
   Person as PersonIcon,
   Class as ClassIcon,
+  Assessment as AssessmentIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import practiceService from '../../../service/practiceService';
 import sectionService from '../../../service/sectionService';
 import { exportSectionStudentsExcel } from '../../../until/exportSectionStudentsExcel';
+import * as XLSX from 'xlsx';
 
 const CourseDetailModal = ({ open, onClose, section }) => {
   const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
   const [theoryStudents, setTheoryStudents] = useState([]);
   const [practiceStudents, setPracticeStudents] = useState([]);
+  const [examListData, setExamListData] = useState(null); // ✅ State cho exam list
   const [loading, setLoading] = useState(false);
   const [hasPractice, setHasPractice] = useState(false);
 
@@ -51,14 +57,17 @@ const CourseDetailModal = ({ open, onClose, section }) => {
     setLoading(true);
     try {
       // Lấy danh sách sinh viên lý thuyết
-      const theoryResponse = await sectionService.getSectionTheoryDetail(section.sectionId);
+      const theoryResponse = await sectionService.getSectionTheoryDetail(
+        section.sectionId
+      );
       setTheoryStudents(theoryResponse?.students || []);
 
       // Kiểm tra xem có lớp thực hành không
-      const practiceGroups = await practiceService.getPracticeGroupsBySection(section.sectionId);
+      const practiceGroups = await practiceService.getPracticeGroupsBySection(
+        section.sectionId
+      );
       if (practiceGroups && practiceGroups.length > 0) {
         setHasPractice(true);
-        // Lấy sinh viên thực hành từ nhóm đầu tiên
         const firstGroupId = practiceGroups[0].practiceGroupId;
         const practiceResponse = await sectionService.getSectionPracticeDetail(
           section.sectionId,
@@ -69,6 +78,12 @@ const CourseDetailModal = ({ open, onClose, section }) => {
         setHasPractice(false);
         setPracticeStudents([]);
       }
+
+      // ✅ Lấy danh sách dự thi
+      const examData = await sectionService.getExamListBySection(
+        section.sectionId
+      );
+      setExamListData(examData);
     } catch (error) {
       console.error('Error fetching student data:', error);
     } finally {
@@ -81,15 +96,58 @@ const CourseDetailModal = ({ open, onClose, section }) => {
   };
 
   const exportToExcel = async () => {
-    const students = tabValue === 0 ? theoryStudents : practiceStudents;
-    const scheduleType = tabValue === 0 ? 'Lý thuyết' : 'Thực hành';
+    if (tabValue === 0) {
+      // Export lý thuyết
+      await exportSectionStudentsExcel(section, theoryStudents, 'Lý thuyết');
+    } else if (tabValue === 1 && hasPractice) {
+      // Export thực hành
+      await exportSectionStudentsExcel(section, practiceStudents, 'Thực hành');
+    } else if (tabValue === (hasPractice ? 2 : 1)) {
+      // ✅ Export danh sách dự thi
+      exportExamListToExcel();
+    }
+  };
 
-    await exportSectionStudentsExcel(section, students, scheduleType);
+  // ✅ Hàm export danh sách dự thi ra Excel
+  const exportExamListToExcel = () => {
+    if (!examListData || !examListData.students) return;
+
+    const dataToExport = examListData.students.map((student, index) => {
+      const row = {
+        STT: index + 1,
+        MSSV: student.mssv,
+        'Họ và tên': student.studentName,
+        Lớp: student.className,
+        Email: student.email,
+        SĐT: student.phone || '',
+        'Đủ điều kiện': student.isEligible ? 'Có' : 'Không',
+        'Lý do': student.eligibilityReason || '',
+      };
+
+      // Thêm các cột điểm
+      student.currentGrades?.forEach((grade) => {
+        row[`${grade.assessmentType} (${grade.weight}%)`] = grade.score || '';
+      });
+
+      return row;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách dự thi');
+
+    const fileName = `Danh_sach_du_thi_${examListData.sectionCode}_${new Date().getTime()}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
   };
 
   if (!section) return null;
 
-  const students = tabValue === 0 ? theoryStudents : practiceStudents;
+  const students =
+    tabValue === 0
+      ? theoryStudents
+      : tabValue === 1 && hasPractice
+        ? practiceStudents
+        : examListData?.students || [];
 
   return (
     <Dialog
@@ -105,7 +163,13 @@ const CourseDetailModal = ({ open, onClose, section }) => {
       }}
     >
       <DialogTitle sx={{ pb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               Chi tiết lớp học phần
@@ -132,24 +196,42 @@ const CourseDetailModal = ({ open, onClose, section }) => {
             borderRadius: 2,
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 3, color: theme.palette.primary.main }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 600, mb: 3, color: theme.palette.primary.main }}
+          >
             Thông tin lớp học phần
           </Typography>
-          
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3, mb: 3 }}>
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 3,
+              mb: 3,
+            }}
+          >
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Box sx={{ 
-                bgcolor: alpha(theme.palette.primary.main, 0.1), 
-                p: 1.5, 
-                borderRadius: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <ClassIcon sx={{ fontSize: 28, color: theme.palette.primary.main }} />
+              <Box
+                sx={{
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  p: 1.5,
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <ClassIcon
+                  sx={{ fontSize: 28, color: theme.palette.primary.main }}
+                />
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mb: 0.5 }}
+                >
                   Mã lớp học phần
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -159,23 +241,31 @@ const CourseDetailModal = ({ open, onClose, section }) => {
             </Box>
 
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Box sx={{ 
-                bgcolor: alpha(theme.palette.success.main, 0.1), 
-                p: 1.5, 
-                borderRadius: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <PersonIcon sx={{ fontSize: 28, color: theme.palette.success.main }} />
+              <Box
+                sx={{
+                  bgcolor: alpha(theme.palette.success.main, 0.1),
+                  p: 1.5,
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <PersonIcon
+                  sx={{ fontSize: 28, color: theme.palette.success.main }}
+                />
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mb: 0.5 }}
+                >
                   Số sinh viên
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
                   {section.enrolledCount}/{section.capacity}
-                  <Chip 
+                  <Chip
                     label={`${Math.round((section.enrolledCount / section.capacity) * 100)}%`}
                     size="small"
                     color="success"
@@ -186,39 +276,61 @@ const CourseDetailModal = ({ open, onClose, section }) => {
             </Box>
           </Box>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: 2,
+            }}
+          >
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mb: 0.5 }}
+              >
                 Mã môn học
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {section.courseCode}
               </Typography>
             </Box>
-            
+
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mb: 0.5 }}
+              >
                 Số tín chỉ
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {section.credits || 'N/A'}
               </Typography>
             </Box>
-            
+
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mb: 0.5 }}
+              >
                 Học kỳ
               </Typography>
-              <Chip 
+              <Chip
                 label={section.semesterName}
                 size="small"
                 color="primary"
                 variant="outlined"
               />
             </Box>
-            
+
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mb: 0.5 }}
+              >
                 Trạng thái
               </Typography>
               <Chip
@@ -226,10 +338,10 @@ const CourseDetailModal = ({ open, onClose, section }) => {
                   section.status === 0
                     ? 'Chưa bắt đầu'
                     : section.status === 1
-                    ? 'Đang diễn ra'
-                    : section.status === 2
-                    ? 'Đã kết thúc'
-                    : 'Đã hủy'
+                      ? 'Đang diễn ra'
+                      : section.status === 2
+                        ? 'Đã kết thúc'
+                        : 'Đã hủy'
                 }
                 color={section.status === 1 ? 'success' : 'default'}
                 size="small"
@@ -238,68 +350,103 @@ const CourseDetailModal = ({ open, onClose, section }) => {
           </Box>
         </Paper>
 
-        {/* Student Statistics */}
-        <Paper
-          sx={{
-            p: 2,
-            mb: 3,
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 2,
-          }}
-        >
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-            Thống kê sinh viên
-          </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
-            <Box sx={{ 
-              p: 2, 
-              bgcolor: alpha(theme.palette.info.main, 0.08),
-              borderRadius: 2,
+        {/* ✅ Thống kê danh sách dự thi (chỉ hiển thị khi có exam data) */}
+        {examListData && (
+          <Paper
+            sx={{
+              p: 2,
+              mb: 3,
               border: 1,
-              borderColor: alpha(theme.palette.info.main, 0.2),
-            }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                Tổng sinh viên
-              </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: theme.palette.info.main }}>
-                {section.totalStudents || section.enrolledCount || 0}
-              </Typography>
-            </Box>
-            
-            <Box sx={{ 
-              p: 2, 
-              bgcolor: alpha(theme.palette.primary.main, 0.08),
+              borderColor: 'divider',
               borderRadius: 2,
-              border: 1,
-              borderColor: alpha(theme.palette.primary.main, 0.2),
-            }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                Nam
-              </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: theme.palette.primary.main }}>
-                {section.maleStudents || 0}
-              </Typography>
-            </Box>
-            
-            <Box sx={{ 
-              p: 2, 
-              bgcolor: alpha(theme.palette.secondary.main, 0.08),
-              borderRadius: 2,
-              border: 1,
-              borderColor: alpha(theme.palette.secondary.main, 0.2),
-            }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                Nữ
-              </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: theme.palette.secondary.main }}>
-                {section.femaleStudents || 0}
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
+            }}
+          >
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+              Thống kê danh sách dự thi
+            </Typography>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: alpha(theme.palette.info.main, 0.08),
+                  borderRadius: 2,
+                  border: 1,
+                  borderColor: alpha(theme.palette.info.main, 0.2),
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mb: 1 }}
+                >
+                  Tổng sinh viên
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: theme.palette.info.main }}
+                >
+                  {examListData.totalStudents}
+                </Typography>
+              </Box>
 
-        {/* Tabs for Theory/Practice */}
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: alpha(theme.palette.success.main, 0.08),
+                  borderRadius: 2,
+                  border: 1,
+                  borderColor: alpha(theme.palette.success.main, 0.2),
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mb: 1 }}
+                >
+                  Đủ điều kiện
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: theme.palette.success.main }}
+                >
+                  {examListData.eligibleStudents}
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: alpha(theme.palette.error.main, 0.08),
+                  borderRadius: 2,
+                  border: 1,
+                  borderColor: alpha(theme.palette.error.main, 0.2),
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mb: 1 }}
+                >
+                  Không đủ điều kiện
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: theme.palette.error.main }}
+                >
+                  {examListData.ineligibleStudents}
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+        )}
+
+        {/* Tabs for Theory/Practice/Exam List */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
           <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab
@@ -314,13 +461,30 @@ const CourseDetailModal = ({ open, onClose, section }) => {
                 label={`Thực hành (${practiceStudents.length})`}
               />
             )}
+            {/* ✅ Tab mới: Danh sách dự thi */}
+            <Tab
+              icon={<AssessmentIcon />}
+              iconPosition="start"
+              label={`Danh sách dự thi (${examListData?.totalStudents || 0})`}
+            />
           </Tabs>
         </Box>
 
         {/* Export Button */}
-        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box
+          sx={{
+            mb: 2,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <Typography variant="body2" color="text.secondary">
-            Danh sách sinh viên {tabValue === 0 ? 'lớp lý thuyết' : 'lớp thực hành'}
+            {tabValue === 0
+              ? 'Danh sách sinh viên lớp lý thuyết'
+              : tabValue === 1 && hasPractice
+                ? 'Danh sách sinh viên lớp thực hành'
+                : 'Danh sách sinh viên dự thi'}
           </Typography>
           <Button
             variant="contained"
@@ -340,36 +504,75 @@ const CourseDetailModal = ({ open, onClose, section }) => {
             <CircularProgress />
           </Box>
         ) : students.length === 0 ? (
-          <Alert severity="info">Chưa có sinh viên đăng ký lớp này</Alert>
+          <Alert severity="info">
+            {tabValue === (hasPractice ? 2 : 1)
+              ? 'Chưa có dữ liệu danh sách dự thi'
+              : 'Chưa có sinh viên đăng ký lớp này'}
+          </Alert>
         ) : (
           <TableContainer component={Paper} variant="outlined">
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+                <TableRow
+                  sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}
+                >
                   <TableCell sx={{ fontWeight: 600 }}>STT</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>MSSV</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Họ và tên</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Lớp</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
+                  {/* ✅ Chỉ hiển thị các cột này cho tab danh sách dự thi */}
+                  {tabValue === (hasPractice ? 2 : 1) && (
+                    <>
+                      <TableCell sx={{ fontWeight: 600 }}>Lớp</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>SĐT</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        Đủ điều kiện
+                      </TableCell>
+                    </>
+                  )}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {students.map((student, index) => (
-                  <TableRow key={student.mssv || student.studentId || index} hover>
+                  <TableRow
+                    key={student.mssv || student.studentId || index}
+                    hover
+                  >
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{student.mssv || student.studentId}</TableCell>
-                    <TableCell>{student.fullName || student.studentName}</TableCell>
-                    <TableCell>{student.className || student.class}</TableCell>
-                    <TableCell>{student.email}</TableCell>
                     <TableCell>
-                      <Chip
-                        label={student.enrollmentStatus || student.status || 'Đang học'}
-                        color="success"
-                        size="small"
-                        variant="outlined"
-                      />
+                      {student.studentName || student.fullName}
                     </TableCell>
+
+                    {/* ✅ Chỉ hiển thị các cột này cho tab danh sách dự thi */}
+                    {tabValue === (hasPractice ? 2 : 1) && (
+                      <>
+                        <TableCell>
+                          {student.className || student.class}
+                        </TableCell>
+                        <TableCell>{student.email}</TableCell>
+                        <TableCell>{student.phone || '-'}</TableCell>
+                        <TableCell>
+                          {student.isEligible ? (
+                            <Chip
+                              icon={<CheckCircleIcon />}
+                              label="Đủ"
+                              color="success"
+                              size="small"
+                            />
+                          ) : (
+                            <Tooltip title={student.eligibilityReason || ''}>
+                              <Chip
+                                icon={<CancelIcon />}
+                                label="Không đủ"
+                                color="error"
+                                size="small"
+                              />
+                            </Tooltip>
+                          )}
+                        </TableCell>
+                      </>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -378,7 +581,9 @@ const CourseDetailModal = ({ open, onClose, section }) => {
         )}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2, borderTop: 1, borderColor: 'divider' }}>
+      <DialogActions
+        sx={{ px: 3, py: 2, borderTop: 1, borderColor: 'divider' }}
+      >
         <Button onClick={onClose} variant="outlined">
           Đóng
         </Button>
