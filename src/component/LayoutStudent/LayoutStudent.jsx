@@ -72,12 +72,12 @@ const menuData = [
         key: 'bhyt',
         path: '/student/bhyt',
       },
-      {
-        label: 'Đề xuất xét TN',
-        icon: <CheckCircleIcon />,
-        key: 'graduate',
-        path: '/student/graduate',
-      },
+      // {
+      //   label: 'Đề xuất xét TN',
+      //   icon: <CheckCircleIcon />,
+      //   key: 'graduate',
+      //   path: '/student/graduate',
+      // },
     ],
   },
   {

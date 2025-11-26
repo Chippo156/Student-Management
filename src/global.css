@@ -1,0 +1,61 @@
+/* Global CSS - Text wrapping and overflow handling */
+
+/* Prevent text overflow and wrap long text */
+.ant-descriptions-item-content,
+.ant-statistic-content,
+.MuiTypography-root,
+.ant-card .ant-card-body {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* For table cells */
+.ant-table-cell {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* For descriptions */
+.ant-descriptions-item-label,
+.ant-descriptions-item-content {
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Ensure text doesn't overflow container */
+* {
+  box-sizing: border-box;
+}
+
+/* Specific fix for long text in cards */
+.ant-card-body,
+.MuiCard-root {
+  overflow: hidden;
+}
+
+.ant-card-body > *,
+.MuiCard-root > * {
+  max-width: 100%;
+}
+
+/* Handle long emails and URLs */
+a, .email, .url {
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+/* Fix for Statistic component specifically */
+.ant-statistic-content-value {
+  word-break: keep-all;
+  white-space: nowrap;
+}
+
+/* For phone numbers and similar - prevent breaking */
+.phone-number,
+.id-number,
+.mssv {
+  white-space: nowrap;
+}

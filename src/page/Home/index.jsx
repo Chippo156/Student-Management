@@ -64,12 +64,12 @@ const menuData = [
         icon: <AccountBalanceIcon />,
         key: 'bank',
       },
-      {
-        label: 'Cập nhật thông tin BHYT',
-        icon: <LocalHospitalIcon />,
-        key: 'bhyt',
-      },
-      { label: 'Đề xuất xét TN', icon: <CheckCircleIcon />, key: 'graduate' },
+      // {
+      //   label: 'Cập nhật thông tin BHYT',
+      //   icon: <LocalHospitalIcon />,
+      //   key: 'bhyt',
+      // },
+      // { label: 'Đề xuất xét TN', icon: <CheckCircleIcon />, key: 'graduate' },
     ],
   },
   {

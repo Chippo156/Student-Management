@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Form, message, Typography } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Form, message, Typography, Spin } from 'antd';
 import { TrophyOutlined } from '@ant-design/icons';
 import { useTheme } from '@mui/material/styles';
 import dayjs from 'dayjs';
@@ -8,6 +8,7 @@ import GraduateOverview from '../../../component/Student/GraduatePage/GraduateOv
 import GraduateRequirements from '../../../component/Student/GraduatePage/GraduateRequirements';
 import GraduateTimeline from '../../../component/Student/GraduatePage/GraduateTimeline';
 import MilestoneModal from '../../../component/Student/GraduatePage/MilestoneModal';
+import graduationService from '../../../service/graduationService';
 
 const { Title } = Typography;
 
@@ -16,8 +17,10 @@ const GraduatePage = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState(true);
+  const [graduationData, setGraduationData] = useState(null);
 
-  const [requirements] = useState([
+  const [requirements, setRequirements] = useState([
     {
       id: '1',
       category: 'Tín chỉ bắt buộc',
@@ -74,44 +77,35 @@ const GraduatePage = () => {
     },
   ]);
 
-  const [milestones, setMilestones] = useState([
-    {
-      id: '1',
-      title: 'Nộp hồ sơ xét tốt nghiệp',
-      date: '2025-03-15',
-      status: 'upcoming',
-      description: 'Nộp hồ sơ xét tốt nghiệp tại phòng đào tạo',
-      documents: [
-        'Đơn xin xét tốt nghiệp',
-        'Bản sao bằng tốt nghiệp THPT',
-        'Chứng chỉ ngoại ngữ',
-      ],
-    },
-    {
-      id: '2',
-      title: 'Đăng ký khóa luận tốt nghiệp',
-      date: '2025-02-01',
-      status: 'upcoming',
-      description: 'Đăng ký đề tài và giảng viên hướng dẫn',
-      documents: ['Đơn đăng ký khóa luận', 'Đề cương khóa luận'],
-    },
-    {
-      id: '3',
-      title: 'Hoàn thành học phần cuối kỳ',
-      date: '2025-01-20',
-      status: 'upcoming',
-      description: 'Hoàn thành các môn học còn lại',
-      documents: [],
-    },
-    {
-      id: '4',
-      title: 'Đăng ký học kỳ 2 năm 4',
-      date: '2024-12-15',
-      status: 'completed',
-      description: 'Đã đăng ký thành công 18 tín chỉ',
-      documents: ['Phiếu đăng ký học phần'],
-    },
-  ]);
+  const [milestones, setMilestones] = useState([]);
+
+  // Fetch graduation data on mount
+  useEffect(() => {
+    const fetchGraduationData = async () => {
+      setLoading(true);
+      try {
+        const data = await graduationService.calculateGraduationProgress();
+
+        if (data) {
+          setGraduationData(data);
+          setRequirements(data.requirements);
+
+          // Generate default milestones based on progress
+          const defaultMilestones = graduationService.getDefaultMilestones(data.overallProgress);
+          setMilestones(defaultMilestones);
+        } else {
+          message.warning('Không thể tải dữ liệu tiến độ tốt nghiệp. Hiển thị dữ liệu mẫu.');
+        }
+      } catch (error) {
+        console.error('Error fetching graduation data:', error);
+        message.error('Có lỗi xảy ra khi tải dữ liệu');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGraduationData();
+  }, []);
 
   const handleAddMilestone = () => {
     setEditingMilestone(null);
@@ -159,9 +153,12 @@ const GraduatePage = () => {
     }
   };
 
-  const totalCompleted = requirements.reduce((sum, req) => sum + req.completed, 0);
-  const totalRequired = requirements.reduce((sum, req) => sum + req.total, 0);
-  const overallProgress = Math.round((totalCompleted / totalRequired) * 100);
+  const totalCompleted = graduationData?.totalCreditsCompleted ||
+    requirements.reduce((sum, req) => sum + req.completed, 0);
+  const totalRequired = graduationData?.totalCreditsRequired ||
+    requirements.reduce((sum, req) => sum + req.total, 0);
+  const overallProgress = graduationData?.overallProgress ||
+    Math.round((totalCompleted / totalRequired) * 100);
 
   const completedRequirements = requirements.filter(
     (req) => req.status === 'completed'
@@ -169,6 +166,22 @@ const GraduatePage = () => {
   const upcomingMilestones = milestones.filter(
     (milestone) => milestone.status === 'upcoming'
   ).length;
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          background: theme.palette.background.default,
+        }}
+      >
+        <Spin size="large" tip="Đang tải dữ liệu tiến độ tốt nghiệp..." />
+      </div>
+    );
+  }
 
   return (
     <div

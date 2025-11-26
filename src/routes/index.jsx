@@ -41,6 +41,7 @@ import StudentSchedule from '../page/Student/Study/StudentSchedule';
 import StudentEditInfoPage from '../page/Student/General information/StudentEditInfoPage';
 import RegisterCourses from '../page/Student/Registration/RegisterCourses';
 import CurriculumPage from '../page/Student/Registration/CurriculumPage';
+import DebtPageComponent from '../page/Student/Finance/DebtPage';
 // Teacher pages
 import TeacherDashboard from '../component/Teacher/Dashboard';
 import TeacherCourses from '../component/Teacher/Pages/CoursesPage';
@@ -67,12 +68,6 @@ const RegisterCoursePage = () => (
   </div>
 );
 
-const DebtPage = () => (
-  <div style={{ padding: '24px' }}>
-    <h2>Tra cứu công nợ</h2>
-    <p>Component tra cứu công nợ đang được phát triển...</p>
-  </div>
-);
 
 const PaymentPage = () => (
   <div style={{ padding: '24px' }}>
@@ -261,7 +256,7 @@ const AppRoutes = () => {
           <Route path="register-courses" element={<RegisterCourses />} />
 
           {/* Học phí */}
-          <Route path="debt" element={<DebtPage />} />
+          <Route path="debt" element={<DebtPageComponent />} />
           <Route path="payment" element={<PaymentPage />} />
 
           {/* Thông báo */}

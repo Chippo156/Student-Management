@@ -68,9 +68,18 @@ const StudentInfoPage = () => {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px', background: theme.palette.background.default, minHeight: '100vh' }}>
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '60px',
+          background: theme.palette.background.default,
+          minHeight: '100vh',
+        }}
+      >
         <Spin size="large" />
-        <div style={{ marginTop: 16, color: theme.palette.text.primary }}>Đang tải thông tin sinh viên...</div>
+        <div style={{ marginTop: 16, color: theme.palette.text.primary }}>
+          Đang tải thông tin sinh viên...
+        </div>
       </div>
     );
   }
@@ -82,7 +91,11 @@ const StudentInfoPage = () => {
 
   const InfoText = ({ children }) => (
     <span style={{ color: theme.palette.text.primary }}>
-      {children || <span style={{ color: theme.palette.text.disabled }}>Chưa cập nhật</span>}
+      {children || (
+        <span style={{ color: theme.palette.text.disabled }}>
+          Chưa cập nhật
+        </span>
+      )}
     </span>
   );
 
@@ -156,7 +169,16 @@ const StudentInfoPage = () => {
             <Row gutter={[16, 16]}>
               <Col xs={12} sm={12}>
                 <Statistic
-                  title={<span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 13 }}>Lớp học</span>}
+                  title={
+                    <span
+                      style={{
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        fontSize: 13,
+                      }}
+                    >
+                      Lớp học
+                    </span>
+                  }
                   value={data?.className || 'Chưa có'}
                   valueStyle={{ color: '#fff', fontSize: 20 }}
                   prefix={<BookOutlined />}
@@ -164,23 +186,46 @@ const StudentInfoPage = () => {
               </Col>
               <Col xs={12} sm={12}>
                 <Statistic
-                  title={<span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 13 }}>Khoa</span>}
+                  title={
+                    <span
+                      style={{
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        fontSize: 13,
+                      }}
+                    >
+                      Khoa
+                    </span>
+                  }
                   value={data?.departmentName || 'Chưa có'}
                   valueStyle={{ color: '#fff', fontSize: 20 }}
                   prefix={<HomeOutlined />}
                 />
               </Col>
               <Col xs={12} sm={12}>
-                <Statistic
-                  title={<span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 13 }}>Năm nhập học</span>}
-                  value={data?.yearOfAdmission || 'N/A'}
-                  valueStyle={{ color: '#fff', fontSize: 20 }}
-                  prefix={<CalendarOutlined />}
-                />
+                <div>
+                  <div style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 13, marginBottom: 8 }}>
+                    Năm nhập học
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <CalendarOutlined style={{ color: '#fff', fontSize: 20 }} />
+                    <span style={{ color: '#fff', fontSize: 20, fontWeight: 500 }}>
+                      {data?.yearOfAdmission || 'N/A'}
+                    </span>
+                  </div>
+                </div>
               </Col>
               <Col xs={12} sm={12}>
                 <Statistic
-                  title={<span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 13 }}>Trình độ</span>}
+                  title={
+                    <span
+                      style={{
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        fontSize: 13,
+                      }}
+                    >
+                      Trình độ
+                    </span>
+                  }
                   value={data?.trainningLevel || 'Chưa có'}
                   valueStyle={{ color: '#fff', fontSize: 20 }}
                   prefix={<TrophyOutlined />}
@@ -194,42 +239,93 @@ const StudentInfoPage = () => {
       {/* Quick Stats */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} md={6}>
-          <Card style={{ background: theme.palette.background.paper, borderColor: theme.palette.divider }}>
+          <Card
+            style={{
+              background: theme.palette.background.paper,
+              borderColor: theme.palette.divider,
+            }}
+          >
             <Statistic
-              title={<span style={{ color: theme.palette.text.secondary }}>Email</span>}
+              title={
+                <span style={{ color: theme.palette.text.secondary }}>
+                  Email
+                </span>
+              }
               value={user?.email || 'Chưa có'}
               valueStyle={{ color: theme.palette.primary.main, fontSize: 14 }}
-              prefix={<MailOutlined style={{ color: theme.palette.primary.main }} />}
+              prefix={
+                <MailOutlined style={{ color: theme.palette.primary.main }} />
+              }
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card style={{ background: theme.palette.background.paper, borderColor: theme.palette.divider }}>
-            <Statistic
-              title={<span style={{ color: theme.palette.text.secondary }}>Số điện thoại</span>}
-              value={user?.phone || 'Chưa có'}
-              valueStyle={{ color: theme.palette.success.main, fontSize: 16 }}
-              prefix={<PhoneOutlined style={{ color: theme.palette.success.main }} />}
-            />
+          <Card
+            style={{
+              background: theme.palette.background.paper,
+              borderColor: theme.palette.divider,
+            }}
+          >
+            <div style={{ padding: '8px 0' }}>
+              <div style={{ color: theme.palette.text.secondary, fontSize: 14, marginBottom: 4 }}>
+                Số điện thoại
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <PhoneOutlined style={{ color: theme.palette.success.main, fontSize: 16 }} />
+                <span style={{ color: theme.palette.success.main, fontSize: 16, fontWeight: 600 }}>
+                  {user?.phone || 'Chưa có'}
+                </span>
+              </div>
+            </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card style={{ background: theme.palette.background.paper, borderColor: theme.palette.divider }}>
+          <Card
+            style={{
+              background: theme.palette.background.paper,
+              borderColor: theme.palette.divider,
+            }}
+          >
             <Statistic
-              title={<span style={{ color: theme.palette.text.secondary }}>Giới tính</span>}
-              value={user?.gender === 0 ? 'Nam' : user?.gender === 1 ? 'Nữ' : 'Khác'}
+              title={
+                <span style={{ color: theme.palette.text.secondary }}>
+                  Giới tính
+                </span>
+              }
+              value={
+                user?.gender === 0 ? 'Nam' : user?.gender === 1 ? 'Nữ' : 'Khác'
+              }
               valueStyle={{ color: theme.palette.secondary.main, fontSize: 16 }}
-              prefix={<UserOutlined style={{ color: theme.palette.secondary.main }} />}
+              prefix={
+                <UserOutlined style={{ color: theme.palette.secondary.main }} />
+              }
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card style={{ background: theme.palette.background.paper, borderColor: theme.palette.divider }}>
+          <Card
+            style={{
+              background: theme.palette.background.paper,
+              borderColor: theme.palette.divider,
+            }}
+          >
             <Statistic
-              title={<span style={{ color: theme.palette.text.secondary }}>Ngày sinh</span>}
-              value={user?.dateOfBirth ? dayjs(user.dateOfBirth).format('DD/MM/YYYY') : 'Chưa có'}
+              title={
+                <span style={{ color: theme.palette.text.secondary }}>
+                  Ngày sinh
+                </span>
+              }
+              value={
+                user?.dateOfBirth
+                  ? dayjs(user.dateOfBirth).format('DD/MM/YYYY')
+                  : 'Chưa có'
+              }
               valueStyle={{ color: theme.palette.warning.main, fontSize: 16 }}
-              prefix={<CalendarOutlined style={{ color: theme.palette.warning.main }} />}
+              prefix={
+                <CalendarOutlined
+                  style={{ color: theme.palette.warning.main }}
+                />
+              }
             />
           </Card>
         </Col>
@@ -244,7 +340,11 @@ const StudentInfoPage = () => {
             color={theme.palette.primary.main}
           />
         }
-        style={{ marginBottom: 24, background: theme.palette.background.paper, borderColor: theme.palette.divider }}
+        style={{
+          marginBottom: 24,
+          background: theme.palette.background.paper,
+          borderColor: theme.palette.divider,
+        }}
       >
         <Descriptions column={2} bordered size="middle">
           <Descriptions.Item label="Họ và tên">
@@ -283,7 +383,11 @@ const StudentInfoPage = () => {
             color={theme.palette.primary.dark}
           />
         }
-        style={{ marginBottom: 24, background: theme.palette.background.paper, borderColor: theme.palette.divider }}
+        style={{
+          marginBottom: 24,
+          background: theme.palette.background.paper,
+          borderColor: theme.palette.divider,
+        }}
       >
         <Descriptions column={2} bordered size="middle">
           <Descriptions.Item label="MSSV">
@@ -316,7 +420,11 @@ const StudentInfoPage = () => {
             color={theme.palette.success.main}
           />
         }
-        style={{ marginBottom: 24, background: theme.palette.background.paper, borderColor: theme.palette.divider }}
+        style={{
+          marginBottom: 24,
+          background: theme.palette.background.paper,
+          borderColor: theme.palette.divider,
+        }}
       >
         <Descriptions column={1} bordered size="middle">
           <Descriptions.Item label="Email">
@@ -343,7 +451,11 @@ const StudentInfoPage = () => {
             color={theme.palette.warning.dark}
           />
         }
-        style={{ marginBottom: 24, background: theme.palette.background.paper, borderColor: theme.palette.divider }}
+        style={{
+          marginBottom: 24,
+          background: theme.palette.background.paper,
+          borderColor: theme.palette.divider,
+        }}
       >
         <Descriptions column={2} bordered size="middle">
           <Descriptions.Item label="CCCD">
@@ -371,7 +483,11 @@ const StudentInfoPage = () => {
             color={theme.palette.secondary.dark}
           />
         }
-        style={{ marginBottom: 24, background: theme.palette.background.paper, borderColor: theme.palette.divider }}
+        style={{
+          marginBottom: 24,
+          background: theme.palette.background.paper,
+          borderColor: theme.palette.divider,
+        }}
       >
         <Descriptions column={2} bordered size="middle">
           <Descriptions.Item label="Số tài khoản">
@@ -410,7 +526,10 @@ const StudentInfoPage = () => {
               <Card
                 type="inner"
                 title={member.relationshipTypeName || 'Người thân'}
-                headStyle={{ background: theme.palette.background.default, color: theme.palette.text.primary }}
+                headStyle={{
+                  background: theme.palette.background.default,
+                  color: theme.palette.text.primary,
+                }}
               >
                 <Descriptions bordered column={1} size="small">
                   <Descriptions.Item label="Họ tên">

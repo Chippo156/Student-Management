@@ -146,4 +146,44 @@ export const tuitionService = {
       return null;
     }
   },
+
+  // Tra cứu công nợ của sinh viên
+  getStudentDebt: async (semesterId = null) => {
+    try {
+      const params = {};
+      if (semesterId) {
+        params.semesterId = semesterId;
+      }
+
+      const response = await axios.get('/api/v1/Tuition/student/debt', {
+        params,
+      });
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Lấy thông tin công nợ thất bại');
+        }
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Lấy thông tin công nợ thất bại'
+          );
+        }
+      } else {
+        message.error(error.message || 'Lấy thông tin công nợ thất bại');
+      }
+      return null;
+    }
+  },
 };

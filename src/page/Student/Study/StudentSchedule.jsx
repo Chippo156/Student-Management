@@ -51,9 +51,22 @@ const StudentSchedule = () => {
           description: item.lecturerName || '',
           status: 'upcoming',
           subject: item.courseCode || '',
+          dayOfWeek: item.dayOfWeek,
+          startTime: item.startTime,
         };
       });
-      setScheduleItems(mapped);
+
+      // Sắp xếp theo ngày trong tuần và thời gian bắt đầu
+      const sorted = mapped.sort((a, b) => {
+        // Sắp xếp theo dayOfWeek trước
+        if (a.dayOfWeek !== b.dayOfWeek) {
+          return a.dayOfWeek - b.dayOfWeek;
+        }
+        // Nếu cùng ngày, sắp xếp theo thời gian
+        return a.startTime.localeCompare(b.startTime);
+      });
+
+      setScheduleItems(sorted);
     } catch (error) {
       console.error(error);
     }
