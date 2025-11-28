@@ -137,4 +137,72 @@ export const studentServices = {
       return null;
     }
   },
+
+  // Create new student
+  createStudent: async (studentData) => {
+    try {
+      const response = await customizeAxios.post(
+        '/api/Student/CreateStudent',
+        studentData
+      );
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Tạo sinh viên thất bại');
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Tạo sinh viên thất bại'
+          );
+        }
+      } else {
+        message.error(error.message || 'Tạo sinh viên thất bại');
+      }
+      return null;
+    }
+  },
+
+  // Update student
+  updateStudent: async (studentData) => {
+    try {
+      const response = await customizeAxios.put(
+        '/api/Student/UpdateStudent',
+        studentData
+      );
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Cập nhật sinh viên thất bại');
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Cập nhật sinh viên thất bại'
+          );
+        }
+      } else {
+        message.error(error.message || 'Cập nhật sinh viên thất bại');
+      }
+      return null;
+    }
+  },
 };

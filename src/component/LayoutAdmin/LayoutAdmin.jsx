@@ -164,18 +164,18 @@ const menuData = [
         key: 'tuition-list',
         path: '/admin/tuition-list',
       },
-      {
-        label: 'Thanh toán',
-        icon: <ReceiptIcon />,
-        key: 'payments',
-        path: '/admin/payments',
-      },
-      {
-        label: 'Báo cáo tài chính',
-        icon: <AssessmentIcon />,
-        key: 'financial-reports',
-        path: '/admin/financial-reports',
-      },
+      // {
+      //   label: 'Thanh toán',
+      //   icon: <ReceiptIcon />,
+      //   key: 'payments',
+      //   path: '/admin/payments',
+      // },
+      // {
+      //   label: 'Báo cáo tài chính',
+      //   icon: <AssessmentIcon />,
+      //   key: 'financial-reports',
+      //   path: '/admin/financial-reports',
+      // },
     ],
   },
   {
@@ -222,12 +222,12 @@ const menuData = [
         key: 'notification-history',
         path: '/admin/notification-history',
       },
-      {
-        label: 'Cài đặt email',
-        icon: <EmailIcon />,
-        key: 'email-settings',
-        path: '/admin/email-settings',
-      },
+      // {
+      //   label: 'Cài đặt email',
+      //   icon: <EmailIcon />,
+      //   key: 'email-settings',
+      //   path: '/admin/email-settings',
+      // },
     ],
   },
   // {

@@ -7,13 +7,6 @@ import {
   CardContent,
   Grid,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   TextField,
   MenuItem,
   Select,
@@ -24,7 +17,6 @@ import {
   InputAdornment,
   Chip,
   Avatar,
-  TablePagination,
   CircularProgress,
 } from '@mui/material';
 import {
@@ -48,6 +40,7 @@ import UserDetailModal from '../../../component/Admin/UserManagementPage/UserDet
 import UserEditModal from '../../../component/Admin/UserManagementPage/UserEditModal';
 import { exportUsersExcel } from '../../../until/exportUsersExcel';
 import { useDebounce } from '../../../hooks/useDebounce';
+import DataTable from '../../../component/Common/DataTable';
 
 const UserManagement = () => {
   const navigate = useNavigate();
@@ -116,7 +109,7 @@ const UserManagement = () => {
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+    setRowsPerPage(parseInt(event.target.value.target?.value || event.target.value, 10));
     setPage(0);
   };
 
@@ -174,6 +167,142 @@ const UserManagement = () => {
     );
   };
 
+  // Define columns for DataTable
+  const columns = [
+    {
+      field: 'user',
+      headerName: 'Người dùng',
+      width: '25%',
+      renderCell: (user) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Avatar
+            src={user.avatarUrl}
+            sx={{
+              width: 40,
+              height: 40,
+              bgcolor: '#e6f4ff',
+              color: '#1677ff',
+            }}
+          >
+            {user.fullName?.[0] || user.username?.[0]}
+          </Avatar>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {user.fullName || user.username}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {user.username}
+            </Typography>
+          </Box>
+        </Box>
+      ),
+    },
+    {
+      field: 'role',
+      headerName: 'Vai trò',
+      width: '15%',
+      renderCell: (user) => getRoleChip(user.role?.roleName),
+    },
+    {
+      field: 'email',
+      headerName: 'Email',
+      width: '20%',
+      renderCell: (user) => (
+        <Typography variant="body2">
+          {user.email || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+        </Typography>
+      ),
+    },
+    {
+      field: 'phone',
+      headerName: 'Số điện thoại',
+      width: '15%',
+      renderCell: (user) => (
+        <Typography variant="body2">
+          {user.phone || <span style={{ color: '#aaa' }}>Chưa cập nhật</span>}
+        </Typography>
+      ),
+    },
+    {
+      field: 'status',
+      headerName: 'Trạng thái',
+      width: '12%',
+      renderCell: (user) => getStatusChip(user.accountStatus),
+    },
+    {
+      field: 'actions',
+      headerName: 'Thao tác',
+      width: '13%',
+      align: 'center',
+      renderCell: (user) => (
+        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+          <Tooltip title="Xem chi tiết">
+            <IconButton
+              size="small"
+              onClick={() => {
+                setSelectedUser(user);
+                setOpenDetail(true);
+              }}
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Chỉnh sửa">
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => {
+                setSelectedUser(user);
+                setOpenEdit(true);
+              }}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {user.accountStatus === 1 ? (
+            <Popconfirm
+              title="Vô hiệu hóa tài khoản này?"
+              okText="Đồng ý"
+              cancelText="Hủy"
+              onConfirm={async () => {
+                const res = await userService.deactivateUser(user.userId);
+                if (res) {
+                  message.success('Đã vô hiệu hóa tài khoản!');
+                  await fetchUsers();
+                }
+              }}
+            >
+              <Tooltip title="Khóa tài khoản">
+                <IconButton size="small" color="error">
+                  <LockIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Popconfirm>
+          ) : (
+            <Popconfirm
+              title="Mở lại tài khoản này?"
+              okText="Đồng ý"
+              cancelText="Hủy"
+              onConfirm={async () => {
+                const res = await userService.reactivateUser(user.userId);
+                if (res) {
+                  message.success('Đã mở lại tài khoản!');
+                  await fetchUsers();
+                }
+              }}
+            >
+              <Tooltip title="Mở khóa tài khoản">
+                <IconButton size="small" color="success">
+                  <LockOpenIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Popconfirm>
+          )}
+        </Box>
+      ),
+    },
+  ];
+
   if (loading && users.length === 0) {
     return (
       <Box
@@ -190,20 +319,22 @@ const UserManagement = () => {
   }
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
+    <Box sx={{ flexGrow: 1, p: { xs: 2, sm: 2, md: 3 }, minHeight: '100vh' }}>
       {/* Header */}
       <Box
         sx={{
           display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: { xs: 'flex-start', sm: 'center' },
           mb: 4,
+          gap: 2,
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a237e' }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a237e', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
           Quản lý người dùng
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, width: { xs: '100%', sm: 'auto' } }}>
           <Tooltip title="Làm mới">
             <IconButton
               onClick={fetchUsers}
@@ -211,6 +342,7 @@ const UserManagement = () => {
                 bgcolor: 'white',
                 '&:hover': { bgcolor: '#e3f2fd' },
                 boxShadow: 1,
+                display: { xs: 'none', sm: 'inline-flex' },
               }}
             >
               <Refresh />
@@ -226,7 +358,9 @@ const UserManagement = () => {
               textTransform: 'none',
               px: 3,
               boxShadow: 2,
+              width: { xs: '100%', sm: 'auto' },
             }}
+            size="small"
           >
             Thêm người dùng
           </Button>
@@ -241,7 +375,9 @@ const UserManagement = () => {
               textTransform: 'none',
               px: 3,
               boxShadow: 2,
+              width: { xs: '100%', sm: 'auto' },
             }}
+            size="small"
           >
             Xuất Excel
           </Button>
@@ -362,12 +498,12 @@ const UserManagement = () => {
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <FilterList sx={{ mr: 1, color: '#1976d2' }} />
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               Bộ lọc tìm kiếm
             </Typography>
           </Box>
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} sm={12} md={6} lg={6}>
               <TextField
                 fullWidth
                 placeholder="Tìm kiếm theo tên, email..."
@@ -388,7 +524,7 @@ const UserManagement = () => {
                 }
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} sm={8} md={4} lg={4}>
               <FormControl fullWidth size="small">
                 <InputLabel>Vai trò</InputLabel>
                 <Select
@@ -403,12 +539,13 @@ const UserManagement = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={2}>
+            <Grid item xs={12} sm={4} md={2} lg={2}>
               <Button
                 fullWidth
                 variant="outlined"
                 onClick={handleResetFilters}
                 sx={{ height: '40px' }}
+                size="small"
               >
                 Đặt lại
               </Button>
@@ -423,166 +560,16 @@ const UserManagement = () => {
       </Card>
 
       {/* Users Table */}
-      <Paper sx={{ boxShadow: 2, borderRadius: 2, overflow: 'hidden' }}>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: '#1a237e' }}>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
-                  Người dùng
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
-                  Vai trò
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
-                  Email
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
-                  Số điện thoại
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
-                  Trạng thái
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 'bold',
-                    color: 'white',
-                    textAlign: 'center',
-                  }}
-                >
-                  Thao tác
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow
-                  key={user.userId}
-                  hover
-                  sx={{
-                    '&:hover': { bgcolor: '#f5f5f5' },
-                    transition: 'background-color 0.2s',
-                  }}
-                >
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Avatar
-                        src={user.avatarUrl}
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          bgcolor: '#e6f4ff',
-                          color: '#1677ff',
-                        }}
-                      >
-                        {user.fullName?.[0] || user.username?.[0]}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {user.fullName || user.username}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {user.username}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  <TableCell>{getRoleChip(user.role?.roleName)}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {user.email || (
-                        <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
-                      )}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {user.phone || (
-                        <span style={{ color: '#aaa' }}>Chưa cập nhật</span>
-                      )}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{getStatusChip(user.accountStatus)}</TableCell>
-                  <TableCell>
-                    <Box
-                      sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}
-                    >
-                      <Tooltip title="Xem chi tiết">
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setOpenDetail(true);
-                          }}
-                        >
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Chỉnh sửa">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setOpenEdit(true);
-                          }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      {user.accountStatus === 1 ? (
-                        <Popconfirm
-                          title="Vô hiệu hóa tài khoản này?"
-                          okText="Đồng ý"
-                          cancelText="Hủy"
-                          onConfirm={async () => {
-                            const res = await userService.deactivateUser(
-                              user.userId
-                            );
-                            if (res) {
-                              message.success('Đã vô hiệu hóa tài khoản!');
-                              await fetchUsers();
-                            }
-                          }}
-                        >
-                          <Tooltip title="Khóa tài khoản">
-                            <IconButton size="small" color="error">
-                              <LockIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Popconfirm>
-                      ) : (
-                        <Popconfirm
-                          title="Mở lại tài khoản này?"
-                          okText="Đồng ý"
-                          cancelText="Hủy"
-                          onConfirm={async () => {
-                            const res = await userService.reactivateUser(
-                              user.userId
-                            );
-                            if (res) {
-                              message.success('Đã mở lại tài khoản!');
-                              await fetchUsers();
-                            }
-                          }}
-                        >
-                          <Tooltip title="Mở khóa tài khoản">
-                            <IconButton size="small" color="success">
-                              <LockOpenIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Popconfirm>
-                      )}
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {users.length === 0 && (
-          <Box sx={{ p: 6, textAlign: 'center' }}>
+      <DataTable
+        columns={columns}
+        rows={users}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        emptyState={
+          <Box>
             <People sx={{ fontSize: 80, color: '#e0e0e0', mb: 2 }} />
             <Typography variant="h6" color="text.secondary" gutterBottom>
               Không tìm thấy người dùng nào
@@ -593,22 +580,8 @@ const UserManagement = () => {
                 : 'Chưa có người dùng nào trong hệ thống'}
             </Typography>
           </Box>
-        )}
-
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 20, 50]}
-          component="div"
-          count={totalCount}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage="Số dòng mỗi trang:"
-          labelDisplayedRows={({ from, to, count }) =>
-            `${from}-${to} của ${count}`
-          }
-        />
-      </Paper>
+        }
+      />
 
       <UserDetailModal
         open={openDetail}

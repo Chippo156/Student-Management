@@ -128,6 +128,18 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
   }, [open]);
 
   const handleFinish = async (values) => {
+    // Validate tổng tín chỉ
+    const totalCredits = values.totalCredits || 0;
+    const creditsTheory = values.creditsTheory || 0;
+    const creditsLab = values.creditsLab || 0;
+
+    if (creditsTheory + creditsLab > totalCredits) {
+      message.error(
+        `Tổng tín chỉ lý thuyết (${creditsTheory}) + thực hành (${creditsLab}) = ${creditsTheory + creditsLab} không được vượt quá tổng tín chỉ (${totalCredits})!`
+      );
+      return;
+    }
+
     try {
       const payload = {
         courseName: values.courseName,
@@ -212,12 +224,13 @@ const CourseCreateModal = ({ open, onCancel, onSave, loading }) => {
                 <Form.Item
                   label="Mã môn học"
                   name="courseCode"
+                  normalize={(value) => value?.toUpperCase()}
                   rules={[
                     { required: true, message: 'Bắt buộc nhập mã môn học' },
                     { min: 3, max: 20, message: 'Mã môn học từ 3-20 ký tự' },
                     {
                       pattern: /^[A-Z0-9]+$/,
-                      message: 'Mã môn học chỉ chứa chữ hoa và số',
+                      message: 'Mã môn học chỉ chứa chữ và số',
                     },
                   ]}
                 >

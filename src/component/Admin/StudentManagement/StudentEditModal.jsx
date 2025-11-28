@@ -19,6 +19,9 @@ import { studentServices } from '../../../service/studentServices';
 import facultyService from '../../../service/facultyService';
 import { departmentService } from '../../../service/departmentService';
 import { classService } from '../../../service/classService';
+import AddressSelector from '../../Student/General information/AddressSelector';
+import { externalBankService } from '../../../service/helperService';
+import { normalizeList } from '../../Student/General information/constants';
 
 const { Option } = Select;
 
@@ -29,9 +32,11 @@ const genderOptions = [
 ];
 
 const studentStatusOptions = [
-  { value: 0, label: 'Đang học' },
-  { value: 1, label: 'Tạm nghỉ' },
-  { value: 2, label: 'Đã tốt nghiệp' },
+  { value: 1, label: 'Đang học' },
+  { value: 2, label: 'Không hoạt động' },
+  { value: 3, label: 'Đã tốt nghiệp' },
+  { value: 4, label: 'Đình chỉ' },
+  { value: 5, label: 'Bảo lưu' },
 ];
 
 /**
@@ -45,13 +50,14 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
   const [classes, setClasses] = useState([]);
   const [selectedFaculty, setSelectedFaculty] = useState(undefined);
   const [selectedDepartment, setSelectedDepartment] = useState(undefined);
+  const [provinces, setProvinces] = useState([]);
 
   const colors = {
     primary: theme.palette.primary.main,
     primaryLight: alpha(theme.palette.primary.main, 0.1),
   };
 
-  // Load faculties
+  // Load faculties and provinces
   useEffect(() => {
     const fetchFaculties = async () => {
       try {
@@ -63,7 +69,16 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
         console.error('Failed to fetch faculties:', error);
       }
     };
+    const fetchProvinces = async () => {
+      try {
+        const data = await externalBankService.getProvinces();
+        setProvinces(normalizeList(data));
+      } catch (error) {
+        console.error('Failed to fetch provinces:', error);
+      }
+    };
     fetchFaculties();
+    fetchProvinces();
   }, []);
 
   // Load departments when faculty changes
@@ -134,6 +149,16 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
           : undefined,
         issuedPlace: student.user?.issuedPlace,
         placeOfBirth: student.user?.placeOfBirth,
+        // Address fields
+        hometownProvince: student.user?.hometownProvince,
+        hometownDistrict: student.user?.hometownDistrict,
+        hometownWard: student.user?.hometownWard,
+        birthProvince: student.user?.birthProvince,
+        birthDistrict: student.user?.birthDistrict,
+        birthWard: student.user?.birthWard,
+        permanentProvince: student.user?.permanentProvince,
+        permanentDistrict: student.user?.permanentDistrict,
+        permanentWard: student.user?.permanentWard,
         facultyId: student.class?.program?.department?.facultyId,
         departmentId: student.class?.program?.departmentId,
         classId: student.classId,
@@ -170,6 +195,16 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
             : null,
           issuedPlace: values.issuedPlace || null,
           placeOfBirth: values.placeOfBirth || null,
+          // Address selector fields
+          hometownProvince: values.hometownProvince || null,
+          hometownDistrict: values.hometownDistrict || null,
+          hometownWard: values.hometownWard || null,
+          birthProvince: values.birthProvince || null,
+          birthDistrict: values.birthDistrict || null,
+          birthWard: values.birthWard || null,
+          permanentProvince: values.permanentProvince || null,
+          permanentDistrict: values.permanentDistrict || null,
+          permanentWard: values.permanentWard || null,
         },
       };
 
@@ -294,19 +329,53 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
             🏠 Thông tin địa chỉ
           </Divider>
           <Row gutter={[24, 16]}>
-            <Col xs={24} md={8}>
-              <Form.Item label="Địa chỉ thường trú" name="address">
-                <Input placeholder="Nhập địa chỉ thường trú" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={8}>
+            <AddressSelector
+              label="Quê quán"
+              provinceField="hometownProvince"
+              districtField="hometownDistrict"
+              wardField="hometownWard"
+              provinces={provinces}
+              form={form}
+              initialValues={{
+                province: student?.user?.hometownProvince,
+                district: student?.user?.hometownDistrict,
+                ward: student?.user?.hometownWard,
+              }}
+            />
+            <AddressSelector
+              label="Nơi sinh"
+              provinceField="birthProvince"
+              districtField="birthDistrict"
+              wardField="birthWard"
+              provinces={provinces}
+              form={form}
+              initialValues={{
+                province: student?.user?.birthProvince,
+                district: student?.user?.birthDistrict,
+                ward: student?.user?.birthWard,
+              }}
+            />
+            <AddressSelector
+              label="Địa chỉ thường trú"
+              provinceField="permanentProvince"
+              districtField="permanentDistrict"
+              wardField="permanentWard"
+              provinces={provinces}
+              form={form}
+              initialValues={{
+                province: student?.user?.permanentProvince,
+                district: student?.user?.permanentDistrict,
+                ward: student?.user?.permanentWard,
+              }}
+            />
+            <Col xs={24} md={12}>
               <Form.Item label="Địa chỉ tạm trú" name="temporaryAddress">
                 <Input placeholder="Nhập địa chỉ tạm trú" />
               </Form.Item>
             </Col>
-            <Col xs={24} md={8}>
-              <Form.Item label="Nơi sinh" name="placeOfBirth">
-                <Input placeholder="Nhập nơi sinh" />
+            <Col xs={24} md={12}>
+              <Form.Item label="Địa chỉ liên hệ" name="address">
+                <Input placeholder="Nhập địa chỉ liên hệ" />
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>

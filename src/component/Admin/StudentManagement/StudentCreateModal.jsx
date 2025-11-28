@@ -21,6 +21,9 @@ import { studentServices } from '../../../service/studentServices';
 import facultyService from '../../../service/facultyService';
 import { departmentService } from '../../../service/departmentService';
 import { classService } from '../../../service/classService';
+import AddressSelector from '../../Student/General information/AddressSelector';
+import { externalBankService } from '../../../service/helperService';
+import { normalizeList } from '../../Student/General information/constants';
 
 const { Option } = Select;
 const { Title } = Typography;
@@ -32,9 +35,11 @@ const genderOptions = [
 ];
 
 const studentStatusOptions = [
-  { value: 0, label: 'Đang học' },
-  { value: 1, label: 'Tạm nghỉ' },
-  { value: 2, label: 'Đã tốt nghiệp' },
+  { value: 1, label: 'Đang học' },
+  { value: 2, label: 'Không hoạt động' },
+  { value: 3, label: 'Đã tốt nghiệp' },
+  { value: 4, label: 'Đình chỉ' },
+  { value: 5, label: 'Bảo lưu' },
 ];
 
 // Regex patterns
@@ -52,13 +57,14 @@ const StudentCreateModal = ({ open, onCancel, onSave, loading }) => {
   const [classes, setClasses] = useState([]);
   const [selectedFaculty, setSelectedFaculty] = useState(undefined);
   const [selectedDepartment, setSelectedDepartment] = useState(undefined);
+  const [provinces, setProvinces] = useState([]);
 
   const colors = {
     primary: theme.palette.primary.main,
     primaryLight: alpha(theme.palette.primary.main, 0.1),
   };
 
-  // Load faculties
+  // Load faculties and provinces
   useEffect(() => {
     const fetchFaculties = async () => {
       try {
@@ -70,7 +76,16 @@ const StudentCreateModal = ({ open, onCancel, onSave, loading }) => {
         console.error('Failed to fetch faculties:', error);
       }
     };
+    const fetchProvinces = async () => {
+      try {
+        const data = await externalBankService.getProvinces();
+        setProvinces(normalizeList(data));
+      } catch (error) {
+        console.error('Failed to fetch provinces:', error);
+      }
+    };
     fetchFaculties();
+    fetchProvinces();
   }, []);
 
   // Load departments when faculty changes
@@ -121,7 +136,7 @@ const StudentCreateModal = ({ open, onCancel, onSave, loading }) => {
         mssv: values.mssv,
         classId: values.classId,
         yearOfAdmission: values.yearOfAdmission,
-        studentStatus: values.studentStatus || 0,
+        studentStatus: values.studentStatus || 1,
         userCreateRequest: {
           fullName: values.fullName,
           gender: values.gender,
@@ -139,6 +154,16 @@ const StudentCreateModal = ({ open, onCancel, onSave, loading }) => {
             : null,
           issuedPlace: values.issuedPlace || null,
           placeOfBirth: values.placeOfBirth || null,
+          // Address selector fields
+          hometownProvince: values.hometownProvince || null,
+          hometownDistrict: values.hometownDistrict || null,
+          hometownWard: values.hometownWard || null,
+          birthProvince: values.birthProvince || null,
+          birthDistrict: values.birthDistrict || null,
+          birthWard: values.birthWard || null,
+          permanentProvince: values.permanentProvince || null,
+          permanentDistrict: values.permanentDistrict || null,
+          permanentWard: values.permanentWard || null,
         },
       };
 
@@ -202,7 +227,7 @@ const StudentCreateModal = ({ open, onCancel, onSave, loading }) => {
           form={form}
           layout="vertical"
           onFinish={handleFinish}
-          initialValues={{ gender: 1, studentStatus: 0 }}
+          initialValues={{ gender: 1, studentStatus: 1 }}
         >
           {/* Thông tin cơ bản */}
           <Title level={4} style={{ marginBottom: 16, color: colors.primary }}>
@@ -295,19 +320,38 @@ const StudentCreateModal = ({ open, onCancel, onSave, loading }) => {
           </Title>
           <Card size="small" style={{ marginBottom: 24 }}>
             <Row gutter={[24, 16]}>
-              <Col xs={24} md={8}>
-                <Form.Item label="Địa chỉ thường trú" name="address">
-                  <Input placeholder="Nhập địa chỉ thường trú" />
-                </Form.Item>
-              </Col>
-              <Col xs={24} md={8}>
+              <AddressSelector
+                label="Quê quán"
+                provinceField="hometownProvince"
+                districtField="hometownDistrict"
+                wardField="hometownWard"
+                provinces={provinces}
+                form={form}
+              />
+              <AddressSelector
+                label="Nơi sinh"
+                provinceField="birthProvince"
+                districtField="birthDistrict"
+                wardField="birthWard"
+                provinces={provinces}
+                form={form}
+              />
+              <AddressSelector
+                label="Địa chỉ thường trú"
+                provinceField="permanentProvince"
+                districtField="permanentDistrict"
+                wardField="permanentWard"
+                provinces={provinces}
+                form={form}
+              />
+              <Col xs={24} md={12}>
                 <Form.Item label="Địa chỉ tạm trú" name="temporaryAddress">
                   <Input placeholder="Nhập địa chỉ tạm trú" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
-                <Form.Item label="Nơi sinh" name="placeOfBirth">
-                  <Input placeholder="Nhập nơi sinh" />
+              <Col xs={24} md={12}>
+                <Form.Item label="Địa chỉ liên hệ" name="address">
+                  <Input placeholder="Nhập địa chỉ liên hệ" />
                 </Form.Item>
               </Col>
               <Col xs={24} md={8}>

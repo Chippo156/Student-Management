@@ -371,32 +371,34 @@ const TeacherList = () => {
   ];
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
+    <Box sx={{ flexGrow: 1, p: { xs: 2, sm: 2, md: 3 }, minHeight: '100vh' }}>
       {/* Header */}
       <PageHeader
         title="Quản lý Giảng viên"
         onRefresh={fetchLecturers}
         actions={
-          <>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, width: { xs: '100%', sm: 'auto' } }}>
             <Button
               variant="contained"
               startIcon={<FileDownload />}
               onClick={handleExportExcel}
               disabled={lecturers.length === 0}
               color="success"
-              sx={{ textTransform: 'none', px: 3, mr: 2 }}
+              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              size="small"
             >
               Xuất Excel
             </Button>
-            <Button
+            {/* <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={handleCreateTeacher}
-              sx={{ textTransform: 'none', px: 3 }}
+              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              size="small"
             >
               Thêm giảng viên
-            </Button>
-          </>
+            </Button> */}
+          </Box>
         }
       />
 
@@ -430,7 +432,7 @@ const TeacherList = () => {
 
       {/* Filter Section */}
       <FilterSection resultCount={lecturers.length}>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={12} md={6} lg={3}>
           <TextField
             fullWidth
             placeholder="Tìm kiếm theo mã GV, tên, email..."
@@ -451,7 +453,7 @@ const TeacherList = () => {
             }
           />
         </Grid>
-        <Grid item xs={12} md={2}>
+        <Grid item xs={12} sm={6} md={4} lg={2}>
           <FormControl fullWidth size="small">
             <InputLabel>Khoa</InputLabel>
             <Select
@@ -468,7 +470,7 @@ const TeacherList = () => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={2}>
+        <Grid item xs={6} sm={4} md={3} lg={2}>
           <FormControl fullWidth size="small">
             <InputLabel>Chức vụ</InputLabel>
             <Select
@@ -484,7 +486,7 @@ const TeacherList = () => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={2}>
+        <Grid item xs={6} sm={4} md={3} lg={2}>
           <FormControl fullWidth size="small">
             <InputLabel>Học hàm</InputLabel>
             <Select
@@ -500,7 +502,7 @@ const TeacherList = () => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={1.5}>
+        <Grid item xs={6} sm={4} md={3} lg={1.5}>
           <FormControl fullWidth size="small">
             <InputLabel>Trạng thái</InputLabel>
             <Select
@@ -514,12 +516,13 @@ const TeacherList = () => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={1.5}>
+        <Grid item xs={6} sm={4} md={3} lg={1.5}>
           <Button
             fullWidth
             variant="outlined"
             onClick={handleResetFilters}
             sx={{ height: '40px' }}
+            size="small"
           >
             Đặt lại
           </Button>

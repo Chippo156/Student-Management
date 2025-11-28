@@ -65,24 +65,24 @@ const menuData = [
     key: 'attendance',
     path: '/teacher/attendance',
   },
-  {
-    label: 'Bài tập',
-    icon: <AssignmentIcon />,
-    key: 'assignments',
-    path: '/teacher/assignments',
-  },
-  {
-    label: 'Tài liệu',
-    icon: <FolderIcon />,
-    key: 'materials',
-    path: '/teacher/materials',
-  },
-  {
-    label: 'Cài đặt',
-    icon: <SettingsIcon />,
-    key: 'settings',
-    path: '/teacher/settings',
-  },
+  // {
+  //   label: 'Bài tập',
+  //   icon: <AssignmentIcon />,
+  //   key: 'assignments',
+  //   path: '/teacher/assignments',
+  // },
+  // {
+  //   label: 'Tài liệu',
+  //   icon: <FolderIcon />,
+  //   key: 'materials',
+  //   path: '/teacher/materials',
+  // },
+  // {
+  //   label: 'Cài đặt',
+  //   icon: <SettingsIcon />,
+  //   key: 'settings',
+  //   path: '/teacher/settings',
+  // },
 ];
 
 const LayoutTeacher = () => {

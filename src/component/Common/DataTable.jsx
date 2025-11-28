@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Paper,
   Table,
@@ -7,11 +7,17 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   Box,
   Typography,
+  TextField,
+  IconButton,
+  Pagination,
+  Select,
+  MenuItem,
+  FormControl,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { ArrowForward } from '@mui/icons-material';
 
 /**
  * DataTable - Component table chung với style thống nhất
@@ -35,6 +41,8 @@ const DataTable = ({
   emptyState,
 }) => {
   const theme = useTheme();
+  const [jumpToPage, setJumpToPage] = useState('');
+  const totalPages = Math.ceil(totalCount / rowsPerPage);
 
   return (
     <Paper sx={{ boxShadow: 2, borderRadius: 2, overflow: 'hidden' }}>
@@ -103,20 +111,123 @@ const DataTable = ({
         </Box>
       )}
 
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 20, 50]}
-        component="div"
-        count={totalCount}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={onPageChange}
-        onRowsPerPageChange={onRowsPerPageChange}
-        labelRowsPerPage="Số dòng mỗi trang:"
-        labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
+      {/* Custom Pagination like Ant Design */}
+      <Box
         sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           borderTop: `1px solid ${theme.palette.divider}`,
+          p: 2,
+          flexWrap: 'wrap',
+          gap: 2,
         }}
-      />
+      >
+        {/* Left side: Rows per page */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="body2" color="text.secondary">
+            Số dòng mỗi trang:
+          </Typography>
+          <FormControl size="small">
+            <Select
+              value={rowsPerPage}
+              onChange={(e) => {
+                onRowsPerPageChange(e);
+              }}
+              sx={{
+                fontSize: '0.875rem',
+                height: '32px',
+                '& .MuiSelect-select': {
+                  padding: '4px 32px 4px 12px',
+                },
+              }}
+            >
+              {[5, 10, 20, 50].map((size) => (
+                <MenuItem key={size} value={size}>
+                  {size}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Typography variant="body2" color="text.secondary">
+            {`${page * rowsPerPage + 1}-${Math.min((page + 1) * rowsPerPage, totalCount)} của ${totalCount}`}
+          </Typography>
+        </Box>
+
+        {/* Right side: Pagination + Jump to page */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* Jump to page */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Đến trang
+            </Typography>
+            <TextField
+              size="small"
+              value={jumpToPage}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                  setJumpToPage(value);
+                }
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  const pageNum = parseInt(jumpToPage);
+                  if (pageNum >= 1 && pageNum <= totalPages) {
+                    onPageChange(null, pageNum - 1);
+                    setJumpToPage('');
+                  }
+                }
+              }}
+              placeholder={`1-${totalPages}`}
+              sx={{
+                width: '70px',
+                '& input': {
+                  textAlign: 'center',
+                  padding: '4px 8px',
+                  fontSize: '0.875rem',
+                },
+                '& .MuiOutlinedInput-root': {
+                  height: '32px',
+                },
+              }}
+            />
+            <IconButton
+              size="small"
+              onClick={() => {
+                const pageNum = parseInt(jumpToPage);
+                if (pageNum >= 1 && pageNum <= totalPages) {
+                  onPageChange(null, pageNum - 1);
+                  setJumpToPage('');
+                }
+              }}
+              disabled={!jumpToPage || parseInt(jumpToPage) < 1 || parseInt(jumpToPage) > totalPages}
+              color="primary"
+              sx={{ padding: '4px' }}
+            >
+              <ArrowForward fontSize="small" />
+            </IconButton>
+          </Box>
+
+          {/* Page numbers */}
+          <Pagination
+            count={totalPages}
+            page={page + 1}
+            onChange={(event, value) => onPageChange(event, value - 1)}
+            color="primary"
+            shape="rounded"
+            showFirstButton
+            showLastButton
+            siblingCount={1}
+            boundaryCount={1}
+            sx={{
+              '& .MuiPaginationItem-root': {
+                fontSize: '0.875rem',
+              },
+            }}
+          />
+        </Box>
+      </Box>
     </Paper>
   );
 };

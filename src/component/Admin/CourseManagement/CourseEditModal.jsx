@@ -126,6 +126,18 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
   }, [course, open, form]);
 
   const handleFinish = async (values) => {
+    // Validate tổng tín chỉ
+    const totalCredits = values.totalCredits || 0;
+    const creditsTheory = values.creditsTheory || 0;
+    const creditsLab = values.creditsLab || 0;
+
+    if (creditsTheory + creditsLab > totalCredits) {
+      message.error(
+        `Tổng tín chỉ lý thuyết (${creditsTheory}) + thực hành (${creditsLab}) = ${creditsTheory + creditsLab} không được vượt quá tổng tín chỉ (${totalCredits})!`
+      );
+      return;
+    }
+
     try {
       const payload = {
         curriculumCourseId: course.curriculumCourseId,
@@ -189,9 +201,14 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
               <Form.Item
                 label="Mã môn học"
                 name="courseCode"
+                normalize={(value) => value?.toUpperCase()}
                 rules={[
                   { required: true, message: 'Bắt buộc nhập mã môn học' },
                   { min: 3, max: 20, message: 'Mã môn học từ 3-20 ký tự' },
+                  {
+                    pattern: /^[A-Z0-9]+$/,
+                    message: 'Mã môn học chỉ chứa chữ và số',
+                  },
                 ]}
               >
                 <Input
@@ -212,7 +229,7 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
                 <Input placeholder="VD: Lập trình cơ bản" />
               </Form.Item>
             </Col>
-            <Col xs={24} md={8}>
+            <Col xs={24} md={12}>
               <Form.Item
                 label="Loại môn học"
                 name="courseType"
@@ -229,7 +246,7 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col xs={24} md={8}>
+            {/* <Col xs={24} md={8}>
               <Form.Item
                 label="Loại hình"
                 name="isRequired"
@@ -240,8 +257,8 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
                   unCheckedChildren="Tự chọn"
                 />
               </Form.Item>
-            </Col>
-            <Col xs={24} md={8}>
+            </Col> */}
+            <Col xs={24} md={12}>
               <Form.Item
                 label="Học kỳ đề xuất"
                 name="semesterSuggested"

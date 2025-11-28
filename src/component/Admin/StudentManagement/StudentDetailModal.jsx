@@ -29,18 +29,22 @@ const StudentDetailModal = ({ open, onCancel, student }) => {
 
   const getStatusText = (status) => {
     const statusMap = {
-      0: 'Đang học',
-      1: 'Tạm nghỉ',
-      2: 'Đã tốt nghiệp',
+      1: 'Đang học', // Active
+      2: 'Không hoạt động', // Inactive
+      3: 'Đã tốt nghiệp', // Graduated
+      4: 'Đình chỉ', // Suspended
+      5: 'Bảo lưu', // Reserved
     };
     return statusMap[status] || 'Không xác định';
   };
 
   const getStatusColor = (status) => {
     const colorMap = {
-      0: 'success',
-      1: 'error',
-      2: 'info',
+      1: 'success', // Active
+      2: 'default', // Inactive
+      3: 'info', // Graduated
+      4: 'error', // Suspended
+      5: 'warning', // Reserved
     };
     return colorMap[status] || 'default';
   };

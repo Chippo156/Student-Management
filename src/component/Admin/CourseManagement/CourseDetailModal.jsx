@@ -1,6 +1,19 @@
 import React from 'react';
-import { Modal, Avatar, Tag, Divider, Row, Col, Descriptions, Timeline } from 'antd';
-import { BookOutlined, ClockCircleOutlined, EditOutlined } from '@ant-design/icons';
+import {
+  Modal,
+  Avatar,
+  Tag,
+  Divider,
+  Row,
+  Col,
+  Descriptions,
+  Timeline,
+} from 'antd';
+import {
+  BookOutlined,
+  ClockCircleOutlined,
+  EditOutlined,
+} from '@ant-design/icons';
 import { useTheme } from '@mui/material/styles';
 import { Box, Typography, Chip } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -106,7 +119,11 @@ const CourseDetailModal = ({ open, onCancel, course }) => {
           <Row gutter={32}>
             <Col span={12}>
               <div style={{ marginBottom: 16 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
                   Tên môn học
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -114,15 +131,26 @@ const CourseDetailModal = ({ open, onCancel, course }) => {
                 </Typography>
               </div>
               <div style={{ marginBottom: 16 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
                   Mã môn học
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600, color: colors.primary }}>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 600, color: colors.primary }}
+                >
                   {course.courseCode || 'Chưa cập nhật'}
                 </Typography>
               </div>
               <div style={{ marginBottom: 16 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
                   Loại môn học
                 </Typography>
                 <Chip
@@ -132,18 +160,14 @@ const CourseDetailModal = ({ open, onCancel, course }) => {
                   sx={{ fontWeight: 600 }}
                 />
               </div>
-              <div style={{ marginBottom: 16 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Bắt buộc
-                </Typography>
-                <Tag color={course.isRequired ? 'green' : 'orange'}>
-                  {course.isRequired ? 'Bắt buộc' : 'Tự chọn'}
-                </Tag>
-              </div>
             </Col>
             <Col span={12}>
               <div style={{ marginBottom: 16 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
                   Chương trình đào tạo
                 </Typography>
                 <Typography variant="body1">
@@ -154,8 +178,12 @@ const CourseDetailModal = ({ open, onCancel, course }) => {
                 </Typography>
               </div>
               <div style={{ marginBottom: 16 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Chuyên ngành/Khoa
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  Chuyên ngành
                 </Typography>
                 <Chip
                   label={course.departmentName}
@@ -168,7 +196,11 @@ const CourseDetailModal = ({ open, onCancel, course }) => {
                 />
               </div>
               <div style={{ marginBottom: 16 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
                   Học kỳ đề xuất
                 </Typography>
                 <Tag color="blue">HK {course.semesterSuggested}</Tag>
@@ -181,9 +213,19 @@ const CourseDetailModal = ({ open, onCancel, course }) => {
             ⏱️ Thông tin tín chỉ
           </Divider>
           <Row gutter={16}>
-            <Col span={6}>
-              <Box sx={{ textAlign: 'center', p: 2, bgcolor: colors.successLight, borderRadius: 2 }}>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: colors.success }}>
+            <Col span={8}>
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  p: 2,
+                  bgcolor: colors.successLight,
+                  borderRadius: 2,
+                }}
+              >
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: colors.success }}
+                >
                   {course.totalCredits}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -191,9 +233,19 @@ const CourseDetailModal = ({ open, onCancel, course }) => {
                 </Typography>
               </Box>
             </Col>
-            <Col span={6}>
-              <Box sx={{ textAlign: 'center', p: 2, bgcolor: colors.primaryLight, borderRadius: 2 }}>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: colors.primary }}>
+            <Col span={8}>
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  p: 2,
+                  bgcolor: colors.primaryLight,
+                  borderRadius: 2,
+                }}
+              >
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: colors.primary }}
+                >
                   {course.creditsTheory}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -201,23 +253,23 @@ const CourseDetailModal = ({ open, onCancel, course }) => {
                 </Typography>
               </Box>
             </Col>
-            <Col span={6}>
-              <Box sx={{ textAlign: 'center', p: 2, bgcolor: colors.warningLight, borderRadius: 2 }}>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: colors.warning }}>
+            <Col span={8}>
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  p: 2,
+                  bgcolor: colors.warningLight,
+                  borderRadius: 2,
+                }}
+              >
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: colors.warning }}
+                >
                   {course.creditsLab}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Thực hành
-                </Typography>
-              </Box>
-            </Col>
-            <Col span={6}>
-              <Box sx={{ textAlign: 'center', p: 2, bgcolor: colors.infoLight, borderRadius: 2 }}>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: colors.info }}>
-                  {course.creditsExercise || 0}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Bài tập
                 </Typography>
               </Box>
             </Col>

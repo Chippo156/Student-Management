@@ -203,7 +203,7 @@ const CreateUser = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 1100, margin: '32px auto' }}>
+    <Box sx={{ flexGrow: 1, p: { xs: 2, sm: 2, md: 3 }, minHeight: '100vh' }}>
       <Card
         title={
           <span style={{ fontSize: 25 }}>
@@ -228,7 +228,7 @@ const CreateUser = () => {
           </Title>
           <Card size="small" style={{ marginBottom: 24 }}>
             <Row gutter={[24, 16]}>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item
                   label="Tên đăng nhập"
                   name="username"
@@ -243,7 +243,7 @@ const CreateUser = () => {
                   <Input placeholder="Nhập tên đăng nhập" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item
                   label="Mật khẩu"
                   name="password"
@@ -256,7 +256,7 @@ const CreateUser = () => {
                   <Input.Password placeholder="Nhập mật khẩu" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item
                   label="Họ và tên"
                   name="fullName"
@@ -268,7 +268,7 @@ const CreateUser = () => {
                   <Input placeholder="Nhập họ và tên" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item
                   label="Giới tính"
                   name="gender"
@@ -285,7 +285,7 @@ const CreateUser = () => {
                   </Select>
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item
                   label="Ngày sinh"
                   name="dateOfBirth"
@@ -296,7 +296,7 @@ const CreateUser = () => {
                   <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item
                   label="Email"
                   name="email"
@@ -305,7 +305,7 @@ const CreateUser = () => {
                   <Input placeholder="Nhập email" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item
                   label="Số điện thoại"
                   name="phone"
@@ -327,32 +327,32 @@ const CreateUser = () => {
           </Title>
           <Card size="small" style={{ marginBottom: 24 }}>
             <Row gutter={[24, 16]}>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item label="Địa chỉ" name="address">
                   <Input placeholder="Nhập địa chỉ" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item label="Địa chỉ tạm trú" name="temporaryAddress">
                   <Input placeholder="Nhập địa chỉ tạm trú" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item label="Nơi sinh" name="placeOfBirth">
                   <Input placeholder="Nhập nơi sinh" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item label="Dân tộc" name="ethnicity">
                   <Input placeholder="Nhập dân tộc" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item label="Tôn giáo" name="religion">
                   <Input placeholder="Nhập tôn giáo" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item label="Quốc tịch" name="nationality">
                   <Input placeholder="Nhập quốc tịch" />
                 </Form.Item>
@@ -365,7 +365,7 @@ const CreateUser = () => {
           </Title>
           <Card size="small" style={{ marginBottom: 24 }}>
             <Row gutter={[24, 16]}>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item
                   label="CCCD"
                   name="citizenIdCard"
@@ -376,12 +376,12 @@ const CreateUser = () => {
                   <Input placeholder="Nhập số CCCD" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item label="Ngày cấp" name="issuedDate">
                   <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item label="Nơi cấp" name="issuedPlace">
                   <Input placeholder="Nhập nơi cấp" />
                 </Form.Item>
@@ -394,7 +394,7 @@ const CreateUser = () => {
           </Title>
           <Card size="small" style={{ marginBottom: 24 }}>
             <Row gutter={24}>
-              <Col xs={24} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <Form.Item
                   label="Vai trò"
                   name="roleId"
@@ -419,7 +419,7 @@ const CreateUser = () => {
                   🎓 Thông tin sinh viên
                 </Title>
                 <Row gutter={[24, 16]}>
-                  <Col xs={24} md={8}>
+                  <Col xs={24} sm={12} md={8}>
                     <Form.Item
                       label="Khoa"
                       name="facultyId"
@@ -441,7 +441,7 @@ const CreateUser = () => {
                       </Select>
                     </Form.Item>
                   </Col>
-                  <Col xs={24} md={8}>
+                  <Col xs={24} sm={12} md={8}>
                     <Form.Item
                       label="Chuyên ngành"
                       name="departmentId"
@@ -467,7 +467,7 @@ const CreateUser = () => {
                       </Select>
                     </Form.Item>
                   </Col>
-                  <Col xs={24} md={8}>
+                  <Col xs={24} sm={12} md={8}>
                     <Form.Item
                       label="Lớp"
                       name="classId"
@@ -494,7 +494,7 @@ const CreateUser = () => {
                       <Input placeholder="Nhập trạng thái" />
                     </Form.Item>
                   </Col> */}
-                  <Col xs={24} md={8}>
+                  <Col xs={24} sm={12} md={8}>
                     <Form.Item label="Ngày nhập học" name="admissionDate">
                       <DatePicker
                         style={{ width: '100%' }}
@@ -502,7 +502,7 @@ const CreateUser = () => {
                       />
                     </Form.Item>
                   </Col>
-                  <Col xs={24} md={8}>
+                  <Col xs={24} sm={12} md={8}>
                     <Form.Item label="Năm học" name="year">
                       <Input placeholder="Nhập năm học" />
                     </Form.Item>
@@ -519,7 +519,7 @@ const CreateUser = () => {
                   👨‍🏫 Thông tin giảng viên
                 </Title>
                 <Row gutter={[24, 16]}>
-                  <Col xs={24} md={8}>
+                  <Col xs={24} sm={12} md={8}>
                     <Form.Item
                       label="Khoa"
                       name="facultyId"
@@ -544,7 +544,7 @@ const CreateUser = () => {
                       </Select>
                     </Form.Item>
                   </Col>
-                  <Col xs={24} md={8}>
+                  <Col xs={24} sm={12} md={8}>
                     <Form.Item
                       label="Chuyên ngành"
                       name="departmentId"
@@ -570,7 +570,7 @@ const CreateUser = () => {
                       </Select>
                     </Form.Item>
                   </Col>
-                  <Col xs={24} md={8}>
+                  <Col xs={24} sm={12} md={8}>
                     <Form.Item label="Chức vụ" name="position">
                       <Select placeholder="Chọn chức vụ" allowClear>
                         {positionOptions.map((pos) => (
@@ -581,7 +581,7 @@ const CreateUser = () => {
                       </Select>
                     </Form.Item>
                   </Col>
-                  <Col xs={24} md={8}>
+                  <Col xs={24} sm={12} md={8}>
                     <Form.Item label="Học hàm" name="academicTitle">
                       <Select placeholder="Chọn học hàm" allowClear>
                         {academicTitleOptions.map((title) => (
