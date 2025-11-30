@@ -319,7 +319,7 @@ const MaterialsPage = () => {
     {
       title: 'Thao tác',
       key: 'action',
-      fixed: 'right',
+      fixed: window.innerWidth < 768 ? false : 'right',
       width: 220,
       render: (_, record) => (
         <Space size="small">

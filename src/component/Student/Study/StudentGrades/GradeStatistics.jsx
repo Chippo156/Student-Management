@@ -8,8 +8,8 @@ import {
 } from '@ant-design/icons';
 
 const GradeStatistics = ({ summary, user, theme }) => (
-  <Row gutter={16} style={{ marginBottom: 24 }}>
-    <Col span={6}>
+  <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+    <Col xs={24} sm={12} md={12} lg={6} xl={6}>
       <Card
         style={{
           minHeight: 140,
@@ -52,7 +52,7 @@ const GradeStatistics = ({ summary, user, theme }) => (
         />
       </Card>
     </Col>
-    <Col span={6}>
+    <Col xs={24} sm={12} md={12} lg={6} xl={6}>
       <Card
         style={{
           minHeight: 140,
@@ -78,7 +78,7 @@ const GradeStatistics = ({ summary, user, theme }) => (
         />
       </Card>
     </Col>
-    <Col span={6}>
+    <Col xs={24} sm={12} md={12} lg={6} xl={6}>
       <Card
         style={{
           minHeight: 140,
@@ -106,7 +106,7 @@ const GradeStatistics = ({ summary, user, theme }) => (
         />
       </Card>
     </Col>
-    <Col span={6}>
+    <Col xs={24} sm={12} md={12} lg={6} xl={6}>
       <Card
         style={{
           minHeight: 140,

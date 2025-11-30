@@ -204,6 +204,91 @@ const RegisterCourses = () => {
           border-color: ${theme.palette.divider} !important;
           color: ${theme.palette.text.primary} !important;
         }
+
+        /* Tour responsive styles - Fix overflow on mobile */
+        .ant-tour {
+          max-width: 100vw !important;
+        }
+
+        .ant-tour .ant-tour-inner {
+          max-width: calc(100vw - 32px) !important;
+          width: auto !important;
+          box-sizing: border-box !important;
+        }
+
+        .ant-tour-content {
+          overflow-wrap: break-word !important;
+          word-wrap: break-word !important;
+          word-break: break-word !important;
+        }
+
+        @media (max-width: 600px) {
+          .ant-tour {
+            left: 0 !important;
+            right: 0 !important;
+            margin: 0 auto !important;
+            max-width: 100vw !important;
+            padding: 0 12px !important;
+          }
+
+          .ant-tour .ant-tour-inner {
+            max-width: 100% !important;
+            padding: 12px !important;
+            margin: 0 !important;
+          }
+
+          .ant-tour-title {
+            font-size: 15px !important;
+            line-height: 1.4 !important;
+            margin-bottom: 8px !important;
+          }
+
+          .ant-tour-description {
+            font-size: 12px !important;
+            line-height: 1.5 !important;
+            margin-bottom: 12px !important;
+          }
+
+          .ant-tour-footer {
+            gap: 6px !important;
+            flex-wrap: wrap !important;
+          }
+
+          .ant-tour-footer .ant-btn {
+            font-size: 12px !important;
+            padding: 4px 10px !important;
+            height: auto !important;
+            min-height: 28px !important;
+          }
+
+          .ant-tour-indicators {
+            gap: 4px !important;
+            margin-top: 8px !important;
+          }
+
+          .ant-tour-indicator {
+            width: 6px !important;
+            height: 6px !important;
+          }
+
+          .ant-tour-arrow {
+            display: none !important;
+          }
+        }
+
+        @media (min-width: 601px) and (max-width: 960px) {
+          .ant-tour .ant-tour-inner {
+            max-width: calc(100vw - 48px) !important;
+          }
+
+          .ant-tour-title {
+            font-size: 17px !important;
+          }
+
+          .ant-tour-description {
+            font-size: 14px !important;
+          }
+        }
         `}
       </style>
       <Card
@@ -217,13 +302,17 @@ const RegisterCourses = () => {
               ? '0 2px 12px rgba(0,0,0,0.3)'
               : '0 2px 12px rgba(0,0,0,0.08)',
         }}
-        bodyStyle={{ padding: 32 }}
+        bodyStyle={{
+          padding: window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 24 : 32
+        }}
       >
         <Box
           sx={{
             display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            gap: { xs: 2, sm: 0 },
             mb: 3.5,
           }}
         >
@@ -233,6 +322,7 @@ const RegisterCourses = () => {
               color: theme.palette.primary.main,
               margin: 0,
               fontWeight: 700,
+              fontSize: window.innerWidth < 600 ? '1.25rem' : '1.5rem',
             }}
           >
             ĐĂNG KÝ HỌC PHẦN
@@ -254,6 +344,7 @@ const RegisterCourses = () => {
             style={{
               borderRadius: 8,
               fontWeight: 500,
+              width: window.innerWidth < 600 ? '100%' : 'auto',
             }}
           >
             Hướng dẫn sử dụng

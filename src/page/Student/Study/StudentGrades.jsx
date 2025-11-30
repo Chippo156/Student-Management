@@ -122,7 +122,8 @@ const StudentGrades = () => {
   return (
     <div
       style={{
-        padding: window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 16 : 24,
+        padding:
+          window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 16 : 24,
         background: theme.palette.background.default,
         minHeight: '100vh',
       }}
@@ -151,10 +152,18 @@ const StudentGrades = () => {
             marginBottom: 24,
           }}
         >
-          <Title level={2} style={{
-            color: theme.palette.text.primary,
-            fontSize: window.innerWidth < 600 ? '1.5rem' : window.innerWidth < 960 ? '1.75rem' : '2rem'
-          }}>
+          <Title
+            level={2}
+            style={{
+              color: theme.palette.text.primary,
+              fontSize:
+                window.innerWidth < 600
+                  ? '1.5rem'
+                  : window.innerWidth < 960
+                    ? '1.75rem'
+                    : '2rem',
+            }}
+          >
             <BookOutlined
               style={{ marginRight: 8, color: theme.palette.primary.main }}
             />

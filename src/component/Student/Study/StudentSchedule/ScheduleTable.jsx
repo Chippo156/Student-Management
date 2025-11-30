@@ -16,6 +16,32 @@ const ScheduleTable = ({
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
+      /* Responsive table scrolling */
+      .schedule-table .ant-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .schedule-table .ant-table-cell-fix-left {
+        z-index: 2 !important;
+        background: inherit !important;
+      }
+
+      .schedule-table .ant-table-thead .ant-table-cell-fix-left {
+        z-index: 3 !important;
+      }
+
+      /* Mobile responsive */
+      @media (max-width: 768px) {
+        .schedule-table .ant-table {
+          font-size: 12px;
+        }
+
+        .schedule-table .ant-table-cell {
+          padding: 8px 4px !important;
+        }
+      }
+
       @media print {
         @page {
           size: A3 landscape;
@@ -154,7 +180,9 @@ const ScheduleTable = ({
         borderRadius: 8,
         boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
         background: theme.palette.background.paper,
+        overflow: 'hidden',
       }}
+      bodyStyle={{ padding: 0, overflow: 'auto' }}
     >
       <style>
         {`

@@ -252,13 +252,25 @@ const Dashboard = () => {
   }, [selectedSemesterId]);
 
   return (
-    <div style={{ minHeight: '100vh', padding: window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 16 : 24, background: colors.bgPage }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        padding:
+          window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 16 : 24,
+        background: colors.bgPage,
+      }}
+    >
       {/* Welcome Banner */}
       <div
         style={{
           background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
           borderRadius: 16,
-          padding: window.innerWidth < 600 ? '24px 20px' : window.innerWidth < 960 ? '28px 30px' : '32px 40px',
+          padding:
+            window.innerWidth < 600
+              ? '24px 20px'
+              : window.innerWidth < 960
+                ? '28px 30px'
+                : '32px 40px',
           marginBottom: 24,
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
           position: 'relative',
@@ -312,7 +324,12 @@ const Dashboard = () => {
             </div>
             <h1
               style={{
-                fontSize: window.innerWidth < 600 ? 24 : window.innerWidth < 960 ? 28 : 32,
+                fontSize:
+                  window.innerWidth < 600
+                    ? 24
+                    : window.innerWidth < 960
+                      ? 28
+                      : 32,
                 fontWeight: 700,
                 color: '#fff',
                 margin: '8px 0',

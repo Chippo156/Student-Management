@@ -14,13 +14,17 @@ import {
   getTypeLabel,
 } from './utils';
 
-export const getScheduleColumns = (weekDays, today, theme, isDark) => [
+export const getScheduleColumns = (weekDays, today, theme, isDark) => {
+  // Check if mobile to disable fixed column
+  const isMobile = window.innerWidth < 768;
+
+  return [
   {
     title: 'Ca học',
     dataIndex: 'period',
     key: 'period',
     width: 100,
-    fixed: 'left',
+    fixed: isMobile ? false : 'left', // Disable fixed on mobile
     align: 'center',
     render: (text) => (
       <div>
@@ -223,3 +227,4 @@ export const getScheduleColumns = (weekDays, today, theme, isDark) => [
     }),
   })),
 ];
+};

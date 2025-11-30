@@ -277,7 +277,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
       key: 'actions',
       width: 120,
       align: 'center',
-      fixed: 'right',
+      fixed: window.innerWidth < 768 ? false : 'right',
       render: (_, record) => (
         <Space size="small">
           <Tooltip title="Chỉnh sửa">

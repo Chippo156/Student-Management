@@ -326,7 +326,7 @@ const AssignmentsPage = () => {
     {
       title: 'Thao tác',
       key: 'action',
-      fixed: 'right',
+      fixed: window.innerWidth < 768 ? false : 'right',
       width: 200,
       render: (_, record) => (
         <Space size="small">

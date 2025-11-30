@@ -9,28 +9,32 @@ import {
   isPassed,
 } from './constants';
 
-export const getGradeColumns = () => [
+export const getGradeColumns = () => {
+  // Check if mobile to disable fixed columns
+  const isMobile = window.innerWidth < 768;
+
+  return [
   {
     title: 'STT',
     dataIndex: 'index',
     key: 'index',
     width: 60,
     align: 'center',
-    fixed: 'left',
+    fixed: isMobile ? false : 'left',
   },
   {
     title: 'Mã lớp học phần',
     dataIndex: 'courseCode',
     key: 'courseCode',
     width: 180,
-    fixed: 'left',
+    fixed: isMobile ? false : 'left',
   },
   {
     title: 'Tên môn học/học phần',
     dataIndex: 'courseName',
     key: 'courseName',
     width: 240,
-    fixed: 'left',
+    fixed: isMobile ? false : 'left',
   },
   {
     title: 'Số tín chỉ',
@@ -38,7 +42,7 @@ export const getGradeColumns = () => [
     key: 'credits',
     width: 80,
     align: 'center',
-    fixed: 'left',
+    fixed: isMobile ? false : 'left',
   },
   {
     title: 'Giữa kỳ',
@@ -147,3 +151,4 @@ export const getGradeColumns = () => [
       ),
   },
 ];
+};

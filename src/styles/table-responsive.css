@@ -1,0 +1,69 @@
+/**
+ * Responsive Table Styles
+ * Fixes for tables with horizontal scrolling and fixed columns
+ */
+
+/* Enable smooth scrolling on all tables */
+.ant-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ant-table {
+  min-width: 100%;
+}
+
+/* Fix z-index for fixed columns to prevent overlap */
+.ant-table-cell-fix-left,
+.ant-table-cell-fix-right {
+  z-index: 2 !important;
+}
+
+.ant-table-thead .ant-table-cell-fix-left,
+.ant-table-thead .ant-table-cell-fix-right {
+  z-index: 3 !important;
+}
+
+/* Fix scrolling shadow for fixed columns */
+.ant-table-ping-left .ant-table-cell-fix-left-last::after {
+  box-shadow: inset 10px 0 8px -8px rgba(0, 0, 0, 0.15);
+}
+
+.ant-table-ping-right .ant-table-cell-fix-right-first::after {
+  box-shadow: inset -10px 0 8px -8px rgba(0, 0, 0, 0.15);
+}
+
+/* Mobile: Reduce padding for better fit */
+@media (max-width: 768px) {
+  .ant-table-cell {
+    padding: 8px 4px !important;
+  }
+
+  .ant-table {
+    font-size: 12px;
+  }
+
+  /* Disable fixed columns on very small screens */
+  .ant-table-cell-fix-left,
+  .ant-table-cell-fix-right {
+    position: relative !important;
+  }
+}
+
+/* Tablet: Moderate padding */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .ant-table-cell {
+    padding: 12px 8px !important;
+  }
+}
+
+/* MUI Table Container responsive */
+.MuiTableContainer-root {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix for DataTable component */
+.MuiTable-root {
+  min-width: 650px;
+}

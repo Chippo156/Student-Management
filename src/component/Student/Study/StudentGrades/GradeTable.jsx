@@ -78,6 +78,9 @@ const GradeTable = ({ columns, dataSource, theme }) => {
     },
   }));
 
+  const isMobile = window.innerWidth < 600;
+  const isTablet = window.innerWidth >= 600 && window.innerWidth < 960;
+
   return (
     <div
       style={{
@@ -85,7 +88,7 @@ const GradeTable = ({ columns, dataSource, theme }) => {
         overflowX: 'auto',
         background: theme.palette.background.paper,
         borderRadius: 8,
-        padding: 16,
+        padding: isMobile ? 8 : isTablet ? 12 : 16,
       }}
     >
       <style>
@@ -109,6 +112,24 @@ const GradeTable = ({ columns, dataSource, theme }) => {
           .grade-table .ant-table-row:hover > td {
             background: ${theme.palette.action.hover} !important;
           }
+
+          /* Responsive table cells */
+          @media (max-width: 600px) {
+            .grade-table .ant-table-cell {
+              padding: 8px 4px !important;
+              font-size: 12px !important;
+            }
+            .grade-table .ant-table-thead > tr > th {
+              font-size: 11px !important;
+            }
+          }
+
+          @media (min-width: 600px) and (max-width: 960px) {
+            .grade-table .ant-table-cell {
+              padding: 12px 8px !important;
+              font-size: 13px !important;
+            }
+          }
         `}
       </style>
       <Table
@@ -119,7 +140,7 @@ const GradeTable = ({ columns, dataSource, theme }) => {
         bordered
         rowKey="key"
         scroll={{ x: 'max-content' }}
-        style={{ maxWidth: 1200 }}
+        style={{ maxWidth: isMobile ? '100%' : 1200 }}
       />
     </div>
   );

@@ -7,6 +7,7 @@ import { CssBaseline } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme';
 import './global.css';
+import './styles/table-responsive.css';
 
 function Main() {
   const mode = useSelector((state) => state.theme.mode);

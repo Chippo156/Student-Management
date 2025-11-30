@@ -481,8 +481,9 @@ const LayoutAdmin = () => {
               }}
               sx={{
                 '& .MuiDrawer-paper': {
-                  width: isMobile ? '100%' : '40%',
-                  maxWidth: isMobile ? '100%' : 360,
+                  width: isMobile ? '100%' : '300px',
+                  minWidth: isMobile ? '100%' : '280px',
+                  maxWidth: isMobile ? '100%' : '360px',
                   bgcolor: 'background.paper',
                   borderRight: 1,
                   borderColor: 'divider',

@@ -128,6 +128,7 @@ const SectionsTable = forwardRef((props, ref) => {
         loading={loading}
         pagination={false}
         size="middle"
+        scroll={{ x: 'max-content' }}
         onRow={(record) => ({
           onClick: () => handleSectionSelect(record),
           style: {
