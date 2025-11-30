@@ -188,6 +188,7 @@ namespace StudentManagement.Services
                 //        classEntity.AdviserAssignment = null;
                 //    }
                 //}
+                classEntity.UpdatedAt = DateTime.Now;
 
                 context.Classes.Update(classEntity);
                 await context.SaveChangesAsync();
@@ -378,7 +379,7 @@ namespace StudentManagement.Services
 
             // Apply sorting and pagination
             var classes = await query
-                .OrderBy(c => c.Program.ProgramName)
+                .OrderByDescending(c => c.CreatedAt)
                 .ThenBy(c => c.ClassName)
                 .Skip((pagination.PageNumber - 1) * pagination.PageSize)
                 .Take(pagination.PageSize)

@@ -69,6 +69,7 @@ namespace StudentManagement.Services
 
             // Lấy trang hiện tại
             var students = await query
+                .OrderByDescending(s => s.User.CreatedAt)
                 .Skip((pagination.PageNumber - 1) * pagination.PageSize)
                 .Take(pagination.PageSize)
                 .ToListAsync();

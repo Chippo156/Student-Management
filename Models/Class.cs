@@ -7,5 +7,7 @@
         public string ClassCode { get; set; } = string.Empty;
         public AcademicProgram Program { get; set; } = null!;
         public AdviserAssignment? AdviserAssignment { get; set; }
+        public DateTime? CreatedAt { get; set; } = DateTime.Now;
+        public DateTime? UpdatedAt { get; set; }
     }
 }

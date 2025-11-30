@@ -122,7 +122,8 @@ namespace StudentManagement.Services
 
                     IsCancelled = false,
                     CancelledAt = null,
-                    CancellationReason = null
+                    CancellationReason = null,
+                    CreatedAt = DateTime.Now
                 };
 
                 context.Sections.Add(newSection);
@@ -737,7 +738,7 @@ namespace StudentManagement.Services
 
             // Apply sorting (default sort by semester, then course name)
             query = query
-                .OrderByDescending(s => s.Semester.Year)
+                .OrderByDescending(s => s.CreatedAt)
                 .ThenByDescending(s => s.Semester.Term)
                 .ThenBy(s => s.CurriculumCourse.Course.CourseName)
                 .ThenBy(s => s.SectionCode ?? "");
@@ -1407,7 +1408,7 @@ namespace StudentManagement.Services
                     string newSectionCode = $"LHP{curriculumCourse.Course.CourseCode}-{semester.Year}{semester.Term}-{classSection.ClassCode}";
                     section.SectionCode = newSectionCode;
                 }
-
+                section.UpdatedAt = DateTime.Now;
                 // Update the section
                 context.Sections.Update(section);
                 await context.SaveChangesAsync();
@@ -1530,7 +1531,7 @@ namespace StudentManagement.Services
                     LecturerCode = l.User.Username,
                     Email = l.User.Email ?? ""
                 })
-                .OrderBy(l => l.Name)
+                .OrderBy(l => l.Id)
                 .ToListAsync();
         }
 
@@ -1560,7 +1561,7 @@ namespace StudentManagement.Services
                     ClassCode = c.ClassCode,
                     ProgramName = c.Program.ProgramName
                 })
-                .OrderBy(c => c.ClassCode)
+                .OrderBy(c => c.ClassId)
                 .ToListAsync();
         }
 

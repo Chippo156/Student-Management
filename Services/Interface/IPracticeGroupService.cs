@@ -22,5 +22,7 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<Schedule>> GetPracticeGroupSchedulesAsync(int practiceGroupId);
         
         Task<bool> AutoAssignStudentsToPracticeGroupsAsync(int sectionId);
+        Task<bool> AssignLecturerToPracticeGroupAsync(int practiceGroupId, int lecturerId);
+
     }
 }

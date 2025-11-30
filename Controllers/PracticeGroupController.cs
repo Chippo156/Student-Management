@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models.Dto.Request;
@@ -74,6 +75,21 @@ namespace StudentManagement.Controllers
             try
             {
                 var result = await practiceGroupService.AutoAssignStudentsToPracticeGroupsAsync(sectionId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
+
+        [HttpPost("AssignLecturer")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AssignLecturerToPracticeGroup([FromBody] PracticeGroupLecturerRequest request)
+        {
+            try
+            {
+                var result = await practiceGroupService.AssignLecturerToPracticeGroupAsync(request.PracticeGroupId, request.LecturerId);
                 return Ok(result);
             }
             catch (Exception ex)

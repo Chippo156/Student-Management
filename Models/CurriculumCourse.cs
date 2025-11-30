@@ -7,5 +7,7 @@
         public Course Course { get; set; } = null!;
         public Boolean isRequired { get; set; }
         public int SemeterSuggested { get; set; }
+        public DateTime? CreatedAt { get; set; } = DateTime.Now;
+        public DateTime? UpdatedAt { get; set; }
     }
 }

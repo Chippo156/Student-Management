@@ -36,5 +36,7 @@ namespace StudentManagement.Models.Dto.Request
 
         [Required]
         public int ScheduleTypeId { get; set; } = 2; // Practice schedule type
+
+        public int? LecturerId { get; set; }
     }
 }

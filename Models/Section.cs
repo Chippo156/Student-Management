@@ -28,5 +28,8 @@ namespace StudentManagement.Models
         public bool IsCancelled { get; set; } = false; // Trạng thái hủy
         public DateTime? CancelledAt { get; set; } // Thời gian hủy
         public string? CancellationReason { get; set; } // Lý do hủy
-    }
+
+        public DateTime? CreatedAt { get; set; } = DateTime.Now;
+        public DateTime? UpdatedAt { get; set; }
+        }
 }

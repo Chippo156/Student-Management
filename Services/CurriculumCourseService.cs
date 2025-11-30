@@ -47,7 +47,8 @@ namespace StudentManagement.Services
                 Program = program,
                 Course = course,
                 isRequired = request.IsRequired,
-                SemeterSuggested = request.SemesterSuggested
+                SemeterSuggested = request.SemesterSuggested,
+                CreatedAt = DateTime.Now
             };
 
             context.CurriculumCourses.Add(curriculumCourse);
@@ -116,7 +117,7 @@ namespace StudentManagement.Services
 
             // Apply pagination and ordering
             var curriculumCourses = await query
-                .OrderBy(cc => cc.Program.Department.DepartmentName)
+                .OrderByDescending(cc => cc.CreatedAt)
                 .ThenBy(cc => cc.Program.ProgramName)
                 .ThenBy(cc => cc.SemeterSuggested)
                 .ThenBy(cc => cc.Course.CourseCode)
@@ -358,6 +359,7 @@ namespace StudentManagement.Services
             curriculumCourse.Course = course;
             curriculumCourse.isRequired = request.IsRequired;
             curriculumCourse.SemeterSuggested = request.SemesterSuggested;
+            curriculumCourse.UpdatedAt = DateTime.Now;
 
             context.CurriculumCourses.Update(curriculumCourse);
             await context.SaveChangesAsync();

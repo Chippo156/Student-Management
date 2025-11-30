@@ -40,7 +40,7 @@ namespace StudentManagement.Services
             }
 
             // Order by full name for stable sorting
-            query = query.OrderBy(u => u.FullName);
+            query = query.OrderByDescending(u => u.CreatedAt);
 
             // Get total count after applying filters
             var totalCount = await query.CountAsync();

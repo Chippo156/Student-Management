@@ -12,7 +12,5 @@ namespace StudentManagement.Models
         public DateOnly? DateOfAdmission { get; set; }
         public StudentStatus StudentStatus { get; set; } = StudentStatus.Active;
         public DateOnly GraduationDate { get; set; }
-
-
     }
 }

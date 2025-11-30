@@ -48,17 +48,36 @@ namespace StudentManagement.Services
                 Section = section
             };
 
-            PracticeScheduleRequest practiceScheduleRequest = new PracticeScheduleRequest
+            if (request.LecturerId != null)
             {
-                PracticeGroupId = practiceGroup.PracticeGroupId,
-                ScheduleTypeId = request.ScheduleTypeId,
-                DayOfWeek = request.DayOfWeek,
-                Date = request.Date,
-                StartTime = request.StartTime,
-                EndTime = request.EndTime,
-                Room = request.Room,
-                OnlineLink = request.OnlineLink
-            };
+                var lecturer = await context.Lecturers.FindAsync(request.LecturerId);
+                if (lecturer == null)
+                {
+                    throw new Exception("Giảng viên không tồn tại");
+                }
+                practiceGroup.LecturerId = request.LecturerId;
+                practiceGroup.Lecturer = lecturer;
+            } else
+            {
+                var lecturer = section.Lecturer;
+                if (lecturer != null)
+                {
+                    practiceGroup.LecturerId = lecturer.Id;
+                    practiceGroup.Lecturer = lecturer;
+                }
+            }
+
+                PracticeScheduleRequest practiceScheduleRequest = new PracticeScheduleRequest
+                {
+                    PracticeGroupId = practiceGroup.PracticeGroupId,
+                    ScheduleTypeId = request.ScheduleTypeId,
+                    DayOfWeek = request.DayOfWeek,
+                    Date = request.Date,
+                    StartTime = request.StartTime,
+                    EndTime = request.EndTime,
+                    Room = request.Room,
+                    OnlineLink = request.OnlineLink
+                };
 
             await AddPracticeScheduleAsync(practiceScheduleRequest, practiceGroup);
             return practiceGroup;
@@ -497,6 +516,17 @@ namespace StudentManagement.Services
             practiceGroup.Description = request.Description;
             practiceGroup.MaxCapacity = request.MaxCapacity;
 
+            if (request.LecturerId != null)
+            {
+                var lecturer = await context.Lecturers.FindAsync(request.LecturerId);
+                if (lecturer == null)
+                {
+                    throw new Exception("Giảng viên không tồn tại");
+                }
+                practiceGroup.LecturerId = request.LecturerId;
+                practiceGroup.Lecturer = lecturer;
+            }
+
             context.PracticeGroups.Update(practiceGroup);
             await context.SaveChangesAsync();
 
@@ -570,6 +600,26 @@ namespace StudentManagement.Services
                 .Include(s => s.Section)
                 .Where(s => s.PracticeGroupId == practiceGroupId)
                 .ToListAsync();
+        }
+
+        public async Task<bool> AssignLecturerToPracticeGroupAsync(int practiceGroupId, int lecturerId)
+        {
+            var practiceGroup = await context.PracticeGroups
+                .Include(pg => pg.Section)
+                .FirstOrDefaultAsync(pg => pg.PracticeGroupId == practiceGroupId && pg.IsActive);
+            if (practiceGroup == null)
+            {
+                throw new Exception("Practice group not found");
+            }
+            var lecturer = await context.Lecturers.FindAsync(lecturerId);
+            if (lecturer == null)
+            {
+                throw new Exception("Lecturer not found");
+            }
+            practiceGroup.Lecturer = lecturer;
+            context.PracticeGroups.Update(practiceGroup);
+            await context.SaveChangesAsync();
+            return true;
         }
     }
 }

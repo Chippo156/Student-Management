@@ -97,7 +97,7 @@ namespace StudentManagement.Services
 
             // Apply pagination và sắp xếp
             var students = await query
-                .OrderBy(s => s.Class.ClassName)
+                .OrderByDescending(s => s.User.CreatedAt)
                 .ThenBy(s => s.MSSV)
                 .Skip((pagination.PageNumber - 1) * pagination.PageSize)
                 .Take(pagination.PageSize)
