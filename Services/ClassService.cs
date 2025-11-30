@@ -21,6 +21,13 @@ namespace StudentManagement.Services
                 ClassCode = GenerateClassCode(classRequest.ClassName),
                 Program = program,
             };
+
+            var classNameExists = await context.Classes
+                .AnyAsync(c => c.ClassName.ToLower() == newClass.ClassName.ToLower());
+            if (classNameExists)
+                throw new Exception($"Lớp với tên '{newClass.ClassName}' đã tồn tại");
+
+
             if (classRequest.LecturerId != null)
             {
                 var lecturer = await context.Lecturers.FindAsync(classRequest.LecturerId);

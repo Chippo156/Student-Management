@@ -301,7 +301,8 @@ namespace StudentManagement.Services
                     Object = request.Object?.Trim(),
                     PolicyArea = request.PolicyArea?.Trim(),
                     DateOfJoinUnion = request.DateOfJoinUnion,
-                    DateOfJoinParty = request.DateOfJoinParty
+                    DateOfJoinParty = request.DateOfJoinParty,
+                    CreatedAt = DateTime.Now
                 };
 
                 context.Users.Add(user);

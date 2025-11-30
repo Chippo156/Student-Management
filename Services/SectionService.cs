@@ -832,6 +832,7 @@ namespace StudentManagement.Services
                     EnrollmentPercentage = enrollmentPercentage,
                     
                     // Department information
+                    DepartmentId = section.CurriculumCourse.Program.Department.DepartmentId,
                     DepartmentName = section.CurriculumCourse.Program.Department.DepartmentName,
                     FacultyName = section.CurriculumCourse.Program.Department.Faculty.FacultyName,
                     

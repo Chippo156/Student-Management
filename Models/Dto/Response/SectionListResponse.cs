@@ -42,6 +42,7 @@ namespace StudentManagement.Models.Dto.Response
         public decimal EnrollmentPercentage { get; set; }
         
         // Department information
+        public int DepartmentId { get; set; }
         public string DepartmentName { get; set; } = string.Empty;
         public string FacultyName { get; set; } = string.Empty;
         

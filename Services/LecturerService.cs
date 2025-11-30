@@ -142,7 +142,7 @@ namespace StudentManagement.Services
 
             // Apply pagination và sắp xếp
             var lecturers = await query
-                .OrderBy(l => l.Department.DepartmentName)
+                .OrderByDescending(l => l.User.CreatedAt)
                 .ThenBy(l => l.Position)
                 .ThenBy(l => l.User.FullName)
                 .Skip((pagination.PageNumber - 1) * pagination.PageSize)
