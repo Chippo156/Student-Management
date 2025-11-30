@@ -276,7 +276,7 @@ const BankInfo = () => {
 
   return (
     <div style={{
-      padding: '24px',
+      padding: window.innerWidth < 600 ? '16px' : window.innerWidth < 960 ? '16px' : '24px',
       minHeight: '100vh',
       background: theme.palette.background.default,
     }}>
@@ -288,7 +288,11 @@ const BankInfo = () => {
           marginBottom: 24,
         }}
       >
-        <Title level={2} style={{ margin: 0, color: theme.palette.text.primary }}>
+        <Title level={2} style={{
+          margin: 0,
+          color: theme.palette.text.primary,
+          fontSize: window.innerWidth < 600 ? '1.5rem' : window.innerWidth < 960 ? '1.75rem' : '2rem'
+        }}>
           <BankOutlined style={{ marginRight: 8, color: theme.palette.primary.main }} />
           Thông tin ngân hàng
         </Title>

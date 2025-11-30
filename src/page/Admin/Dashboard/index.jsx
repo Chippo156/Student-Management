@@ -227,7 +227,7 @@ const AdminDashboard = () => {
           },
         }}
       >
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
           <Box
             sx={{
               display: 'flex',
@@ -275,17 +275,17 @@ const AdminDashboard = () => {
 
   return (
     <PageTransition>
-      <Box sx={{ p: 3, bgcolor: colors.background, minHeight: '100vh' }}>
+      <Box sx={{ p: { xs: 2, sm: 2, md: 3 }, bgcolor: colors.background, minHeight: '100vh' }}>
         {/* Header */}
         <Fade in={true} timeout={400}>
           <Box sx={{ mb: 4 }}>
             <Typography
               variant="h4"
-              sx={{ fontWeight: 700, color: colors.text, mb: 1 }}
+              sx={{ fontWeight: 700, color: colors.text, mb: 1, fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
             >
               Admin Dashboard
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
               Chào mừng trở lại! Đây là tổng quan hệ thống quản lý sinh viên.
             </Typography>
           </Box>
@@ -308,7 +308,7 @@ const AdminDashboard = () => {
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {/* Yearly Growth Chart */}
           <Grid item xs={12} lg={8}>
-            <Card sx={{ p: 3, height: '450px', bgcolor: colors.paper }}>
+            <Card sx={{ p: { xs: 2, sm: 2, md: 3 }, height: '450px', bgcolor: colors.paper }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Thống kê tăng trưởng theo năm
               </Typography>
@@ -347,7 +347,7 @@ const AdminDashboard = () => {
 
           {/* Student Status Distribution */}
           <Grid item xs={12} lg={4}>
-            <Card sx={{ p: 3, height: '450px', bgcolor: colors.paper }}>
+            <Card sx={{ p: { xs: 2, sm: 2, md: 3 }, height: '450px', bgcolor: colors.paper }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Phân bố trạng thái sinh viên
               </Typography>
@@ -385,7 +385,7 @@ const AdminDashboard = () => {
         {/* Charts Row 2: Graduation Trends */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12}>
-            <Card sx={{ p: 3, height: '400px', bgcolor: colors.paper }}>
+            <Card sx={{ p: { xs: 2, sm: 2, md: 3 }, height: '400px', bgcolor: colors.paper }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Thống kê tốt nghiệp hàng năm
               </Typography>
@@ -439,7 +439,7 @@ const AdminDashboard = () => {
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {/* Department Distribution */}
           <Grid item xs={12} lg={6}>
-            <Card sx={{ p: 3, height: '400px', bgcolor: colors.paper }}>
+            <Card sx={{ p: { xs: 2, sm: 2, md: 3 }, height: '400px', bgcolor: colors.paper }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Phân bố sinh viên theo chuyên ngành
               </Typography>
@@ -475,7 +475,7 @@ const AdminDashboard = () => {
 
           {/* Tuition Statistics */}
           <Grid item xs={12} lg={6}>
-            <Card sx={{ p: 3, height: '400px', bgcolor: colors.paper }}>
+            <Card sx={{ p: { xs: 2, sm: 2, md: 3 }, height: '400px', bgcolor: colors.paper }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Thống kê học phí 6 tháng gần nhất
               </Typography>
@@ -529,7 +529,7 @@ const AdminDashboard = () => {
         <Grid container spacing={3}>
           {/* Recent Enrollment Activities */}
           <Grid item xs={12} lg={6}>
-            <Card sx={{ p: 3, height: '450px', bgcolor: colors.paper }}>
+            <Card sx={{ p: { xs: 2, sm: 2, md: 3 }, height: '450px', bgcolor: colors.paper }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Hoạt động đăng ký gần đây
               </Typography>
@@ -615,7 +615,7 @@ const AdminDashboard = () => {
 
           {/* System Activities */}
           <Grid item xs={12} lg={6}>
-            <Card sx={{ p: 3, height: '450px', bgcolor: colors.paper }}>
+            <Card sx={{ p: { xs: 2, sm: 2, md: 3 }, height: '450px', bgcolor: colors.paper }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Hoạt động hệ thống
               </Typography>

@@ -166,10 +166,10 @@ const GradeEntry = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
+        <Typography variant="h4" fontWeight={700} gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
           Nhập điểm sinh viên
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -178,7 +178,7 @@ const GradeEntry = () => {
       </Box>
 
       {/* Single Student Search */}
-      <Paper sx={{ p: 3, mb: 3 }}>
+      <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, mb: 3 }}>
         <Autocomplete
           options={students}
           getOptionLabel={(option) =>

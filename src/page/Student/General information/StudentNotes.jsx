@@ -190,7 +190,7 @@ const StudentNotes = () => {
 
   return (
     <div style={{
-      padding: '24px',
+      padding: window.innerWidth < 600 ? '16px' : window.innerWidth < 960 ? '20px' : '24px',
       minHeight: '100vh',
       background: theme.palette.background.default,
     }}>

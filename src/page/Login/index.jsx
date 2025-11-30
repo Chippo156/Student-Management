@@ -130,7 +130,7 @@ const Login = () => {
         alignItems: 'center',
         justifyContent: 'center',
         background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`,
-        p: 3,
+        p: { xs: 2, sm: 2, md: 3 },
       }}
     >
       <Container

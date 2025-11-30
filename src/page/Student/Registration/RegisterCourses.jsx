@@ -166,7 +166,7 @@ const RegisterCourses = () => {
       sx={{
         background: theme.palette.background.default,
         minHeight: '100vh',
-        p: 3,
+        p: { xs: 2, sm: 2, md: 3 },
         width: '100%',
       }}
     >

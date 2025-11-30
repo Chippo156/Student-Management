@@ -257,7 +257,7 @@ const CurriculumPage = () => {
   return (
     <div
       style={{
-        padding: 24,
+        padding: window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 16 : 24,
         minHeight: '100vh',
         background: theme.palette.background.default,
       }}
@@ -287,6 +287,7 @@ const CurriculumPage = () => {
           color: theme.palette.primary.main,
           fontWeight: 700,
           marginBottom: 24,
+          fontSize: window.innerWidth < 600 ? '1.5rem' : window.innerWidth < 960 ? '1.75rem' : '2rem'
         }}
       >
         <BookOutlined style={{ marginRight: 8 }} />

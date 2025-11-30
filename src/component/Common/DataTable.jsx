@@ -46,8 +46,8 @@ const DataTable = ({
 
   return (
     <Paper sx={{ boxShadow: 2, borderRadius: 2, overflow: 'hidden' }}>
-      <TableContainer>
-        <Table>
+      <TableContainer sx={{ overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow
               sx={{

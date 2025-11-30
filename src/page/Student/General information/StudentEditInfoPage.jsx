@@ -164,12 +164,12 @@ const StudentEditInfoPage = () => {
         mx: 'auto',
         mt: 4,
         maxWidth: 1100,
-        p: 3,
+        p: { xs: 2, sm: 2, md: 3 },
         background: theme.palette.background.default,
         minHeight: '100vh',
       }}
     >
-      <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, background: theme.palette.background.paper }}>
+      <Paper elevation={3} sx={{ p: { xs: 2, sm: 2, md: 4 }, background: theme.palette.background.paper }}>
         <Tabs defaultActiveKey="1">
           <TabPane tab="Thông tin cá nhân" key="1">
             <PersonalInfoForm

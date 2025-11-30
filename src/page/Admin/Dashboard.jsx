@@ -369,7 +369,7 @@ const AdminDashboard = () => {
 
   return (
     <PageTransition>
-      <Box sx={{ p: 3, bgcolor: colors.background, minHeight: '100vh' }}>
+      <Box sx={{ p: { xs: 2, sm: 2, md: 3 }, bgcolor: colors.background, minHeight: '100vh' }}>
         {/* Hero Banner */}
         <Fade in={true} timeout={400}>
           <Paper

@@ -348,7 +348,7 @@ const TuitionFees = () => {
   ];
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
+    <Box sx={{ flexGrow: 1, p: { xs: 2, sm: 2, md: 3 }, minHeight: '100vh' }}>
       {/* Header */}
       <PageHeader
         title="Quản lý Học phí"
@@ -360,7 +360,8 @@ const TuitionFees = () => {
             onClick={handleExportExcel}
             disabled={tuitions.length === 0}
             color="success"
-            sx={{ textTransform: 'none', px: 3 }}
+            sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+            size="small"
           >
             Xuất Excel
           </Button>
@@ -405,7 +406,7 @@ const TuitionFees = () => {
 
       {/* Filter Section */}
       <FilterSection resultCount={totalCount}>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} sm={12} md={4} lg={4}>
           <TextField
             fullWidth
             placeholder="Tìm kiếm theo MSSV, tên sinh viên..."
@@ -425,7 +426,7 @@ const TuitionFees = () => {
             }
           />
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={2.5} lg={2.5}>
           <FormControl fullWidth>
             <InputLabel>Trạng thái</InputLabel>
             <Select
@@ -440,7 +441,7 @@ const TuitionFees = () => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={2.5} lg={2.5}>
           <FormControl fullWidth>
             <InputLabel>Trễ hạn</InputLabel>
             <Select
@@ -454,7 +455,7 @@ const TuitionFees = () => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={2}>
+        <Grid item xs={12} sm={12} md={2} lg={2}>
           <Button
             fullWidth
             variant="outlined"

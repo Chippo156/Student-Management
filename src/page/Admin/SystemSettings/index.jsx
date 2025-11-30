@@ -293,7 +293,7 @@ const SystemSettings = () => {
   };
 
   return (
-    <Box sx={{ p: 3, backgroundColor: colors.background, minHeight: '100vh' }}>
+    <Box sx={{ p: { xs: 2, sm: 2, md: 3 }, backgroundColor: colors.background, minHeight: '100vh' }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography
@@ -381,7 +381,7 @@ const SystemSettings = () => {
 
       {/* Filter and Search */}
       <Card sx={{ mb: 3, borderRadius: 2 }}>
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={6}>
               <TextField
@@ -448,7 +448,7 @@ const SystemSettings = () => {
             <CardContent sx={{ p: 0 }}>
               <Box
                 sx={{
-                  p: 3,
+                  p: { xs: 2, sm: 2, md: 3 },
                   backgroundColor: alpha(category.color, 0.05),
                   borderBottom: `1px solid ${alpha(category.color, 0.1)}`,
                 }}
@@ -476,7 +476,7 @@ const SystemSettings = () => {
                   <Box key={config.id}>
                     <Box
                       sx={{
-                        p: 3,
+                        p: { xs: 2, sm: 2, md: 3 },
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
@@ -535,7 +535,7 @@ const SystemSettings = () => {
         <DialogContent>
           <Box sx={{ mt: 2 }}>{renderEditField()}</Box>
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
+        <DialogActions sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
           <Button onClick={() => setOpenDialog(false)}>Hủy</Button>
           <Button variant="contained" onClick={handleSave}>
             Lưu

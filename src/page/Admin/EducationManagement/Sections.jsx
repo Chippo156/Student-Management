@@ -387,20 +387,21 @@ const Sections = () => {
   ];
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
+    <Box sx={{ flexGrow: 1, p: { xs: 2, sm: 2, md: 3 }, minHeight: '100vh' }}>
       {/* Header */}
       <PageHeader
         title="Quản lý Lớp học phần"
         onRefresh={fetchSections}
         actions={
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, width: { xs: '100%', sm: 'auto' } }}>
             <Button
               variant="contained"
               startIcon={<FileDownload />}
               onClick={handleExportExcel}
               disabled={sections.length === 0}
               color="success"
-              sx={{ textTransform: 'none', px: 3 }}
+              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              size="small"
             >
               Xuất Excel
             </Button>
@@ -408,7 +409,8 @@ const Sections = () => {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={handleCreateSection}
-              sx={{ textTransform: 'none', px: 3 }}
+              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              size="small"
             >
               Thêm lớp học phần
             </Button>
@@ -454,7 +456,7 @@ const Sections = () => {
 
       {/* Filter Section */}
       <FilterSection resultCount={sections.length}>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} sm={12} md={4} lg={4}>
           <TextField
             fullWidth
             placeholder="Tìm theo mã lớp, tên môn học..."
@@ -475,7 +477,7 @@ const Sections = () => {
             }
           />
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={3} lg={2.5}>
           <FormControl fullWidth size="small">
             <InputLabel>Học kỳ</InputLabel>
             <Select
@@ -492,7 +494,7 @@ const Sections = () => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={3} lg={2.5}>
           <FormControl fullWidth size="small">
             <InputLabel>Trạng thái</InputLabel>
             <Select
@@ -509,7 +511,7 @@ const Sections = () => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={2}>
+        <Grid item xs={12} sm={12} md={2} lg={2}>
           <Button
             fullWidth
             variant="outlined"

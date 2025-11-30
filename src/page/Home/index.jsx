@@ -267,7 +267,7 @@ function StudentManagementLayout() {
             </Tooltip>
           </Box>
         </Paper>
-        <Box sx={{ flex: 1, p: 3 }}>
+        <Box sx={{ flex: 1, p: { xs: 2, sm: 2, md: 3 } }}>
           <Routes>
             <Route
               path="/"

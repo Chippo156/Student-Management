@@ -241,27 +241,29 @@ const Curriculum = () => {
   ];
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
+    <Box sx={{ flexGrow: 1, p: { xs: 2, sm: 2, md: 3 }, minHeight: '100vh' }}>
       {/* Header */}
       <PageHeader
         title="Quản lý Chương trình đào tạo"
         onRefresh={fetchPrograms}
         actions={
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, width: { xs: '100%', sm: 'auto' } }}>
             <Button
               variant="contained"
               startIcon={<FileDownload />}
               onClick={handleExportExcel}
               disabled={programs.length === 0}
               color="success"
-              sx={{ textTransform: 'none', px: 3 }}
+              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              size="small"
             >
               Xuất Excel
             </Button>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              sx={{ textTransform: 'none', px: 3 }}
+              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              size="small"
             >
               Thêm chương trình
             </Button>
@@ -287,7 +289,7 @@ const Curriculum = () => {
 
       {/* Filter Section */}
       <FilterSection resultCount={programs.length}>
-        <Grid item xs={12} md={5}>
+        <Grid item xs={12} sm={12} md={5} lg={4}>
           <TextField
             fullWidth
             placeholder="Tìm theo tên chương trình..."
@@ -308,7 +310,7 @@ const Curriculum = () => {
             }
           />
         </Grid>
-        <Grid item xs={12} md={2}>
+        <Grid item xs={12} sm={6} md={2} lg={2}>
           <FormControl fullWidth size="small">
             <InputLabel>Bậc đào tạo</InputLabel>
             <Select
@@ -325,7 +327,7 @@ const Curriculum = () => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={3} lg={3}>
           <FormControl fullWidth size="small">
             <InputLabel>Khoa</InputLabel>
             <Select
@@ -342,7 +344,7 @@ const Curriculum = () => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={2}>
+        <Grid item xs={12} sm={12} md={2} lg={2}>
           <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
             Đặt lại
           </Button>

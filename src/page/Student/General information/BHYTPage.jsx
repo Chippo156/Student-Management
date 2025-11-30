@@ -169,8 +169,12 @@ const BHYTPage = () => {
   const coverageRate = totalCost > 0 ? (totalCovered / totalCost) * 100 : 0;
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Title level={2}>
+    <div style={{
+      padding: window.innerWidth < 600 ? '16px' : window.innerWidth < 960 ? '16px' : '24px'
+    }}>
+      <Title level={2} style={{
+        fontSize: window.innerWidth < 600 ? '1.5rem' : window.innerWidth < 960 ? '1.75rem' : '2rem'
+      }}>
         <MedicineBoxOutlined style={{ marginRight: 8 }} />
         Thông tin BHYT
       </Title>

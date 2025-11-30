@@ -155,7 +155,7 @@ const NotificationHistory = () => {
         <Paper
           elevation={2}
           sx={{
-            p: 3,
+            p: { xs: 2, sm: 2, md: 3 },
             mb: 3,
             background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
           }}
@@ -182,7 +182,7 @@ const NotificationHistory = () => {
         </Paper>
 
         {/* Filters */}
-        <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
+        <Paper elevation={1} sx={{ p: { xs: 2, sm: 2, md: 3 }, mb: 3 }}>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={4}>
               <TextField

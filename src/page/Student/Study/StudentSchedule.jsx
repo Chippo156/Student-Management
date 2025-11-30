@@ -143,7 +143,7 @@ const StudentSchedule = () => {
   return (
     <div
       style={{
-        padding: 24,
+        padding: window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 16 : 24,
         width: '100%',
         minHeight: '100vh',
         background: theme.palette.background.default,
@@ -181,14 +181,20 @@ const StudentSchedule = () => {
           <div>
             <Title
               level={2}
-              style={{ margin: 0, color: theme.palette.text.primary }}
+              style={{
+                margin: 0,
+                color: theme.palette.text.primary,
+                fontSize: window.innerWidth < 600 ? '1.5rem' : window.innerWidth < 960 ? '1.75rem' : '2rem'
+              }}
             >
               <CalendarOutlined
                 style={{ marginRight: 8, color: theme.palette.primary.main }}
               />
               Lịch học, lịch thi theo tuần
             </Title>
-            <Text type="secondary" style={{ fontSize: 13 }}>
+            <Text type="secondary" style={{
+              fontSize: window.innerWidth < 600 ? 11 : 13
+            }}>
               Tuần ngày {startOfWeek.format('DD/MM')} -{' '}
               {endOfWeek.format('DD/MM/YYYY')}
             </Text>

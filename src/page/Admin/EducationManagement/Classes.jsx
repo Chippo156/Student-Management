@@ -289,20 +289,21 @@ const Classes = () => {
   ];
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
+    <Box sx={{ flexGrow: 1, p: { xs: 2, sm: 2, md: 3 }, minHeight: '100vh' }}>
       {/* Header */}
       <PageHeader
         title="Quản lý Lớp học"
         onRefresh={loadClasses}
         actions={
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, width: { xs: '100%', sm: 'auto' } }}>
             <Button
               variant="contained"
               startIcon={<FileDownload />}
               onClick={handleExportExcel}
               disabled={classes.length === 0}
               color="success"
-              sx={{ textTransform: 'none', px: 3 }}
+              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              size="small"
             >
               Xuất Excel
             </Button>
@@ -310,7 +311,8 @@ const Classes = () => {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setCreateModalOpen(true)}
-              sx={{ textTransform: 'none', px: 3 }}
+              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              size="small"
             >
               Thêm lớp học
             </Button>
@@ -348,7 +350,7 @@ const Classes = () => {
 
       {/* Filter Section */}
       <FilterSection resultCount={totalCount}>
-        <Grid item xs={12} md={10}>
+        <Grid item xs={12} sm={12} md={10} lg={10}>
           <TextField
             fullWidth
             placeholder="Tìm kiếm theo mã lớp, tên lớp..."
@@ -369,7 +371,7 @@ const Classes = () => {
             }
           />
         </Grid>
-        <Grid item xs={12} md={2}>
+        <Grid item xs={12} sm={12} md={2} lg={2}>
           <Button
             fullWidth
             variant="outlined"

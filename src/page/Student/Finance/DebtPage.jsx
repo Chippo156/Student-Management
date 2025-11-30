@@ -119,14 +119,14 @@ const DebtPage = () => {
 
   if (!debtData) {
     return (
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
         <Card><Empty description="Không có dữ liệu công nợ" /></Card>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: 3, bgcolor: theme.palette.background.default, minHeight: '100vh' }}>
+    <Box sx={{ p: { xs: 2, sm: 2, md: 3 }, bgcolor: theme.palette.background.default, minHeight: '100vh' }}>
       <style>
         {`
           .debt-page .ant-card {
@@ -184,10 +184,10 @@ const DebtPage = () => {
       <div className="debt-page">
         {/* Header */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 0.5 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 0.5, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
             Tra cứu công nợ học phí
           </Typography>
-          <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+          <Typography variant="body2" sx={{ color: theme.palette.text.secondary, fontSize: { xs: '0.875rem', sm: '0.875rem' } }}>
             Theo dõi chi tiết học phí và công nợ của bạn
           </Typography>
         </Box>

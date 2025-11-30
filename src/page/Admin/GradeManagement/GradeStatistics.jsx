@@ -172,10 +172,10 @@ const GradeStatistics = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
+        <Typography variant="h4" fontWeight={700} gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
           Thống kê điểm sinh viên
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -200,7 +200,7 @@ const GradeStatistics = () => {
       {tabValue === 0 ? (
         <>
           {/* Search Section */}
-          <Paper sx={{ p: 3, mb: 3 }}>
+          <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, mb: 3 }}>
             <Autocomplete
               options={students}
               getOptionLabel={(option) =>
@@ -582,7 +582,7 @@ const GradeStatistics = () => {
               <Grid container spacing={3} sx={{ mb: 3 }}>
                 {/* Grade Distribution */}
                 <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3, height: '100%' }}>
+                  <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, height: '100%' }}>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                       Phân bố điểm chữ
                     </Typography>
@@ -624,7 +624,7 @@ const GradeStatistics = () => {
 
                 {/* GPA Trend */}
                 <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3, height: '100%' }}>
+                  <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, height: '100%' }}>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                       Xu hướng GPA theo học kỳ
                     </Typography>
@@ -664,7 +664,7 @@ const GradeStatistics = () => {
               {/* Semester Statistics Table */}
               {statsData.semesterStats &&
                 statsData.semesterStats.length > 0 && (
-                  <Paper sx={{ p: 3, mb: 3 }}>
+                  <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, mb: 3 }}>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                       Thống kê theo học kỳ
                     </Typography>
@@ -762,7 +762,7 @@ const GradeStatistics = () => {
               {/* Subject Type Statistics */}
               {statsData.subjectTypeStats &&
                 statsData.subjectTypeStats.length > 0 && (
-                  <Paper sx={{ p: 3, mb: 3 }}>
+                  <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, mb: 3 }}>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                       Thống kê theo loại môn học
                     </Typography>
@@ -835,7 +835,7 @@ const GradeStatistics = () => {
       ) : (
         <>
           {/* Filters */}
-          <Paper sx={{ p: 3, mb: 3 }}>
+          <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, mb: 3 }}>
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <TextField
@@ -1059,7 +1059,7 @@ const GradeStatistics = () => {
               {/* Grade Distribution Chart */}
               <Grid container spacing={3} sx={{ mb: 3 }}>
                 <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3, height: '100%' }}>
+                  <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, height: '100%' }}>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                       Phân bố điểm chữ (Tất cả sinh viên)
                     </Typography>
@@ -1100,7 +1100,7 @@ const GradeStatistics = () => {
                 </Grid>
 
                 <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3, height: '100%' }}>
+                  <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, height: '100%' }}>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                       Phân bố điểm chữ (Bảng thống kê)
                     </Typography>
@@ -1156,7 +1156,7 @@ const GradeStatistics = () => {
               {/* Department Statistics */}
               {allStudentsStats.departmentStats &&
                 allStudentsStats.departmentStats.length > 0 && (
-                  <Paper sx={{ p: 3, mb: 3 }}>
+                  <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, mb: 3 }}>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                       Thống kê theo khoa
                     </Typography>
@@ -1209,7 +1209,7 @@ const GradeStatistics = () => {
               {/* Program Statistics */}
               {allStudentsStats.programStats &&
                 allStudentsStats.programStats.length > 0 && (
-                  <Paper sx={{ p: 3, mb: 3 }}>
+                  <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, mb: 3 }}>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                       Thống kê theo chương trình đào tạo
                     </Typography>
@@ -1260,7 +1260,7 @@ const GradeStatistics = () => {
               {/* Semester Statistics */}
               {allStudentsStats.semesterStats &&
                 allStudentsStats.semesterStats.length > 0 && (
-                  <Paper sx={{ p: 3, mb: 3 }}>
+                  <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, mb: 3 }}>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                       Thống kê theo học kỳ
                     </Typography>

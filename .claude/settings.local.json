@@ -3,7 +3,14 @@
     "allow": [
       "Bash(echo:*)",
       "Bash(\"d:\\study\\hk1 nam 5\\Khóa luận\\fe\\Student-Management\\src\\service\\gradeService.js\")",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(for f in \"src/page/Admin/EducationManagement/Curriculum.jsx\" \"src/page/Admin/EducationManagement/Sections.jsx\" \"src/page/Admin/GradeManagement/GradeEntry.jsx\" \"src/page/Admin/GradeManagement/GradeManagement.jsx\" \"src/page/Admin/GradeManagement/GradeSheet.jsx\" \"src/page/Admin/GradeManagement/GradeStatistics.jsx\" \"src/page/Admin/TuitionManagement/TuitionFees.jsx\")",
+      "Bash(do)",
+      "Bash(if grep -q \"p: 3\" \"d:\\study\\hk1 nam 5\\Khóa luận\\fe\\Student-Management\\/$f\")",
+      "Bash(then)",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

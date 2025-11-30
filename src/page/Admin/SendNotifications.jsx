@@ -208,12 +208,12 @@ const SendNotifications = () => {
   const years = [1, 2, 3, 4, 5];
 
   return (
-    <Box sx={{ p: 3, maxWidth: '100%', overflow: 'hidden' }}>
-      <Box display="flex" alignItems="center" gap={2} mb={3}>
+    <Box sx={{ p: { xs: 2, sm: 2, md: 3 }, maxWidth: '100%', overflow: 'hidden' }}>
+      <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} gap={2} mb={3}>
         <Avatar sx={{ bgcolor: 'primary.main' }}>
           <AnnouncementIcon />
         </Avatar>
-        <Typography variant="h4" component="h1">
+        <Typography variant="h4" component="h1" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
           Gửi thông báo
         </Typography>
       </Box>
@@ -227,7 +227,7 @@ const SendNotifications = () => {
       <Grid container spacing={3}>
         {/* Form */}
         <Grid item xs={12} lg={8}>
-          <Paper sx={{ p: 3 }}>
+          <Paper sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
             <Typography variant="h6" gutterBottom>
               Nội dung thông báo
             </Typography>
@@ -431,7 +431,7 @@ const SendNotifications = () => {
           <Grid container spacing={2}>
             {/* Recipients */}
             <Grid item xs={12}>
-              <Paper sx={{ p: 3 }}>
+              <Paper sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
                 <Typography variant="h6" gutterBottom>
                   Đối tượng nhận
                 </Typography>
@@ -484,12 +484,12 @@ const SendNotifications = () => {
 
             {/* Actions */}
             <Grid item xs={12}>
-              <Paper sx={{ p: 3 }}>
+              <Paper sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
                 <Typography variant="h6" gutterBottom>
                   Thao tác
                 </Typography>
 
-                <Box display="flex" flexDirection="column" gap={2}>
+                <Box display="flex" flexDirection={{ xs: 'column', sm: 'column' }} gap={2}>
                   <Button
                     variant="outlined"
                     startIcon={<PreviewIcon />}

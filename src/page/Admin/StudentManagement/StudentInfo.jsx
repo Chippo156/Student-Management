@@ -207,7 +207,7 @@ const StudentInfo = () => {
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: '100%', overflow: 'hidden' }}>
+    <Box sx={{ p: { xs: 2, sm: 2, md: 3 }, maxWidth: '100%', overflow: 'hidden' }}>
       <Box display="flex" alignItems="center" gap={2} mb={3}>
         <Avatar sx={{ bgcolor: 'primary.main' }}>
           <AccountBoxIcon />

@@ -129,11 +129,11 @@ const GradeSheet = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
       {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box sx={{ mb: 4, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, gap: { xs: 2, md: 0 } }}>
         <Box>
-          <Typography variant="h4" fontWeight={700} gutterBottom>
+          <Typography variant="h4" fontWeight={700} gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
             Bảng điểm sinh viên
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -154,7 +154,7 @@ const GradeSheet = () => {
       </Box>
 
       {/* Search Section */}
-      <Paper sx={{ p: 3, mb: 3 }}>
+      <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, mb: 3 }}>
         <Autocomplete
           options={students}
           getOptionLabel={(option) =>
@@ -292,7 +292,7 @@ const GradeSheet = () => {
 
           {/* Semester Grades Table */}
           {studentData.semesterGrades?.map((semester) => (
-            <Paper key={semester.semesterId} sx={{ mb: 3, p: 3 }}>
+            <Paper key={semester.semesterId} sx={{ mb: 3, p: { xs: 2, sm: 2, md: 3 } }}>
               <Box
                 sx={{
                   display: 'flex',

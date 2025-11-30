@@ -42,7 +42,7 @@ function TabPanel(props) {
       aria-labelledby={`tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: { xs: 2, sm: 2, md: 3 } }}>{children}</Box>}
     </div>
   );
 }
@@ -114,7 +114,7 @@ const SystemSettings = () => {
   };
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
+    <Box sx={{ flexGrow: 1, p: { xs: 2, sm: 2, md: 3 }, minHeight: '100vh' }}>
       {/* Header */}
       <PageHeader
         title="Cài đặt hệ thống"

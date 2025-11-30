@@ -399,7 +399,7 @@ function GradeManagement() {
   ];
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, minHeight: "100vh" }}>
+    <Box sx={{ flexGrow: 1, p: { xs: 2, sm: 2, md: 3 }, minHeight: "100vh" }}>
       {/* Header */}
       <PageHeader
         title="Quản lý Điểm số"

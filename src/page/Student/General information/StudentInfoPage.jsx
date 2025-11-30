@@ -117,7 +117,7 @@ const StudentInfoPage = () => {
   return (
     <div
       style={{
-        padding: 24,
+        padding: window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 20 : 24,
         background: theme.palette.background.default,
         minHeight: '100vh',
       }}
