@@ -771,7 +771,9 @@ const ChatModal = ({ open, onClose }) => {
                                   fontWeight: 600,
                                 },
                                 '& a': {
-                                  color: isMyMessage ? '#e3f2fd' : 'primary.main',
+                                  color: isMyMessage
+                                    ? '#e3f2fd'
+                                    : 'primary.main',
                                   textDecoration: 'underline',
                                 },
                               }}
@@ -779,7 +781,11 @@ const ChatModal = ({ open, onClose }) => {
                               <ReactMarkdown
                                 remarkPlugins={[remarkGfm, remarkBreaks]}
                                 components={{
-                                  p: ({ children }) => <p style={{ marginBottom: '8px' }}>{children}</p>,
+                                  p: ({ children }) => (
+                                    <p style={{ marginBottom: '8px' }}>
+                                      {children}
+                                    </p>
+                                  ),
                                   br: () => <br />,
                                 }}
                               >
