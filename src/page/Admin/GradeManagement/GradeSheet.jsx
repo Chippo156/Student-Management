@@ -115,13 +115,14 @@ const GradeSheet = () => {
     }
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!studentData) {
       message.warning('Vui lòng chọn sinh viên trước khi xuất file');
       return;
     }
 
-    const result = exportStudentGradesExcel(studentData);
+    const result = await exportStudentGradesExcel(studentData);
+    console.log('sdasda', result);
     if (result.success) {
       message.success('Xuất file Excel thành công');
     } else {
@@ -132,9 +133,23 @@ const GradeSheet = () => {
   return (
     <Box sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
       {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, gap: { xs: 2, md: 0 } }}>
+      <Box
+        sx={{
+          mb: 4,
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', md: 'center' },
+          gap: { xs: 2, md: 0 },
+        }}
+      >
         <Box>
-          <Typography variant="h4" fontWeight={700} gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
+          <Typography
+            variant="h4"
+            fontWeight={700}
+            gutterBottom
+            sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+          >
             Bảng điểm sinh viên
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -177,7 +192,9 @@ const GradeSheet = () => {
                 ...params.InputProps,
                 startAdornment: (
                   <>
-                    <SearchIcon sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />
+                    <SearchIcon
+                      sx={{ ml: 1, mr: -0.5, color: 'action.active' }}
+                    />
                     {params.InputProps.startAdornment}
                   </>
                 ),
@@ -214,7 +231,9 @@ const GradeSheet = () => {
                     Thông tin sinh viên
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  <Box
+                    sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}
+                  >
                     <Box>
                       <Typography variant="body2" color="text.secondary">
                         Mã số sinh viên
@@ -266,7 +285,9 @@ const GradeSheet = () => {
                         GPA tích lũy (4)
                       </Typography>
                       <Typography variant="h5" fontWeight={700} color="primary">
-                        {studentData.semesterGrades?.[0]?.cumulativeGPA4.toFixed(2)}
+                        {studentData.semesterGrades?.[0]?.cumulativeGPA4.toFixed(
+                          2
+                        )}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
@@ -297,7 +318,10 @@ const GradeSheet = () => {
 
           {/* Semester Grades Table */}
           {studentData.semesterGrades?.map((semester) => (
-            <Paper key={semester.semesterId} sx={{ mb: 3, p: { xs: 2, sm: 2, md: 3 } }}>
+            <Paper
+              key={semester.semesterId}
+              sx={{ mb: 3, p: { xs: 2, sm: 2, md: 3 } }}
+            >
               <Box
                 sx={{
                   display: 'flex',
@@ -323,7 +347,10 @@ const GradeSheet = () => {
                     label={`GPA TL: ${semester.cumulativeGPA10.toFixed(2)}`}
                     color="secondary"
                   />
-                  <Chip label={semester.semesterRank} color={getRankColor(semester.semesterRank)} />
+                  <Chip
+                    label={semester.semesterRank}
+                    color={getRankColor(semester.semesterRank)}
+                  />
                 </Box>
               </Box>
 
@@ -384,12 +411,12 @@ const GradeSheet = () => {
                     {semester.courseGrades?.map((course) => {
                       // Extract scores by type
                       const regularScore =
-                        course.assessments?.find(
-                          (a) => a.assessmentTypeId === 1
-                        )?.regularPointsDetails?.reduce(
-                          (sum, detail) => sum + detail.score,
-                          0
-                        ) /
+                        course.assessments
+                          ?.find((a) => a.assessmentTypeId === 1)
+                          ?.regularPointsDetails?.reduce(
+                            (sum, detail) => sum + detail.score,
+                            0
+                          ) /
                           course.assessments?.find(
                             (a) => a.assessmentTypeId === 1
                           )?.regularPointsDetails?.length || 0;
