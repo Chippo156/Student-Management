@@ -5,6 +5,7 @@ using StudentManagement.Services.Interface;
 using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using System.Text.RegularExpressions;
+using StudentManagement.Models;
 
 namespace StudentManagement.Services
 {
@@ -46,7 +47,7 @@ namespace StudentManagement.Services
                         temperature = 0.4,
                         topK = 40,
                         topP = 0.95,
-                        maxOutputTokens = 1024  // Tăng lên để có thể trả lời dài hơn với thông tin chi tiết
+                        maxOutputTokens = 500 // Giảm từ 1024 xuống 500 để ép AI không viết văn dài
                     },
                     safetySettings = new[]
                     {
@@ -217,6 +218,12 @@ namespace StudentManagement.Services
                 .Take(3) // Last 3 semesters
                 .ToListAsync();
 
+            var schedules = await _context.Schedules
+                .Include(s => s.Section)
+                    .ThenInclude(sec => sec.CurriculumCourse.Course)
+                .Where(s => s.Section.Enrollments.Any(e => e.Student.MSSV == mssv))
+                .ToListAsync();
+
             // Calculate statistics
             var totalCreditsCompleted = finalResults.Where(fr => fr.GradePoint >= 1.0)
                 .Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab);
@@ -279,6 +286,15 @@ namespace StudentManagement.Services
                     PaidAmount = tf.PaidAmount,
                     RemainingAmount = tf.RemainingAmount,
                     Status = tf.Status.ToString()
+                }).ToList(),
+                
+                ScheduleInfos = schedules.Select(s => new ScheduleInfo
+                {
+                    CourseCode = s.Section.CurriculumCourse.Course.CourseCode,
+                    CourseName = s.Section.CurriculumCourse.Course.CourseName,
+                    DayOfWeek = s.DayOfWeek.ToString(),
+                    StartTime = s.StartTime.ToString(@"hh\:mm"),
+                    EndTime = s.EndTime.ToString(@"hh\:mm")
                 }).ToList()
             };
         }
@@ -336,6 +352,16 @@ namespace StudentManagement.Services
                     foreach (var enrollment in studentInfo.CurrentEnrollments.Take(5))
                     {
                         baseContext += $"• {enrollment.CourseCode} - {enrollment.CourseName} ({enrollment.Credits} TC) - {enrollment.Semester}\n";
+                    }
+                }
+
+                // Add schedule info
+                if (studentInfo.ScheduleInfos.Any())
+                {
+                    baseContext += "\n\n**Lịch học hiện tại:**\n";
+                    foreach (var schedule in studentInfo.ScheduleInfos.Take(5))
+                    {
+                        baseContext += $"• {schedule.CourseCode} - {schedule.CourseName}: {schedule.DayOfWeek}, {schedule.StartTime} - {schedule.EndTime}\n";
                     }
                 }
 
@@ -455,6 +481,7 @@ Bạn là EduBot - trợ lý AI thông minh của Student Management System tạ
             public List<CourseResultInfo> FinalResults { get; set; } = new();
             public List<EnrollmentInfo> CurrentEnrollments { get; set; } = new();
             public List<TuitionInfo> TuitionInfo { get; set; } = new();
+            public List<ScheduleInfo>  ScheduleInfos { get; set; } = new();
         }
 
         private class GpaInfo
@@ -462,6 +489,15 @@ Bạn là EduBot - trợ lý AI thông minh của Student Management System tạ
             public string Semester { get; set; } = "";
             public double GPA { get; set; }
             public double GPA10Scale { get; set; }
+        }
+
+        private class ScheduleInfo
+        {
+            public string CourseCode { get; set; } = "";
+            public string CourseName { get; set; } = "";
+            public string DayOfWeek { get; set; } = "";
+            public string StartTime { get; set; } = "";
+            public string EndTime { get; set; } = "";
         }
 
         private class CourseResultInfo

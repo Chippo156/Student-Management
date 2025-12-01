@@ -93,6 +93,8 @@ builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ITuitionService, TuitionService>();
+builder.Services.AddScoped<IRegistrationPeriodService, RegistrationPeriodService>();
+
 // Register HttpClient for GeminiAIService
 builder.Services.AddHttpClient<IGeminiAIService, GeminiAIService>();
 

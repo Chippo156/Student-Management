@@ -93,7 +93,7 @@ namespace StudentManagement.Controllers
             var result = await userService.ResetPassword(id, request);
             if (!result)
             {
-                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"User with ID {id} not found.", null));
+                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, "Đặt lại mật khẩu không thành công", null));
             }
             return Ok(ApiResponse.SuccessResponse(null, "Password reset successfully"));
         }
