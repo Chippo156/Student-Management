@@ -63,6 +63,7 @@ const GradeStatistics = () => {
   const [statsData, setStatsData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
 
   // Overall statistics
   const [allStudentsStats, setAllStudentsStats] = useState(null);
@@ -85,10 +86,10 @@ const GradeStatistics = () => {
     }
   }, [selectedDepartment, selectedSemester]);
 
-  const fetchStudents = async () => {
+  const fetchStudents = async (search = '') => {
     setLoadingStudents(true);
     try {
-      const result = await studentServices.getAllStudents(1, 1000);
+      const result = await studentServices.getAllStudents(1, 50, search);
       if (result?.items) {
         setStudents(result.items);
       }
@@ -209,6 +210,10 @@ const GradeStatistics = () => {
               value={selectedStudent}
               onChange={handleStudentChange}
               loading={loadingStudents}
+              onInputChange={(event, value) => {
+                setSearchInput(value);
+                fetchStudents(value);
+              }}
               renderInput={(params) => (
                 <TextField
                   {...params}

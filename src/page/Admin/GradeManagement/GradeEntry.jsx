@@ -49,16 +49,17 @@ const GradeEntry = () => {
   const [editingGrade, setEditingGrade] = useState(null);
   const [editScore, setEditScore] = useState('');
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
 
   // Fetch students on mount
   useEffect(() => {
     fetchStudents();
   }, []);
 
-  const fetchStudents = async () => {
+  const fetchStudents = async (search = '') => {
     setLoadingStudents(true);
     try {
-      const result = await studentServices.getAllStudents(1, 1000);
+      const result = await studentServices.getAllStudents(1, 50, search);
       if (result?.items) {
         setStudents(result.items);
       }
@@ -116,14 +117,17 @@ const GradeEntry = () => {
 
     try {
       const gradeData = {
-        studentId:selectedStudent.id,
+        studentId: selectedStudent.id,
         assessmentId: assessment.assessmentId,
         score,
       };
 
       console.log('Grade Data before update:', gradeData);
 
-      const result = await gradeService.updateGrade(assessment.gradeId, gradeData);
+      const result = await gradeService.updateGrade(
+        assessment.gradeId,
+        gradeData
+      );
 
       if (result) {
         // Refresh data
@@ -169,7 +173,12 @@ const GradeEntry = () => {
     <Box sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight={700} gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
+        <Typography
+          variant="h4"
+          fontWeight={700}
+          gutterBottom
+          sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+        >
           Nhập điểm sinh viên
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -187,6 +196,10 @@ const GradeEntry = () => {
           value={selectedStudent}
           onChange={handleStudentChange}
           loading={loadingStudents}
+          onInputChange={(event, value) => {
+            setSearchInput(value);
+            fetchStudents(value);
+          }}
           renderInput={(params) => (
             <TextField
               {...params}

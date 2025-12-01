@@ -37,15 +37,16 @@ const GradeSheet = () => {
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
 
   useEffect(() => {
     fetchStudents();
   }, []);
 
-  const fetchStudents = async () => {
+  const fetchStudents = async (search = '') => {
     setLoadingStudents(true);
     try {
-      const result = await studentServices.getAllStudents(1, 1000);
+      const result = await studentServices.getAllStudents(1, 50, search);
       if (result?.items) {
         setStudents(result.items);
       }
@@ -163,6 +164,10 @@ const GradeSheet = () => {
           value={selectedStudent}
           onChange={handleStudentChange}
           loading={loadingStudents}
+          onInputChange={(event, value) => {
+            setSearchInput(value);
+            fetchStudents(value);
+          }}
           renderInput={(params) => (
             <TextField
               {...params}
