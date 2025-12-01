@@ -12,7 +12,7 @@ const ScheduleTable = ({
   endOfWeek,
 }) => {
   const columns = getScheduleColumns(weekDays, today, theme, isDark);
-
+  console.log(isDark);
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
@@ -144,9 +144,8 @@ const ScheduleTable = ({
         .printable-schedule .ant-table-tbody > tr > td:first-child {
           width: 50px !important;
           min-width: 50px !important;
-          background: #fff9e6 !important;
+
         }
-        
         .printable-schedule .ant-table-tbody > tr > td > div > div {
           font-size: 8pt !important;
           padding: 4px !important;
@@ -191,9 +190,11 @@ const ScheduleTable = ({
             color: ${theme.palette.text.primary} !important;
           }
           .schedule-table .ant-table-thead > tr > th {
-            background: ${theme.palette.mode === 'dark'
-              ? theme.palette.background.paper
-              : theme.palette.background.secondary} !important;
+            background: ${
+              theme.palette.mode === 'dark'
+                ? theme.palette.background.paper
+                : theme.palette.background.secondary
+            } !important;
             color: ${theme.palette.text.primary} !important;
             border-color: ${theme.palette.divider} !important;
             font-weight: 600;
@@ -215,7 +216,7 @@ const ScheduleTable = ({
               marginBottom: 10,
               fontSize: 24,
               fontWeight: 'bold',
-              color: 'black',
+              color: theme.palette.mode !== 'dark' ? 'black' : 'white',
             }}
           >
             LỊCH HỌC, LỊCH THI THEO TUẦN
@@ -225,7 +226,7 @@ const ScheduleTable = ({
               textAlign: 'center',
               marginBottom: 20,
               fontSize: 14,
-              color: 'black',
+              color: theme.palette.mode !== 'dark' ? 'black' : 'white',
             }}
           >
             Tuần ngày {startOfWeek.format('DD/MM')} -{' '}

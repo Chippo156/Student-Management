@@ -44,6 +44,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useSelector } from 'react-redux';
 import { chatApi } from '../../service/chatService';
+import ReactMarkdown from 'react-markdown';
 
 const ChatModal = ({ open, onClose }) => {
   const theme = useTheme();
@@ -704,12 +705,75 @@ const ChatModal = ({ open, onClose }) => {
                                 </Typography>
                               </Box>
                             )}
-                            <Typography
-                              variant="body2"
-                              sx={{ wordBreak: 'break-word' }}
+                            <Box
+                              sx={{
+                                '& p': {
+                                  margin: 0,
+                                  marginBottom: '8px',
+                                  '&:last-child': { marginBottom: 0 },
+                                },
+                                '& ul, & ol': {
+                                  margin: 0,
+                                  paddingLeft: '20px',
+                                  marginBottom: '8px',
+                                },
+                                '& li': {
+                                  marginBottom: '4px',
+                                },
+                                '& strong': {
+                                  fontWeight: 700,
+                                },
+                                '& em': {
+                                  fontStyle: 'italic',
+                                },
+                                '& code': {
+                                  backgroundColor: isMyMessage
+                                    ? 'rgba(255,255,255,0.2)'
+                                    : theme.palette.mode === 'dark'
+                                      ? 'rgba(255,255,255,0.1)'
+                                      : 'rgba(0,0,0,0.1)',
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  fontSize: '0.875em',
+                                  fontFamily: 'monospace',
+                                },
+                                '& pre': {
+                                  backgroundColor: isMyMessage
+                                    ? 'rgba(255,255,255,0.2)'
+                                    : theme.palette.mode === 'dark'
+                                      ? 'rgba(255,255,255,0.1)'
+                                      : 'rgba(0,0,0,0.1)',
+                                  padding: '12px',
+                                  borderRadius: '8px',
+                                  overflow: 'auto',
+                                  marginBottom: '8px',
+                                  '& code': {
+                                    backgroundColor: 'transparent',
+                                    padding: 0,
+                                  },
+                                },
+                                '& blockquote': {
+                                  borderLeft: '4px solid',
+                                  borderColor: isMyMessage
+                                    ? 'rgba(255,255,255,0.5)'
+                                    : 'primary.main',
+                                  paddingLeft: '12px',
+                                  margin: '8px 0',
+                                  fontStyle: 'italic',
+                                  opacity: 0.9,
+                                },
+                                '& h1, & h2, & h3, & h4, & h5, & h6': {
+                                  margin: '8px 0',
+                                  fontWeight: 600,
+                                },
+                                '& a': {
+                                  color: isMyMessage ? '#e3f2fd' : 'primary.main',
+                                  textDecoration: 'underline',
+                                },
+                              }}
                             >
-                              {msg.content}
-                            </Typography>
+                              <ReactMarkdown>{msg.content}</ReactMarkdown>
+                            </Box>
                             {msg.editedAt && (
                               <Typography
                                 variant="caption"
