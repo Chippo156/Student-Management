@@ -20,6 +20,12 @@ import {
   Tooltip,
   Tab,
   Tabs,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  useTheme,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -31,11 +37,11 @@ import {
   SmartToy as SmartToyIcon,
   School as SchoolIcon,
   DeleteSweep as DeleteSweepIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
 import { useChat } from '../../context/ChatContext';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { Button, useTheme } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { chatApi } from '../../service/chatService';
 
@@ -63,6 +69,7 @@ const ChatModal = ({ open, onClose }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isMinimized, setIsMinimized] = useState(false);
   const [tabValue, setTabValue] = useState(0);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -168,14 +175,7 @@ const ChatModal = ({ open, onClose }) => {
 
   const handleClearHistory = async () => {
     if (!currentRoom?.chatRoomId) return;
-
-    if (
-      !window.confirm(
-        'Bạn có chắc chắn muốn xóa toàn bộ lịch sử tin nhắn trong phòng chat này?'
-      )
-    ) {
-      return;
-    }
+    setShowDeleteDialog(false);
 
     try {
       const success = await chatApi.clearHistory(currentRoom.chatRoomId);
@@ -186,7 +186,6 @@ const ChatModal = ({ open, onClose }) => {
       }
     } catch (error) {
       console.error('Failed to clear chat history:', error);
-      alert('Không thể xóa lịch sử chat. Vui lòng thử lại.');
     }
   };
 
@@ -342,7 +341,7 @@ const ChatModal = ({ open, onClose }) => {
                   <IconButton
                     size="small"
                     sx={{ color: 'white' }}
-                    onClick={handleClearHistory}
+                    onClick={() => setShowDeleteDialog(true)}
                   >
                     <DeleteSweepIcon />
                   </IconButton>
@@ -880,6 +879,61 @@ const ChatModal = ({ open, onClose }) => {
             </Box>
           )}
         </Box>
+
+        {/* Confirm Delete Dialog */}
+        <Dialog
+          open={showDeleteDialog}
+          onClose={() => setShowDeleteDialog(false)}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 2,
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              color: 'warning.main',
+            }}
+          >
+            <WarningIcon />
+            Xác nhận xóa lịch sử
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary">
+              Bạn có chắc chắn muốn xóa toàn bộ lịch sử tin nhắn trong phòng
+              chat này?
+            </Typography>
+            <Typography
+              variant="body2"
+              color="error"
+              sx={{ mt: 1, fontWeight: 500 }}
+            >
+              Hành động này không thể hoàn tác!
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button
+              onClick={() => setShowDeleteDialog(false)}
+              variant="outlined"
+              color="inherit"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleClearHistory}
+              variant="contained"
+              color="error"
+              startIcon={<DeleteSweepIcon />}
+            >
+              Xóa lịch sử
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Paper>
     </Slide>
   );
