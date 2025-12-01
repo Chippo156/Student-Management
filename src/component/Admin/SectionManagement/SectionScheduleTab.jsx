@@ -583,17 +583,17 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                 <Grid item xs={12} md={6}>
                   <Autocomplete
                     options={lecturers}
-                    getOptionLabel={(option) => option.fullName || ''}
+                    getOptionLabel={(option) => option.name || ''}
                     value={
                       lecturers.find(
-                        (l) => l.lecturerId === formData.lecturerId
+                        (l) => l.id === formData.lecturerId
                       ) || null
                     }
                     onChange={(event, newValue) => {
                       console.log('Selected lecturer:', newValue);
                       setFormData({
                         ...formData,
-                        lecturerId: newValue?.lecturerId || null,
+                        lecturerId: newValue?.id || null,
                       });
                     }}
                     renderInput={(params) => (
@@ -604,7 +604,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                       />
                     )}
                     isOptionEqualToValue={(option, value) =>
-                      option.lecturerId === value.lecturerId
+                      option.id === value.id
                     }
                     noOptionsText="Không tìm thấy giảng viên"
                   />
