@@ -29,6 +29,7 @@ import {
 import { useTheme, alpha } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import { sectionService, gradeService } from '../../../service';
 import { exportGradesExcel } from '../../../until/exportGradesExcel';
 
