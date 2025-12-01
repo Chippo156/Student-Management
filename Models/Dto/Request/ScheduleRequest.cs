@@ -23,5 +23,11 @@ namespace StudentManagement.Models.Dto.Request
         [Required(ErrorMessage = "Room is required")]
         public string Room { get; set; } = string.Empty;
         public string? OnlineLink { get; set; }
+
+        // Practice group specific
+        public int? PracticeGroupId { get; set; }
+        public string? PracticeGroupName { get; set; }
+        public int? LecturerId { get; set; }
+        public int? MaxCapacity { get; set; }
     }
 }

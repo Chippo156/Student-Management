@@ -351,10 +351,25 @@ namespace StudentManagement.Services
                 // Course information
                 CourseId = schedule.Section.CurriculumCourse.Course.CourseId,
                 CourseName = schedule.Section.CurriculumCourse.Course.CourseName,
+                // In the Select for ScheduleListResponse mapping, update the following lines:
 
-                LecturerName = schedule.Section.Lecturer.User.FullName ?? "Not Assigned",
+                //LecturerId = schedule.PracticeGroupId.HasValue && schedule.PracticeGroup != null
+                //    ? schedule.PracticeGroup.LecturerId
+                //    : schedule.Section.Lecturer.Id,
+
+                //LecturerName = schedule.PracticeGroupId.HasValue && schedule.PracticeGroup != null
+                //    ? schedule.PracticeGroup.Lecturer.User.FullName
+                //    : schedule.Section.Lecturer.User.FullName,
 
                 // Class information
+                LecturerId = schedule.PracticeGroupId.HasValue && schedule.PracticeGroup != null
+                    ? schedule.PracticeGroup.LecturerId
+                    : schedule.Section.Lecturer.Id,
+
+                LecturerName = schedule.PracticeGroupId.HasValue && schedule.PracticeGroup != null
+                    && schedule.PracticeGroup.Lecturer != null && schedule.PracticeGroup.Lecturer.User != null
+                    ? schedule.PracticeGroup.Lecturer.User.FullName
+                    : schedule.Section.Lecturer.User.FullName,
                 ClassId = schedule.Section.Class.ClassId,
                 ClassName = schedule.Section.Class.ClassName,
 
@@ -930,6 +945,22 @@ namespace StudentManagement.Services
                 {
                     throw new Exception("Xung đột với lịch hiện có");
                 }
+            }
+            if (request.PracticeGroupId.HasValue)
+            {
+                var practiceGroup = await context.PracticeGroups
+                    .Include(pg => pg.Section)
+                    .FirstOrDefaultAsync(pg => pg.PracticeGroupId == request.PracticeGroupId);
+                
+                if (practiceGroup is null)
+                    { throw new Exception("Không tìm thấy nhóm thực hành"); }
+                var lecturer = await context.Lecturers.FindAsync(request.LecturerId);
+
+                practiceGroup.LecturerId = request.LecturerId;
+                practiceGroup.Lecturer = lecturer;
+                practiceGroup.MaxCapacity = request.MaxCapacity ?? practiceGroup.MaxCapacity;
+                practiceGroup.GroupName = request.PracticeGroupName;
+                context.PracticeGroups.Update(practiceGroup);
             }
 
             schedule.DayOfWeek = request.DayOfWeek;
