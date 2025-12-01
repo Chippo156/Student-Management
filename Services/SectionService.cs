@@ -316,7 +316,9 @@ namespace StudentManagement.Services
             var section = await context.Sections
                 .Include(s => s.CurriculumCourse)
                   .ThenInclude(cc => cc.Course)
-
+                .Include(s => s.CurriculumCourse)
+                  .ThenInclude(cc => cc.Program)
+                    .ThenInclude(p => p.Department)
                 .Include(s => s.Lecturer)
                   .ThenInclude(l => l.User)
                 .Include(s => s.Semester)
@@ -345,6 +347,8 @@ namespace StudentManagement.Services
                 IsActive = section.Status != SectionStatus.IsClosed,
                 ClassName =  section.Class.ClassName,
                 SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
+                DepartmentId = section.CurriculumCourse.Program.Department.DepartmentId,
+                DepartmentName = section.CurriculumCourse.Program.Department.DepartmentName,
             };
         }
 
