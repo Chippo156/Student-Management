@@ -45,6 +45,8 @@ import { vi } from 'date-fns/locale';
 import { useSelector } from 'react-redux';
 import { chatApi } from '../../service/chatService';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 
 const ChatModal = ({ open, onClose }) => {
   const theme = useTheme();
@@ -707,6 +709,8 @@ const ChatModal = ({ open, onClose }) => {
                             )}
                             <Box
                               sx={{
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word',
                                 '& p': {
                                   margin: 0,
                                   marginBottom: '8px',
@@ -772,7 +776,15 @@ const ChatModal = ({ open, onClose }) => {
                                 },
                               }}
                             >
-                              <ReactMarkdown>{msg.content}</ReactMarkdown>
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm, remarkBreaks]}
+                                components={{
+                                  p: ({ children }) => <p style={{ marginBottom: '8px' }}>{children}</p>,
+                                  br: () => <br />,
+                                }}
+                              >
+                                {msg.content}
+                              </ReactMarkdown>
                             </Box>
                             {msg.editedAt && (
                               <Typography
