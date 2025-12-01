@@ -29,7 +29,6 @@ import {
 import { useTheme, alpha } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import * as XLSX from 'xlsx';
 import { sectionService, gradeService } from '../../../service';
 import { exportGradesExcel } from '../../../until/exportGradesExcel';
 
@@ -1144,8 +1143,8 @@ const GradesPage = () => {
                 showSizeChanger: true,
                 showTotal: (total) => `Tổng số ${total} sinh viên`,
               }}
-              scroll={{ x: 1200 }}
-              style={{ maxWidth: 1200 }}
+              scroll={{ x: 'max-content' }}
+              size="middle"
             />
           </Card>
         </Fade>

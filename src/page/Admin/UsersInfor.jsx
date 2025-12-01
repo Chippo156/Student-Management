@@ -364,7 +364,8 @@ const UsersInfor = () => {
           showTotal: (total, range) =>
             `${range[0]}-${range[1]} của ${total} người dùng`,
         }}
-        scroll={{ x: 1600 }}
+        scroll={{ x: 'max-content' }}
+        size="middle"
       />
 
       <Modal

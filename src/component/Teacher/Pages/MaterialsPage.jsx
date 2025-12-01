@@ -57,23 +57,26 @@ const MaterialsPage = () => {
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
 
-  const colors = useMemo(() => ({
-    primary: theme.palette.primary.main,
-    success: theme.palette.success.main,
-    warning: theme.palette.warning.main,
-    error: theme.palette.error.main,
-    info: theme.palette.info.main,
-    bgLightBlue: alpha(theme.palette.primary.main, 0.1),
-    bgLightGreen: alpha(theme.palette.success.main, 0.1),
-    bgLightOrange: alpha(theme.palette.warning.main, 0.1),
-    bgLightPurple: alpha(theme.palette.secondary.main, 0.1),
-    iconBlue: theme.palette.primary.main,
-    iconGreen: theme.palette.success.main,
-    iconOrange: theme.palette.warning.main,
-    iconPurple: theme.palette.secondary.main,
-    iconGray: theme.palette.grey[600],
-    iconRed: theme.palette.error.main,
-  }), [theme]);
+  const colors = useMemo(
+    () => ({
+      primary: theme.palette.primary.main,
+      success: theme.palette.success.main,
+      warning: theme.palette.warning.main,
+      error: theme.palette.error.main,
+      info: theme.palette.info.main,
+      bgLightBlue: alpha(theme.palette.primary.main, 0.1),
+      bgLightGreen: alpha(theme.palette.success.main, 0.1),
+      bgLightOrange: alpha(theme.palette.warning.main, 0.1),
+      bgLightPurple: alpha(theme.palette.secondary.main, 0.1),
+      iconBlue: theme.palette.primary.main,
+      iconGreen: theme.palette.success.main,
+      iconOrange: theme.palette.warning.main,
+      iconPurple: theme.palette.secondary.main,
+      iconGray: theme.palette.grey[600],
+      iconRed: theme.palette.error.main,
+    }),
+    [theme]
+  );
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -96,9 +99,8 @@ const MaterialsPage = () => {
 
       setLoading(true);
       try {
-        const response = await teacherService.getCourseMaterials(
-          selectedCourse
-        );
+        const response =
+          await teacherService.getCourseMaterials(selectedCourse);
         setMaterials(response.data || []);
       } catch (error) {
         console.error('Error fetching materials:', error);
@@ -393,7 +395,9 @@ const MaterialsPage = () => {
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <Description sx={{ fontSize: 40, color: colors.iconGreen, mr: 2 }} />
+                <Description
+                  sx={{ fontSize: 40, color: colors.iconGreen, mr: 2 }}
+                />
                 <Box>
                   <Typography
                     variant="h5"
@@ -421,7 +425,9 @@ const MaterialsPage = () => {
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <Folder sx={{ fontSize: 40, color: colors.iconOrange, mr: 2 }} />
+                <Folder
+                  sx={{ fontSize: 40, color: colors.iconOrange, mr: 2 }}
+                />
                 <Box>
                   <Typography
                     variant="h5"
@@ -449,7 +455,9 @@ const MaterialsPage = () => {
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <Download sx={{ fontSize: 40, color: colors.iconPurple, mr: 2 }} />
+                <Download
+                  sx={{ fontSize: 40, color: colors.iconPurple, mr: 2 }}
+                />
                 <Box>
                   <Typography
                     variant="h5"
@@ -517,7 +525,8 @@ const MaterialsPage = () => {
                 showSizeChanger: true,
                 showTotal: (total) => `Tổng số ${total} tài liệu`,
               }}
-              scroll={{ x: 1400 }}
+              scroll={{ x: 'max-content' }}
+              size="middle"
             />
           </Card>
         </Fade>
@@ -553,7 +562,9 @@ const MaterialsPage = () => {
                 fullWidth
                 label="Mô tả"
                 value={formData.description}
-                onChange={(e) => handleFormChange('description', e.target.value)}
+                onChange={(e) =>
+                  handleFormChange('description', e.target.value)
+                }
                 multiline
                 rows={3}
               />

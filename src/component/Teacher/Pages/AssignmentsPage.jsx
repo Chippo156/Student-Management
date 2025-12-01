@@ -58,21 +58,24 @@ const AssignmentsPage = () => {
   const lecturerId = user?.lecturerId;
 
   // Theme-aware colors
-  const colors = useMemo(() => ({
-    bgCard: theme.palette.background.paper,
-    bgPage: theme.palette.background.default,
-    primary: theme.palette.primary.main,
-    success: theme.palette.success.main,
-    warning: theme.palette.warning.main,
-    error: theme.palette.error.main,
-    text: theme.palette.text.primary,
-    textSecondary: theme.palette.text.secondary,
-    border: theme.palette.divider,
-    bgPrimarySoft: alpha(theme.palette.primary.main, 0.12),
-    bgSuccessSoft: alpha(theme.palette.success.main, 0.12),
-    bgWarningSoft: alpha(theme.palette.warning.main, 0.12),
-    bgErrorSoft: alpha(theme.palette.error.main, 0.12),
-  }), [theme]);
+  const colors = useMemo(
+    () => ({
+      bgCard: theme.palette.background.paper,
+      bgPage: theme.palette.background.default,
+      primary: theme.palette.primary.main,
+      success: theme.palette.success.main,
+      warning: theme.palette.warning.main,
+      error: theme.palette.error.main,
+      text: theme.palette.text.primary,
+      textSecondary: theme.palette.text.secondary,
+      border: theme.palette.divider,
+      bgPrimarySoft: alpha(theme.palette.primary.main, 0.12),
+      bgSuccessSoft: alpha(theme.palette.success.main, 0.12),
+      bgWarningSoft: alpha(theme.palette.warning.main, 0.12),
+      bgErrorSoft: alpha(theme.palette.error.main, 0.12),
+    }),
+    [theme]
+  );
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -254,12 +257,8 @@ const AssignmentsPage = () => {
   );
   const avgSubmissionRate = assignments.length
     ? (
-        (assignments.reduce(
-          (sum, a) => sum + (a.submitted / a.total) * 100,
-          0
-        ) /
-          assignments.length) ||
-        0
+        assignments.reduce((sum, a) => sum + (a.submitted / a.total) * 100, 0) /
+          assignments.length || 0
       ).toFixed(1)
     : 0;
 
@@ -376,7 +375,9 @@ const AssignmentsPage = () => {
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <Assignment sx={{ fontSize: 40, color: colors.primary, mr: 2 }} />
+                <Assignment
+                  sx={{ fontSize: 40, color: colors.primary, mr: 2 }}
+                />
                 <Box>
                   <Typography
                     variant="h5"
@@ -404,7 +405,9 @@ const AssignmentsPage = () => {
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <CheckCircle sx={{ fontSize: 40, color: colors.success, mr: 2 }} />
+                <CheckCircle
+                  sx={{ fontSize: 40, color: colors.success, mr: 2 }}
+                />
                 <Box>
                   <Typography
                     variant="h5"
@@ -432,7 +435,9 @@ const AssignmentsPage = () => {
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <Assignment sx={{ fontSize: 40, color: colors.warning, mr: 2 }} />
+                <Assignment
+                  sx={{ fontSize: 40, color: colors.warning, mr: 2 }}
+                />
                 <Box>
                   <Typography
                     variant="h5"
@@ -460,7 +465,13 @@ const AssignmentsPage = () => {
               }}
             >
               <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                <CheckCircle sx={{ fontSize: 40, color: theme.palette.secondary.main, mr: 2 }} />
+                <CheckCircle
+                  sx={{
+                    fontSize: 40,
+                    color: theme.palette.secondary.main,
+                    mr: 2,
+                  }}
+                />
                 <Box>
                   <Typography
                     variant="h5"
@@ -528,7 +539,8 @@ const AssignmentsPage = () => {
                 showSizeChanger: true,
                 showTotal: (total) => `Tổng số ${total} bài tập`,
               }}
-              scroll={{ x: 1400 }}
+              scroll={{ x: 'max-content' }}
+              size="middle"
             />
           </Card>
         </Fade>
@@ -541,7 +553,12 @@ const AssignmentsPage = () => {
       )}
 
       {/* Assignment Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
           {editingAssignment ? 'Chỉnh sửa bài tập' : 'Tạo bài tập mới'}
         </DialogTitle>
@@ -561,7 +578,9 @@ const AssignmentsPage = () => {
                 fullWidth
                 label="Mô tả"
                 value={formData.description}
-                onChange={(e) => handleFormChange('description', e.target.value)}
+                onChange={(e) =>
+                  handleFormChange('description', e.target.value)
+                }
                 multiline
                 rows={4}
               />

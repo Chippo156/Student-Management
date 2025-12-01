@@ -41,7 +41,6 @@ import {
   practiceService,
 } from '../../../service';
 import dayjs from 'dayjs';
-import * as XLSX from 'xlsx';
 import { exportAttendanceExcel } from '../../../until/exportAttendanceExcel';
 import AttendanceStatistics from '../Components/AttendanceStatistics';
 const AttendancePage = () => {
@@ -988,17 +987,17 @@ const AttendancePage = () => {
                       >
                         Lưu điểm danh {!hasChanges ? '(không có thay đổi)' : ''}
                       </Button>
-                      <Button
-                        variant="outlined"
-                        color="info"
-                        onClick={() => handleExportExcel()}
-                        disabled={loading}
-                        startIcon={<CalendarToday />}
-                      >
-                        Excel
-                      </Button>
                     </>
                   )}
+                  <Button
+                    variant="outlined"
+                    color="info"
+                    onClick={() => handleExportExcel()}
+                    disabled={loading}
+                    startIcon={<CalendarToday />}
+                  >
+                    Excel
+                  </Button>
                 </Box>
               </Grid>
             </Grid>
@@ -1037,14 +1036,14 @@ const AttendancePage = () => {
               dataSource={sessions}
               loading={loading}
               rowKey="attendanceSessionId"
-              size="small"
               pagination={{
                 pageSize: 8,
                 showSizeChanger: true,
                 showTotal: (total) => `Tổng ${total} phiên`,
                 position: ['bottomRight'],
               }}
-              scroll={{ x: 1200 }}
+              scroll={{ x: 'max-content' }}
+              size="middle"
               rowClassName={(record) =>
                 selectedSession?.attendanceSessionId ===
                 record.attendanceSessionId
@@ -1076,7 +1075,6 @@ const AttendancePage = () => {
                 dataSource={students}
                 loading={loading}
                 rowKey="studentId"
-                size="small"
                 pagination={{
                   pageSize: 20,
                   showSizeChanger: true,
@@ -1084,7 +1082,8 @@ const AttendancePage = () => {
                     `${range[0]}-${range[1]} của ${total} sinh viên`,
                   position: ['bottomRight'],
                 }}
-                scroll={{ x: 1200 }}
+                scroll={{ x: 'max-content' }}
+                size="middle"
               />
             </CardContent>
           </Card>

@@ -37,26 +37,28 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import sectionService from '../../../service/sectionService';
 import CourseDetailModal from '../Components/CourseDetailModal';
-import * as XLSX from 'xlsx';
 
 const CoursesPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const colors = useMemo(() => ({
-    bgCard: theme.palette.background.paper,
-    bgPage: theme.palette.background.default,
-    primary: theme.palette.primary.main,
-    success: theme.palette.success.main,
-    warning: theme.palette.warning.main,
-    error: theme.palette.error.main,
-    text: theme.palette.text.primary,
-    textSecondary: theme.palette.text.secondary,
-    border: theme.palette.divider,
-    bgPrimarySoft: alpha(theme.palette.primary.main, 0.12),
-    bgSuccessSoft: alpha(theme.palette.success.main, 0.12),
-    bgWarningSoft: alpha(theme.palette.warning.main, 0.12),
-    bgErrorSoft: alpha(theme.palette.error.main, 0.12),
-  }), [theme]);
+  const colors = useMemo(
+    () => ({
+      bgCard: theme.palette.background.paper,
+      bgPage: theme.palette.background.default,
+      primary: theme.palette.primary.main,
+      success: theme.palette.success.main,
+      warning: theme.palette.warning.main,
+      error: theme.palette.error.main,
+      text: theme.palette.text.primary,
+      textSecondary: theme.palette.text.secondary,
+      border: theme.palette.divider,
+      bgPrimarySoft: alpha(theme.palette.primary.main, 0.12),
+      bgSuccessSoft: alpha(theme.palette.success.main, 0.12),
+      bgWarningSoft: alpha(theme.palette.warning.main, 0.12),
+      bgErrorSoft: alpha(theme.palette.error.main, 0.12),
+    }),
+    [theme]
+  );
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -102,20 +104,28 @@ const CoursesPage = () => {
     if (searchText) {
       filtered = filtered.filter(
         (section) =>
-          section.sectionCode?.toLowerCase().includes(searchText.toLowerCase()) ||
-          section.courseCode?.toLowerCase().includes(searchText.toLowerCase()) ||
+          section.sectionCode
+            ?.toLowerCase()
+            .includes(searchText.toLowerCase()) ||
+          section.courseCode
+            ?.toLowerCase()
+            .includes(searchText.toLowerCase()) ||
           section.courseName?.toLowerCase().includes(searchText.toLowerCase())
       );
     }
 
     // Status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter((section) => section.status === parseInt(statusFilter));
+      filtered = filtered.filter(
+        (section) => section.status === parseInt(statusFilter)
+      );
     }
 
     // Semester filter
     if (semesterFilter !== 'all') {
-      filtered = filtered.filter((section) => section.semesterName === semesterFilter);
+      filtered = filtered.filter(
+        (section) => section.semesterName === semesterFilter
+      );
     }
 
     setFilteredCourses(filtered);
@@ -123,7 +133,7 @@ const CoursesPage = () => {
 
   const handleExportExcel = () => {
     const dataToExport = filteredCourses.map((section, index) => ({
-      'STT': index + 1,
+      STT: index + 1,
       'Mã lớp HP': section.sectionCode,
       'Mã môn học': section.courseCode,
       'Tên môn học': section.courseName,
@@ -140,7 +150,7 @@ const CoursesPage = () => {
 
     // Set column widths
     const colWidths = [
-      { wch: 5 },  // STT
+      { wch: 5 }, // STT
       { wch: 15 }, // Mã lớp HP
       { wch: 12 }, // Mã môn học
       { wch: 35 }, // Tên môn học
@@ -152,7 +162,10 @@ const CoursesPage = () => {
     ];
     worksheet['!cols'] = colWidths;
 
-    XLSX.writeFile(workbook, `Danh_sach_lop_hoc_phan_${new Date().getTime()}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `Danh_sach_lop_hoc_phan_${new Date().getTime()}.xlsx`
+    );
   };
 
   const handleResetFilters = () => {
@@ -180,7 +193,9 @@ const CoursesPage = () => {
     return statusMap[status] || 'Không xác định';
   };
 
-  const semesters = [...new Set(courses.map((c) => c.semesterName))].filter(Boolean);
+  const semesters = [...new Set(courses.map((c) => c.semesterName))].filter(
+    Boolean
+  );
 
   const getStatusChip = (status) => {
     const statusConfig = {
@@ -212,7 +227,14 @@ const CoursesPage = () => {
   return (
     <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 4,
+        }}
+      >
         <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text }}>
           Môn học của tôi
         </Typography>
@@ -260,7 +282,10 @@ const CoursesPage = () => {
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
               <School sx={{ fontSize: 50, mr: 2, color: colors.primary }} />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.primary }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 'bold', mb: 0.5, color: colors.primary }}
+                >
                   {courses.length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -281,9 +306,22 @@ const CoursesPage = () => {
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <People sx={{ fontSize: 50, mr: 2, color: theme.palette.secondary.main }} />
+              <People
+                sx={{
+                  fontSize: 50,
+                  mr: 2,
+                  color: theme.palette.secondary.main,
+                }}
+              />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: theme.palette.secondary.main }}>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 'bold',
+                    mb: 0.5,
+                    color: theme.palette.secondary.main,
+                  }}
+                >
                   {courses.reduce(
                     (total, section) => total + (section.enrolledCount || 0),
                     0
@@ -309,7 +347,10 @@ const CoursesPage = () => {
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
               <Schedule sx={{ fontSize: 50, mr: 2, color: colors.success }} />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.success }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 'bold', mb: 0.5, color: colors.success }}
+                >
                   {courses.filter((section) => section.status === 1).length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -405,14 +446,34 @@ const CoursesPage = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: colors.primary }}>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>STT</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>Mã lớp HP</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>Mã môn học</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>Tên môn học</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>Số sinh viên</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>Học kỳ</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>Trạng thái</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard, textAlign: 'center' }}>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+                  STT
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+                  Mã lớp HP
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+                  Mã môn học
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+                  Tên môn học
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+                  Số sinh viên
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+                  Học kỳ
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+                  Trạng thái
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 'bold',
+                    color: colors.bgCard,
+                    textAlign: 'center',
+                  }}
+                >
                   Thao tác
                 </TableCell>
               </TableRow>
@@ -434,30 +495,46 @@ const CoursesPage = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip label={section.courseCode} size="small" color="primary" variant="outlined" />
+                    <Chip
+                      label={section.courseCode}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
                   </TableCell>
                   <TableCell>
-                    <Typography sx={{ fontWeight: 500 }}>{section.courseName}</Typography>
+                    <Typography sx={{ fontWeight: 500 }}>
+                      {section.courseName}
+                    </Typography>
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography sx={{ fontWeight: 600, color: colors.success }}>
+                      <Typography
+                        sx={{ fontWeight: 600, color: colors.success }}
+                      >
                         {section.enrolledCount}
                       </Typography>
                       <Typography color="text.secondary">/</Typography>
-                      <Typography color="text.secondary">{section.capacity}</Typography>
+                      <Typography color="text.secondary">
+                        {section.capacity}
+                      </Typography>
                     </Box>
                   </TableCell>
                   <TableCell>
                     <Chip
                       label={section.semesterName}
                       size="small"
-                      sx={{ bgcolor: colors.bgPrimarySoft, color: colors.primary }}
+                      sx={{
+                        bgcolor: colors.bgPrimarySoft,
+                        color: colors.primary,
+                      }}
                     />
                   </TableCell>
                   <TableCell>{getStatusChip(section.status)}</TableCell>
                   <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                    <Box
+                      sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}
+                    >
                       <Button
                         variant="outlined"
                         size="small"
@@ -491,7 +568,9 @@ const CoursesPage = () => {
 
         {filteredCourses.length === 0 && (
           <Box sx={{ p: 6, textAlign: 'center' }}>
-            <School sx={{ fontSize: 80, color: alpha(colors.text, 0.2), mb: 2 }} />
+            <School
+              sx={{ fontSize: 80, color: alpha(colors.text, 0.2), mb: 2 }}
+            />
             <Typography variant="h6" color="text.secondary" gutterBottom>
               Không tìm thấy lớp học phần nào
             </Typography>

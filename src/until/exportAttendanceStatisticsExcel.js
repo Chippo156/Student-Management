@@ -46,8 +46,8 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
     row1.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
     row1.height = 25;
 
-    // Merge row 1 (6 base columns + sessions + 5 summary columns)
-    const totalCols = 6 + sessions.length + 5;
+    // Merge row 1 (6 base columns + sessions + 4 summary columns)
+    const totalCols = 6 + sessions.length + 4;
     worksheet.mergeCells(1, 1, 1, totalCols);
 
     // === ROW 2-6: Info ===
@@ -288,7 +288,7 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
       dataRow.getCell(summaryStartCol).value = student.totalPresent || 0;           // Có mặt
       dataRow.getCell(summaryStartCol + 1).value = student.totalExcused || 0;        // Có phép
       dataRow.getCell(summaryStartCol + 2).value = student.totalAbsent || 0;        // Không phép
-      dataRow.getCell(summaryStartCol + 3).value = (student.totalPresent || 0) + (student.totalAbsent || 0) + (student.totalLate || 0) + (student.totalExcused || 0); // Tổng buổi
+      dataRow.getCell(summaryStartCol + 3).value = (student.totalPresent || 0) + (student.totalAbsent || 0) + (student.totalExcused || 0); // Tổng buổi
 
       // Apply borders and alignment cho TẤT CẢ các cells
       for (let c = 1; c <= totalCols; c++) {

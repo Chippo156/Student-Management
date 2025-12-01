@@ -37,7 +37,7 @@ import {
 import { useSelector } from 'react-redux';
 import sectionService from '../../../service/sectionService';
 import { studentServices } from '../../../service/studentServices';
-import * as XLSX from 'xlsx';
+import { exportSectionStudentsExcel } from '../../../until/exportSectionStudentsExcel';
 const StudentsPage = () => {
   const theme = useTheme();
   const [students, setStudents] = useState([]);
@@ -56,21 +56,24 @@ const StudentsPage = () => {
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
 
-  const colors = useMemo(() => ({
-    primary: theme.palette.primary.main,
-    secondary: theme.palette.secondary.main,
-    success: theme.palette.success.main,
-    textPrimary: theme.palette.text.primary,
-    textSecondary: theme.palette.text.secondary,
-    bgWhite: theme.palette.background.paper,
-    bgLightBlue: alpha(theme.palette.primary.main, 0.1),
-    bgLightPurple: alpha(theme.palette.secondary.main, 0.1),
-    bgLightGreen: alpha(theme.palette.success.main, 0.1),
-    iconBlue: theme.palette.primary.main,
-    iconPurple: theme.palette.secondary.main,
-    iconGreen: theme.palette.success.main,
-    hoverBgBlue: alpha(theme.palette.primary.main, 0.04),
-  }), [theme]);
+  const colors = useMemo(
+    () => ({
+      primary: theme.palette.primary.main,
+      secondary: theme.palette.secondary.main,
+      success: theme.palette.success.main,
+      textPrimary: theme.palette.text.primary,
+      textSecondary: theme.palette.text.secondary,
+      bgWhite: theme.palette.background.paper,
+      bgLightBlue: alpha(theme.palette.primary.main, 0.1),
+      bgLightPurple: alpha(theme.palette.secondary.main, 0.1),
+      bgLightGreen: alpha(theme.palette.success.main, 0.1),
+      iconBlue: theme.palette.primary.main,
+      iconPurple: theme.palette.secondary.main,
+      iconGreen: theme.palette.success.main,
+      hoverBgBlue: alpha(theme.palette.primary.main, 0.04),
+    }),
+    [theme]
+  );
 
   useEffect(() => {
     const fetchSections = async () => {
@@ -101,12 +104,13 @@ const StudentsPage = () => {
           const allStudents = [];
           for (const section of sections) {
             try {
-              const studentsResponse = await studentServices.getStudentsWithSection(
-                section.sectionId,
-                1,
-                100, // Get all students from this section
-                searchText
-              );
+              const studentsResponse =
+                await studentServices.getStudentsWithSection(
+                  section.sectionId,
+                  1,
+                  100, // Get all students from this section
+                  searchText
+                );
               const studentsData = studentsResponse?.items || [];
               studentsData.forEach((student) => {
                 allStudents.push({
@@ -125,7 +129,7 @@ const StudentsPage = () => {
             }
           }
           setStudents(allStudents);
-          setPagination(prev => ({ ...prev, total: allStudents.length }));
+          setPagination((prev) => ({ ...prev, total: allStudents.length }));
         } else {
           // Fetch students for selected section
           const studentsResponse = await studentServices.getStudentsWithSection(
@@ -135,7 +139,9 @@ const StudentsPage = () => {
             searchText
           );
           const studentsData = studentsResponse?.items || [];
-          const selectedSectionData = sections.find(s => s.sectionId === selectedSection);
+          const selectedSectionData = sections.find(
+            (s) => s.sectionId === selectedSection
+          );
 
           const enrichedStudents = studentsData.map((student) => ({
             ...student,
@@ -146,9 +152,9 @@ const StudentsPage = () => {
           }));
 
           setStudents(enrichedStudents);
-          setPagination(prev => ({
+          setPagination((prev) => ({
             ...prev,
-            total: studentsResponse?.totalCount || 0
+            total: studentsResponse?.totalCount || 0,
           }));
         }
       } catch (error) {
@@ -161,7 +167,13 @@ const StudentsPage = () => {
     if (sections.length > 0) {
       fetchStudents();
     }
-  }, [selectedSection, sections, searchText, pagination.current, pagination.pageSize]);
+  }, [
+    selectedSection,
+    sections,
+    searchText,
+    pagination.current,
+    pagination.pageSize,
+  ]);
 
   const handleViewDetails = (student) => {
     setSelectedStudent(student);
@@ -173,50 +185,36 @@ const StudentsPage = () => {
     setSelectedStudent(null);
   };
 
-  const handleExportExcel = () => {
-    const dataToExport = students.map((student, index) => ({
-      'STT': index + 1,
-      'MSSV': student.mssv,
-      'Họ và tên': student.fullName,
-      'Email': student.email,
-      'Số điện thoại': student.phone || '',
-      'Lớp': student.className,
-      'Mã lớp HP': student.sectionCode,
-      'Môn học': student.courseName,
-      'Mã môn học': student.courseCode,
-      'Nhóm TH': student.practiceGroupName || 'Chưa có nhóm',
-      'Trạng thái ĐK': student.enrollmentStatus,
-      'Điểm cuối kỳ': student.finalScore || '',
-      'Điểm chữ': student.gradeLetter || '',
-    }));
+  const handleExportExcel = async () => {
+    if (students.length === 0) {
+      return;
+    }
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách sinh viên');
+    // Get section info
+    const section = sections.find((s) => s.sectionId === selectedSection);
 
-    // Set column widths
-    const colWidths = [
-      { wch: 5 },  // STT
-      { wch: 12 }, // MSSV
-      { wch: 25 }, // Họ và tên
-      { wch: 30 }, // Email
-      { wch: 15 }, // SĐT
-      { wch: 15 }, // Lớp
-      { wch: 15 }, // Mã lớp HP
-      { wch: 35 }, // Môn học
-      { wch: 12 }, // Mã MH
-      { wch: 15 }, // Nhóm TH
-      { wch: 15 }, // Trạng thái
-      { wch: 12 }, // Điểm
-      { wch: 10 }, // Điểm chữ
-    ];
-    worksheet['!cols'] = colWidths;
+    // Prepare section data
+    const sectionData = {
+      sectionCode: section?.sectionCode || section?.displayName || '',
+      courseName: section?.courseName || '',
+      courseCode: section?.courseCode || '',
+      semesterName: section?.semesterName || '',
+    };
 
-    XLSX.writeFile(workbook, `Danh_sach_sinh_vien_${new Date().getTime()}.xlsx`);
+    // Export using utility
+    const result = await exportSectionStudentsExcel(
+      sectionData,
+      students,
+      'Lý thuyết'
+    );
+
+    if (!result.success) {
+      console.error('Export failed:', result.error);
+    }
   };
 
   const handleRefresh = () => {
-    setPagination(prev => ({ ...prev, current: 1 }));
+    setPagination((prev) => ({ ...prev, current: 1 }));
     // Trigger refetch by updating dependencies
   };
 
@@ -313,8 +311,18 @@ const StudentsPage = () => {
     <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
       {/* Header */}
       <Fade in={true} timeout={600}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: colors.primary }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 4,
+          }}
+        >
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 700, color: colors.primary }}
+          >
             Quản lý Sinh viên
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
@@ -361,13 +369,21 @@ const StudentsPage = () => {
                 '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
               }}
             >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
+              <CardContent
+                sx={{ display: 'flex', alignItems: 'center', py: 3 }}
+              >
                 <People sx={{ fontSize: 50, mr: 2, color: colors.iconBlue }} />
                 <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconBlue }}>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconBlue }}
+                  >
                     {uniqueStudents}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: colors.textSecondary }}
+                  >
                     Tổng sinh viên
                   </Typography>
                 </Box>
@@ -386,13 +402,27 @@ const StudentsPage = () => {
                 '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
               }}
             >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-                <School sx={{ fontSize: 50, mr: 2, color: colors.iconPurple }} />
+              <CardContent
+                sx={{ display: 'flex', alignItems: 'center', py: 3 }}
+              >
+                <School
+                  sx={{ fontSize: 50, mr: 2, color: colors.iconPurple }}
+                />
                 <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconPurple }}>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontWeight: 'bold',
+                      mb: 0.5,
+                      color: colors.iconPurple,
+                    }}
+                  >
                     {totalStudents}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: colors.textSecondary }}
+                  >
                     Lượt đăng ký
                   </Typography>
                 </Box>
@@ -411,13 +441,27 @@ const StudentsPage = () => {
                 '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
               }}
             >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-                <CheckCircle sx={{ fontSize: 50, mr: 2, color: colors.iconGreen }} />
+              <CardContent
+                sx={{ display: 'flex', alignItems: 'center', py: 3 }}
+              >
+                <CheckCircle
+                  sx={{ fontSize: 50, mr: 2, color: colors.iconGreen }}
+                />
                 <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconGreen }}>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontWeight: 'bold',
+                      mb: 0.5,
+                      color: colors.iconGreen,
+                    }}
+                  >
                     {activeSections}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: colors.textSecondary }}
+                  >
                     Lớp đang dạy
                   </Typography>
                 </Box>
@@ -462,12 +506,15 @@ const StudentsPage = () => {
                     label="Lớp học phần"
                     onChange={(e) => {
                       setSelectedSection(e.target.value);
-                      setPagination(prev => ({ ...prev, current: 1 }));
+                      setPagination((prev) => ({ ...prev, current: 1 }));
                     }}
                   >
                     <MenuItem value="all">Tất cả lớp học phần</MenuItem>
                     {sections.map((section) => (
-                      <MenuItem key={section.sectionId} value={section.sectionId}>
+                      <MenuItem
+                        key={section.sectionId}
+                        value={section.sectionId}
+                      >
                         {section.courseName} ({section.sectionCode})
                       </MenuItem>
                     ))}
@@ -501,28 +548,33 @@ const StudentsPage = () => {
       <Fade in={true} timeout={1200}>
         <Card>
           <div style={{ overflowX: 'auto', width: '100%' }}>
-            <div style={{ maxWidth: 1200, padding: 12 }}>
-              <Table
-                columns={columns}
-                dataSource={students}
-                loading={loading}
-                rowKey={(record) => `${record.studentId}-${record.sectionId}`}
-                pagination={{
-                  current: pagination.current,
-                  pageSize: pagination.pageSize,
-                  total: pagination.total,
-                  showSizeChanger: true,
-                  showTotal: (total) => `Tổng số ${total} sinh viên`,
-                  onChange: (page, pageSize) => {
-                    setPagination(prev => ({ ...prev, current: page, pageSize }));
-                  },
-                }}
-                scroll={{ x: 'max-content' }}
-                // ensure rows render below header/controls
-                onRow={(record) => ({ style: { position: 'relative', zIndex: 1 } })}
-                style={{ borderCollapse: 'separate' }}
-              />
-            </div>
+            <Table
+              columns={columns}
+              dataSource={students}
+              loading={loading}
+              rowKey={(record) => `${record.studentId}-${record.sectionId}`}
+              pagination={{
+                current: pagination.current,
+                pageSize: pagination.pageSize,
+                total: pagination.total,
+                showSizeChanger: true,
+                showTotal: (total) => `Tổng số ${total} sinh viên`,
+                onChange: (page, pageSize) => {
+                  setPagination((prev) => ({
+                    ...prev,
+                    current: page,
+                    pageSize,
+                  }));
+                },
+              }}
+              scroll={{ x: 'max-content' }}
+              // ensure rows render below header/controls
+              onRow={(record) => ({
+                style: { position: 'relative', zIndex: 1 },
+              })}
+              style={{ borderCollapse: 'separate' }}
+              size="middle"
+            />
           </div>
         </Card>
       </Fade>
@@ -609,7 +661,9 @@ const StudentsPage = () => {
                 <Chip
                   label={selectedStudent.enrollmentStatus}
                   color={
-                    selectedStudent.enrollmentStatus === 'Đã đăng ký' ? 'success' : 'default'
+                    selectedStudent.enrollmentStatus === 'Đã đăng ký'
+                      ? 'success'
+                      : 'default'
                   }
                   size="small"
                 />
@@ -619,7 +673,9 @@ const StudentsPage = () => {
                   Điểm cuối kỳ:
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 2 }}>
-                  {selectedStudent.finalScore || 'Chưa có'} {selectedStudent.gradeLetter && `(${selectedStudent.gradeLetter})`}
+                  {selectedStudent.finalScore || 'Chưa có'}{' '}
+                  {selectedStudent.gradeLetter &&
+                    `(${selectedStudent.gradeLetter})`}
                 </Typography>
               </Grid>
             </Grid>

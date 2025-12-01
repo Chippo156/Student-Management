@@ -35,8 +35,6 @@ import {
 } from '../../../component/Common';
 import academicProgramService from '../../../service/academicProgramService';
 import { departmentService } from '../../../service/departmentService';
-import * as XLSX from 'xlsx';
-import { useDebounce } from '../../../hooks/useDebounce';
 
 const Curriculum = () => {
   const theme = useTheme();

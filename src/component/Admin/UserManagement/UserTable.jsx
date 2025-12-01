@@ -177,7 +177,8 @@ const UserTable = ({
         showTotal: (total) => `Tổng ${total} người dùng`,
       }}
       onChange={onChange}
-      scroll={{ x: 1000 }}
+      scroll={{ x: 'max-content' }}
+      size="middle"
     />
   );
 };

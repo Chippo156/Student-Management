@@ -83,7 +83,11 @@ const SectionScheduleTab = ({ sectionId, section }) => {
 
   // Fetch lecturers once when section loads
   useEffect(() => {
-    if (section && section.departmentId !== null && section.departmentId !== undefined) {
+    if (
+      section &&
+      section.departmentId !== null &&
+      section.departmentId !== undefined
+    ) {
       console.log(
         'Initial fetch of lecturers for section department:',
         section.departmentId
@@ -174,14 +178,23 @@ const SectionScheduleTab = ({ sectionId, section }) => {
       setFormData(newFormData);
 
       // Always fetch lecturers when opening dialog (will be used if practice schedule)
-      if (section && section.departmentId !== null && section.departmentId !== undefined) {
+      if (
+        section &&
+        section.departmentId !== null &&
+        section.departmentId !== undefined
+      ) {
         console.log(
           '✅ Fetching lecturers for departmentId:',
           section.departmentId
         );
         fetchLecturers(section.departmentId);
       } else {
-        console.warn('❌ No valid departmentId! Section:', section, 'DepartmentId:', section?.departmentId);
+        console.warn(
+          '❌ No valid departmentId! Section:',
+          section,
+          'DepartmentId:',
+          section?.departmentId
+        );
       }
     } else {
       setEditingSchedule(null);
@@ -200,7 +213,11 @@ const SectionScheduleTab = ({ sectionId, section }) => {
       });
 
       // Fetch lecturers for new schedule too
-      if (section && section.departmentId !== null && section.departmentId !== undefined) {
+      if (
+        section &&
+        section.departmentId !== null &&
+        section.departmentId !== undefined
+      ) {
         console.log(
           'Fetching lecturers for new schedule, departmentId:',
           section.departmentId
@@ -427,8 +444,8 @@ const SectionScheduleTab = ({ sectionId, section }) => {
         rowKey="scheduleId"
         loading={loading}
         pagination={false}
-        size="small"
-        scroll={{ x: 1000 }}
+        scroll={{ x: 'max-content' }}
+        size="middle"
         locale={{
           emptyText: (
             <Box sx={{ py: 4 }}>
@@ -585,9 +602,8 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                     options={lecturers}
                     getOptionLabel={(option) => option.name || ''}
                     value={
-                      lecturers.find(
-                        (l) => l.id === formData.lecturerId
-                      ) || null
+                      lecturers.find((l) => l.id === formData.lecturerId) ||
+                      null
                     }
                     onChange={(event, newValue) => {
                       console.log('Selected lecturer:', newValue);

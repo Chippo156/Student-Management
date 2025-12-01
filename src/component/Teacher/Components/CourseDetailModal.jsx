@@ -36,7 +36,7 @@ import { useTheme, alpha } from '@mui/material/styles';
 import practiceService from '../../../service/practiceService';
 import sectionService from '../../../service/sectionService';
 import { exportSectionStudentsExcel } from '../../../until/exportSectionStudentsExcel';
-import * as XLSX from 'xlsx';
+import { exportExamListExcel } from '../../../until/exportExamListExcel';
 
 const CourseDetailModal = ({ open, onClose, section }) => {
   const theme = useTheme();
@@ -109,35 +109,22 @@ const CourseDetailModal = ({ open, onClose, section }) => {
   };
 
   // ✅ Hàm export danh sách dự thi ra Excel
-  const exportExamListToExcel = () => {
+  const exportExamListToExcel = async () => {
     if (!examListData || !examListData.students) return;
 
-    const dataToExport = examListData.students.map((student, index) => {
-      const row = {
-        STT: index + 1,
-        MSSV: student.mssv,
-        'Họ và tên': student.studentName,
-        Lớp: student.className,
-        Email: student.email,
-        SĐT: student.phone || '',
-        'Đủ điều kiện': student.isEligible ? 'Có' : 'Không',
-        'Lý do': student.eligibilityReason || '',
-      };
+    // Prepare exam data with section info
+    const examDataForExport = {
+      ...examListData,
+      sectionCode: section?.sectionCode || examListData.sectionCode,
+      courseName: section?.courseName || examListData.courseName,
+      semesterName: section?.semesterName || examListData.semesterName,
+    };
 
-      // Thêm các cột điểm
-      student.currentGrades?.forEach((grade) => {
-        row[`${grade.assessmentType} (${grade.weight}%)`] = grade.score || '';
-      });
+    const result = await exportExamListExcel(examDataForExport);
 
-      return row;
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách dự thi');
-
-    const fileName = `Danh_sach_du_thi_${examListData.sectionCode}_${new Date().getTime()}.xlsx`;
-    XLSX.writeFile(workbook, fileName);
+    if (!result.success) {
+      console.error('Export exam list failed:', result.error);
+    }
   };
 
   if (!section) return null;

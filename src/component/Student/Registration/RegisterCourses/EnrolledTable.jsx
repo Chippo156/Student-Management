@@ -185,7 +185,8 @@ const EnrolledTable = forwardRef((props, ref) => {
           size="small"
           bordered
           locale={{ emptyText: 'Chưa đăng ký lớp học phần nào' }}
-          scroll={{ x: 1000 }}
+          scroll={{ x: 'max-content' }}
+          size="middle"
           rowClassName={(r, i) => tableRowClassName(r, i, null, null)}
         />
       </Spin>

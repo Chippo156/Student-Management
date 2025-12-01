@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-const baseURL =
-  import.meta.env?.VITE_APP_BE_API_URL || 'https://localhost:7061';
-
+const baseURL = import.meta.env?.VITE_APP_BE_API_URL;
+console.log(baseURL);
 const instance = axios.create({
   baseURL: baseURL,
   // withCredentials: true,

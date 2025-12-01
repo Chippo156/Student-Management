@@ -269,7 +269,8 @@ const StudentManagement = () => {
           showTotal: (total, range) =>
             `${range[0]}-${range[1]} của ${total} sinh viên`,
         }}
-        scroll={{ x: 1400 }}
+        scroll={{ x: 'max-content' }}
+        size="middle"
       />
 
       <Modal

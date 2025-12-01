@@ -1,7 +1,7 @@
 import * as signalR from '@microsoft/signalr';
 import axios from '../until/customize-axios';
 
-const CHAT_HUB_URL = 'https://localhost:7061/chathub';
+const CHAT_HUB_URL = import.meta.env?.VITE_APP_BE_CHAT_HUB;
 
 class ChatService {
   constructor() {

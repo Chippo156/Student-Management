@@ -104,7 +104,8 @@ const ScheduleDetail = forwardRef((props, ref) => {
         bordered
         size="small"
         locale={{ emptyText: 'Không có lịch học' }}
-        scroll={{ x: 1000 }}
+        scroll={{ x: 'max-content' }}
+        size="middle"
         rowClassName={scheduleRowClassName}
         style={{ marginBottom: 16 }}
       />

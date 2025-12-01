@@ -36,7 +36,6 @@ import {
   DataTable,
   FilterSection,
 } from '../../../component/Common';
-import * as XLSX from 'xlsx';
 import { tuitionService } from '../../../service/tuitionService';
 import TuitionDetailModal from '../../../component/Admin/TuitionManagement/TuitionDetailModal';
 import StudentTuitionSummaryModal from '../../../component/Admin/TuitionManagement/StudentTuitionSummaryModal';
@@ -360,7 +359,11 @@ const TuitionFees = () => {
             onClick={handleExportExcel}
             disabled={tuitions.length === 0}
             color="success"
-            sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+            sx={{
+              textTransform: 'none',
+              px: 3,
+              width: { xs: '100%', sm: 'auto' },
+            }}
             size="small"
           >
             Xuất Excel
