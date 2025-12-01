@@ -71,11 +71,10 @@ const AdminDashboard = () => {
   const [graduationData, setGraduationData] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
 
-  // State cho mock statistics
-  const [studentsByYear, setStudentsByYear] = useState(null);
-  const [departmentData, setDepartmentData] = useState(null);
-  const [gpaByDepartment, setGpaByDepartment] = useState(null);
-  const [tuitionStats, setTuitionStats] = useState(null);
+  // ✅ State cho 2 API mới
+  const [studentsByYearData, setStudentsByYearData] = useState(null);
+  const [studentsByDepartmentData, setStudentsByDepartmentData] =
+    useState(null);
 
   const colors = useMemo(
     () => ({
@@ -105,19 +104,15 @@ const AdminDashboard = () => {
         graduation,
         userData,
         byYear,
-        departments,
-        gpaData,
-        tuition,
+        byDepartment,
       ] = await Promise.all([
         statisticsService.getOverview(),
         statisticsService.getStudentStatus(),
         statisticsService.getYearlyGrowth(7),
         statisticsService.getGraduationYearly(),
         userService.getUserInfo(),
-        statisticsService.getStudentsByYear(),
-        statisticsService.getDepartmentDistribution(),
-        statisticsService.getGPAByDepartment(),
-        statisticsService.getTuitionStatistics(),
+        statisticsService.getStudentsByYear(), // ✅ API mới 1
+        statisticsService.getStudentsByDepartment(), // ✅ API mới 2
       ]);
 
       console.log('📊 Overview data:', overview);
@@ -125,16 +120,16 @@ const AdminDashboard = () => {
       console.log('📈 Yearly growth data:', yearlyGrowth);
       console.log('🎓 Graduation data:', graduation);
       console.log('👤 User data:', userData);
+      console.log('📅 Students by year data:', byYear);
+      console.log('🏢 Students by department data:', byDepartment);
 
       setOverviewData(overview);
       setStudentStatusData(studentStatus);
       setYearlyGrowthData(yearlyGrowth);
       setGraduationData(graduation);
       setCurrentUser(userData);
-      setStudentsByYear(byYear);
-      setDepartmentData(departments);
-      setGpaByDepartment(gpaData);
-      setTuitionStats(tuition);
+      setStudentsByYearData(byYear);
+      setStudentsByDepartmentData(byDepartment);
     } catch (error) {
       console.error('❌ Error fetching dashboard data:', error);
     }
@@ -253,6 +248,40 @@ const AdminDashboard = () => {
     }));
   }, [graduationData]);
 
+  // ✅ Transform data cho Students by Year Pie Chart (API mới)
+  const studentsByYear = useMemo(() => {
+    if (!studentsByYearData?.yearDistribution) return [];
+
+    const colors = ['#1976d2', '#2e7d32', '#ed6c02', '#9c27b0', '#d32f2f'];
+
+    return studentsByYearData.yearDistribution.map((item, index) => ({
+      name: item.yearName,
+      value: item.studentCount,
+      percentage: item.percentage.toFixed(1),
+      color: colors[index % colors.length],
+    }));
+  }, [studentsByYearData]);
+
+  // ✅ Transform data cho Department Distribution Bar Chart (API mới)
+  const departmentData = useMemo(() => {
+    if (!studentsByDepartmentData) return [];
+
+    const colors = [
+      '#1976d2',
+      '#2e7d32',
+      '#ed6c02',
+      '#9c27b0',
+      '#d32f2f',
+      '#00acc1',
+    ];
+
+    return studentsByDepartmentData.map((item, index) => ({
+      departmentName: item.departmentName,
+      studentCount: item.studentCount,
+      color: colors[index % colors.length],
+    }));
+  }, [studentsByDepartmentData]);
+
   // Component cho Stats Card
   const StatCard = ({ stat }) => {
     const IconComponent = stat.icon;
@@ -336,22 +365,6 @@ const AdminDashboard = () => {
     );
   };
 
-  // Component cho Activity Icon
-  const getActivityIcon = (type) => {
-    switch (type) {
-      case 'enrollment':
-        return <BookIcon />;
-      case 'grade':
-        return <GradeIcon />;
-      case 'announcement':
-        return <AnnouncementIcon />;
-      case 'document':
-        return <DocumentIcon />;
-      default:
-        return <TrendingUpIcon />;
-    }
-  };
-
   if (loading) {
     return (
       <Box
@@ -369,7 +382,13 @@ const AdminDashboard = () => {
 
   return (
     <PageTransition>
-      <Box sx={{ p: { xs: 2, sm: 2, md: 3 }, bgcolor: colors.background, minHeight: '100vh' }}>
+      <Box
+        sx={{
+          p: { xs: 2, sm: 2, md: 3 },
+          bgcolor: colors.background,
+          minHeight: '100vh',
+        }}
+      >
         {/* Hero Banner */}
         <Fade in={true} timeout={400}>
           <Paper
@@ -411,11 +430,15 @@ const AdminDashboard = () => {
                       {currentUser?.fullName?.charAt(0).toUpperCase() || 'A'}
                     </Avatar>
                     <Box>
-                      <Typography variant="h3" sx={{ fontWeight: 700, mb: 0.5 }}>
+                      <Typography
+                        variant="h3"
+                        sx={{ fontWeight: 700, mb: 0.5 }}
+                      >
                         Xin chào, {currentUser?.fullName || 'Admin'}!
                       </Typography>
                       <Typography variant="body1" sx={{ opacity: 0.95 }}>
-                        {currentUser?.email || 'Quản trị viên hệ thống'} • {currentUser?.roleName || 'Administrator'}
+                        {currentUser?.email || 'Quản trị viên hệ thống'} •{' '}
+                        {currentUser?.roleName || 'Administrator'}
                       </Typography>
                     </Box>
                   </Box>
@@ -435,7 +458,10 @@ const AdminDashboard = () => {
                     >
                       <RefreshIcon />
                     </IconButton>
-                    <Typography variant="body2" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ opacity: 0.9, fontWeight: 500 }}
+                    >
                       {new Date().toLocaleDateString('vi-VN', {
                         weekday: 'long',
                         day: 'numeric',
@@ -446,7 +472,7 @@ const AdminDashboard = () => {
                     <Typography variant="h6" sx={{ mt: 0.5, fontWeight: 600 }}>
                       {new Date().toLocaleTimeString('vi-VN', {
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
                       })}
                     </Typography>
                   </Box>
@@ -600,139 +626,11 @@ const AdminDashboard = () => {
           </Grid>
         </Grid>
 
-        {/* Charts Row 3: Department Distribution & Tuition Stats */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          {/* Department Distribution */}
-          <Grid item xs={12} lg={6}>
-            <Card sx={{ p: 3, height: '400px', bgcolor: colors.paper }}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                Phân bố sinh viên theo chuyên ngành
-              </Typography>
-              <ResponsiveContainer width="100%" height="90%">
-                <BarChart data={departmentData} layout="vertical">
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke={alpha(colors.text, 0.1)}
-                  />
-                  <XAxis type="number" stroke={colors.textSecondary} />
-                  <YAxis
-                    type="category"
-                    dataKey="departmentName"
-                    stroke={colors.textSecondary}
-                    width={150}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: colors.paper,
-                      border: `1px solid ${alpha(colors.text, 0.2)}`,
-                      borderRadius: 8,
-                    }}
-                  />
-                  <Bar dataKey="studentCount" name="Số sinh viên" radius={[0, 8, 8, 0]}>
-                    {departmentData?.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          </Grid>
-
-          {/* Tuition Statistics */}
-          <Grid item xs={12} lg={6}>
-            <Card sx={{ p: 3, height: '400px', bgcolor: colors.paper }}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                Thống kê học phí 6 tháng gần nhất
-              </Typography>
-              <Box sx={{ mb: 2 }}>
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <Box
-                      sx={{
-                        textAlign: 'center',
-                        p: 2,
-                        bgcolor: alpha(colors.success, 0.1),
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        Đã đóng
-                      </Typography>
-                      <Typography
-                        variant="h6"
-                        sx={{ fontWeight: 700, color: colors.success }}
-                      >
-                        {tuitionStats?.paidPercentage}%
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Box
-                      sx={{
-                        textAlign: 'center',
-                        p: 2,
-                        bgcolor: alpha(colors.warning, 0.1),
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        Chưa đóng
-                      </Typography>
-                      <Typography
-                        variant="h6"
-                        sx={{ fontWeight: 700, color: colors.warning }}
-                      >
-                        {tuitionStats?.pendingPercentage}%
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Box>
-              <ResponsiveContainer width="100%" height="70%">
-                <BarChart data={tuitionStats?.monthlyStats}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke={alpha(colors.text, 0.1)}
-                  />
-                  <XAxis dataKey="month" stroke={colors.textSecondary} />
-                  <YAxis stroke={colors.textSecondary} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: colors.paper,
-                      border: `1px solid ${alpha(colors.text, 0.2)}`,
-                      borderRadius: 8,
-                    }}
-                  />
-                  <Legend />
-                  <Bar
-                    dataKey="paid"
-                    fill={colors.success}
-                    name="Đã đóng"
-                    radius={[8, 8, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="pending"
-                    fill={colors.warning}
-                    name="Chưa đóng"
-                    radius={[8, 8, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="overdue"
-                    fill={colors.error}
-                    name="Quá hạn"
-                    radius={[8, 8, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Charts Row 4: Students by Year & GPA by Department */}
+        {/* ✅ Charts Row 3: Students by Year & Department Distribution */}
         <Grid container spacing={3}>
           {/* Students by Academic Year */}
           <Grid item xs={12} lg={6}>
-            <Card sx={{ p: 3, height: '400px', bgcolor: colors.paper }}>
+            <Card sx={{ p: 3, height: '450px', bgcolor: colors.paper }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Phân bố sinh viên theo năm học
               </Typography>
@@ -743,12 +641,10 @@ const AdminDashboard = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ year, percentage }) =>
-                      `${year}: ${percentage}%`
-                    }
+                    label={({ name, percentage }) => `${name}: ${percentage}%`}
                     outerRadius={110}
                     fill="#8884d8"
-                    dataKey="count"
+                    dataKey="value"
                   >
                     {studentsByYear?.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -767,105 +663,43 @@ const AdminDashboard = () => {
             </Card>
           </Grid>
 
-          {/* GPA by Department */}
+          {/* Department Distribution */}
           <Grid item xs={12} lg={6}>
-            <Card sx={{ p: 3, height: '400px', bgcolor: colors.paper }}>
+            <Card sx={{ p: 3, height: '450px', bgcolor: colors.paper }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                Điểm trung bình theo chuyên ngành
+                Phân bố sinh viên theo chuyên ngành
               </Typography>
-              <Box sx={{ overflowY: 'auto', maxHeight: '340px' }}>
-                {gpaByDepartment?.map((dept, index) => (
-                  <Box
-                    key={dept.id}
-                    sx={{
-                      p: 2,
-                      mb: 2,
-                      bgcolor: alpha(colors.primary, 0.05),
-                      borderRadius: 2,
-                      borderLeft: `4px solid ${colors.primary}`,
+              <ResponsiveContainer width="100%" height="90%">
+                <BarChart data={departmentData} layout="vertical">
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={alpha(colors.text, 0.1)}
+                  />
+                  <XAxis type="number" stroke={colors.textSecondary} />
+                  <YAxis
+                    type="category"
+                    dataKey="departmentName"
+                    stroke={colors.textSecondary}
+                    width={200}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: colors.paper,
+                      border: `1px solid ${alpha(colors.text, 0.2)}`,
+                      borderRadius: 8,
                     }}
+                  />
+                  <Bar
+                    dataKey="studentCount"
+                    name="Số sinh viên"
+                    radius={[0, 8, 8, 0]}
                   >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        mb: 1,
-                      }}
-                    >
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                        {dept.departmentName}
-                      </Typography>
-                      <Chip
-                        label={`GPA: ${dept.averageGPA.toFixed(2)}`}
-                        color={
-                          dept.averageGPA >= 3.2
-                            ? 'success'
-                            : dept.averageGPA >= 3.0
-                            ? 'primary'
-                            : 'warning'
-                        }
-                        size="small"
-                        sx={{ fontWeight: 700 }}
-                      />
-                    </Box>
-                    <Grid container spacing={1}>
-                      <Grid item xs={3}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography
-                            variant="h6"
-                            sx={{ color: colors.success, fontWeight: 700 }}
-                          >
-                            {dept.excellentCount}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Xuất sắc
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={3}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography
-                            variant="h6"
-                            sx={{ color: colors.primary, fontWeight: 700 }}
-                          >
-                            {dept.goodCount}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Giỏi
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={3}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography
-                            variant="h6"
-                            sx={{ color: colors.warning, fontWeight: 700 }}
-                          >
-                            {dept.averageCount}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Khá
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={3}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography
-                            variant="h6"
-                            sx={{ color: colors.error, fontWeight: 700 }}
-                          >
-                            {dept.weakCount}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Yếu
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                ))}
-              </Box>
+                    {departmentData?.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </Card>
           </Grid>
         </Grid>

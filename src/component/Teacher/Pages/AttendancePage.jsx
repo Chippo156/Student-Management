@@ -51,6 +51,7 @@ const AttendancePage = () => {
   const [selectedDate, setSelectedDate] = useState(dayjs()); // Thêm state cho ngày đã chọn
   const [classType, setClassType] = useState(''); // 'theory' hoặc 'practice' hoặc '' (tất cả)
   const [practiceGroups, setPracticeGroups] = useState([]); // Danh sách nhóm thực hành
+  const [selectedPracticeGroupId, setSelectedPracticeGroupId] = useState(null); // Lưu practiceGroupId từ session
   const [loading, setLoading] = useState(false);
   const [openCreateSessionModal, setOpenCreateSessionModal] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
@@ -258,7 +259,37 @@ const AttendancePage = () => {
 
   // Click vào một phiên để load danh sách sinh viên và điểm danh
   const handleSelectSession = async (session) => {
+    console.log('=== SELECTING SESSION ===');
+    console.log('Session data:', session);
+    console.log('Session sectionId:', session.sectionId);
+    console.log('Session practiceGroupId:', session.practiceGroupId);
+
     setSelectedSession(session);
+
+    // Auto-fill selectedCourse và classType từ session
+    if (session.sectionId) {
+      console.log('Setting selectedCourse to:', session.sectionId);
+      setSelectedCourse(session.sectionId);
+    }
+
+    // Map practiceGroupId to classType
+    // nếu là null practiceGroupId thì là lý thuyết còn kia là thực hành
+    if (session.practiceGroupId === null) {
+      console.log('Setting classType to: theory (practiceGroupId is null)');
+      setClassType('theory');
+      setSelectedPracticeGroupId(null);
+    } else {
+      console.log('Setting classType to: practice (practiceGroupId:', session.practiceGroupId, ')');
+      setClassType('practice');
+      setSelectedPracticeGroupId(session.practiceGroupId);
+    }
+
+    // Set selectedDate từ session date nếu có
+    if (session.sessionDate) {
+      const sessionDate = dayjs(session.sessionDate);
+      console.log('Setting selectedDate to:', sessionDate.format('YYYY-MM-DD'));
+      setSelectedDate(sessionDate);
+    }
 
     // Load danh sách sinh viên của session này
     setLoading(true);
@@ -462,8 +493,13 @@ const AttendancePage = () => {
       setLoading(false);
     }
   };
-
   const handleExportExcel = async () => {
+    console.log('=== EXPORT EXCEL CLICKED ===');
+    console.log('selectedCourse:', selectedCourse);
+    console.log('classType:', classType);
+    console.log('selectedDate:', selectedDate?.format('YYYY-MM-DD'));
+    console.log('practiceGroups:', practiceGroups);
+
     if (!selectedCourse) {
       setSnackbar({
         open: true,
@@ -483,10 +519,12 @@ const AttendancePage = () => {
         sectionData =
           await sectionService.getSectionTheoryDetail(selectedCourse);
       } else if (classType === 'practice') {
-        // Nếu có nhiều nhóm thực hành, cần chọn nhóm
+        // Sử dụng practiceGroupId từ session đã chọn hoặc nhóm đầu tiên
         const practiceGroupId =
-          sessionData.practiceGroupId ||
+          selectedPracticeGroupId ||
           (practiceGroups.length > 0 ? practiceGroups[0].id : null);
+
+        console.log('Using practiceGroupId for export:', practiceGroupId);
 
         sectionData = await sectionService.getSectionPracticeDetail(
           selectedCourse,
@@ -989,11 +1027,20 @@ const AttendancePage = () => {
                       </Button>
                     </>
                   )}
+                  {(() => {
+                    const isDisabled = loading || !selectedCourse || !classType;
+                    console.log('Excel button disabled?', isDisabled, {
+                      loading,
+                      selectedCourse,
+                      classType,
+                    });
+                    return null;
+                  })()}
                   <Button
                     variant="outlined"
                     color="info"
                     onClick={() => handleExportExcel()}
-                    disabled={loading}
+                    disabled={loading || !selectedCourse || !classType}
                     startIcon={<CalendarToday />}
                   >
                     Excel
