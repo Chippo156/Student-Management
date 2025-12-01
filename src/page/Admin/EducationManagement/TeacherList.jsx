@@ -156,7 +156,8 @@ const TeacherList = () => {
     if (filterDepartment) {
       const dept = departments.find((d) => d.departmentId === filterDepartment);
       filterInfo +=
-        (filterInfo ? ', ' : '') + `Khoa: ${dept?.departmentName || ''}`;
+        (filterInfo ? ', ' : '') +
+        `Chuyên ngành: ${dept?.departmentName || ''}`;
     }
     if (filterPosition)
       filterInfo += (filterInfo ? ', ' : '') + `Chức vụ: ${filterPosition}`;
@@ -257,6 +258,7 @@ const TeacherList = () => {
       renderCell: (lecturer) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Avatar
+            src={lecturer.user?.avatarUrl}
             sx={{
               width: 40,
               height: 40,
@@ -291,7 +293,7 @@ const TeacherList = () => {
     },
     {
       field: 'department',
-      headerName: 'Khoa',
+      headerName: 'Chuyên ngành',
       width: 180,
       renderCell: (lecturer) => (
         <Chip
@@ -377,14 +379,25 @@ const TeacherList = () => {
         title="Quản lý Giảng viên"
         onRefresh={fetchLecturers}
         actions={
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, width: { xs: '100%', sm: 'auto' } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 1,
+              width: { xs: '100%', sm: 'auto' },
+            }}
+          >
             <Button
               variant="contained"
               startIcon={<FileDownload />}
               onClick={handleExportExcel}
               disabled={lecturers.length === 0}
               color="success"
-              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              sx={{
+                textTransform: 'none',
+                px: 3,
+                width: { xs: '100%', sm: 'auto' },
+              }}
               size="small"
             >
               Xuất Excel
@@ -424,7 +437,7 @@ const TeacherList = () => {
           <StatsCard
             icon={<Business />}
             value={stats.departments}
-            label="Khoa"
+            label="Chuyên ngành"
             color="warning"
           />
         </Grid>
@@ -455,10 +468,10 @@ const TeacherList = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
           <FormControl fullWidth size="small">
-            <InputLabel>Khoa</InputLabel>
+            <InputLabel>Chuyên ngành</InputLabel>
             <Select
               value={filterDepartment}
-              label="Khoa"
+              label="Chuyên ngành"
               onChange={(e) => setFilterDepartment(e.target.value)}
             >
               <MenuItem value="">Tất cả</MenuItem>
@@ -480,25 +493,8 @@ const TeacherList = () => {
             >
               <MenuItem value="">Tất cả</MenuItem>
               <MenuItem value="Giảng viên">Giảng viên</MenuItem>
-              <MenuItem value="Trưởng khoa">Trưởng khoa</MenuItem>
-              <MenuItem value="Phó khoa">Phó khoa</MenuItem>
-              <MenuItem value="Trưởng bộ môn">Trưởng bộ môn</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={6} sm={4} md={3} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Học hàm</InputLabel>
-            <Select
-              value={filterAcademicTitle}
-              label="Học hàm"
-              onChange={(e) => setFilterAcademicTitle(e.target.value)}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
               <MenuItem value="Giáo sư">Giáo sư</MenuItem>
-              <MenuItem value="Phó giáo sư">Phó giáo sư</MenuItem>
-              <MenuItem value="Tiến sĩ">Tiến sĩ</MenuItem>
-              <MenuItem value="Thạc sĩ">Thạc sĩ</MenuItem>
+              <MenuItem value="Trợ giảng">Trợ giảng</MenuItem>
             </Select>
           </FormControl>
         </Grid>

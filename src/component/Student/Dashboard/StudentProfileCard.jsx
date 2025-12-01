@@ -1,10 +1,18 @@
 import React from 'react';
 import { Card, Row, Col, Button } from 'antd';
 import { UserOutlined, RightOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom'; // ✅ Import useNavigate
+import AvatarUpload from '../../Common/AvatarUpload';
 
 const StudentProfileCard = ({ account, colors }) => {
+  const navigate = useNavigate(); // ✅ Initialize navigate
+
   const acctFullName = account?.fullName || account?.user?.fullName;
-  const acctAvatar = account?.avatar || account?.user?.avatar;
+  const acctAvatar =
+    account?.avatarUrl ||
+    account?.user?.avatarUrl ||
+    account?.avatar ||
+    account?.user?.avatar;
   const acctEmail = account?.email || account?.user?.email;
   const acctPhone = account?.phone || account?.user?.phone;
   const acctGender = account?.gender ?? account?.user?.gender;
@@ -25,35 +33,12 @@ const StudentProfileCard = ({ account, colors }) => {
       <Row gutter={[16, 16]} align="middle">
         <Col xs={24} md={6} style={{ textAlign: 'center' }}>
           <div style={{ position: 'relative', display: 'inline-block' }}>
-            <div
-              style={{
-                width: 96,
-                height: 96,
-                borderRadius: '50%',
-                background: colors.primary,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: `0 10px 25px ${colors.primary}40`,
-                overflow: 'hidden',
-              }}
-            >
-              {acctAvatar ? (
-                <img
-                  src={acctAvatar}
-                  alt="avatar"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
-                />
-              ) : (
-                <UserOutlined
-                  style={{ fontSize: 42, color: colors.primaryContrast }}
-                />
-              )}
-            </div>
+            <AvatarUpload
+              currentAvatarUrl={acctAvatar}
+              userId={account?.user?.userId || account?.userId}
+              size={96}
+              showUploadButton={true}
+            />
             <span
               style={{
                 position: 'absolute',
@@ -67,7 +52,11 @@ const StudentProfileCard = ({ account, colors }) => {
               }}
             />
           </div>
-          <Button type="link" style={{ marginTop: 8, padding: 0 }}>
+          <Button
+            type="link"
+            style={{ marginTop: 8, padding: 0 }}
+            onClick={() => navigate('/student/info')}
+          >
             Xem chi tiết <RightOutlined />
           </Button>
         </Col>

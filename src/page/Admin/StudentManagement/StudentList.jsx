@@ -289,6 +289,7 @@ const StudentList = () => {
       renderCell: (student) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Avatar
+            src={student.user?.avatarUrl}
             sx={{
               width: 40,
               height: 40,

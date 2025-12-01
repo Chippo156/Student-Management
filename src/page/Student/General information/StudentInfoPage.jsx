@@ -5,16 +5,17 @@ import {
   Divider,
   Spin,
   Typography,
-  Avatar,
   Tag,
   Row,
   Col,
   Statistic,
   Space,
   Badge,
+  Button,
 } from 'antd';
 import dayjs from 'dayjs';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
   UserOutlined,
   BookOutlined,
@@ -26,9 +27,13 @@ import {
   PhoneOutlined,
   CalendarOutlined,
   TrophyOutlined,
+  EditOutlined,
+  LockOutlined,
 } from '@ant-design/icons';
 import { useTheme, alpha } from '@mui/material/styles';
 import { familyRelationshipService } from '../../../service/familyRelationshipService';
+import AvatarUpload from '../../../component/Common/AvatarUpload';
+import ResetPasswordModal from '../../../component/Common/ResetPasswordModal';
 
 const { Title, Text } = Typography;
 
@@ -148,14 +153,11 @@ const StudentInfoPage = () => {
         <Row gutter={24} align="middle" style={{ position: 'relative' }}>
           <Col xs={24} md={8} style={{ textAlign: 'center' }}>
             <Badge dot status="success" offset={[-10, 90]}>
-              <Avatar
+              <AvatarUpload
+                currentAvatarUrl={user?.avatarUrl}
+                userId={user?.userId}
                 size={120}
-                src={user?.avatarUrl}
-                icon={<UserOutlined />}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.3)',
-                  border: '4px solid rgba(255, 255, 255, 0.5)',
-                }}
+                showUploadButton={true}
               />
             </Badge>
             <Title level={3} style={{ margin: '16px 0 8px', color: '#fff' }}>

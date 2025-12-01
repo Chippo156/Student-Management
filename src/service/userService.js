@@ -2,6 +2,36 @@ import { message } from 'antd';
 import axios from '../until/customize-axios';
 
 export const userService = {
+  resetPassword: async (data) => {
+    try {
+      const response = await axios.put('/api/User/ResetPassword', data);
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Đổi mật khẩu thất bại');
+        }
+        return null;
+      }
+
+      message.success('Đổi mật khẩu thành công!');
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(error.response.data.message || 'Đổi mật khẩu thất bại');
+        }
+      } else {
+        message.error(error.message || 'Đổi mật khẩu thất bại');
+      }
+      return null;
+    }
+  },
   getUserInfo: async () => {
     try {
       const response = await axios.get('/api/v1/Auth/GetCurrentUserByToken');

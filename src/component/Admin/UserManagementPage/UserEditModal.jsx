@@ -16,6 +16,7 @@ import { genderOptions, roleOptions } from './constants';
 import facultyService from '../../../service/facultyService';
 import { departmentService } from '../../../service/departmentService';
 import { classService } from '../../../service/classService';
+import AvatarUpload from '../../Common/AvatarUpload';
 
 const { Option } = Select;
 
@@ -155,6 +156,16 @@ const UserEditModal = ({ open, onCancel, onSave, user, loading }) => {
           onFinish={handleFinish}
           initialValues={{ gender: 1 }}
         >
+          {/* Avatar Upload */}
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <AvatarUpload
+              currentAvatarUrl={user?.avatarUrl}
+              userId={user?.userId}
+              size={100}
+              showUploadButton={true}
+            />
+          </div>
+
           {/* Thông tin cá nhân */}
           <Divider orientation="left">
             <span style={{ fontSize: 16, fontWeight: 600 }}>🧍 Thông tin cá nhân</span>

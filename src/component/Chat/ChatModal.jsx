@@ -169,7 +169,11 @@ const ChatModal = ({ open, onClose }) => {
   const handleClearHistory = async () => {
     if (!currentRoom?.chatRoomId) return;
 
-    if (!window.confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử tin nhắn trong phòng chat này?')) {
+    if (
+      !window.confirm(
+        'Bạn có chắc chắn muốn xóa toàn bộ lịch sử tin nhắn trong phòng chat này?'
+      )
+    ) {
       return;
     }
 
@@ -332,17 +336,18 @@ const ChatModal = ({ open, onClose }) => {
             </Box>
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            {currentRoom && currentRoom.roomName?.toLowerCase().includes('ai') && (
-              <Tooltip title="Xóa lịch sử chat">
-                <IconButton
-                  size="small"
-                  sx={{ color: 'white' }}
-                  onClick={handleClearHistory}
-                >
-                  <DeleteSweepIcon />
-                </IconButton>
-              </Tooltip>
-            )}
+            {currentRoom &&
+              currentRoom.roomName?.toLowerCase().includes('ai') && (
+                <Tooltip title="Xóa lịch sử chat">
+                  <IconButton
+                    size="small"
+                    sx={{ color: 'white' }}
+                    onClick={handleClearHistory}
+                  >
+                    <DeleteSweepIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
             <Tooltip title="Đóng">
               <IconButton
                 size="small"
@@ -377,10 +382,36 @@ const ChatModal = ({ open, onClose }) => {
           }}
         >
           {!currentRoom ? (
-            // Danh sách chat rooms
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            // Danh sách chat rooms - TOÀN BỘ KHU VỰC CÓ SCROLLBAR
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'auto',
+                overflowY: 'auto',
+                // Custom scrollbar cho toàn bộ khu vực danh sách phòng chat
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background:
+                    theme.palette.mode === 'dark' ? '#2d3748' : '#f1f1f1',
+                  borderRadius: '4px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background:
+                    theme.palette.mode === 'dark' ? '#4a5568' : '#888',
+                  borderRadius: '4px',
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                  background:
+                    theme.palette.mode === 'dark' ? '#718096' : '#555',
+                },
+              }}
+            >
               {/* Search */}
-              <Box sx={{ p: 2, pb: 1 }}>
+              <Box sx={{ p: 2, pb: 1, flexShrink: 0 }}>
                 <TextField
                   fullWidth
                   size="small"
@@ -398,7 +429,16 @@ const ChatModal = ({ open, onClose }) => {
               </Box>
 
               {/* Quick actions */}
-              <Box sx={{ px: 2, pb: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box
+                sx={{
+                  px: 2,
+                  pb: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                  flexShrink: 0,
+                }}
+              >
                 <Button
                   fullWidth
                   variant="outlined"
@@ -433,8 +473,8 @@ const ChatModal = ({ open, onClose }) => {
                 </Button>
               </Box>
 
-              {/* Rooms List */}
-              <List sx={{ flex: 1, overflow: 'auto', p: 0 }}>
+              {/* Rooms List - KHÔNG CÓ SCROLLBAR Ở ĐÂY NỮA */}
+              <List sx={{ p: 0, flexShrink: 0 }}>
                 {filteredRooms.length === 0 ? (
                   <Box sx={{ p: 4, textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary">
@@ -466,6 +506,12 @@ const ChatModal = ({ open, onClose }) => {
                                 variant="body2"
                                 sx={{
                                   fontWeight: room.unreadCount > 0 ? 600 : 400,
+                                  display: '-webkit-box',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                  maxWidth: 200,
                                 }}
                               >
                                 {room.roomName}
@@ -474,6 +520,14 @@ const ChatModal = ({ open, onClose }) => {
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"
+                                  sx={{
+                                    display: '-webkit-box',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                    maxWidth: 200,
+                                  }}
                                 >
                                   GV: {room.lecturerName}
                                 </Typography>
@@ -484,14 +538,30 @@ const ChatModal = ({ open, onClose }) => {
                             <Typography
                               variant="caption"
                               color="text.secondary"
-                              noWrap
+                              sx={{
+                                display: '-webkit-box',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                maxWidth: 200,
+                              }}
                             >
                               {room.lastMessage?.content ||
                                 'Bắt đầu trò chuyện'}
                             </Typography>
                           }
                         />
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            maxWidth: '60px',
+                          }}
+                        >
                           {room.lastMessage?.sentAt &&
                             formatLastMessageTime(room.lastMessage.sentAt)}
                         </Typography>

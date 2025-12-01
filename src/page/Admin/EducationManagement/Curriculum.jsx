@@ -27,14 +27,21 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
-import { PageHeader, StatsCard, DataTable, FilterSection } from '../../../component/Common';
+import {
+  PageHeader,
+  StatsCard,
+  DataTable,
+  FilterSection,
+} from '../../../component/Common';
 import academicProgramService from '../../../service/academicProgramService';
+import { departmentService } from '../../../service/departmentService';
 import * as XLSX from 'xlsx';
 import { useDebounce } from '../../../hooks/useDebounce';
 
 const Curriculum = () => {
   const theme = useTheme();
   const [programs, setPrograms] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDegree, setFilterDegree] = useState('');
@@ -42,13 +49,30 @@ const Curriculum = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
-
-  // ✅ Debounce search term
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
 
   useEffect(() => {
     fetchPrograms();
   }, [page, rowsPerPage, debouncedSearchTerm, filterDegree, filterDepartment]); // ✅ Dùng debouncedSearchTerm
+
+  const fetchDepartments = async () => {
+    try {
+      const data = await departmentService.getDepartmentsDropdown();
+      // Transform data to match dropdown structure
+      const transformedData =
+        data?.map((dept) => ({
+          id: dept.departmentId,
+          name: dept.departmentName,
+        })) || [];
+      setDepartments(transformedData);
+    } catch (error) {
+      console.error('Failed to fetch departments:', error);
+    }
+  };
 
   const fetchPrograms = async () => {
     setLoading(true);
@@ -58,6 +82,7 @@ const Curriculum = () => {
         pageSize: rowsPerPage,
         programName: debouncedSearchTerm, // ✅ Dùng debounced value
         degreeLevel: filterDegree || '',
+        departmentId: filterDepartment || null, // ✅ Thêm filter theo departmentId
       });
 
       if (result) {
@@ -86,11 +111,6 @@ const Curriculum = () => {
     setFilterDepartment('');
   };
 
-  const uniqueDepartments = useMemo(() => {
-    const depts = new Set(programs.map((p) => p.departmentName));
-    return Array.from(depts);
-  }, [programs]);
-
   const degreeLevels = ['Cử nhân', 'Thạc sĩ', 'Tiến sĩ'];
 
   const stats = useMemo(() => {
@@ -98,18 +118,18 @@ const Curriculum = () => {
       total: totalCount,
       undergraduate: programs.filter((p) => p.degreeLevel === 'Cử nhân').length,
       graduate: programs.filter((p) => p.degreeLevel === 'Thạc sĩ').length,
-      departments: uniqueDepartments.length,
+      departments: departments.length,
     };
-  }, [programs, totalCount, uniqueDepartments]);
+  }, [programs, totalCount, departments]);
 
   const handleExportExcel = () => {
     const dataToExport = programs.map((program, index) => ({
-      'STT': index + 1,
+      STT: index + 1,
       'Mã CTĐT': program.academicProgramId,
       'Tên chương trình': program.programName,
       'Bậc đào tạo': program.degreeLevel,
-      'Khoa': program.departmentName,
-      'Khoa quản lý': program.facultyName,
+      'Chuyên ngành': program.departmentName,
+      'Chuyên ngành quản lý': program.facultyName,
       'Tín chỉ': program.creditsRequired,
       'Trạng thái': program.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động',
     }));
@@ -130,12 +150,22 @@ const Curriculum = () => {
     ];
     worksheet['!cols'] = colWidths;
 
-    XLSX.writeFile(workbook, `Danh_sach_chuong_trinh_dao_tao_${new Date().getTime()}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `Danh_sach_chuong_trinh_dao_tao_${new Date().getTime()}.xlsx`
+    );
   };
 
   if (loading && programs.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -171,9 +201,10 @@ const Curriculum = () => {
           label={program.degreeLevel}
           size="small"
           sx={{
-            bgcolor: theme.palette.mode === 'light'
-              ? theme.palette.primary.light + '30'
-              : theme.palette.primary.dark + '40',
+            bgcolor:
+              theme.palette.mode === 'light'
+                ? theme.palette.primary.light + '30'
+                : theme.palette.primary.dark + '40',
             color: theme.palette.primary.main,
           }}
         />
@@ -181,13 +212,11 @@ const Curriculum = () => {
     },
     {
       field: 'departmentName',
-      headerName: 'Khoa',
+      headerName: 'Chuyên ngành',
       width: 200,
       renderCell: (program) => (
         <Box>
-          <Typography variant="body2">
-            {program.departmentName}
-          </Typography>
+          <Typography variant="body2">{program.departmentName}</Typography>
           <Typography variant="caption" color="text.secondary">
             {program.facultyName}
           </Typography>
@@ -247,14 +276,25 @@ const Curriculum = () => {
         title="Quản lý Chương trình đào tạo"
         onRefresh={fetchPrograms}
         actions={
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, width: { xs: '100%', sm: 'auto' } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 1,
+              width: { xs: '100%', sm: 'auto' },
+            }}
+          >
             <Button
               variant="contained"
               startIcon={<FileDownload />}
               onClick={handleExportExcel}
               disabled={programs.length === 0}
               color="success"
-              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              sx={{
+                textTransform: 'none',
+                px: 3,
+                width: { xs: '100%', sm: 'auto' },
+              }}
               size="small"
             >
               Xuất Excel
@@ -262,7 +302,11 @@ const Curriculum = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              sx={{
+                textTransform: 'none',
+                px: 3,
+                width: { xs: '100%', sm: 'auto' },
+              }}
               size="small"
             >
               Thêm chương trình
@@ -274,16 +318,36 @@ const Curriculum = () => {
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <StatsCard icon={<School />} value={stats.total} label="Tổng chương trình" color="primary" />
+          <StatsCard
+            icon={<School />}
+            value={stats.total}
+            label="Tổng chương trình"
+            color="primary"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatsCard icon={<MenuBook />} value={stats.undergraduate} label="Đại học" color="success" />
+          <StatsCard
+            icon={<MenuBook />}
+            value={stats.undergraduate}
+            label="Đại học"
+            color="success"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatsCard icon={<CheckCircle />} value={stats.graduate} label="Sau đại học" color="info" />
+          <StatsCard
+            icon={<CheckCircle />}
+            value={stats.graduate}
+            label="Sau đại học"
+            color="info"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatsCard icon={<Business />} value={stats.departments} label="Khoa" color="warning" />
+          <StatsCard
+            icon={<Business />}
+            value={stats.departments}
+            label="Chuyên ngành"
+            color="warning"
+          />
         </Grid>
       </Grid>
 
@@ -329,23 +393,38 @@ const Curriculum = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={3} lg={3}>
           <FormControl fullWidth size="small">
-            <InputLabel>Khoa</InputLabel>
+            <InputLabel id="department-select-label">Chuyên ngành</InputLabel>
             <Select
+              labelId="department-select-label"
               value={filterDepartment || ''}
-              label="Khoa"
+              label="Chuyên ngành"
               onChange={(e) => setFilterDepartment(e.target.value)}
+              renderValue={(selected) => {
+                if (!selected) {
+                  return 'Tất cả';
+                }
+                const department = departments.find((d) => d.id === selected);
+                return department ? department.name : selected;
+              }}
             >
-              <MenuItem value="">Tất cả</MenuItem>
-              {uniqueDepartments.map((dept) => (
-                <MenuItem key={dept} value={dept}>
-                  {dept}
+              <MenuItem value="">
+                <em>Tất cả</em>
+              </MenuItem>
+              {departments.map((dept) => (
+                <MenuItem key={dept.id} value={dept.id}>
+                  {dept.name}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
         </Grid>
         <Grid item xs={12} sm={12} md={2} lg={2}>
-          <Button fullWidth variant="outlined" onClick={handleResetFilters} sx={{ height: '40px' }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={handleResetFilters}
+            sx={{ height: '40px' }}
+          >
             Đặt lại
           </Button>
         </Grid>
@@ -362,12 +441,16 @@ const Curriculum = () => {
         onRowsPerPageChange={handleChangeRowsPerPage}
         emptyState={
           <>
-            <School sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }} />
+            <School
+              sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }}
+            />
             <Typography variant="h6" color="text.secondary" gutterBottom>
               Không tìm thấy chương trình đào tạo nào
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {searchTerm ? 'Thử thay đổi từ khóa tìm kiếm' : 'Chưa có chương trình đào tạo nào trong hệ thống'}
+              {searchTerm
+                ? 'Thử thay đổi từ khóa tìm kiếm'
+                : 'Chưa có chương trình đào tạo nào trong hệ thống'}
             </Typography>
           </>
         }

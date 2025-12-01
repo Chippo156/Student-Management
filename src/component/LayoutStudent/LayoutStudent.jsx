@@ -33,6 +33,7 @@ import {
   Payment as PaymentIcon,
   Search as SearchIcon,
   CreditCard as CreditCardIcon,
+  Notifications as NotificationsIcon,
   ExpandLess,
   ExpandMore,
   Menu as MenuIcon,
@@ -72,12 +73,12 @@ const menuData = [
         key: 'bank',
         path: '/student/bank',
       },
-      {
-        label: 'Cập nhật thông tin BHYT',
-        icon: <LocalHospitalIcon />,
-        key: 'bhyt',
-        path: '/student/bhyt',
-      },
+      // {
+      //   label: 'Cập nhật thông tin BHYT',
+      //   icon: <LocalHospitalIcon />,
+      //   key: 'bhyt',
+      //   path: '/student/bhyt',
+      // },
       // {
       //   label: 'Đề xuất xét TN',
       //   icon: <CheckCircleIcon />,
@@ -104,12 +105,12 @@ const menuData = [
         key: 'week-calendar',
         path: '/student/schedule',
       },
-      {
-        label: 'Lịch theo tiến độ',
-        icon: <TimelineIcon />,
-        key: 'timeline-calendar',
-        path: '/student/timeline',
-      },
+      // {
+      //   label: 'Lịch theo tiến độ',
+      //   icon: <TimelineIcon />,
+      //   key: 'timeline-calendar',
+      //   path: '/student/timeline',
+      // },
     ],
   },
   {
@@ -144,13 +145,19 @@ const menuData = [
         key: 'debt',
         path: '/student/debt',
       },
-      {
-        label: 'Thanh toán trực tuyến',
-        icon: <CreditCardIcon />,
-        key: 'pay',
-        path: '/student/payment',
-      },
+      // {
+      //   label: 'Thanh toán trực tuyến',
+      //   icon: <CreditCardIcon />,
+      //   key: 'pay',
+      //   path: '/student/payment',
+      // },
     ],
+  },
+  {
+    label: 'Nhắc nhở',
+    icon: <NotificationsIcon />,
+    key: 'notifications',
+    path: '/student/notifications',
   },
 ];
 
@@ -301,21 +308,29 @@ const LayoutStudent = () => {
       )}
 
       {/* Menu List */}
-      <List component="nav" sx={{ flex: 1, overflow: 'auto', pt: isDesktop ? 0 : 1 }}>
+      <List
+        component="nav"
+        sx={{ flex: 1, overflow: 'auto', pt: isDesktop ? 0 : 1 }}
+      >
         {menuData.map((item) => renderMenuItem(item))}
       </List>
 
       {/* Collapse toggle for desktop */}
       {isDesktop && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 1, borderTop: 1, borderColor: 'divider' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            py: 1,
+            borderTop: 1,
+            borderColor: 'divider',
+          }}
+        >
           <Tooltip
             title={collapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
             placement="right"
           >
-            <IconButton
-              onClick={() => setCollapsed((v) => !v)}
-              size="small"
-            >
+            <IconButton onClick={() => setCollapsed((v) => !v)} size="small">
               {collapsed ? <MenuIcon /> : <MenuOpenIcon />}
             </IconButton>
           </Tooltip>
@@ -337,7 +352,7 @@ const LayoutStudent = () => {
             bgcolor: 'background.paper',
             color: 'text.primary',
             borderBottom: 1,
-            borderColor: 'divider'
+            borderColor: 'divider',
           }}
         >
           <Toolbar variant="dense" sx={{ minHeight: 48 }}>

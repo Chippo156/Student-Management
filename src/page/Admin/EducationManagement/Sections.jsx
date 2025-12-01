@@ -75,7 +75,7 @@ const Sections = () => {
   useEffect(() => {
     const fetchSemesters = async () => {
       try {
-        const data = await semesterService.getStudentSemesters();
+        const data = await sectionService.getSemesterDropdown();
         setSemesters(data || []);
       } catch (error) {
         console.error('Failed to fetch semesters:', error);
@@ -163,7 +163,7 @@ const Sections = () => {
     let filterInfo = '';
     if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
     if (filterSemester) {
-      const semester = semesters.find((s) => s.semesterId === filterSemester);
+      const semester = semesters.find((s) => s.id === filterSemester);
       filterInfo +=
         (filterInfo ? ', ' : '') + `Học kỳ: ${semester?.semesterName || ''}`;
     }
@@ -187,6 +187,7 @@ const Sections = () => {
     try {
       const detailData = await sectionService.getSectionById(section.sectionId);
       if (detailData) {
+        console.log('aaa', detailData);
         setSelectedSection(detailData);
         setDetailModalOpen(true);
       }
@@ -393,14 +394,25 @@ const Sections = () => {
         title="Quản lý Lớp học phần"
         onRefresh={fetchSections}
         actions={
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, width: { xs: '100%', sm: 'auto' } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 1,
+              width: { xs: '100%', sm: 'auto' },
+            }}
+          >
             <Button
               variant="contained"
               startIcon={<FileDownload />}
               onClick={handleExportExcel}
               disabled={sections.length === 0}
               color="success"
-              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              sx={{
+                textTransform: 'none',
+                px: 3,
+                width: { xs: '100%', sm: 'auto' },
+              }}
               size="small"
             >
               Xuất Excel
@@ -409,7 +421,11 @@ const Sections = () => {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={handleCreateSection}
-              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              sx={{
+                textTransform: 'none',
+                px: 3,
+                width: { xs: '100%', sm: 'auto' },
+              }}
               size="small"
             >
               Thêm lớp học phần
@@ -456,7 +472,7 @@ const Sections = () => {
 
       {/* Filter Section */}
       <FilterSection resultCount={sections.length}>
-        <Grid item xs={12} sm={12} md={4} lg={4}>
+        <Grid item xs={12} sm={12} md={6} lg={7}>
           <TextField
             fullWidth
             placeholder="Tìm theo mã lớp, tên môn học..."
@@ -479,15 +495,29 @@ const Sections = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={3} lg={2.5}>
           <FormControl fullWidth size="small">
-            <InputLabel>Học kỳ</InputLabel>
+            <InputLabel id="semester-select-label">Học kỳ</InputLabel>
             <Select
+              labelId="semester-select-label"
               value={filterSemester}
               label="Học kỳ"
               onChange={(e) => setFilterSemester(e.target.value)}
+              renderValue={(selected) => {
+                if (!selected) {
+                  return 'Tất cả'; // ✅ Hiển thị "Tất cả" khi chưa chọn
+                }
+                const semester = semesters.find(
+                  (sem) => sem.id === selected // ✅ Sửa: sem.id thay vì sem.semesterId
+                );
+                return semester
+                  ? `${semester.year} - ${semester.term}`
+                  : selected;
+              }}
             >
-              <MenuItem value="">Tất cả</MenuItem>
+              <MenuItem value="">
+                <em>Tất cả</em>
+              </MenuItem>
               {semesters.map((sem) => (
-                <MenuItem key={sem.semesterId} value={sem.semesterId}>
+                <MenuItem key={sem.id} value={sem.id}>
                   {sem.year} - {sem.term}
                 </MenuItem>
               ))}

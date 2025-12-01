@@ -89,14 +89,19 @@ const academicProgramService = {
   },
   createProgram: async (programData) => {
     try {
-      const response = await api.post('/api/AcademicProgram/CreateProgram', programData);
+      const response = await api.post(
+        '/api/AcademicProgram/CreateProgram',
+        programData
+      );
 
       if (response?.success === false) {
         const errData = response?.data;
         if (Array.isArray(errData) && errData.length > 0) {
           message.error(errData[0]);
         } else {
-          message.error(response?.message || 'Tạo chương trình đào tạo thất bại');
+          message.error(
+            response?.message || 'Tạo chương trình đào tạo thất bại'
+          );
         }
         return null;
       }
@@ -134,7 +139,7 @@ const academicProgramService = {
         }
         return null;
       }
-      return response;
+      return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
         const errData = error.response.data.data;

@@ -16,6 +16,7 @@ import {
   MenuItem,
   TextField,
   Grid,
+  Autocomplete,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -28,6 +29,7 @@ import { Table, Tag, Space } from 'antd';
 import { useTheme } from '@mui/material/styles';
 import scheduleService from '../../../service/scheduleService';
 import practiceService from '../../../service/practiceService';
+import { lecturerService } from '../../../service/lecturerService';
 import dayjs from 'dayjs';
 
 const SCHEDULE_TYPES = [
@@ -52,6 +54,12 @@ const SectionScheduleTab = ({ sectionId, section }) => {
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
+  const [lecturers, setLecturers] = useState([]);
+
+  // Debug section prop
+  console.log('SectionScheduleTab rendered with section:', section);
+  console.log('Section departmentId:', section?.departmentId);
+
   const [formData, setFormData] = useState({
     scheduleTypeId: 1,
     dayOfWeek: null,
@@ -64,6 +72,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
     groupName: '',
     maxCapacity: 30,
     description: '',
+    lecturerId: null,
   });
 
   useEffect(() => {
@@ -71,6 +80,17 @@ const SectionScheduleTab = ({ sectionId, section }) => {
       fetchSchedules();
     }
   }, [sectionId]);
+
+  // Fetch lecturers once when section loads
+  useEffect(() => {
+    if (section && section.departmentId !== null && section.departmentId !== undefined) {
+      console.log(
+        'Initial fetch of lecturers for section department:',
+        section.departmentId
+      );
+      fetchLecturers(section.departmentId);
+    }
+  }, [section]);
 
   const fetchSchedules = async () => {
     setLoading(true);
@@ -87,6 +107,21 @@ const SectionScheduleTab = ({ sectionId, section }) => {
     }
   };
 
+  const fetchLecturers = async (departmentId) => {
+    try {
+      console.log('Calling API with departmentId:', departmentId);
+      const response =
+        await lecturerService.getLecturersByDepartment(departmentId);
+      console.log('API response:', response);
+      console.log('Lecturers data:', response?.data);
+      if (response && response.data) {
+        setLecturers(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch lecturers:', error);
+    }
+  };
+
   // Calculate capacity per practice group
   const calculatePracticeGroupCapacity = () => {
     if (!section || !section.capacity || !section.practiceGroupCount) {
@@ -99,9 +134,29 @@ const SectionScheduleTab = ({ sectionId, section }) => {
     const defaultPracticeCapacity = calculatePracticeGroupCapacity();
 
     if (schedule) {
-      setEditingSchedule(schedule);
-      setFormData({
-        scheduleTypeId: schedule.scheduleTypeId,
+      console.log('=== OPENING EDIT DIALOG ===');
+      console.log('Edit schedule:', schedule);
+      console.log('Schedule lecturerId:', schedule.lecturerId);
+      console.log('Schedule Type from API:', schedule.scheduleType);
+      console.log('Schedule Type ID from API:', schedule.scheduleTypeId);
+      console.log('Section object:', section);
+      console.log('Section departmentId:', section?.departmentId);
+
+      // Fix scheduleTypeId if it's 0 or invalid
+      let correctScheduleTypeId = schedule.scheduleTypeId;
+      if (!correctScheduleTypeId || correctScheduleTypeId === 0) {
+        // Map from scheduleType string to ID
+        if (schedule.scheduleType === 'Lý thuyết') correctScheduleTypeId = 1;
+        else if (schedule.scheduleType === 'Thực hành')
+          correctScheduleTypeId = 2;
+        else if (schedule.scheduleType === 'Thi') correctScheduleTypeId = 3;
+        else correctScheduleTypeId = 1; // Default
+      }
+
+      console.log('Corrected Schedule Type ID:', correctScheduleTypeId);
+
+      const newFormData = {
+        scheduleTypeId: correctScheduleTypeId,
         dayOfWeek: schedule.dayOfWeek,
         date: schedule.date ? dayjs(schedule.date).format('YYYY-MM-DD') : null,
         startTime: schedule.startTime?.substring(0, 5) || '07:00',
@@ -111,7 +166,23 @@ const SectionScheduleTab = ({ sectionId, section }) => {
         groupName: schedule.practiceGroupName || '',
         maxCapacity: schedule.practiceGroupCapacity || defaultPracticeCapacity,
         description: '',
-      });
+        lecturerId: schedule.lecturerId || null,
+      };
+
+      console.log('Setting formData:', newFormData);
+      setEditingSchedule(schedule);
+      setFormData(newFormData);
+
+      // Always fetch lecturers when opening dialog (will be used if practice schedule)
+      if (section && section.departmentId !== null && section.departmentId !== undefined) {
+        console.log(
+          '✅ Fetching lecturers for departmentId:',
+          section.departmentId
+        );
+        fetchLecturers(section.departmentId);
+      } else {
+        console.warn('❌ No valid departmentId! Section:', section, 'DepartmentId:', section?.departmentId);
+      }
     } else {
       setEditingSchedule(null);
       setFormData({
@@ -125,7 +196,17 @@ const SectionScheduleTab = ({ sectionId, section }) => {
         groupName: '',
         maxCapacity: defaultPracticeCapacity,
         description: '',
+        lecturerId: null,
       });
+
+      // Fetch lecturers for new schedule too
+      if (section && section.departmentId !== null && section.departmentId !== undefined) {
+        console.log(
+          'Fetching lecturers for new schedule, departmentId:',
+          section.departmentId
+        );
+        fetchLecturers(section.departmentId);
+      }
     }
     setDialogOpen(true);
   };
@@ -152,6 +233,10 @@ const SectionScheduleTab = ({ sectionId, section }) => {
       let result;
       if (editingSchedule) {
         // Update existing schedule
+        // Include lecturerId for practice schedules
+        if (formData.scheduleTypeId === 2) {
+          payload.lecturerId = formData.lecturerId || null;
+        }
         result = await scheduleService.updateSchedule(
           editingSchedule.scheduleId,
           payload
@@ -167,6 +252,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
               `Nhóm ${schedules.filter((s) => s.scheduleTypeId === 2).length + 1}`,
             maxCapacity: parseInt(formData.maxCapacity),
             description: formData.description || null,
+            lecturerId: formData.lecturerId || null,
           };
           result =
             await practiceService.createSchedulePractice(practicePayload);
@@ -375,9 +461,13 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                 <Select
                   value={formData.scheduleTypeId}
                   label="Loại lịch"
-                  onChange={(e) =>
-                    setFormData({ ...formData, scheduleTypeId: e.target.value })
-                  }
+                  onChange={(e) => {
+                    console.log('Changing schedule type to:', e.target.value);
+                    setFormData({
+                      ...formData,
+                      scheduleTypeId: e.target.value,
+                    });
+                  }}
                   disabled={!!editingSchedule}
                 >
                   {SCHEDULE_TYPES.filter((type) => {
@@ -470,9 +560,15 @@ const SectionScheduleTab = ({ sectionId, section }) => {
             </Grid>
 
             {/* Practice Group Fields */}
+            {(() => {
+              console.log('Current scheduleTypeId:', formData.scheduleTypeId);
+              console.log('Is practice?', formData.scheduleTypeId === 2);
+              console.log('Lecturers available:', lecturers.length);
+              return null;
+            })()}
             {formData.scheduleTypeId === 2 && (
               <>
-                <Grid item xs={12} md={8}>
+                <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
                     label="Tên nhóm thực hành"
@@ -482,6 +578,35 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                     }
                     placeholder="VD: Nhóm 1, Nhóm A"
                     disabled={!!editingSchedule}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Autocomplete
+                    options={lecturers}
+                    getOptionLabel={(option) => option.fullName || ''}
+                    value={
+                      lecturers.find(
+                        (l) => l.lecturerId === formData.lecturerId
+                      ) || null
+                    }
+                    onChange={(event, newValue) => {
+                      console.log('Selected lecturer:', newValue);
+                      setFormData({
+                        ...formData,
+                        lecturerId: newValue?.lecturerId || null,
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Giảng viên (tùy chọn)"
+                        placeholder="Tìm kiếm giảng viên..."
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) =>
+                      option.lecturerId === value.lecturerId
+                    }
+                    noOptionsText="Không tìm thấy giảng viên"
                   />
                 </Grid>
                 <Grid item xs={12} md={4}>
@@ -504,7 +629,10 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                       label="Mô tả (tùy chọn)"
                       value={formData.description}
                       onChange={(e) =>
-                        setFormData({ ...formData, description: e.target.value })
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
                       }
                       multiline
                       rows={2}

@@ -38,10 +38,8 @@ const academicTitleOptions = [
 
 const positionOptions = [
   { value: 'Giảng viên', label: 'Giảng viên' },
-  { value: 'Trưởng khoa', label: 'Trưởng khoa' },
-  { value: 'Phó khoa', label: 'Phó khoa' },
-  { value: 'Trưởng bộ môn', label: 'Trưởng bộ môn' },
-  { value: 'Phó trưởng bộ môn', label: 'Phó trưởng bộ môn' },
+  { value: 'Giáo sư', label: 'Giáo sư' },
+  { value: 'Trợ giảng', label: 'Trợ giảng' },
 ];
 
 // Regex patterns

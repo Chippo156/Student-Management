@@ -62,17 +62,19 @@ const ClassEditModal = ({ open, onClose, onSuccess, classData }) => {
 
         // Load departments
         const deptResponse = await departmentService.getDepartmentsDropdown();
-        if (deptResponse?.data) {
-          setDepartments(deptResponse.data);
+        console.log(deptResponse);
+        if (deptResponse) {
+          setDepartments(deptResponse);
         }
 
         // Load programs nếu có departmentId
         if (classData.departmentId) {
-          const progResponse = await academicProgramService.getProgramsByDepartment(
-            classData.departmentId
-          );
-          if (progResponse?.data) {
-            setPrograms(progResponse.data);
+          const progResponse =
+            await academicProgramService.getProgramsByDepartment(
+              classData.departmentId
+            );
+          if (progResponse) {
+            setPrograms(progResponse);
           }
         }
 
@@ -108,9 +110,8 @@ const ClassEditModal = ({ open, onClose, onSuccess, classData }) => {
   const loadPrograms = async (departmentId) => {
     setLoadingData(true);
     try {
-      const response = await academicProgramService.getProgramsByDepartment(
-        departmentId
-      );
+      const response =
+        await academicProgramService.getProgramsByDepartment(departmentId);
       if (response?.data) {
         setPrograms(response.data);
       }
@@ -244,7 +245,10 @@ const ClassEditModal = ({ open, onClose, onSuccess, classData }) => {
                   <em>-- Chọn chương trình đào tạo --</em>
                 </MenuItem>
                 {programs.map((program) => (
-                  <MenuItem key={program.academicProgramId} value={program.academicProgramId}>
+                  <MenuItem
+                    key={program.academicProgramId}
+                    value={program.academicProgramId}
+                  >
                     {program.programName} - {program.degreeLevel}
                   </MenuItem>
                 ))}

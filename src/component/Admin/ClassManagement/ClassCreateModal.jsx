@@ -66,8 +66,8 @@ const ClassCreateModal = ({ open, onClose, onSuccess }) => {
     setLoadingData(true);
     try {
       const response = await departmentService.getDepartmentsDropdown();
-      if (response?.data) {
-        setDepartments(response.data);
+      if (response) {
+        setDepartments(response);
       }
     } catch (error) {
       console.error('Error loading departments:', error);
@@ -82,8 +82,8 @@ const ClassCreateModal = ({ open, onClose, onSuccess }) => {
       const response = await academicProgramService.getProgramsByDepartment(
         departmentId
       );
-      if (response?.data) {
-        setPrograms(response.data);
+      if (response) {
+        setPrograms(response);
       }
     } catch (error) {
       console.error('Error loading programs:', error);

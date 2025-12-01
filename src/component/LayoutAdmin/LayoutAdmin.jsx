@@ -118,6 +118,12 @@ const menuData = [
         path: '/admin/sections',
       },
       {
+        label: 'Khung thời gian đăng ký',
+        icon: <EventAvailableIcon />,
+        key: 'registration-period',
+        path: '/admin/registration-period',
+      },
+      {
         label: 'Chương trình đào tạo',
         icon: <SchoolIcon />,
         key: 'curriculum',
@@ -131,32 +137,32 @@ const menuData = [
       },
     ],
   },
-  {
-    label: 'Phân quyền',
-    icon: <SecurityIcon />,
-    key: 'permission-management',
-    path: '/admin/permission-management',
-    children: [
-      {
-        label: 'Quản lý vai trò',
-        icon: <AdminPanelSettingsIcon />,
-        key: 'roles',
-        path: '/admin/roles',
-      },
-      {
-        label: 'Phân quyền người dùng',
-        icon: <SecurityIcon />,
-        key: 'user-permissions',
-        path: '/admin/user-permissions',
-      },
-      {
-        label: 'Cài đặt bảo mật',
-        icon: <TuneIcon />,
-        key: 'security-settings',
-        path: '/admin/security-settings',
-      },
-    ],
-  },
+  // {
+  //   label: 'Phân quyền',
+  //   icon: <SecurityIcon />,
+  //   key: 'permission-management',
+  //   path: '/admin/permission-management',
+  //   children: [
+  //     {
+  //       label: 'Quản lý vai trò',
+  //       icon: <AdminPanelSettingsIcon />,
+  //       key: 'roles',
+  //       path: '/admin/roles',
+  //     },
+  //     {
+  //       label: 'Phân quyền người dùng',
+  //       icon: <SecurityIcon />,
+  //       key: 'user-permissions',
+  //       path: '/admin/user-permissions',
+  //     },
+  //     {
+  //       label: 'Cài đặt bảo mật',
+  //       icon: <TuneIcon />,
+  //       key: 'security-settings',
+  //       path: '/admin/security-settings',
+  //     },
+  //   ],
+  // },
   {
     label: 'Quản lý Học phí',
     icon: <PaymentIcon />,
@@ -364,7 +370,14 @@ const LayoutAdmin = () => {
 
   // Sidebar content component
   const drawerContent = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Box
+      sx={{
+        minWidth: 150,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+      }}
+    >
       {/* Header with close button for mobile/tablet */}
       {!isDesktop && (
         <Box
@@ -387,21 +400,29 @@ const LayoutAdmin = () => {
       )}
 
       {/* Menu List */}
-      <List component="nav" sx={{ flex: 1, overflow: 'auto', pt: isDesktop ? 0 : 1 }}>
+      <List
+        component="nav"
+        sx={{ flex: 1, overflow: 'auto', pt: isDesktop ? 0 : 1 }}
+      >
         {menuData.map((item) => renderMenuItem(item))}
       </List>
 
       {/* Collapse toggle for desktop */}
       {isDesktop && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 1, borderTop: 1, borderColor: 'divider' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            py: 1,
+            borderTop: 1,
+            borderColor: 'divider',
+          }}
+        >
           <Tooltip
             title={collapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
             placement="right"
           >
-            <IconButton
-              onClick={() => setCollapsed((v) => !v)}
-              size="small"
-            >
+            <IconButton onClick={() => setCollapsed((v) => !v)} size="small">
               {collapsed ? <MenuIcon /> : <MenuOpenIcon />}
             </IconButton>
           </Tooltip>
@@ -423,7 +444,7 @@ const LayoutAdmin = () => {
             bgcolor: 'background.paper',
             color: 'text.primary',
             borderBottom: 1,
-            borderColor: 'divider'
+            borderColor: 'divider',
           }}
         >
           <Toolbar variant="dense" sx={{ minHeight: 48 }}>
@@ -454,8 +475,6 @@ const LayoutAdmin = () => {
             <Paper
               elevation={2}
               sx={{
-                width: collapsed ? 72 : 240,
-                minWidth: collapsed ? 72 : 240,
                 minHeight: '100%',
                 bgcolor: 'background.paper',
                 borderRight: 1,

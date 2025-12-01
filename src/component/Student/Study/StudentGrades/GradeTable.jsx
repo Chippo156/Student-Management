@@ -98,9 +98,11 @@ const GradeTable = ({ columns, dataSource, theme }) => {
             color: ${theme.palette.text.primary} !important;
           }
           .grade-table .ant-table-thead > tr > th {
-            background: ${theme.palette.mode === 'dark'
-              ? theme.palette.background.paper
-              : theme.palette.background.secondary} !important;
+            background: ${
+              theme.palette.mode === 'dark'
+                ? theme.palette.background.paper
+                : theme.palette.background.secondary
+            } !important;
             color: ${theme.palette.text.primary} !important;
             border-color: ${theme.palette.divider} !important;
             font-weight: 600;
@@ -140,7 +142,7 @@ const GradeTable = ({ columns, dataSource, theme }) => {
         bordered
         rowKey="key"
         scroll={{ x: 'max-content' }}
-        style={{ maxWidth: isMobile ? '100%' : 1200 }}
+        size="middle"
       />
     </div>
   );

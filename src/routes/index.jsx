@@ -20,6 +20,7 @@ import TuitionFees from '../page/Admin/TuitionManagement/TuitionFees';
 import SendNotifications from '../page/Admin/SendNotifications';
 import Curriculum from '../page/Admin/EducationManagement/Curriculum';
 import Sections from '../page/Admin/EducationManagement/Sections';
+import RegistrationPeriod from '../page/Admin/EducationManagement/RegistrationPeriod';
 
 // Admin management pages
 import StudentList from '../page/Admin/StudentManagement/StudentList';
@@ -157,6 +158,7 @@ const AppRoutes = () => {
           <Route path="classes" element={<Classes />} />
           <Route path="curriculum" element={<Curriculum />} />
           <Route path="sections" element={<Sections />} />
+          <Route path="registration-period" element={<RegistrationPeriod />} />
           {/* Thêm router quản lý giảng viên */}
           <Route path="teacher" element={<TeacherList />} />
 

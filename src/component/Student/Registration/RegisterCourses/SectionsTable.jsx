@@ -2,6 +2,8 @@ import React, { forwardRef } from 'react';
 import { Card, Table, Switch, Empty, Space } from 'antd';
 import { BookOutlined } from '@ant-design/icons';
 import { alpha } from '@mui/material/styles';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 const SectionsTable = forwardRef((props, ref) => {
   const {
@@ -40,13 +42,28 @@ const SectionsTable = forwardRef((props, ref) => {
       title: 'Thời gian',
       key: 'schedule',
       align: 'center',
-
-      width: 150,
-      render: (_, record) => (
-        <span>
-          {record.startDate} - {record.endDate}
-        </span>
-      ),
+      width: 200,
+      render: (_, record) => {
+        try {
+          const startDate = record.startDate
+            ? format(new Date(record.startDate), 'dd/MM/yyyy', { locale: vi })
+            : '';
+          const endDate = record.endDate
+            ? format(new Date(record.endDate), 'dd/MM/yyyy', { locale: vi })
+            : '';
+          return (
+            <span>
+              {startDate} - {endDate}
+            </span>
+          );
+        } catch {
+          return (
+            <span>
+              {record.startDate} - {record.endDate}
+            </span>
+          );
+        }
+      },
     },
     {
       title: 'Sĩ số',
@@ -55,7 +72,7 @@ const SectionsTable = forwardRef((props, ref) => {
       align: 'center',
       render: (_, record) => (
         <span>
-          {record.totalCredits}/{record.maxCapacity}
+          {record.currentEnrollment}/{record.maxCapacity}
         </span>
       ),
     },
@@ -83,7 +100,6 @@ const SectionsTable = forwardRef((props, ref) => {
       },
     },
   ];
-  console.log(displaySections);
   return (
     <Card
       ref={ref} // ✅ Forward ref
@@ -96,7 +112,7 @@ const SectionsTable = forwardRef((props, ref) => {
             <BookOutlined style={{ marginRight: 8 }} />
             Danh sách lớp học phần
           </span>
-          <Space>
+          {/* <Space>
             <span style={{ fontSize: 14, fontWeight: 400 }}>
               Chỉ hiển thị lớp không trùng lịch:
             </span>
@@ -106,7 +122,7 @@ const SectionsTable = forwardRef((props, ref) => {
               checkedChildren="Bật"
               unCheckedChildren="Tắt"
             />
-          </Space>
+          </Space> */}
         </Space>
       }
       style={{
@@ -128,7 +144,6 @@ const SectionsTable = forwardRef((props, ref) => {
         loading={loading}
         pagination={false}
         size="middle"
-        scroll={{ x: 'max-content' }}
         onRow={(record) => ({
           onClick: () => handleSectionSelect(record),
           style: {

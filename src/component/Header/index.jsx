@@ -30,7 +30,9 @@ import { toggleMode } from '../../redux/ThemeSlice';
 import { useNavigate } from 'react-router-dom';
 import { logoutUser, doLogoutAction } from '../../redux/UserSlice';
 import NotificationDropdown from './NotificationDropdown';
+import ResetPasswordModal from '../Common/ResetPasswordModal';
 import announcementService from '../../service/announcementService';
+import { message } from 'antd';
 
 const HeaderPage = () => {
   const theme = useTheme();
@@ -42,6 +44,7 @@ const HeaderPage = () => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [notifyEl, setNotifyEl] = React.useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   useEffect(() => {
     if (account) {
@@ -135,6 +138,11 @@ const HeaderPage = () => {
     navigate('/register');
   };
 
+  const handleChangePasswordSuccess = () => {
+    message.success('Đổi mật khẩu thành công!');
+    setShowPasswordModal(false);
+  };
+  console.log(account);
   const isAdmin = localStorage.getItem('role') == 1;
   return (
     <>
@@ -150,7 +158,7 @@ const HeaderPage = () => {
           sx={{
             justifyContent: 'space-between',
             px: { xs: 1, sm: 2, md: 3 },
-            maxWidth: isAdmin ? 'none' : '1600px',
+            // maxWidth: isAdmin ? 'none' : '1600px',
             margin: '0 auto',
             width: '100%',
           }}
@@ -305,7 +313,7 @@ const HeaderPage = () => {
                   onKeyDown={handleKeyDown}
                 >
                   <Avatar
-                    src={account.avatarUrl || ''}
+                    src={account?.user?.avatarUrl || account?.avatarUrl || ''}
                     sx={{
                       width: 32,
                       height: 32,
@@ -313,9 +321,12 @@ const HeaderPage = () => {
                       mr: 1,
                     }}
                   >
-                    {!account.avatarUrl &&
-                      (account.fullName ? (
-                        account.fullName.charAt(0).toUpperCase()
+                    {!account?.user?.avatarUrl &&
+                      !account?.avatarUrl &&
+                      (account?.user?.fullName || account?.fullName ? (
+                        (account?.user?.fullName || account?.fullName)
+                          .charAt(0)
+                          .toUpperCase()
                       ) : (
                         <AccountCircleIcon />
                       ))}
@@ -335,7 +346,7 @@ const HeaderPage = () => {
                         lineHeight: 1.2,
                       }}
                     >
-                      {account.fullName || account.username}
+                      {account?.user?.fullName || account?.user?.username}
                     </Typography>
                     <Typography
                       variant="caption"
@@ -371,10 +382,10 @@ const HeaderPage = () => {
                     }}
                   >
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                      {account.fullName || account.username}
+                      {account?.user?.fullName || account?.user?.username}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {account.email}
+                      {account?.user?.email}
                     </Typography>
                     <br />
                     <Typography variant="caption" color="primary">
@@ -405,7 +416,7 @@ const HeaderPage = () => {
                   </MenuItem>
                   <MenuItem
                     onClick={() => {
-                      navigate('/change-password');
+                      setShowPasswordModal(true);
                       handleUserClose();
                     }}
                     sx={{ color: theme.palette.text.primary }}
@@ -457,6 +468,11 @@ const HeaderPage = () => {
         anchorEl={notifyEl}
         open={Boolean(notifyEl)}
         onClose={handleNotifyClose}
+      />
+      <ResetPasswordModal
+        visible={showPasswordModal}
+        onCancel={() => setShowPasswordModal(false)}
+        onSuccess={handleChangePasswordSuccess}
       />
     </>
   );

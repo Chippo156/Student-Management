@@ -92,27 +92,27 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 0:  // IsPreparing
+      case 0: // IsPreparing
         return {
           bg: alpha(theme.palette.warning.main, 0.1),
           color: theme.palette.warning.main,
         };
-      case 1:  // IsOpening
+      case 1: // IsOpening
         return {
           bg: alpha(theme.palette.info.main, 0.1),
           color: theme.palette.info.main,
         };
-      case 2:  // IsClosed
+      case 2: // IsClosed
         return {
           bg: alpha(theme.palette.grey[500], 0.1),
           color: theme.palette.grey[700],
         };
-      case 3:  // IsCancelled
+      case 3: // IsCancelled
         return {
           bg: alpha(theme.palette.error.main, 0.1),
           color: theme.palette.error.main,
         };
-      case 4:  // IsCompleted
+      case 4: // IsCompleted
         return {
           bg: alpha(theme.palette.success.main, 0.1),
           color: theme.palette.success.main,
@@ -260,7 +260,7 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
     };
 
     const statColor = getStatColor();
-
+    console.log(activeTab);
     return (
       <Box
         sx={{
@@ -616,7 +616,10 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
           )}
 
           {activeTab === 1 && (
-            <SectionScheduleTab sectionId={section.sectionId} section={section} />
+            <SectionScheduleTab
+              sectionId={section.sectionId}
+              section={section}
+            />
           )}
 
           {activeTab === 2 && (

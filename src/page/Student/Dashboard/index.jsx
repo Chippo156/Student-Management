@@ -121,27 +121,27 @@ const Dashboard = () => {
       text: 'Tra cứu công nợ',
       path: '/student/debt',
     },
-    {
-      icon: <CreditCardOutlined />,
-      text: 'Thanh toán trực tuyến',
-      path: '/student/payment',
-    },
-    {
-      icon: <FileTextOutlined />,
-      text: 'Phiếu thu tổng hợp',
-      path: '/student/receipt',
-    },
-    {
-      icon: <ClockCircleOutlined />,
-      text: 'Lịch theo tiến độ',
-      path: '/student/progress-schedule',
-    },
+    // {
+    //   icon: <CreditCardOutlined />,
+    //   text: 'Thanh toán trực tuyến',
+    //   path: '/student/payment',
+    // },
+    // {
+    //   icon: <FileTextOutlined />,
+    //   text: 'Phiếu thu tổng hợp',
+    //   path: '/student/receipt',
+    // },
+    // {
+    //   icon: <ClockCircleOutlined />,
+    //   text: 'Lịch theo tiến độ',
+    //   path: '/student/progress-schedule',
+    // },
     {
       icon: <BellOutlined />,
       text: 'Nhắc nhở',
       path: '/student/notifications',
     },
-    { icon: <MessageOutlined />, text: 'Khảo sát', path: '/student/survey' },
+    // { icon: <MessageOutlined />, text: 'Khảo sát', path: '/student/survey' },
   ];
 
   const [hoveredRing, setHoveredRing] = useState(null);
@@ -201,8 +201,18 @@ const Dashboard = () => {
         const data = await semesterService.getStudentSemesters();
         setSemesters(data);
 
-        if (data.length > 0)
-          setSelectedSemesterId(data[data.length - 1].semesterId);
+        if (data.length > 0) {
+          // Tìm học kỳ đang active
+          const activeSemester = data.find(
+            (sem) => sem.isSemesterActive === true
+          );
+          if (activeSemester) {
+            setSelectedSemesterId(activeSemester.semesterId);
+          } else {
+            // Nếu không có học kỳ active, chọn học kỳ cuối cùng
+            setSelectedSemesterId(data[data.length - 1].semesterId);
+          }
+        }
       } catch {
         setSemesters([]);
       }

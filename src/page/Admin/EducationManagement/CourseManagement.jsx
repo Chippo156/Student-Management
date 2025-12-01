@@ -200,7 +200,7 @@ const CourseManagement = () => {
     },
     {
       field: 'departmentName',
-      headerName: 'Khoa',
+      headerName: 'Chuyên ngành',
       width: 150,
       renderCell: (course) => (
         <Chip
