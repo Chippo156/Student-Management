@@ -670,7 +670,6 @@ const CurriculumPage = () => {
                         index: i + 1,
                       }))}
                       pagination={false}
-                      size="small"
                       bordered
                       scroll={{ x: 'max-content' }}
                       size="middle"

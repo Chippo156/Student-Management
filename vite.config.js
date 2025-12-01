@@ -13,4 +13,18 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        // Suppress warnings from @microsoft/signalr
+        if (
+          warning.code === 'INVALID_ANNOTATION' &&
+          warning.id?.includes('@microsoft/signalr')
+        ) {
+          return;
+        }
+        warn(warning);
+      },
+    },
+  },
 });

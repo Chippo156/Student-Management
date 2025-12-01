@@ -182,7 +182,6 @@ const EnrolledTable = forwardRef((props, ref) => {
             index: i + 1,
           }))}
           pagination={false}
-          size="small"
           bordered
           locale={{ emptyText: 'Chưa đăng ký lớp học phần nào' }}
           scroll={{ x: 'max-content' }}

@@ -102,7 +102,6 @@ const ScheduleDetail = forwardRef((props, ref) => {
         dataSource={dataSource}
         pagination={false}
         bordered
-        size="small"
         locale={{ emptyText: 'Không có lịch học' }}
         scroll={{ x: 'max-content' }}
         size="middle"

@@ -80,7 +80,6 @@ const CoursesTable = forwardRef(
               index: i + 1,
             }))}
             pagination={false}
-            size="small"
             bordered
             rowClassName={(r, i) =>
               tableRowClassName(r, i, selectedCourse, null)
