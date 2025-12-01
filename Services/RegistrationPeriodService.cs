@@ -196,11 +196,11 @@ namespace StudentManagement.Services
                 throw new ArgumentException("Start date must be before end date");
             }
 
-            // Check if period has started (prevent modification if already started)
-            if (DateTime.UtcNow > registrationPeriod.StartDate && DateTime.UtcNow < registrationPeriod.EndDate)
-            {
-                throw new InvalidOperationException("Cannot modify an active registration period");
-            }
+            //// Check if period has started (prevent modification if already started)
+            //if (DateTime.UtcNow > registrationPeriod.StartDate && DateTime.UtcNow < registrationPeriod.EndDate)
+            //{
+            //    throw new InvalidOperationException("Cannot modify an active registration period");
+            //}
 
             // Check for overlapping periods (excluding current period)
             var hasOverlap = await _context.RegistrationPeriods
