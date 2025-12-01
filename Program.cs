@@ -130,12 +130,14 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
-        policy.WithOrigins("http://localhost:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());   // QUAN TRỌNG
+        policy.WithOrigins(
+                "http://localhost:3000",                            // Môi trường Dev (Local)
+                "https://student-management-beta-beryl.vercel.app"  // Môi trường Production (Vercel) - LƯU Ý: KHÔNG CÓ DẤU / Ở CUỐI
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());   // QUAN TRỌNG
 });
-
 
 var app = builder.Build();
 
