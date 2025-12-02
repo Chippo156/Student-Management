@@ -428,6 +428,7 @@ namespace StudentManagement.Services
                 .Where(e => e.Section.SectionId == sectionId &&
                            e.enrollmentStatus == StudentManagement.Enum.EnrollmentStatus.Enrolled);
 
+
             // Apply search filter nếu có
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
@@ -436,18 +437,19 @@ namespace StudentManagement.Services
                     e.Student.MSSV.ToLower().Contains(searchLower) ||
                     e.Student.User.FullName.ToLower().Contains(searchLower) ||
                     e.Student.User.Email.ToLower().Contains(searchLower) ||
-                    e.Student.Class.ClassName.ToLower().Contains(searchLower));
+                    e.Student.Class.ClassName.ToLower().Contains(searchLower))
+                    ;
             }
 
             // Tổng số bản ghi
             var totalCount = await query.CountAsync();
 
             // Lấy dữ liệu với phân trang, sắp xếp theo MSSV
-            var enrollments = await query
-                .OrderBy(e => e.Student.MSSV)
-                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+            var enrollments =  query
+                .AsEnumerable()
+                .OrderBy(e => e.Student.User.FullName.Trim().Split(' ').LastOrDefault()).Skip((pagination.PageNumber - 1) * pagination.PageSize)
                 .Take(pagination.PageSize)
-                .ToListAsync();
+                .ToList();
 
             // Lấy thông tin nhóm thực hành cho các sinh viên này
             var studentIds = enrollments.Select(e => e.Student.Id).ToList();

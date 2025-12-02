@@ -625,13 +625,14 @@ namespace StudentManagement.Services
                 ?? throw new Exception($"Section with ID {sectionId} not found");
 
             // Lấy tất cả sinh viên đã đăng ký section này
-            var enrolledStudents = await context.Enrollments
+            var enrolledStudents =  context.Enrollments
                 .Include(e => e.Student)
                     .ThenInclude(s => s.User)
                 .Where(e => e.Section.SectionId == sectionId &&
                            e.enrollmentStatus == EnrollmentStatus.Enrolled)
-                .OrderBy(e => e.Student.MSSV)
-                .ToListAsync();
+                .AsEnumerable()
+    .OrderBy(e => e.Student.User.FullName.Trim().Split(' ').LastOrDefault())
+                .ToList();
 
             if (!enrolledStudents.Any())
             {

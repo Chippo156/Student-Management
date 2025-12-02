@@ -1216,11 +1216,13 @@ namespace StudentManagement.Services
         // Helper methods
         private async Task<List<BasicStudentInfo>> GetTheoryStudentsAsync(int sectionId)
         {
-            return await context.Enrollments
+            return context.Enrollments
                 .Include(e => e.Student)
                     .ThenInclude(s => s.User)
                 .Where(e => e.Section.SectionId == sectionId &&
                            e.enrollmentStatus == Enum.EnrollmentStatus.Enrolled)
+                .AsEnumerable()
+                .OrderBy(pge => pge.Student.User.FullName.Trim().Split(' ').LastOrDefault())
                 .Select(e => new BasicStudentInfo
                 {
                     StudentId = e.Student.Id,
@@ -1230,17 +1232,18 @@ namespace StudentManagement.Services
                     DateOfBirth = e.Student.User.DateOfBirth,
                     PracticeGroupName = null // Không có trong lý thuyết
                 })
-                .OrderBy(s => s.MSSV)
-                .ToListAsync();
+                .ToList();
         }
 
         private async Task<List<BasicStudentInfo>> GetPracticeGroupStudentsAsync(int practiceGroupId)
         {
-            return await context.PracticeGroupEnrollments
+            return context.PracticeGroupEnrollments
                 .Include(pge => pge.Student)
                     .ThenInclude(s => s.User)
                 .Include(pge => pge.PracticeGroup)
                 .Where(pge => pge.PracticeGroupId == practiceGroupId && pge.IsActive)
+                .AsEnumerable()
+                .OrderBy(pge => pge.Student.User.FullName.Trim().Split(' ').LastOrDefault())
                 .Select(pge => new BasicStudentInfo
                 {
                     StudentId = pge.Student.Id,
@@ -1250,17 +1253,18 @@ namespace StudentManagement.Services
                     DateOfBirth = pge.Student.User.DateOfBirth,
                     PracticeGroupName = pge.PracticeGroup.GroupName
                 })
-                .OrderBy(s => s.MSSV)
-                .ToListAsync();
+                .ToList();
         }
 
         private async Task<List<BasicStudentInfo>> GetAllPracticeStudentsInSectionAsync(int sectionId)
         {
-            return await context.PracticeGroupEnrollments
+            return context.PracticeGroupEnrollments
                 .Include(pge => pge.Student)
                     .ThenInclude(s => s.User)
                 .Include(pge => pge.PracticeGroup)
                 .Where(pge => pge.PracticeGroup.SectionId == sectionId && pge.IsActive)
+                .AsEnumerable()
+                .OrderBy(pge => pge.Student.User.FullName.Trim().Split(' ').LastOrDefault())
                 .Select(pge => new BasicStudentInfo
                 {
                     StudentId = pge.Student.Id,
@@ -1270,8 +1274,7 @@ namespace StudentManagement.Services
                     DateOfBirth = pge.Student.User.DateOfBirth,
                     PracticeGroupName = pge.PracticeGroup.GroupName
                 })
-                .OrderBy(s => s.MSSV)
-                .ToListAsync();
+                .ToList();
         }
 
         public async Task<Section?> UpdateSectionAsync(int sectionId, UpdateSectionRequest request)
