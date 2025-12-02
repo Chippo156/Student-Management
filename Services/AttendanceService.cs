@@ -59,7 +59,11 @@ namespace StudentManagement.Services
                     Room = request.Room,
                     CreatedByLecturerId = lecturer.Id,
                     CreatedByLecturer = lecturer,
-                    PracticeGroupId = request.PracticeGroupId
+                    PracticeGroupId = request.PracticeGroupId,
+                    AllowSelfCheckIn = request.AllowSelfCheckIn,
+                    SelfCheckInStartTime = request.SelfCheckInStartTime,
+                    SelfCheckInEndTime = request.SelfCheckInEndTime,
+                    CheckInCode = request.CheckInCode
                 };
 
                 context.AttendanceSessions.Add(attendanceSession);
@@ -119,7 +123,7 @@ namespace StudentManagement.Services
                     {
                         attendance.Status = studentRecord.Status;
                         attendance.Note = studentRecord.Note;
-                        attendance.RecordedAt = DateTime.UtcNow;
+                        attendance.RecordedAt = DateTime.Now;
                         attendance.RecordedByLecturerId = lecturer.Id;
                         context.Attendances.Update(attendance);
                     }
@@ -379,7 +383,7 @@ namespace StudentManagement.Services
 
             attendance.Status = request.Status;
             attendance.Note = request.Note;
-            attendance.RecordedAt = DateTime.UtcNow;
+            attendance.RecordedAt = DateTime.Now;
             attendance.RecordedByLecturerId = lecturer.Id;
 
             context.Attendances.Update(attendance);
@@ -855,7 +859,7 @@ namespace StudentManagement.Services
                 CourseName = section.CurriculumCourse.Course.CourseName,
                 SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
                 LecturerName = section.Lecturer?.User?.FullName ?? "Not Assigned",
-                ExportedAt = DateTime.UtcNow,
+                ExportedAt = DateTime.Now,
                 TotalStudents = enrolledStudents.Count,
                 TotalSessions = attendanceSessions.Count,
                 OverallAttendanceRate = overallAttendanceRate,
@@ -901,6 +905,311 @@ namespace StudentManagement.Services
                 >= 60 => "Warning",   // Cảnh báo
                 _ => "Poor"           // Kém
             };
+        }
+
+        // **NEW: Student self check-in methods**
+
+        public async Task<List<AvailableCheckInSessionResponse>> GetAvailableCheckInSessionsForStudentAsync(string mssv)
+        {
+            var student = await context.Students
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.MSSV == mssv)
+                ?? throw new Exception("Student not found");
+
+            var now = DateTime.Now;
+            
+            // Get attendance sessions where:
+            // 1. Student is enrolled in the section
+            // 2. Self check-in is enabled
+            // 3. Check-in window is active or upcoming (within 30 minutes)
+            var availableSessions = await context.AttendanceSessions
+                .Include(ats => ats.Section)
+                    .ThenInclude(s => s.CurriculumCourse)
+                        .ThenInclude(cc => cc.Course)
+                .Include(ats => ats.Section)
+                    .ThenInclude(s => s.Lecturer)
+                        .ThenInclude(l => l.User)
+                .Where(ats => 
+                    ats.AllowSelfCheckIn &&
+                    ats.IsActive &&
+                    ats.SelfCheckInStartTime.HasValue &&
+                    ats.SelfCheckInEndTime.HasValue &&
+                    ats.SelfCheckInEndTime.Value > now &&
+                    // Check if student is enrolled in this section
+                    context.Enrollments.Any(e => 
+                        e.Student.Id == student.Id && 
+                        e.Section.SectionId == ats.SectionId &&
+                        e.enrollmentStatus == EnrollmentStatus.Enrolled))
+                .OrderBy(ats => ats.SessionDate)
+                .ThenBy(ats => ats.StartTime)
+                .ToListAsync();
+
+            var responses = new List<AvailableCheckInSessionResponse>();
+
+            foreach (var session in availableSessions)
+            {
+                // Check if student has already checked in
+                var existingAttendance = await context.Attendances
+                    .FirstOrDefaultAsync(a => 
+                        a.AttendanceSessionId == session.AttendanceSessionId &&
+                        a.StudentId == student.Id);
+
+                var hasCheckedIn = existingAttendance != null && 
+                                  existingAttendance.Status != AttendanceStatus.Unknown;
+
+                var isCheckInActive = now >= session.SelfCheckInStartTime && 
+                                     now <= session.SelfCheckInEndTime;
+
+                var minutesUntilStart = session.SelfCheckInStartTime.HasValue 
+                    ? Math.Max(0, (int)(session.SelfCheckInStartTime.Value - now).TotalMinutes)
+                    : 0;
+
+                var minutesUntilEnd = session.SelfCheckInEndTime.HasValue
+                    ? Math.Max(0, (int)(session.SelfCheckInEndTime.Value - now).TotalMinutes)
+                    : 0;
+
+                var response = new AvailableCheckInSessionResponse
+                {
+                    AttendanceSessionId = session.AttendanceSessionId,
+                    SessionName = session.SessionName,
+                    CourseName = session.Section.CurriculumCourse.Course.CourseName,
+                    CourseCode = session.Section.CurriculumCourse.Course.CourseCode,
+                    SectionCode = session.Section.SectionCode ?? $"LHP{session.SectionId}",
+                    SessionDate = session.SessionDate,
+                    StartTime = session.StartTime,
+                    EndTime = session.EndTime,
+                    Room = session.Room,
+                    
+                    SelfCheckInStartTime = session.SelfCheckInStartTime.Value,
+                    SelfCheckInEndTime = session.SelfCheckInEndTime.Value,
+                    
+                    IsCheckInActive = isCheckInActive,
+                    HasCheckedIn = hasCheckedIn,
+                    CurrentStatus = existingAttendance?.Status.ToString(),
+                    CheckedInAt = existingAttendance?.RecordedAt,
+                    MinutesUntilStart = minutesUntilStart,
+                    MinutesUntilEnd = minutesUntilEnd,
+                    
+                    LecturerName = session.Section.Lecturer?.User?.FullName ?? "Not Assigned"
+                };
+
+                responses.Add(response);
+            }
+
+            return responses;
+        }
+
+        public async Task<StudentSelfCheckInResponse> StudentSelfCheckInAsync(
+            string mssv, 
+            StudentSelfCheckInRequest request)
+        {
+            using var transaction = await context.Database.BeginTransactionAsync();
+            
+            try
+            {
+                var student = await context.Students
+                    .Include(s => s.User)
+                    .FirstOrDefaultAsync(s => s.MSSV == mssv);
+
+                if (student == null)
+                {
+                    return new StudentSelfCheckInResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Student not found",
+                        Errors = { "Không tìm thấy thông tin sinh viên" }
+                    };
+                }
+
+                // Get attendance session
+                var attendanceSession = await context.AttendanceSessions
+                    .Include(ats => ats.Section)
+                        .ThenInclude(s => s.CurriculumCourse)
+                            .ThenInclude(cc => cc.Course)
+                    .FirstOrDefaultAsync(ats => ats.AttendanceSessionId == request.AttendanceSessionId);
+
+                if (attendanceSession == null)
+                {
+                    return new StudentSelfCheckInResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Session not found",
+                        Errors = { "Không tìm thấy phiên điểm danh" }
+                    };
+                }
+
+                // Validate check-in eligibility
+                var validationResult = await ValidateStudentCheckInAsync(student, attendanceSession, request);
+                if (!validationResult.IsValid)
+                {
+                    return new StudentSelfCheckInResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Check-in validation failed",
+                        Errors = validationResult.Errors
+                    };
+                }
+
+                // Determine attendance status based on check-in time
+                var now = DateTime.Now;
+
+                var sessionStartTime = attendanceSession.SelfCheckInStartTime.HasValue
+                    ? attendanceSession.SelfCheckInStartTime.Value.AddMinutes(5)
+                    : now.AddMinutes(5); // fallback if null
+                var lateThreshold = attendanceSession.SelfCheckInStartTime.HasValue
+                    ? attendanceSession.SelfCheckInStartTime.Value.AddMinutes(15)
+                    : now.AddMinutes(15); // fallback if null
+
+                var attendanceStatus = now <= sessionStartTime 
+                    ? AttendanceStatus.Present 
+                    : now <= lateThreshold 
+                        ? AttendanceStatus.Late 
+                        : AttendanceStatus.Absent; // Still allow check-in but mark as present
+
+                // Find or create attendance record
+                var attendance = await context.Attendances
+                    .FirstOrDefaultAsync(a => 
+                        a.AttendanceSessionId == request.AttendanceSessionId &&
+                        a.StudentId == student.Id);
+
+                if (attendance == null)
+                {
+                    // Create new attendance record
+                    attendance = new Attendance
+                    {
+                        AttendanceSessionId = request.AttendanceSessionId,
+                        StudentId = student.Id,
+                        SectionId = attendanceSession.SectionId,
+                        Status = attendanceStatus,
+                        Note = $"Self check-in{(string.IsNullOrEmpty(request.Note) ? "" : $": {request.Note}")}",
+                        RecordedAt = now,
+                        RecordedByLecturerId = null // Self check-in
+                    };
+
+                    context.Attendances.Add(attendance);
+                }
+                else if (attendance.Status == AttendanceStatus.Unknown)
+                {
+                    // Update existing unknown status
+                    attendance.Status = attendanceStatus;
+                    attendance.Note = $"Self check-in{(string.IsNullOrEmpty(request.Note) ? "" : $": {request.Note}")}";
+                    attendance.RecordedAt = now;
+                    
+                    context.Attendances.Update(attendance);
+                }
+                else
+                {
+                    // Already checked in
+                    return new StudentSelfCheckInResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Already checked in",
+                        Errors = { "Bạn đã điểm danh cho buổi học này rồi" }
+                    };
+                }
+
+                await context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return new StudentSelfCheckInResponse
+                {
+                    IsSuccess = true,
+                    Message = "Điểm danh thành công",
+                    AttendanceId = attendance.AttendanceId,
+                    AttendanceStatus = GetAttendanceStatusInVietnamese(attendance.Status),
+                    CheckInTime = attendance.RecordedAt,
+                    SessionName = attendanceSession.SessionName,
+                    CourseName = attendanceSession.Section.CurriculumCourse.Course.CourseName
+                };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return new StudentSelfCheckInResponse
+                {
+                    IsSuccess = false,
+                    Message = "System error",
+                    Errors = { ex.Message }
+                };
+            }
+        }
+
+        private async Task<(bool IsValid, List<string> Errors)> ValidateStudentCheckInAsync(
+            Student student,
+            AttendanceSession attendanceSession, 
+            StudentSelfCheckInRequest request)
+        {
+            var errors = new List<string>();
+            var now = DateTime.Now;
+
+            // Check if self check-in is enabled
+            if (!attendanceSession.AllowSelfCheckIn)
+            {
+                errors.Add("Tự điểm danh không được bật cho buổi học này");
+                return (false, errors);
+            }
+
+            // Check if within check-in window
+            if (!attendanceSession.SelfCheckInStartTime.HasValue || 
+                !attendanceSession.SelfCheckInEndTime.HasValue)
+            {
+                errors.Add("Thời gian điểm danh không được thiết lập");
+                return (false, errors);
+            }
+
+            if (now < attendanceSession.SelfCheckInStartTime.Value)
+            {
+                var minutesUntilStart = (int)(attendanceSession.SelfCheckInStartTime.Value - now).TotalMinutes;
+                errors.Add($"Chưa đến thời gian điểm danh (còn {minutesUntilStart} phút)");
+                return (false, errors);
+            }
+
+            if (now > attendanceSession.SelfCheckInEndTime.Value)
+            {
+                errors.Add("Đã hết thời gian điểm danh");
+                return (false, errors);
+            }
+
+            // Verify check-in code
+            if (attendanceSession.CheckInCode != request.CheckInCode)
+            {
+                errors.Add("Mã điểm danh không chính xác");
+                return (false, errors);
+            }
+
+            // Check if student is enrolled in the section
+            var isEnrolled = await context.Enrollments
+                .AnyAsync(e => 
+                    e.Student.Id == student.Id && 
+                    e.Section.SectionId == attendanceSession.SectionId &&
+                    e.enrollmentStatus == EnrollmentStatus.Enrolled);
+
+            if (!isEnrolled)
+            {
+                errors.Add("Bạn không được đăng ký trong lớp học phần này");
+                return (false, errors);
+            }
+            return (errors.Count == 0, errors);
+        }
+
+        // Helper method to calculate distance between two coordinates
+        private static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+        {
+            const double R = 6371000; // Earth's radius in meters
+            var dLat = (lat2 - lat1) * Math.PI / 180;
+            var dLon = (lon2 - lon1) * Math.PI / 180;
+            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                    Math.Cos(lat1 * Math.PI / 180) * Math.Cos(lat2 * Math.PI / 180) *
+                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            return R * c;
+        }
+
+        // Helper method to generate random 6-digit code
+        private static string GenerateCheckInCode()
+        {
+            var random = new Random();
+            return random.Next(100000, 999999).ToString();
         }
     }
 }

@@ -21,5 +21,9 @@ namespace StudentManagement.Services.Interface
         Task<bool> DeleteAttendanceSessionAsync(int attendanceSessionId, string lecturerCode);
         Task<SectionAllAttendanceStatisticsResponse> GetSectionAttendanceStatisticsAsync(int sectionId);
         Task<SectionAttendanceExportResponse> GetSectionAttendanceExportAsync(int sectionId);
+
+        // **NEW: Student self check-in methods**
+        Task<List<AvailableCheckInSessionResponse>> GetAvailableCheckInSessionsForStudentAsync(string mssv);
+        Task<StudentSelfCheckInResponse> StudentSelfCheckInAsync(string mssv, StudentSelfCheckInRequest request);
     }
 }

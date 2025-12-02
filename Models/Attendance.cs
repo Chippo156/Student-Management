@@ -58,8 +58,14 @@ namespace StudentManagement.Models
         public int? PracticeGroupId { get; set; }
         public PracticeGroup? PracticeGroup { get; set; }
 
+        public bool AllowSelfCheckIn { get; set; } = false;
+        public DateTime? SelfCheckInStartTime { get; set; }
+        public DateTime? SelfCheckInEndTime { get; set; }
+        public string? CheckInCode { get; set; } // 6-digit code for verification
+
         // Attendance records for this session
         [JsonIgnore]
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
+
     }
 }

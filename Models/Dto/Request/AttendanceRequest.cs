@@ -12,6 +12,10 @@ namespace StudentManagement.Models.Dto.Request
         public string? Description { get; set; }
         public string? Room { get; set; }
         public int? PracticeGroupId { get; set; } // Null for main class, specific for practice group
+        public bool AllowSelfCheckIn { get; set; } = false;
+        public DateTime? SelfCheckInStartTime { get; set; }
+        public DateTime? SelfCheckInEndTime { get; set; }
+        public string? CheckInCode { get; set; } // 6-digit code for verification
     }
 
     public class RecordAttendanceRequest
