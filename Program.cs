@@ -132,7 +132,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy =>
         policy.WithOrigins(
                 "http://localhost:3000",                            // Môi trường Dev (Local)
-                "https://student-management-eta-drab.vercel.app"  // Môi trường Production (Vercel) - LƯU Ý: KHÔNG CÓ DẤU / Ở CUỐI
+                "https://student-management-eta-drab.vercel.app",
+                "https://student-management-zowu.vercel.app"// Môi trường Production (Vercel) - LƯU Ý: KHÔNG CÓ DẤU / Ở CUỐI
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
