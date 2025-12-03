@@ -1056,18 +1056,32 @@ namespace StudentManagement.Services
                 // Determine attendance status based on check-in time
                 var now = DateTime.Now;
 
-                var sessionStartTime = attendanceSession.SelfCheckInStartTime.HasValue
-                    ? attendanceSession.SelfCheckInStartTime.Value.AddMinutes(10)
-                    : now.AddMinutes(10); // fallback if null
-                var lateThreshold = attendanceSession.SelfCheckInStartTime.HasValue
-                    ? attendanceSession.SelfCheckInStartTime.Value.AddMinutes(20)
-                    : now.AddMinutes(20); // fallback if null
+                var startTime = attendanceSession.SelfCheckInStartTime.Value;
+                var endTime = attendanceSession.SelfCheckInEndTime.Value;
 
-                var attendanceStatus = now <= sessionStartTime 
-                    ? AttendanceStatus.Present 
-                    : now <= lateThreshold 
-                        ? AttendanceStatus.Late 
-                        : AttendanceStatus.Absent; // Still allow check-in but mark as present
+                // 2. Định nghĩa các mốc giới hạn (Thresholds)
+                // Ví dụ: Cho phép đi trễ 15 phút đầu vẫn tính là Present (Grace Period)
+                var gracePeriodMinutes = 15;
+                var presentDeadline = startTime.AddMinutes(gracePeriodMinutes);
+
+                // 3. Xét trạng thái
+                AttendanceStatus attendanceStatus;
+
+                if (now <= presentDeadline)
+                {
+                    // Check-in trước hoặc trong 15 phút đầu -> Tính là đúng giờ
+                    attendanceStatus = AttendanceStatus.Present;
+                }
+                else if (now <= endTime)
+                {
+                    // Check-in sau 15 phút đầu nhưng vẫn trong thời gian mở cổng -> Tính là đi muộn
+                    attendanceStatus = AttendanceStatus.Late;
+                }
+                else
+                {
+                    // Quá giờ đóng cổng -> Tính là vắng (hoặc vẫn cho check-in nhưng note là quá hạn)
+                    attendanceStatus = AttendanceStatus.Absent;
+                }
 
                 // Find or create attendance record
                 var attendance = await context.Attendances
