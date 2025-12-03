@@ -1057,11 +1057,11 @@ namespace StudentManagement.Services
                 var now = DateTime.Now;
 
                 var sessionStartTime = attendanceSession.SelfCheckInStartTime.HasValue
-                    ? attendanceSession.SelfCheckInStartTime.Value.AddMinutes(5)
-                    : now.AddMinutes(5); // fallback if null
+                    ? attendanceSession.SelfCheckInStartTime.Value.AddMinutes(10)
+                    : now.AddMinutes(10); // fallback if null
                 var lateThreshold = attendanceSession.SelfCheckInStartTime.HasValue
-                    ? attendanceSession.SelfCheckInStartTime.Value.AddMinutes(15)
-                    : now.AddMinutes(15); // fallback if null
+                    ? attendanceSession.SelfCheckInStartTime.Value.AddMinutes(20)
+                    : now.AddMinutes(20); // fallback if null
 
                 var attendanceStatus = now <= sessionStartTime 
                     ? AttendanceStatus.Present 
