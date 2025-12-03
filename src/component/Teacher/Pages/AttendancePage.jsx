@@ -21,6 +21,8 @@ import {
   Alert,
   Avatar,
   TextField,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { Table, Tag, Space, DatePicker } from 'antd';
@@ -70,6 +72,9 @@ const AttendancePage = () => {
     room: '',
     description: '',
     practiceGroupId: null,
+    allowSelfCheckIn: true,
+    selfCheckInStartTime: null,
+    selfCheckInEndTime: null,
   });
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -77,6 +82,11 @@ const AttendancePage = () => {
     severity: 'success',
   });
   const [showStatistics, setShowStatistics] = useState(false);
+  const [checkInCodeDialog, setCheckInCodeDialog] = useState({
+    open: false,
+    code: '',
+    sessionName: '',
+  });
 
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
@@ -191,16 +201,26 @@ const AttendancePage = () => {
 
     setLoading(true);
     try {
+      const sessionDateStr = selectedDate.format('YYYY-MM-DD');
+
       const payload = {
         sectionId: selectedCourse,
-        sessionDate: selectedDate.format('YYYY-MM-DD'), // Dùng ngày đã chọn
+        sessionDate: sessionDateStr,
         startTime: sessionData.startTime + ':00',
         endTime: sessionData.endTime + ':00',
         sessionName:
           sessionData.sessionName || 'Buổi ' + selectedDate.format('DD/MM'),
-        description: sessionData.description,
-        room: sessionData.room,
-        practiceGroupId: sessionData.practiceGroupId,
+        description: sessionData.description || null,
+        room: sessionData.room || null,
+        practiceGroupId: sessionData.practiceGroupId || null,
+        allowSelfCheckIn: sessionData.allowSelfCheckIn,
+        selfCheckInStartTime: sessionData.selfCheckInStartTime
+          ? `${sessionDateStr}T${sessionData.selfCheckInStartTime}:00`
+          : null,
+        selfCheckInEndTime: sessionData.selfCheckInEndTime
+          ? `${sessionDateStr}T${sessionData.selfCheckInEndTime}:00`
+          : null,
+        checkInCode: null,
       };
 
       const response = await teacherService.createAttendanceSession(payload);
@@ -214,6 +234,9 @@ const AttendancePage = () => {
         room: '',
         description: '',
         practiceGroupId: null,
+        allowSelfCheckIn: true,
+        selfCheckInStartTime: null,
+        selfCheckInEndTime: null,
       });
 
       // Load lại danh sách sessions
@@ -238,6 +261,15 @@ const AttendancePage = () => {
 
       const sessionsResponse = await teacherService.getMySessions(params);
       setSessions(sessionsResponse.items || []);
+
+      // Show check-in code dialog if allowSelfCheckIn is true and checkInCode exists
+      if (response?.data?.allowSelfCheckIn && response?.data?.checkInCode) {
+        setCheckInCodeDialog({
+          open: true,
+          code: response.data.checkInCode,
+          sessionName: response.data.sessionName,
+        });
+      }
 
       // Show success message
       setSnackbar({
@@ -695,6 +727,30 @@ const AttendancePage = () => {
       key: 'excusedCount',
       width: 80,
       render: (count) => <span style={{ color: colors.error }}>{count}</span>,
+    },
+    {
+      title: 'Mã điểm danh',
+      key: 'checkInCode',
+      width: 120,
+      render: (_, record) =>
+        record.checkInCode && record.selfCheckInStartTime ? (
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => {
+              setCheckInCodeDialog({
+                open: true,
+                code: record.checkInCode,
+                sessionName: record.sessionName,
+              });
+            }}
+            sx={{ textTransform: 'none' }}
+          >
+            Xem mã
+          </Button>
+        ) : (
+          <span style={{ color: colors.textSecondary }}>-</span>
+        ),
     },
     {
       title: 'Thao tác',
@@ -1236,6 +1292,63 @@ const AttendancePage = () => {
                 placeholder="Thông tin thêm về phiên điểm danh..."
               />
             </Grid>
+
+            {/* Self Check-in Section */}
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={sessionData.allowSelfCheckIn}
+                    onChange={(e) =>
+                      setSessionData({
+                        ...sessionData,
+                        allowSelfCheckIn: e.target.checked,
+                        // Reset related fields if disabled
+                        selfCheckInStartTime: e.target.checked ? sessionData.selfCheckInStartTime : null,
+                        selfCheckInEndTime: e.target.checked ? sessionData.selfCheckInEndTime : null,
+                      })
+                    }
+                    color="primary"
+                  />
+                }
+                label="Cho phép sinh viên tự điểm danh"
+              />
+            </Grid>
+
+            {sessionData.allowSelfCheckIn && (
+              <>
+                <Grid item xs={6}>
+                  <TextField
+                    fullWidth
+                    label="Giờ bắt đầu tự điểm danh"
+                    type="time"
+                    value={sessionData.selfCheckInStartTime || ''}
+                    onChange={(e) =>
+                      setSessionData({
+                        ...sessionData,
+                        selfCheckInStartTime: e.target.value || null,
+                      })
+                    }
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    fullWidth
+                    label="Giờ kết thúc tự điểm danh"
+                    type="time"
+                    value={sessionData.selfCheckInEndTime || ''}
+                    onChange={(e) =>
+                      setSessionData({
+                        ...sessionData,
+                        selfCheckInEndTime: e.target.value || null,
+                      })
+                    }
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+              </>
+            )}
           </Grid>
         </DialogContent>
         <DialogActions>
@@ -1282,6 +1395,76 @@ const AttendancePage = () => {
             color="primary"
           >
             Xác nhận
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Check-in Code Dialog */}
+      <Dialog
+        open={checkInCodeDialog.open}
+        onClose={() => setCheckInCodeDialog({ ...checkInCodeDialog, open: false })}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+            Mã điểm danh tự động
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ textAlign: 'center', py: 3 }}>
+            <Typography variant="body1" sx={{ mb: 3 }}>
+              Phiên: <strong>{checkInCodeDialog.sessionName}</strong>
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Mã điểm danh cho sinh viên:
+            </Typography>
+            <Box
+              sx={{
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                border: `2px dashed ${theme.palette.primary.main}`,
+                borderRadius: 2,
+                p: 3,
+                mb: 2,
+              }}
+            >
+              <Typography
+                variant="h3"
+                sx={{
+                  fontWeight: 'bold',
+                  color: 'primary.main',
+                  letterSpacing: 8,
+                  fontFamily: 'monospace',
+                }}
+              >
+                {checkInCodeDialog.code}
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary">
+              Vui lòng gửi mã này cho sinh viên để họ có thể tự điểm danh
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              navigator.clipboard.writeText(checkInCodeDialog.code);
+              setSnackbar({
+                open: true,
+                message: 'Đã sao chép mã điểm danh!',
+                severity: 'success',
+              });
+            }}
+            variant="outlined"
+          >
+            Sao chép mã
+          </Button>
+          <Button
+            onClick={() => setCheckInCodeDialog({ ...checkInCodeDialog, open: false })}
+            variant="contained"
+            color="primary"
+          >
+            Đóng
           </Button>
         </DialogActions>
       </Dialog>

@@ -35,6 +35,7 @@ import {
   PersonAdd,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTheme, alpha } from '@mui/material/styles';
 import { userService } from '../../../service/userService';
 import UserDetailModal from '../../../component/Admin/UserManagementPage/UserDetailModal';
 import UserEditModal from '../../../component/Admin/UserManagementPage/UserEditModal';
@@ -44,6 +45,7 @@ import DataTable from '../../../component/Common/DataTable';
 
 const UserManagement = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
   const [users, setUsers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
@@ -180,8 +182,8 @@ const UserManagement = () => {
             sx={{
               width: 40,
               height: 40,
-              bgcolor: '#e6f4ff',
-              color: '#1677ff',
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              color: 'primary.main',
             }}
           >
             {user.fullName?.[0] || user.username?.[0]}
@@ -331,7 +333,7 @@ const UserManagement = () => {
           gap: 2,
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a237e', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
           Quản lý người dùng
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, width: { xs: '100%', sm: 'auto' } }}>
@@ -339,8 +341,8 @@ const UserManagement = () => {
             <IconButton
               onClick={fetchUsers}
               sx={{
-                bgcolor: 'white',
-                '&:hover': { bgcolor: '#e3f2fd' },
+                bgcolor: 'background.paper',
+                '&:hover': { bgcolor: 'action.hover' },
                 boxShadow: 1,
                 display: { xs: 'none', sm: 'inline-flex' },
               }}
@@ -352,9 +354,8 @@ const UserManagement = () => {
             variant="contained"
             startIcon={<PersonAdd />}
             onClick={() => navigate('/admin/create-user')}
+            color="primary"
             sx={{
-              bgcolor: '#1976d2',
-              '&:hover': { bgcolor: '#1565c0' },
               textTransform: 'none',
               px: 3,
               boxShadow: 2,
@@ -369,9 +370,8 @@ const UserManagement = () => {
             startIcon={<FileDownload />}
             onClick={handleExportExcel}
             disabled={users.length === 0}
+            color="success"
             sx={{
-              bgcolor: '#4caf50',
-              '&:hover': { bgcolor: '#45a049' },
               textTransform: 'none',
               px: 3,
               boxShadow: 2,
@@ -389,22 +389,22 @@ const UserManagement = () => {
         <Grid item xs={12} sm={6} md={3}>
           <Card
             sx={{
-              bgcolor: '#e3f2fd',
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
               boxShadow: 2,
               transition: 'transform 0.3s',
               '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <People sx={{ fontSize: 50, mr: 2, color: '#1976d2' }} />
+              <People sx={{ fontSize: 50, mr: 2, color: 'primary.main' }} />
               <Box>
                 <Typography
                   variant="h4"
-                  sx={{ fontWeight: 'bold', mb: 0.5, color: '#1976d2' }}
+                  sx={{ fontWeight: 'bold', mb: 0.5, color: 'primary.main' }}
                 >
                   {stats.total}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
+                <Typography variant="body2" color="text.secondary">
                   Tổng người dùng
                 </Typography>
               </Box>
@@ -415,22 +415,22 @@ const UserManagement = () => {
         <Grid item xs={12} sm={6} md={3}>
           <Card
             sx={{
-              bgcolor: '#e8f5e9',
+              bgcolor: alpha(theme.palette.success.main, 0.1),
               boxShadow: 2,
               transition: 'transform 0.3s',
               '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <CheckCircle sx={{ fontSize: 50, mr: 2, color: '#388e3c' }} />
+              <CheckCircle sx={{ fontSize: 50, mr: 2, color: 'success.main' }} />
               <Box>
                 <Typography
                   variant="h4"
-                  sx={{ fontWeight: 'bold', mb: 0.5, color: '#388e3c' }}
+                  sx={{ fontWeight: 'bold', mb: 0.5, color: 'success.main' }}
                 >
                   {stats.active}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
+                <Typography variant="body2" color="text.secondary">
                   Đang hoạt động
                 </Typography>
               </Box>
@@ -441,7 +441,7 @@ const UserManagement = () => {
         <Grid item xs={12} sm={6} md={3}>
           <Card
             sx={{
-              bgcolor: '#ffebee',
+              bgcolor: alpha(theme.palette.error.main, 0.1),
               boxShadow: 2,
               transition: 'transform 0.3s',
               '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
@@ -449,16 +449,16 @@ const UserManagement = () => {
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
               <AdminPanelSettings
-                sx={{ fontSize: 50, mr: 2, color: '#d32f2f' }}
+                sx={{ fontSize: 50, mr: 2, color: 'error.main' }}
               />
               <Box>
                 <Typography
                   variant="h4"
-                  sx={{ fontWeight: 'bold', mb: 0.5, color: '#d32f2f' }}
+                  sx={{ fontWeight: 'bold', mb: 0.5, color: 'error.main' }}
                 >
                   {stats.admins}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
+                <Typography variant="body2" color="text.secondary">
                   Quản trị viên
                 </Typography>
               </Box>
@@ -469,22 +469,22 @@ const UserManagement = () => {
         <Grid item xs={12} sm={6} md={3}>
           <Card
             sx={{
-              bgcolor: '#f3e5f5',
+              bgcolor: alpha(theme.palette.secondary.main, 0.1),
               boxShadow: 2,
               transition: 'transform 0.3s',
               '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 },
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <SchoolIcon sx={{ fontSize: 50, mr: 2, color: '#7b1fa2' }} />
+              <SchoolIcon sx={{ fontSize: 50, mr: 2, color: 'secondary.main' }} />
               <Box>
                 <Typography
                   variant="h4"
-                  sx={{ fontWeight: 'bold', mb: 0.5, color: '#7b1fa2' }}
+                  sx={{ fontWeight: 'bold', mb: 0.5, color: 'secondary.main' }}
                 >
                   {stats.teachers}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#424242' }}>
+                <Typography variant="body2" color="text.secondary">
                   Giảng viên
                 </Typography>
               </Box>
@@ -497,7 +497,7 @@ const UserManagement = () => {
       <Card sx={{ mb: 3, boxShadow: 2 }}>
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <FilterList sx={{ mr: 1, color: '#1976d2' }} />
+            <FilterList sx={{ mr: 1, color: 'primary.main' }} />
             <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               Bộ lọc tìm kiếm
             </Typography>
@@ -570,7 +570,7 @@ const UserManagement = () => {
         onRowsPerPageChange={handleChangeRowsPerPage}
         emptyState={
           <Box>
-            <People sx={{ fontSize: 80, color: '#e0e0e0', mb: 2 }} />
+            <People sx={{ fontSize: 80, color: 'action.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary" gutterBottom>
               Không tìm thấy người dùng nào
             </Typography>

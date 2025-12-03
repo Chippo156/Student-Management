@@ -205,4 +205,56 @@ export const studentServices = {
       return null;
     }
   },
+
+  // Lấy danh sách phiên điểm danh khả dụng cho sinh viên tự điểm danh
+  getAvailableCheckInSessions: async () => {
+    try {
+      const response = await customizeAxios.get(
+        '/api/student/attendance/available-sessions'
+      );
+      if (response?.success === false) {
+        message.error(
+          response?.message || 'Lấy danh sách phiên điểm danh thất bại'
+        );
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching available sessions:', error);
+      message.error('Lấy danh sách phiên điểm danh thất bại');
+      return null;
+    }
+  },
+
+  // Sinh viên tự điểm danh
+  selfCheckIn: async (attendanceSessionId, checkInCode = '', note = null) => {
+    try {
+      const response = await customizeAxios.post(
+        '/api/student/attendance/check-in',
+        {
+          attendanceSessionId,
+          checkInCode,
+          note,
+        }
+      );
+      if (response?.success === false) {
+        message.error(response?.message || 'Điểm danh thất bại');
+        return null;
+      }
+      message.success('Điểm danh thành công!');
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data;
+        if (Array.isArray(errData.data) && errData.data.length > 0) {
+          message.error(errData.data[0]);
+        } else {
+          message.error(errData.message || 'Điểm danh thất bại');
+        }
+      } else {
+        message.error(error.message || 'Điểm danh thất bại');
+      }
+      return null;
+    }
+  },
 };

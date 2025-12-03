@@ -34,6 +34,7 @@ import {
   Search as SearchIcon,
   CreditCard as CreditCardIcon,
   Notifications as NotificationsIcon,
+  CheckCircleOutline as CheckCircleOutlineIcon,
   ExpandLess,
   ExpandMore,
   Menu as MenuIcon,
@@ -104,6 +105,12 @@ const menuData = [
         icon: <CalendarMonthIcon />,
         key: 'week-calendar',
         path: '/student/schedule',
+      },
+      {
+        label: 'Điểm danh',
+        icon: <CheckCircleOutlineIcon />,
+        key: 'attendance',
+        path: '/student/attendance',
       },
       // {
       //   label: 'Lịch theo tiến độ',

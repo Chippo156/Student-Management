@@ -16,7 +16,7 @@ import {
   MenuItem,
   FormControl,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, alpha } from '@mui/material/styles';
 import { ArrowForward } from '@mui/icons-material';
 
 /**
@@ -51,9 +51,7 @@ const DataTable = ({
           <TableHead>
             <TableRow
               sx={{
-                bgcolor: theme.palette.mode === 'light'
-                  ? theme.palette.primary.main
-                  : theme.palette.background.paper,
+                bgcolor: alpha(theme.palette.primary.main, 0.08),
               }}
             >
               {columns.map((column, index) => (
@@ -62,9 +60,7 @@ const DataTable = ({
                   align={column.align || 'left'}
                   sx={{
                     fontWeight: 600,
-                    color: theme.palette.mode === 'light'
-                      ? 'white'
-                      : theme.palette.text.primary,
+                    color: theme.palette.text.primary,
                     width: column.width,
                     ...column.headerStyle,
                   }}

@@ -29,6 +29,7 @@ import { message } from 'antd';
 import gradeService from '../../../service/gradeService';
 import { studentServices } from '../../../service/studentServices';
 import { exportStudentGradesExcel } from '../../../until/exportStudentGradesExcel';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const GradeSheet = () => {
   const theme = useTheme();
@@ -38,10 +39,17 @@ const GradeSheet = () => {
   const [loading, setLoading] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+  const debouncedSearchInput = useDebounce(searchInput, 500);
 
   useEffect(() => {
     fetchStudents();
   }, []);
+
+  useEffect(() => {
+    if (debouncedSearchInput !== undefined) {
+      fetchStudents(debouncedSearchInput);
+    }
+  }, [debouncedSearchInput]);
 
   const fetchStudents = async (search = '') => {
     setLoadingStudents(true);
@@ -181,7 +189,6 @@ const GradeSheet = () => {
           loading={loadingStudents}
           onInputChange={(event, value) => {
             setSearchInput(value);
-            fetchStudents(value);
           }}
           renderInput={(params) => (
             <TextField

@@ -36,6 +36,7 @@ import {
 import { useTheme, alpha } from '@mui/material/styles';
 import gradeService from '../../../service/gradeService';
 import { studentServices } from '../../../service/studentServices';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const GradeEntry = () => {
   const theme = useTheme();
@@ -50,11 +51,19 @@ const GradeEntry = () => {
   const [editScore, setEditScore] = useState('');
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+  const debouncedSearchInput = useDebounce(searchInput, 500);
 
   // Fetch students on mount
   useEffect(() => {
     fetchStudents();
   }, []);
+
+  // Fetch students when debounced search input changes
+  useEffect(() => {
+    if (debouncedSearchInput !== undefined) {
+      fetchStudents(debouncedSearchInput);
+    }
+  }, [debouncedSearchInput]);
 
   const fetchStudents = async (search = '') => {
     setLoadingStudents(true);
@@ -198,7 +207,6 @@ const GradeEntry = () => {
           loading={loadingStudents}
           onInputChange={(event, value) => {
             setSearchInput(value);
-            fetchStudents(value);
           }}
           renderInput={(params) => (
             <TextField

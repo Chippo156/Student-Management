@@ -35,6 +35,7 @@ import {
 } from '../../../component/Common';
 import academicProgramService from '../../../service/academicProgramService';
 import { departmentService } from '../../../service/departmentService';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const Curriculum = () => {
   const theme = useTheme();

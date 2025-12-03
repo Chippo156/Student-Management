@@ -52,6 +52,7 @@ import {
 } from 'recharts';
 import statisticsService from '../../../service/statisticsService';
 import { studentServices } from '../../../service/studentServices';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const GradeStatistics = () => {
   const theme = useTheme();
@@ -64,6 +65,7 @@ const GradeStatistics = () => {
   const [loading, setLoading] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+  const debouncedSearchInput = useDebounce(searchInput, 500);
 
   // Overall statistics
   const [allStudentsStats, setAllStudentsStats] = useState(null);
@@ -79,6 +81,12 @@ const GradeStatistics = () => {
     fetchStudents();
     fetchAllStudentsStats();
   }, []);
+
+  useEffect(() => {
+    if (debouncedSearchInput !== undefined) {
+      fetchStudents(debouncedSearchInput);
+    }
+  }, [debouncedSearchInput]);
 
   useEffect(() => {
     if (tabValue === 1) {
@@ -212,7 +220,6 @@ const GradeStatistics = () => {
               loading={loadingStudents}
               onInputChange={(event, value) => {
                 setSearchInput(value);
-                fetchStudents(value);
               }}
               renderInput={(params) => (
                 <TextField

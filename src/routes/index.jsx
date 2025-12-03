@@ -43,6 +43,7 @@ import StudentEditInfoPage from '../page/Student/General information/StudentEdit
 import RegisterCourses from '../page/Student/Registration/RegisterCourses';
 import CurriculumPage from '../page/Student/Registration/CurriculumPage';
 import DebtPageComponent from '../page/Student/Finance/DebtPage';
+import SelfCheckIn from '../page/Student/Attendance/SelfCheckIn';
 // Teacher pages
 import TeacherDashboard from '../component/Teacher/Dashboard';
 import TeacherCourses from '../component/Teacher/Pages/CoursesPage';
@@ -252,6 +253,7 @@ const AppRoutes = () => {
           <Route path="grades" element={<StudentGrades />} />
           <Route path="schedule" element={<StudentSchedule />} />
           <Route path="timeline" element={<TimelinePage />} />
+          <Route path="attendance" element={<SelfCheckIn />} />
 
           {/* Đăng ký học phần */}
           <Route path="curriculum" element={<CurriculumPage />} />
