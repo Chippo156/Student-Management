@@ -21,7 +21,10 @@ namespace StudentManagement.Models.Dto.Response
         // Practice group info (if applicable)
         public int? PracticeGroupId { get; set; }
         public string? PracticeGroupName { get; set; }
-        
+        public DateTime? SelfCheckInStartTime { get; set; }
+        public DateTime? SelfCheckInEndTime { get; set; }
+        public string? CheckInCode { get; set; } // 6-digit code for verification
+
         // Attendance statistics
         public int TotalStudents { get; set; }
         public int PresentCount { get; set; }

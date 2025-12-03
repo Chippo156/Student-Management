@@ -63,7 +63,7 @@ namespace StudentManagement.Services
                     AllowSelfCheckIn = request.AllowSelfCheckIn,
                     SelfCheckInStartTime = request.SelfCheckInStartTime,
                     SelfCheckInEndTime = request.SelfCheckInEndTime,
-                    CheckInCode = request.CheckInCode
+                    CheckInCode = GenerateCheckInCode()
                 };
 
                 context.AttendanceSessions.Add(attendanceSession);
@@ -203,6 +203,9 @@ namespace StudentManagement.Services
                 CreatedByLecturerName = attendanceSession.CreatedByLecturer.User.FullName,
                 PracticeGroupId = attendanceSession.PracticeGroupId,
                 PracticeGroupName = attendanceSession.PracticeGroup?.GroupName,
+                CheckInCode = attendanceSession.CheckInCode,
+                SelfCheckInEndTime = attendanceSession.SelfCheckInEndTime,
+                SelfCheckInStartTime = attendanceSession.SelfCheckInStartTime,
                 TotalStudents = totalStudents,
                 PresentCount = presentCount,
                 AbsentCount = absentCount,
@@ -1191,20 +1194,6 @@ namespace StudentManagement.Services
             }
             return (errors.Count == 0, errors);
         }
-
-        // Helper method to calculate distance between two coordinates
-        private static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
-        {
-            const double R = 6371000; // Earth's radius in meters
-            var dLat = (lat2 - lat1) * Math.PI / 180;
-            var dLon = (lon2 - lon1) * Math.PI / 180;
-            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                    Math.Cos(lat1 * Math.PI / 180) * Math.Cos(lat2 * Math.PI / 180) *
-                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-            return R * c;
-        }
-
         // Helper method to generate random 6-digit code
         private static string GenerateCheckInCode()
         {

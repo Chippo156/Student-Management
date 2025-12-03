@@ -15,7 +15,6 @@ namespace StudentManagement.Models.Dto.Request
         public bool AllowSelfCheckIn { get; set; } = false;
         public DateTime? SelfCheckInStartTime { get; set; }
         public DateTime? SelfCheckInEndTime { get; set; }
-        public string? CheckInCode { get; set; } // 6-digit code for verification
     }
 
     public class RecordAttendanceRequest
