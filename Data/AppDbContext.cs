@@ -49,6 +49,7 @@ namespace StudentManagement.Data
         public DbSet<TuitionFee> TuitionFees { get; set; }
         public DbSet<TuitionPayment> TuitionPayments { get; set; }
         public DbSet<TuitionFeeDetail> TuitionFeeDetails { get; set; }
+        public DbSet<OtpVerification> OtpVerifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

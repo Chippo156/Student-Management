@@ -25,5 +25,6 @@ namespace StudentManagement.Services.Interface
         // **NEW: Student self check-in methods**
         Task<List<AvailableCheckInSessionResponse>> GetAvailableCheckInSessionsForStudentAsync(string mssv);
         Task<StudentSelfCheckInResponse> StudentSelfCheckInAsync(string mssv, StudentSelfCheckInRequest request);
+        Task<ICollection<StudentSelfCheckInResponse>> GetAllCheckInsForStudentAsync(string mssv);
     }
 }

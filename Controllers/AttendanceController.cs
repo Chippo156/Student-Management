@@ -194,5 +194,6 @@ namespace StudentManagement.Controllers
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
+
     }
 }

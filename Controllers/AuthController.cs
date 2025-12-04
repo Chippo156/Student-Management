@@ -147,10 +147,11 @@ namespace StudentManagement.Controllers
                 }
 
                 var result = await userService.ForgotPasswordByMSSVAsync(request);
-                
+
                 if (result.IsSuccess)
                 {
-                    return Ok(ApiResponse.SuccessResponse(new { 
+                    return Ok(ApiResponse.SuccessResponse(new
+                    {
                         message = result.Message,
                         studentName = result.StudentName,
                         email = result.Email
@@ -165,6 +166,38 @@ namespace StudentManagement.Controllers
             {
                 return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
                     "An error occurred while processing forgot password request", new List<string> { ex.Message }));
+            }
+        }
+
+        [HttpPost("VerifyOtp")]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid request data", errors));
+                }
+
+                var result = await userService.VerifyOtpAsync(request);
+
+                if (result.IsSuccess)
+                {
+                    return Ok(ApiResponse.SuccessResponse(null, result.Message));
+                }
+                else
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, result.Message, result.Errors));
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError,
+                    "An error occurred while verifying OTP", new List<string> { ex.Message }));
             }
         }
     }

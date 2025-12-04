@@ -1208,11 +1208,43 @@ namespace StudentManagement.Services
             }
             return (errors.Count == 0, errors);
         }
+
+
+
         // Helper method to generate random 6-digit code
         private static string GenerateCheckInCode()
         {
             var random = new Random();
             return random.Next(100000, 999999).ToString();
+        }
+
+        public async Task<ICollection<StudentSelfCheckInResponse>> GetAllCheckInsForStudentAsync(string mssv)
+        {
+            var student = await context.Students
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.MSSV == mssv)
+                ?? throw new Exception("Student not found");
+            var attendances = await context.Attendances
+                .Include(a => a.AttendanceSession)
+                    .ThenInclude(ats => ats.Section)
+                        .ThenInclude(s => s.CurriculumCourse)
+                            .ThenInclude(cc => cc.Course)
+                .Where(a => a.StudentId == student.Id &&
+                            a.AttendanceSession.AllowSelfCheckIn)
+                .OrderByDescending(a => a.RecordedAt)
+                .ToListAsync();
+            var responses = attendances.Select(a => new StudentSelfCheckInResponse
+            {
+                IsSuccess = true,
+                AttendanceId = a.AttendanceId,
+                AttendanceStatus = GetAttendanceStatusInVietnamese(a.Status),
+                CheckInTime = a.RecordedAt,
+                SessionName = a.AttendanceSession.SessionName,
+                CourseName = a.AttendanceSession.Section.CurriculumCourse.Course.CourseName,
+                Message = "Lịch sử điểm danh"
+            }).ToList();
+            return responses;
+
         }
     }
 }

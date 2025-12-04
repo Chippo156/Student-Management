@@ -206,7 +206,7 @@ namespace StudentManagement.Services
             await _hubContext.Clients.Group($"ChatRoom_{request.ChatRoomId}").SendAsync("ReceiveMessage", userMessageResponse);
             if (chatRoom?.ChatType == ChatType.AI)
             {
-                await GenerateAndSendAIResponse(request.ChatRoomId, request.Content, user.FullName);
+                await GenerateAndSendAIResponse(request.ChatRoomId, request.Content, user);
             }
 
             return userMessageResponse;
@@ -303,7 +303,7 @@ Hãy đặt câu hỏi bất cứ lúc nào bạn cần hỗ trợ! 😊";
             await _hubContext.Clients.Group($"ChatRoom_{chatRoomId}").SendAsync("ReceiveMessage", welcomeMessageResponse);
         }
 
-        private async Task GenerateAndSendAIResponse(int chatRoomId, string userMessage, string studentName)
+        private async Task GenerateAndSendAIResponse(int chatRoomId, string userMessage, User user)
         {
             try
             {
@@ -330,7 +330,8 @@ Hãy đặt câu hỏi bất cứ lúc nào bạn cần hỗ trợ! 😊";
                 // Generate AI response
                 var aiResponse = await _geminiAIService.GenerateEducationalResponseAsync(
                     userMessage,
-                    $"Sinh viên: {studentName}\nCuộc trò chuyện gần đây:\n{conversationContext}");
+                    user.Username,
+                    $"Sinh viên với mã số sinh viên: {user.Username} và tên {user.FullName}\nCuộc trò chuyện gần đây:\n{conversationContext}");
 
                 // Stop typing notification
                 //await _hubContext.Clients.Group($"ChatRoom_{chatRoomId}").SendAsync("UserTyping", new

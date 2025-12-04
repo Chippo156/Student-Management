@@ -99,10 +99,10 @@ namespace StudentManagement.Services
             }
         }
 
-        public async Task<string> GenerateEducationalResponseAsync(string question, string studentContext = "")
+        public async Task<string> GenerateEducationalResponseAsync(string question, string mssv, string studentContext = "")
         {
             // **NEW: Detect MSSV in question and fetch student data**
-            var studentInfo = await ExtractAndFetchStudentInfoAsync(question, studentContext);
+            var studentInfo = await ExtractAndFetchStudentInfoAsync(question, studentContext, mssv);
             
             var enhancedContext = await BuildStudentContextPromptAsync(studentContext, studentInfo);
 
@@ -119,6 +119,7 @@ namespace StudentManagement.Services
 - Bổ sung thông tin liên quan hữu ích
 - Khuyến khích và động viên sinh viên
 - Hướng dẫn cụ thể nếu cần thực hiện thao tác trong hệ thống
+- Trả lời ngắn gọn, súc tích, và không cách dòng.
 
 ❓ **Câu hỏi:** {question}
 
@@ -128,12 +129,12 @@ namespace StudentManagement.Services
         }
 
         // **NEW METHOD: Extract MSSV and fetch student information**
-        private async Task<StudentDatabaseInfo?> ExtractAndFetchStudentInfoAsync(string question, string studentContext)
+        private async Task<StudentDatabaseInfo?> ExtractAndFetchStudentInfoAsync(string question, string studentContext, string mssv)
         {
             try
             {
                 // Extract MSSV from question or context
-                string? mssv = ExtractMSSV(question) ?? ExtractMSSV(studentContext);
+                //string? mssv = ExtractMSSV(question) ?? ExtractMSSV(studentContext);
                 
                 if (string.IsNullOrEmpty(mssv))
                     return null;
@@ -145,26 +146,6 @@ namespace StudentManagement.Services
                 Console.WriteLine($"Error fetching student info: {ex.Message}");
                 return null;
             }
-        }
-
-        // **NEW METHOD: Extract MSSV using regex**
-        private static string? ExtractMSSV(string text)
-        {
-            if (string.IsNullOrEmpty(text))
-                return null;
-
-            // Pattern for MSSV - typically 8-10 digits
-            var mssvPattern = @"\b(20\d{6,8})\b";
-            var match = Regex.Match(text, mssvPattern);
-            
-            if (match.Success)
-                return match.Value;
-
-            // Alternative pattern - look for explicit MSSV mention
-            var explicitPattern = @"MSSV[:\s]*(\d{8,10})";
-            match = Regex.Match(text, explicitPattern, RegexOptions.IgnoreCase);
-            
-            return match.Success ? match.Groups[1].Value : null;
         }
 
         // **NEW METHOD: Fetch comprehensive student information from database**
@@ -222,6 +203,8 @@ namespace StudentManagement.Services
                 .Include(s => s.Section)
                     .ThenInclude(sec => sec.CurriculumCourse.Course)
                 .Where(s => s.Section.Enrollments.Any(e => e.Student.MSSV == mssv))
+                                .OrderByDescending(fr => fr.Section.Semester.Year)
+                .ThenByDescending(fr => fr.Section.Semester.Term)
                 .ToListAsync();
 
             // Calculate statistics
@@ -319,6 +302,7 @@ namespace StudentManagement.Services
 • Trạng thái: {studentInfo.StudentStatus}
 
 **Kết quả học tập:**
+• Lịch học hiện tại: {studentInfo.ScheduleInfos})
 • GPA hiện tại: {studentInfo.CurrentGPA}/4.0 (≈ {Math.Round(studentInfo.CurrentGPA * 2.5, 2)}/10)
 • GPA tích lũy: {studentInfo.CumulativeGPA}/4.0 (≈ {Math.Round(studentInfo.CumulativeGPA * 2.5, 2)}/10)
 • Tín chỉ đã tích lũy: {studentInfo.TotalCreditsCompleted}/{studentInfo.RequiredCredits}
@@ -328,7 +312,7 @@ namespace StudentManagement.Services
                 // Add GPA history
                 if (studentInfo.GpaSnapshots.Any())
                 {
-                    baseContext += "\n\n**Lịch sử GPA theo học kỳ:**\n";
+                    baseContext += "\n**Lịch sử GPA theo học kỳ:**";
                     foreach (var gpa in studentInfo.GpaSnapshots.TakeLast(5))
                     {
                         baseContext += $"• {gpa.Semester}: {gpa.GPA}/4.0 ({gpa.GPA10Scale}/10)\n";
@@ -338,46 +322,46 @@ namespace StudentManagement.Services
                 // Add recent course results
                 if (studentInfo.FinalResults.Any())
                 {
-                    baseContext += "\n\n**Kết quả môn học gần đây:**\n";
+                    baseContext += "\n**Kết quả môn học gần đây:**";
                     foreach (var result in studentInfo.FinalResults.Take(5))
                     {
-                        baseContext += $"• {result.CourseCode} - {result.CourseName}: {result.FinalScore}/10 ({result.GradeLetter}) - {result.Semester}\n";
+                        baseContext += $"• {result.CourseCode} - {result.CourseName}: {result.FinalScore}/10 ({result.GradeLetter}) - {result.Semester}";
                     }
                 }
 
                 // Add current enrollments
                 if (studentInfo.CurrentEnrollments.Any())
                 {
-                    baseContext += "\n\n**Môn học đang học:**\n";
+                    baseContext += "\n**Môn học đang học:**";
                     foreach (var enrollment in studentInfo.CurrentEnrollments.Take(5))
                     {
-                        baseContext += $"• {enrollment.CourseCode} - {enrollment.CourseName} ({enrollment.Credits} TC) - {enrollment.Semester}\n";
+                        baseContext += $"• {enrollment.CourseCode} - {enrollment.CourseName} ({enrollment.Credits} TC) - {enrollment.Semester}";
                     }
                 }
 
                 // Add schedule info
                 if (studentInfo.ScheduleInfos.Any())
                 {
-                    baseContext += "\n\n**Lịch học hiện tại:**\n";
+                    baseContext += "\n**Lịch học hiện tại:**";
                     foreach (var schedule in studentInfo.ScheduleInfos.Take(5))
                     {
-                        baseContext += $"• {schedule.CourseCode} - {schedule.CourseName}: {schedule.DayOfWeek}, {schedule.StartTime} - {schedule.EndTime}\n";
+                        baseContext += $"• {schedule.CourseCode} - {schedule.CourseName}: {schedule.DayOfWeek}, {schedule.StartTime} - {schedule.EndTime}";
                     }
                 }
 
                 // Add tuition info
                 if (studentInfo.TuitionInfo.Any())
                 {
-                    baseContext += "\n\n**Thông tin học phí gần đây:**\n";
+                    baseContext += "\n**Thông tin học phí gần đây:**";
                     foreach (var tuition in studentInfo.TuitionInfo.Take(2))
                     {
-                        baseContext += $"• {tuition.Semester}: {tuition.TotalAmount:N0} VND (Đã đóng: {tuition.PaidAmount:N0} VND, Còn lại: {tuition.RemainingAmount:N0} VND)\n";
+                        baseContext += $"• {tuition.Semester}: {tuition.TotalAmount:N0} VND (Đã đóng: {tuition.PaidAmount:N0} VND, Còn lại: {tuition.RemainingAmount:N0} VND)";
                     }
                 }
             }
             else if (studentInfo?.NotFound == true)
             {
-                baseContext += $"\n\n⚠️ **THÔNG BÁO:** Không tìm thấy thông tin sinh viên với MSSV {studentInfo.MSSV} trong hệ thống.";
+                baseContext += $"\n⚠️ **THÔNG BÁO:** Không tìm thấy thông tin sinh viên với MSSV {studentInfo.MSSV} trong hệ thống.";
             }
 
             baseContext += BuildSystemKnowledgeBase();
@@ -452,7 +436,7 @@ Bạn là EduBot - trợ lý AI thông minh của Student Management System tạ
 - Đưa ra lời khuyên thiết thực cho sinh viên
 - Sử dụng emoji phù hợp để tạo không khí thân thiện
 
-{(string.IsNullOrEmpty(conversationContext) ? "" : $"📋 **Ngữ cảnh cuộc trò chuyện trước:**\n{conversationContext}\n")}
+{(string.IsNullOrEmpty(conversationContext) ? "" : $"📋 **Ngữ cảnh cuộc trò chuyện trước:**{conversationContext}\n")}
 
 ❓ **Câu hỏi của sinh viên:** {userMessage}
 

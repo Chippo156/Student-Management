@@ -111,5 +111,99 @@ namespace StudentManagement.Services
 </body>
 </html>";
         }
+        // Thêm method gửi OTP
+        public async Task<bool> SendOtpEmailAsync(string toEmail, string otpCode, string studentName, string mssv)
+        {
+            try
+            {
+                var smtpSettings = _configuration.GetSection("EmailSettings");
+                var fromEmail = smtpSettings["FromEmail"];
+                var fromPassword = smtpSettings["FromPassword"];
+                var smtpHost = smtpSettings["SmtpHost"];
+                var smtpPort = int.Parse(smtpSettings["SmtpPort"] ?? "587");
+
+                using var client = new SmtpClient(smtpHost, smtpPort)
+                {
+                    EnableSsl = true,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(fromEmail, fromPassword)
+                };
+
+                var subject = "Mã OTP xác thực - Student Management System";
+                var body = GenerateOtpEmailBody(studentName, mssv, otpCode);
+
+                var message = new MailMessage(fromEmail!, toEmail, subject, body)
+                {
+                    IsBodyHtml = true
+                };
+
+                await client.SendMailAsync(message);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to send OTP email: {ex.Message}");
+                return false;
+            }
+        }
+
+        private string GenerateOtpEmailBody(string studentName, string mssv, string otpCode)
+        {
+            return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }}
+        .container {{ max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }}
+        .header {{ text-align: center; color: #333; margin-bottom: 30px; }}
+        .content {{ color: #555; line-height: 1.6; }}
+        .otp-box {{ background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; font-family: monospace; font-size: 24px; text-align: center; border: 2px solid #007bff; }}
+        .otp-code {{ font-size: 32px; font-weight: bold; color: #007bff; letter-spacing: 5px; }}
+        .warning {{ color: #dc3545; font-weight: bold; margin: 20px 0; padding: 15px; background-color: #f8d7da; border-radius: 5px; }}
+        .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #888; font-size: 12px; text-align: center; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>🔐 Mã OTP Xác Thực</h2>
+        </div>
+        
+        <div class='content'>
+            <p>Xin chào <strong>{studentName}</strong>,</p>
+            <p><strong>Mã số:</strong> {mssv}</p>
+            
+            <p>Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
+            
+            <p>Mã OTP xác thực của bạn là:</p>
+            
+            <div class='otp-box'>
+                <div class='otp-code'>{otpCode}</div>
+            </div>
+            
+            <div class='warning'>
+                ⚠️ <strong>Lưu ý quan trọng:</strong><br>
+                • Mã OTP có hiệu lực trong 5 phút<br>
+                • Không chia sẻ mã này với bất kỳ ai<br>
+                • Nếu không phải bạn yêu cầu, vui lòng bỏ qua email này
+            </div>
+            
+            <p><strong>Bước tiếp theo:</strong></p>
+            <ol>
+                <li>Quay lại trang đặt lại mật khẩu</li>
+                <li>Nhập mã OTP ở trên</li>
+                <li>Tạo mật khẩu mới</li>
+            </ol>
+        </div>
+        
+        <div class='footer'>
+            <p>Email này được gửi tự động từ Student Management System.</p>
+            <p>Vui lòng không trả lời email này.</p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
     }
 }

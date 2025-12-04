@@ -1009,23 +1009,22 @@ namespace StudentManagement.Services
             
             try
             {
-                // Tìm sinh viên theo MSSV
-                var student = await context.Students
-                    .Include(s => s.User)
-                    .FirstOrDefaultAsync(s => s.MSSV == request.MSSV.Trim());
+                // Tìm user theo MSSV
+                var user = await context.Users
+                    .FirstOrDefaultAsync(s => s.Username == request.MSSV.Trim());
 
-                if (student == null)
+                if (user == null)
                 {
                     return new ForgotPasswordByMSSVResponse
                     {
                         IsSuccess = false,
-                        Message = "Không tìm thấy sinh viên với MSSV này",
+                        Message = "Không tìm thấy tài khoản với MSSV này",
                         Errors = { "MSSV không tồn tại trong hệ thống" }
                     };
                 }
 
                 // Kiểm tra tài khoản có hoạt động không
-                if (student.User.AccountStatus != AccountStatus.Active)
+                if (user.AccountStatus != AccountStatus.Active)
                 {
                     return new ForgotPasswordByMSSVResponse
                     {
@@ -1036,7 +1035,7 @@ namespace StudentManagement.Services
                 }
 
                 // Kiểm tra email có tồn tại không
-                if (string.IsNullOrWhiteSpace(student.User.Email))
+                if (string.IsNullOrWhiteSpace(user.Email))
                 {
                     return new ForgotPasswordByMSSVResponse
                     {
@@ -1046,28 +1045,47 @@ namespace StudentManagement.Services
                     };
                 }
 
-                // Tạo mật khẩu mặc định (có thể là MSSV + năm sinh hoặc format khác)
-                var defaultPassword = "123456";
+                // **NEW: Kiểm tra OTP cũ chưa hết hạn**
+                var existingOtp = await context.OtpVerifications
+                    .Where(o => o.Code == request.MSSV && 
+                               o.Purpose == "ForgotPassword" && 
+                               !o.IsUsed && 
+                               o.ExpiresAt > DateTime.UtcNow)
+                    .FirstOrDefaultAsync();
 
-                //// Hash mật khẩu mặc định
-                //var hashedPassword = new PasswordHasher<User>().HashPassword(student.User, defaultPassword);
+                if (existingOtp != null)
+                {
+                    return new ForgotPasswordByMSSVResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Vui lòng chờ",
+                        Errors = { $"Mã OTP cũ vẫn còn hiệu lực. Vui lòng chờ {(existingOtp.ExpiresAt - DateTime.UtcNow).TotalSeconds:F0} giây." }
+                    };
+                }
 
-                // Cập nhật mật khẩu
-                student.User.PasswordHash = defaultPassword;
-                
-                // Xóa refresh token để buộc đăng nhập lại
-                student.User.RefreshToken = null;
-                student.User.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(-1);
+                // **NEW: Tạo mã OTP 6 số**
+                var otpCode = GenerateOtpCode();
+                var otpExpiry = DateTime.UtcNow.AddMinutes(5); // 5 phút
 
-                context.Users.Update(student.User);
+                var otpVerification = new OtpVerification
+                {
+                    Email = user.Email,
+                    Code = request.MSSV,
+                    OtpCode = otpCode,
+                    CreatedAt = DateTime.UtcNow,
+                    ExpiresAt = otpExpiry,
+                    Purpose = "ForgotPassword"
+                };
+
+                context.OtpVerifications.Add(otpVerification);
                 await context.SaveChangesAsync();
 
-                // Gửi email với mật khẩu mặc định
-                var emailSent = await emailService.SendDefaultPasswordEmailAsync(
-                    student.User.Email,
-                    defaultPassword,
-                    student.User.FullName,
-                    student.MSSV);
+                // **NEW: Gửi email OTP thay vì password**
+                var emailSent = await emailService.SendOtpEmailAsync(
+                    user.Email,
+                    otpCode,
+                    user.FullName,
+                    user.Username);
 
                 if (!emailSent)
                 {
@@ -1085,9 +1103,9 @@ namespace StudentManagement.Services
                 return new ForgotPasswordByMSSVResponse
                 {
                     IsSuccess = true,
-                    Message = "Mật khẩu mặc định đã được gửi đến email của bạn",
-                    StudentName = student.User.FullName,
-                    Email = MaskEmail(student.User.Email)
+                    Message = "Mã OTP đã được gửi đến email của bạn",
+                    StudentName = user.FullName,
+                    Email = MaskEmail(user.Email)
                 };
             }
             catch (Exception ex)
@@ -1102,18 +1120,98 @@ namespace StudentManagement.Services
             }
         }
 
-        private static string GenerateDefaultPassword(string mssv, DateOnly? dateOfBirth)
+        public async Task<VerifyOtpResponse> VerifyOtpAsync(VerifyOtpRequest request)
         {
-            // Tạo mật khẩu mặc định theo format: MSSV + 4 số cuối năm sinh
-            // Ví dụ: 20210001 + 2003 = 202100012003
-            if (dateOfBirth.HasValue)
+            using var transaction = await context.Database.BeginTransactionAsync();
+
+            try
             {
-                var birthYear = dateOfBirth.Value.Year.ToString();
-                return mssv + birthYear;
+                var user = await context.Users
+                    .FirstOrDefaultAsync(s => s.Username == request.MSSV.Trim());
+                var otpRecord = await context.OtpVerifications
+                    .Where(o => o.Code == request.MSSV && 
+                               o.OtpCode == request.OtpCode && 
+                               o.Purpose == "ForgotPassword" && 
+                               !o.IsUsed)
+                    .FirstOrDefaultAsync();
+
+                if (otpRecord == null)
+                {
+                    return new VerifyOtpResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Mã OTP không hợp lệ",
+                        Errors = { "Mã OTP không đúng hoặc đã được sử dụng" }
+                    };
+                }
+
+                if (otpRecord.ExpiresAt < DateTime.UtcNow)
+                {
+                    return new VerifyOtpResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Mã OTP đã hết hạn",
+                        Errors = { "Mã OTP đã hết hiệu lực. Vui lòng yêu cầu mã mới" }
+                    };
+                }
+                
+
+                var defaultPassword = "123456";
+
+                //// Hash mật khẩu mặc định
+                //var hashedPassword = new PasswordHasher<User>().HashPassword(student.User, defaultPassword);
+
+                // Cập nhật mật khẩu
+                user.PasswordHash = defaultPassword;
+
+                // Xóa refresh token để buộc đăng nhập lại
+                user.RefreshToken = null;
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(-1);
+
+                context.Users.Update(user);
+                await context.SaveChangesAsync();
+
+                // Gửi email với mật khẩu mặc định
+                var emailSent = await emailService.SendDefaultPasswordEmailAsync(
+                    user.Email,
+                    defaultPassword,
+                    user.FullName,
+                    user.Username);
+
+                if (!emailSent)
+                {
+                    await transaction.RollbackAsync();
+                    return new VerifyOtpResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Không thể gửi email",
+                        Errors = { "Có lỗi xảy ra khi gửi email. Vui lòng thử lại sau." }
+                    };
+                }
+
+                await transaction.CommitAsync();
+
+                return new VerifyOtpResponse
+                {
+                    IsSuccess = true,
+                    Message = "Xác thực OTP thành công và mật khẩu mới được gửi vào Email của bạn."
+                };
             }
-            
-            // Nếu không có ngày sinh, dùng MSSV + "2024"
-            return mssv + "2024";
+            catch (Exception ex)
+            {
+                return new VerifyOtpResponse
+                {
+                    IsSuccess = false,
+                    Message = "Có lỗi xảy ra khi xác thực OTP",
+                    Errors = { ex.Message }
+                };
+            }
+        }
+
+        private static string GenerateOtpCode()
+        {
+            var random = new Random();
+            return random.Next(100000, 999999).ToString();
         }
 
         private static string MaskEmail(string email)

@@ -67,32 +67,23 @@ namespace StudentManagement.Controllers
                 return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
             }
         }
-
-        //[HttpGet("my-attendance/{sectionId}")]
-        //public async Task<IActionResult> GetMyAttendanceStatistics(int sectionId)
-        //{
-        //    try
-        //    {
-        //        var mssv = User.FindFirstValue(ClaimTypes.Name);
-        //        if (mssv == null)
-        //        {
-        //            return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid MSSV in token", null));
-        //        }
-
-        //        // Get student ID from MSSV
-        //        var student = await _attendanceService.GetStudentByMSSVAsync(mssv);
-        //        if (student == null)
-        //        {
-        //            return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, "Student not found", null));
-        //        }
-
-        //        var statistics = await _attendanceService.GetStudentAttendanceStatisticsAsync(student.Id, sectionId);
-        //        return Ok(ApiResponse.SuccessResponse(statistics, "Student attendance statistics retrieved successfully"));
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
-        //    }
-        //}
+        [HttpGet("GetAllCheckIn")]
+        public async Task<IActionResult> GetAllCheckIns()
+        {
+            try
+            {
+                var mssv = User.FindFirstValue(ClaimTypes.Name);
+                if (mssv == null)
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid MSSV in token", null));
+                }
+                var checkIns = await _attendanceService.GetAllCheckInsForStudentAsync(mssv);
+                return Ok(ApiResponse.SuccessResponse(checkIns, "Student check-ins retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, ex.Message, null));
+            }
+        }
     }
 }
