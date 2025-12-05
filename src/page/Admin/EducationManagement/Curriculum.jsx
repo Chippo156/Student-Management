@@ -10,10 +10,6 @@ import {
   IconButton,
   Tooltip,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from '@mui/material';
 import {
   School,
@@ -27,6 +23,7 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
+import * as XLSX from 'xlsx';
 import {
   PageHeader,
   StatsCard,
@@ -35,6 +32,7 @@ import {
 } from '../../../component/Common';
 import academicProgramService from '../../../service/academicProgramService';
 import { departmentService } from '../../../service/departmentService';
+import SearchableAutocomplete from '../../../component/Common/SearchableAutocomplete';
 import { useDebounce } from '../../../hooks/useDebounce';
 
 const Curriculum = () => {
@@ -43,8 +41,8 @@ const Curriculum = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDegree, setFilterDegree] = useState('');
-  const [filterDepartment, setFilterDepartment] = useState('');
+  const [filterDegree, setFilterDegree] = useState(null);
+  const [filterDepartment, setFilterDepartment] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
@@ -80,8 +78,8 @@ const Curriculum = () => {
         pageNumber: page + 1,
         pageSize: rowsPerPage,
         programName: debouncedSearchTerm, // ✅ Dùng debounced value
-        degreeLevel: filterDegree || '',
-        departmentId: filterDepartment || null, // ✅ Thêm filter theo departmentId
+        degreeLevel: filterDegree?.value || '',
+        departmentId: filterDepartment?.id || null, // ✅ Thêm filter theo departmentId
       });
 
       if (result) {
@@ -106,11 +104,15 @@ const Curriculum = () => {
 
   const handleResetFilters = () => {
     setSearchTerm('');
-    setFilterDegree('');
-    setFilterDepartment('');
+    setFilterDegree(null);
+    setFilterDepartment(null);
   };
 
-  const degreeLevels = ['Cử nhân', 'Thạc sĩ', 'Tiến sĩ'];
+  const degreeLevels = [
+    { id: 'Cử nhân', value: 'Cử nhân', name: 'Cử nhân' },
+    { id: 'Thạc sĩ', value: 'Thạc sĩ', name: 'Thạc sĩ' },
+    { id: 'Tiến sĩ', value: 'Tiến sĩ', name: 'Tiến sĩ' },
+  ];
 
   const stats = useMemo(() => {
     return {
@@ -374,48 +376,36 @@ const Curriculum = () => {
           />
         </Grid>
         <Grid item xs={12} sm={6} md={2} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Bậc đào tạo</InputLabel>
-            <Select
-              value={filterDegree || ''}
-              label="Bậc đào tạo"
-              onChange={(e) => setFilterDegree(e.target.value)}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              {degreeLevels.map((level) => (
-                <MenuItem key={level} value={level}>
-                  {level}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={degreeLevels}
+            value={filterDegree}
+            onChange={(event, newValue) => {
+              setFilterDegree(newValue);
+              setPage(0);
+            }}
+            getOptionLabel={(option) => option.name}
+            isOptionEqualToValue={(option, value) => option?.id === value?.id}
+            label="Bậc đào tạo"
+            placeholder="Tất cả"
+            size="small"
+            showSearchIcon={false}
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3} lg={3}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="department-select-label">Chuyên ngành</InputLabel>
-            <Select
-              labelId="department-select-label"
-              value={filterDepartment || ''}
-              label="Chuyên ngành"
-              onChange={(e) => setFilterDepartment(e.target.value)}
-              renderValue={(selected) => {
-                if (!selected) {
-                  return 'Tất cả';
-                }
-                const department = departments.find((d) => d.id === selected);
-                return department ? department.name : selected;
-              }}
-            >
-              <MenuItem value="">
-                <em>Tất cả</em>
-              </MenuItem>
-              {departments.map((dept) => (
-                <MenuItem key={dept.id} value={dept.id}>
-                  {dept.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={departments}
+            value={filterDepartment}
+            onChange={(event, newValue) => {
+              setFilterDepartment(newValue);
+              setPage(0);
+            }}
+            getOptionLabel={(option) => option.name}
+            isOptionEqualToValue={(option, value) => option?.id === value?.id}
+            label="Chuyên ngành"
+            placeholder="Tất cả"
+            size="small"
+            showSearchIcon={false}
+          />
         </Grid>
         <Grid item xs={12} sm={12} md={2} lg={2}>
           <Button

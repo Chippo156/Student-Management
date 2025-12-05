@@ -632,23 +632,71 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
                 <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
                   <Table>
                     <TableHead>
-                      <TableRow sx={{ bgcolor: theme.palette.primary.main }}>
-                        <TableCell sx={{ color: 'white', fontWeight: 700 }}>
+                      <TableRow
+                        sx={{
+                          bgcolor: theme.palette.mode === 'light'
+                            ? theme.palette.grey[100]
+                            : theme.palette.primary.main
+                        }}
+                      >
+                        <TableCell
+                          sx={{
+                            color: theme.palette.mode === 'light'
+                              ? theme.palette.text.primary
+                              : 'white',
+                            fontWeight: 700
+                          }}
+                        >
                           STT
                         </TableCell>
-                        <TableCell sx={{ color: 'white', fontWeight: 700 }}>
+                        <TableCell
+                          sx={{
+                            color: theme.palette.mode === 'light'
+                              ? theme.palette.text.primary
+                              : 'white',
+                            fontWeight: 700
+                          }}
+                        >
                           Mã SV
                         </TableCell>
-                        <TableCell sx={{ color: 'white', fontWeight: 700 }}>
+                        <TableCell
+                          sx={{
+                            color: theme.palette.mode === 'light'
+                              ? theme.palette.text.primary
+                              : 'white',
+                            fontWeight: 700
+                          }}
+                        >
                           Họ và tên
                         </TableCell>
-                        <TableCell sx={{ color: 'white', fontWeight: 700 }}>
+                        <TableCell
+                          sx={{
+                            color: theme.palette.mode === 'light'
+                              ? theme.palette.text.primary
+                              : 'white',
+                            fontWeight: 700
+                          }}
+                        >
                           Email
                         </TableCell>
-                        <TableCell sx={{ color: 'white', fontWeight: 700 }}>
+                        <TableCell
+                          sx={{
+                            color: theme.palette.mode === 'light'
+                              ? theme.palette.text.primary
+                              : 'white',
+                            fontWeight: 700
+                          }}
+                        >
                           Giới tính
                         </TableCell>
-                        <TableCell sx={{ color: 'white', fontWeight: 700 }}>
+                        <TableCell
+                          sx={{
+                            color: theme.palette.mode === 'light'
+                              ? theme.palette.text.primary
+                              : 'white',
+                            fontWeight: 700
+                          }}
+                        >
                           Ngày sinh
                         </TableCell>
                       </TableRow>

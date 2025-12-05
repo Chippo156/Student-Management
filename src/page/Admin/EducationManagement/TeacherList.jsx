@@ -40,6 +40,7 @@ import { departmentService } from '../../../service/departmentService';
 import TeacherDetailModal from '../../../component/Admin/TeacherManagement/TeacherDetailModal';
 import TeacherEditModal from '../../../component/Admin/TeacherManagement/TeacherEditModal';
 import TeacherCreateModal from '../../../component/Admin/TeacherManagement/TeacherCreateModal';
+import SearchableAutocomplete from '../../../component/Common/SearchableAutocomplete';
 import { exportLecturersExcel } from '../../../until/exportLecturersExcel';
 import { useDebounce } from '../../../hooks/useDebounce';
 
@@ -56,10 +57,10 @@ const TeacherList = () => {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // Filter states
-  const [filterDepartment, setFilterDepartment] = useState('');
-  const [filterPosition, setFilterPosition] = useState('');
-  const [filterAcademicTitle, setFilterAcademicTitle] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState(null);
+  const [filterPosition, setFilterPosition] = useState(null);
+  const [filterAcademicTitle, setFilterAcademicTitle] = useState(null);
+  const [filterStatus, setFilterStatus] = useState(null);
   const [departments, setDepartments] = useState([]);
 
   // Modal states
@@ -72,10 +73,10 @@ const TeacherList = () => {
   const fetchLecturers = async () => {
     setLoading(true);
     const filters = {
-      departmentId: filterDepartment || undefined,
-      position: filterPosition || undefined,
-      academicTitle: filterAcademicTitle || undefined,
-      lecturerStatus: filterStatus !== '' ? filterStatus : undefined,
+      departmentId: filterDepartment?.id || undefined,
+      position: filterPosition?.id || undefined,
+      academicTitle: filterAcademicTitle?.id || undefined,
+      lecturerStatus: filterStatus?.id || undefined,
     };
     const res = await lecturerService.getAllLecturers(
       page + 1,
@@ -98,7 +99,12 @@ const TeacherList = () => {
     const fetchDepartments = async () => {
       const result = await departmentService.getDepartmentsDropdown();
       if (result && Array.isArray(result)) {
-        setDepartments(result);
+        setDepartments(
+          result.map((dept) => ({
+            id: dept.departmentId,
+            name: dept.departmentName,
+          }))
+        );
       } else {
         setDepartments([]);
       }
@@ -144,30 +150,29 @@ const TeacherList = () => {
 
   const handleResetFilters = () => {
     setSearchTerm('');
-    setFilterDepartment('');
-    setFilterPosition('');
-    setFilterAcademicTitle('');
-    setFilterStatus('');
+    setFilterDepartment(null);
+    setFilterPosition(null);
+    setFilterAcademicTitle(null);
+    setFilterStatus(null);
   };
 
   const handleExportExcel = async () => {
     let filterInfo = '';
     if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
     if (filterDepartment) {
-      const dept = departments.find((d) => d.departmentId === filterDepartment);
       filterInfo +=
         (filterInfo ? ', ' : '') +
-        `Chuyên ngành: ${dept?.departmentName || ''}`;
+        `Chuyên ngành: ${filterDepartment.name || ''}`;
     }
     if (filterPosition)
-      filterInfo += (filterInfo ? ', ' : '') + `Chức vụ: ${filterPosition}`;
+      filterInfo +=
+        (filterInfo ? ', ' : '') + `Chức vụ: ${filterPosition.name}`;
     if (filterAcademicTitle)
       filterInfo +=
-        (filterInfo ? ', ' : '') + `Học hàm: ${filterAcademicTitle}`;
-    if (filterStatus !== '') {
-      const statusLabel =
-        filterStatus === 1 ? 'Đang công tác' : 'Không hoạt động';
-      filterInfo += (filterInfo ? ', ' : '') + `Trạng thái: ${statusLabel}`;
+        (filterInfo ? ', ' : '') + `Học hàm: ${filterAcademicTitle.name}`;
+    if (filterStatus) {
+      filterInfo +=
+        (filterInfo ? ', ' : '') + `Trạng thái: ${filterStatus.name}`;
     }
 
     const result = await exportLecturersExcel(lecturers, filterInfo);
@@ -467,50 +472,61 @@ const TeacherList = () => {
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Chuyên ngành</InputLabel>
-            <Select
-              value={filterDepartment}
-              label="Chuyên ngành"
-              onChange={(e) => setFilterDepartment(e.target.value)}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              {departments.map((dept) => (
-                <MenuItem key={dept.departmentId} value={dept.departmentId}>
-                  {dept.departmentName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={departments}
+            placeholder="Tìm chuyên ngành..."
+            value={filterDepartment}
+            onChange={(event, newValue) => {
+              setFilterDepartment(newValue);
+              setPage(0);
+            }}
+          />
         </Grid>
         <Grid item xs={6} sm={4} md={3} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Chức vụ</InputLabel>
-            <Select
-              value={filterPosition}
-              label="Chức vụ"
-              onChange={(e) => setFilterPosition(e.target.value)}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              <MenuItem value="Giảng viên">Giảng viên</MenuItem>
-              <MenuItem value="Giáo sư">Giáo sư</MenuItem>
-              <MenuItem value="Trợ giảng">Trợ giảng</MenuItem>
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={[
+              { id: 'Trưởng khoa', name: 'Trưởng khoa' },
+              { id: 'Giảng viên', name: 'Giảng viên' },
+              { id: 'Trợ giảng', name: 'Trợ giảng' },
+            ]}
+            placeholder="Tìm chức vụ..."
+            value={filterPosition}
+            onChange={(event, newValue) => {
+              setFilterPosition(newValue);
+              setPage(0);
+            }}
+          />
         </Grid>
         <Grid item xs={6} sm={4} md={3} lg={1.5}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Trạng thái</InputLabel>
-            <Select
-              value={filterStatus}
-              label="Trạng thái"
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              <MenuItem value={1}>Đang công tác</MenuItem>
-              <MenuItem value={2}>Không hoạt động</MenuItem>
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={[
+              { id: 'GS', name: 'Giáo sư' },
+              { id: 'PGS', name: 'Phó Giáo sư' },
+              { id: 'TS.', name: 'Tiến sĩ' },
+              { id: 'ThS.', name: 'Thạc sĩ' },
+              { id: 'CN', name: 'Cử nhân' },
+            ]}
+            placeholder="Tìm học hàm..."
+            value={filterAcademicTitle}
+            onChange={(event, newValue) => {
+              setFilterAcademicTitle(newValue);
+              setPage(0);
+            }}
+          />
+        </Grid>
+        <Grid item xs={6} sm={4} md={3} lg={1.5}>
+          <SearchableAutocomplete
+            options={[
+              { id: 1, name: 'Đang công tác' },
+              { id: 2, name: 'Không hoạt động' },
+            ]}
+            placeholder="Tìm trạng thái..."
+            value={filterStatus}
+            onChange={(event, newValue) => {
+              setFilterStatus(newValue);
+              setPage(0);
+            }}
+          />
         </Grid>
         <Grid item xs={6} sm={4} md={3} lg={1.5}>
           <Button

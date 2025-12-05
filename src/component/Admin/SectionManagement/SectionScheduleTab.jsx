@@ -250,10 +250,9 @@ const SectionScheduleTab = ({ sectionId, section }) => {
       let result;
       if (editingSchedule) {
         // Update existing schedule
-        // Include lecturerId for practice schedules
-        if (formData.scheduleTypeId === 2) {
-          payload.lecturerId = formData.lecturerId || null;
-        }
+        // Always include lecturerId (will be null for non-practice schedules)
+        payload.lecturerId = formData.lecturerId || null;
+
         result = await scheduleService.updateSchedule(
           editingSchedule.scheduleId,
           payload

@@ -12,10 +12,6 @@ import {
   IconButton,
   Tooltip,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from '@mui/material';
 import {
   School,
@@ -42,7 +38,25 @@ import StudentDetailModal from '../../../component/Admin/StudentManagement/Stude
 import StudentEditModal from '../../../component/Admin/StudentManagement/StudentEditModal';
 import StudentCreateModal from '../../../component/Admin/StudentManagement/StudentCreateModal';
 import { exportStudentsExcel } from '../../../until/exportStudentsExcel';
-import { useDebounce } from '../../../hooks/useDebounce'; // ✅ Import hook
+import { useDebounce } from '../../../hooks/useDebounce';
+import SearchableAutocomplete from '../../../component/Common/SearchableAutocomplete';
+
+const yearOptions = [
+  { value: '2024', label: '2024' },
+  { value: '2023', label: '2023' },
+  { value: '2022', label: '2022' },
+  { value: '2021', label: '2021' },
+  { value: '2020', label: '2020' },
+  { value: '2019', label: '2019' },
+];
+
+const statusOptions = [
+  { value: 1, label: 'Đang học' },
+  { value: 2, label: 'Không hoạt động' },
+  { value: 3, label: 'Đã tốt nghiệp' },
+  { value: 4, label: 'Đình chỉ' },
+  { value: 5, label: 'Bảo lưu' },
+];
 
 const StudentList = () => {
   const theme = useTheme();
@@ -56,10 +70,10 @@ const StudentList = () => {
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDepartment, setFilterDepartment] = useState('');
-  const [filterClass, setFilterClass] = useState('');
-  const [filterYearOfAdmission, setFilterYearOfAdmission] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState(null);
+  const [filterClass, setFilterClass] = useState(null);
+  const [filterYearOfAdmission, setFilterYearOfAdmission] = useState(null);
+  const [filterStatus, setFilterStatus] = useState(null);
 
   // ✅ Debounce search term
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -75,14 +89,18 @@ const StudentList = () => {
   const fetchStudents = async () => {
     setLoading(true);
     try {
+      const filters = {
+        departmentId: filterDepartment?.departmentId,
+        className: filterClass?.className,
+        yearOfAdmission: filterYearOfAdmission?.value,
+        studentStatus: filterStatus?.value,
+      };
+
       const response = await studentServices.getAllStudents(
         page + 1,
         rowsPerPage,
-        debouncedSearchTerm, // ✅ Dùng debounced value
-        filterDepartment || undefined,
-        filterClass || undefined,
-        filterYearOfAdmission || undefined,
-        filterStatus || undefined
+        debouncedSearchTerm,
+        filters
       );
 
       if (response) {
@@ -115,13 +133,13 @@ const StudentList = () => {
     const fetchClasses = async () => {
       if (filterDepartment) {
         const result =
-          await classService.getClassesDropdownByDepartment(filterDepartment);
+          await classService.getClassesDropdownByDepartment(filterDepartment.departmentId);
         if (result && Array.isArray(result)) {
           setClasses(result);
         } else {
           setClasses([]);
         }
-        setFilterClass('');
+        setFilterClass(null);
       } else {
         const result = await classService.getAllClasses(1, 1000, '');
         if (result && result.items && Array.isArray(result.items)) {
@@ -177,37 +195,29 @@ const StudentList = () => {
 
   const handleResetFilters = () => {
     setSearchTerm('');
-    setFilterDepartment('');
-    setFilterClass('');
-    setFilterYearOfAdmission('');
-    setFilterStatus('');
+    setFilterDepartment(null);
+    setFilterClass(null);
+    setFilterYearOfAdmission(null);
+    setFilterStatus(null);
   };
 
   const handleExportExcel = async () => {
     let filterInfo = '';
     if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
     if (filterDepartment) {
-      const dept = departments.find((d) => d.departmentId === filterDepartment);
       filterInfo +=
         (filterInfo ? ', ' : '') +
-        `Chuyên ngành: ${dept?.departmentName || ''}`;
+        `Chuyên ngành: ${filterDepartment.departmentName}`;
     }
     if (filterClass)
-      filterInfo += (filterInfo ? ', ' : '') + `Lớp: ${filterClass}`;
+      filterInfo += (filterInfo ? ', ' : '') + `Lớp: ${filterClass.className}`;
     if (filterYearOfAdmission)
       filterInfo +=
-        (filterInfo ? ', ' : '') + `Năm nhập học: ${filterYearOfAdmission}`;
-    if (filterStatus !== '') {
-      const statusMap = {
-        1: 'Đang học',
-        2: 'Không hoạt động',
-        3: 'Đã tốt nghiệp',
-        4: 'Đình chỉ',
-        5: 'Bảo lưu',
-      };
+        (filterInfo ? ', ' : '') + `Năm nhập học: ${filterYearOfAdmission.value}`;
+    if (filterStatus) {
       filterInfo +=
         (filterInfo ? ', ' : '') +
-        `Trạng thái: ${statusMap[filterStatus] || ''}`;
+        `Trạng thái: ${filterStatus.label}`;
     }
 
     const result = await exportStudentsExcel(students, filterInfo);
@@ -519,73 +529,56 @@ const StudentList = () => {
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Chuyên ngành</InputLabel>
-            <Select
-              value={filterDepartment}
-              label="Chuyên ngành"
-              onChange={(e) => setFilterDepartment(e.target.value)}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              {departments.map((dept) => (
-                <MenuItem key={dept.departmentId} value={dept.departmentId}>
-                  {dept.departmentName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={departments}
+            value={filterDepartment}
+            onChange={(event, newValue) => setFilterDepartment(newValue)}
+            getOptionLabel={(option) => option.departmentName}
+            isOptionEqualToValue={(option, value) => option?.departmentId === value?.departmentId}
+            label="Chuyên ngành"
+            placeholder="Tất cả"
+            size="small"
+            showSearchIcon={false}
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Lớp</InputLabel>
-            <Select
-              value={filterClass}
-              label="Lớp"
-              onChange={(e) => setFilterClass(e.target.value)}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              {classes.map((cls) => (
-                <MenuItem key={cls.classId} value={cls.className}>
-                  {cls.className}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={classes}
+            value={filterClass}
+            onChange={(event, newValue) => setFilterClass(newValue)}
+            getOptionLabel={(option) => option.className}
+            isOptionEqualToValue={(option, value) => option?.classId === value?.classId}
+            label="Lớp"
+            placeholder="Tất cả"
+            size="small"
+            showSearchIcon={false}
+          />
         </Grid>
         <Grid item xs={6} sm={4} md={3} lg={1.5}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Năm</InputLabel>
-            <Select
-              value={filterYearOfAdmission}
-              label="Năm"
-              onChange={(e) => setFilterYearOfAdmission(e.target.value)}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              <MenuItem value="2024">2024</MenuItem>
-              <MenuItem value="2023">2023</MenuItem>
-              <MenuItem value="2022">2022</MenuItem>
-              <MenuItem value="2021">2021</MenuItem>
-              <MenuItem value="2020">2020</MenuItem>
-              <MenuItem value="2019">2019</MenuItem>
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={yearOptions}
+            value={filterYearOfAdmission}
+            onChange={(event, newValue) => setFilterYearOfAdmission(newValue)}
+            getOptionLabel={(option) => option.label}
+            isOptionEqualToValue={(option, value) => option?.value === value?.value}
+            label="Năm"
+            placeholder="Tất cả"
+            size="small"
+            showSearchIcon={false}
+          />
         </Grid>
         <Grid item xs={6} sm={4} md={4} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Trạng thái</InputLabel>
-            <Select
-              value={filterStatus}
-              label="Trạng thái"
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              <MenuItem value={1}>Đang học</MenuItem>
-              <MenuItem value={2}>Không hoạt động</MenuItem>
-              <MenuItem value={3}>Đã tốt nghiệp</MenuItem>
-              <MenuItem value={4}>Đình chỉ</MenuItem>
-              <MenuItem value={5}>Bảo lưu</MenuItem>
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={statusOptions}
+            value={filterStatus}
+            onChange={(event, newValue) => setFilterStatus(newValue)}
+            getOptionLabel={(option) => option.label}
+            isOptionEqualToValue={(option, value) => option?.value === value?.value}
+            label="Trạng thái"
+            placeholder="Tất cả"
+            size="small"
+            showSearchIcon={false}
+          />
         </Grid>
         <Grid item xs={12} sm={4} md={5} lg={1.5}>
           <Button

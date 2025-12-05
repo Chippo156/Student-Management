@@ -12,10 +12,6 @@ import {
   Tooltip,
   CircularProgress,
   LinearProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from '@mui/material';
 import {
   School,
@@ -41,6 +37,7 @@ import { exportSectionsExcel } from '../../../until/exportSectionsExcel';
 import SectionDetailModal from '../../../component/Admin/SectionManagement/SectionDetailModal';
 import SectionCreateModal from '../../../component/Admin/SectionManagement/SectionCreateModal';
 import SectionEditModal from '../../../component/Admin/SectionManagement/SectionEditModal';
+import SearchableAutocomplete from '../../../component/Common/SearchableAutocomplete';
 import { useDebounce } from '../../../hooks/useDebounce';
 
 const Sections = () => {
@@ -49,8 +46,8 @@ const Sections = () => {
   const [semesters, setSemesters] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterSemester, setFilterSemester] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterSemester, setFilterSemester] = useState(null);
+  const [filterStatus, setFilterStatus] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
@@ -65,20 +62,31 @@ const Sections = () => {
   const [selectedSection, setSelectedSection] = useState(null);
 
   const statusOptions = [
-    { value: 0, label: 'Đang chuẩn bị', color: 'warning' }, // IsPreparing
-    { value: 1, label: 'Đang mở đăng ký', color: 'info' }, // IsOpening
-    { value: 2, label: 'Đã đóng', color: 'default' }, // IsClosed
-    { value: 3, label: 'Đã hủy', color: 'error' }, // IsCancelled
-    { value: 4, label: 'Đã hoàn thành', color: 'success' }, // IsCompleted
+    { id: 0, name: 'Đang chuẩn bị', color: 'warning' }, // IsPreparing
+    { id: 1, name: 'Đang mở đăng ký', color: 'info' }, // IsOpening
+    { id: 2, name: 'Đã đóng', color: 'default' }, // IsClosed
+    { id: 3, name: 'Đã hủy', color: 'error' }, // IsCancelled
+    { id: 4, name: 'Đã hoàn thành', color: 'success' }, // IsCompleted
   ];
 
   useEffect(() => {
     const fetchSemesters = async () => {
       try {
         const data = await sectionService.getSemesterDropdown();
-        setSemesters(data || []);
+        // Transform semester data to {id, name} format for SearchableAutocomplete
+        const transformedSemesters = (data || []).map((semester) => ({
+          id: semester.id,
+          name:
+            semester.name ||
+            `${semester.year || ''} - ${semester.term || ''}`.trim() ||
+            `Học kỳ ${semester.id}`,
+          year: semester.year,
+          term: semester.term,
+        }));
+        setSemesters(transformedSemesters);
       } catch (error) {
         console.error('Failed to fetch semesters:', error);
+        setSemesters([]);
       }
     };
     fetchSemesters();
@@ -94,10 +102,9 @@ const Sections = () => {
       const result = await sectionService.getAllSections({
         pageNumber: page + 1,
         pageSize: rowsPerPage,
-        sectionCode: debouncedSearchTerm, // ✅ Dùng debounced value
-        courseName: debouncedSearchTerm, // ✅ Dùng debounced value
-        status: filterStatus !== '' ? filterStatus : null,
-        semesterId: filterSemester || null,
+        search: debouncedSearchTerm, // ✅ Dùng debounced value
+        status: filterStatus?.id ?? null,
+        semesterId: filterSemester?.id ?? null,
       });
 
       if (result) {
@@ -122,18 +129,18 @@ const Sections = () => {
 
   const handleResetFilters = () => {
     setSearchTerm('');
-    setFilterSemester('');
-    setFilterStatus('');
+    setFilterSemester(null);
+    setFilterStatus(null);
   };
 
   const getStatusColor = (status) => {
-    const statusOption = statusOptions.find((s) => s.value === status);
+    const statusOption = statusOptions.find((s) => s.id === status);
     return statusOption ? statusOption.color : 'default';
   };
 
   const getStatusLabel = (status) => {
-    const statusOption = statusOptions.find((s) => s.value === status);
-    return statusOption ? statusOption.label : 'Không xác định';
+    const statusOption = statusOptions.find((s) => s.id === status);
+    return statusOption ? statusOption.name : 'Không xác định';
   };
 
   const stats = useMemo(() => {
@@ -163,14 +170,13 @@ const Sections = () => {
     let filterInfo = '';
     if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
     if (filterSemester) {
-      const semester = semesters.find((s) => s.id === filterSemester);
       filterInfo +=
-        (filterInfo ? ', ' : '') + `Học kỳ: ${semester?.semesterName || ''}`;
+        (filterInfo ? ', ' : '') +
+        `Học kỳ: ${filterSemester.year} - ${filterSemester.term}`;
     }
-    if (filterStatus !== '') {
-      const status = statusOptions.find((s) => s.value === filterStatus);
+    if (filterStatus) {
       filterInfo +=
-        (filterInfo ? ', ' : '') + `Trạng thái: ${status?.label || ''}`;
+        (filterInfo ? ', ' : '') + `Trạng thái: ${filterStatus.label}`;
     }
 
     const result = await exportSectionsExcel(sections, filterInfo);
@@ -494,52 +500,32 @@ const Sections = () => {
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3} lg={2.5}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="semester-select-label">Học kỳ</InputLabel>
-            <Select
-              labelId="semester-select-label"
-              value={filterSemester}
-              label="Học kỳ"
-              onChange={(e) => setFilterSemester(e.target.value)}
-              renderValue={(selected) => {
-                if (!selected) {
-                  return 'Tất cả'; // ✅ Hiển thị "Tất cả" khi chưa chọn
-                }
-                const semester = semesters.find(
-                  (sem) => sem.id === selected // ✅ Sửa: sem.id thay vì sem.semesterId
-                );
-                return semester
-                  ? `${semester.year} - ${semester.term}`
-                  : selected;
-              }}
-            >
-              <MenuItem value="">
-                <em>Tất cả</em>
-              </MenuItem>
-              {semesters.map((sem) => (
-                <MenuItem key={sem.id} value={sem.id}>
-                  {sem.year} - {sem.term}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={semesters}
+            value={filterSemester}
+            onChange={(event, newValue) => {
+              setFilterSemester(newValue);
+              setPage(0);
+            }}
+            label="Học kỳ"
+            placeholder="Tìm học kỳ..."
+            size="small"
+            showSearchIcon={false}
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3} lg={2.5}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Trạng thái</InputLabel>
-            <Select
-              value={filterStatus}
-              label="Trạng thái"
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              {statusOptions.map((status) => (
-                <MenuItem key={status.value} value={status.value}>
-                  {status.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={statusOptions}
+            value={filterStatus}
+            onChange={(event, newValue) => {
+              setFilterStatus(newValue);
+              setPage(0);
+            }}
+            label="Trạng thái"
+            placeholder="Tìm trạng thái..."
+            size="small"
+            showSearchIcon={false}
+          />
         </Grid>
         <Grid item xs={12} sm={12} md={2} lg={2}>
           <Button

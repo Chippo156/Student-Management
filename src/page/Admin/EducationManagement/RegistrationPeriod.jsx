@@ -40,6 +40,7 @@ import { departmentService } from '../../../service/departmentService';
 import sectionService from '../../../service/sectionService';
 import RegistrationPeriodCreateModal from '../../../component/Admin/RegistrationPeriodManagement/RegistrationPeriodCreateModal';
 import RegistrationPeriodEditModal from '../../../component/Admin/RegistrationPeriodManagement/RegistrationPeriodEditModal';
+import SearchableAutocomplete from '../../../component/Common/SearchableAutocomplete';
 import dayjs from 'dayjs';
 
 const RegistrationPeriod = () => {
@@ -53,9 +54,9 @@ const RegistrationPeriod = () => {
   const [totalCount, setTotalCount] = useState(0);
 
   // Filter states
-  const [filterDepartment, setFilterDepartment] = useState('');
-  const [filterSemester, setFilterSemester] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState(null);
+  const [filterSemester, setFilterSemester] = useState(null);
+  const [filterStatus, setFilterStatus] = useState(null);
 
   // Modal states
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -90,8 +91,15 @@ const RegistrationPeriod = () => {
       }
 
       if (semResponse) {
-        // API returns {id, name, year, term, isActive} structure
-        setSemesters(semResponse);
+        // Transform semester data to {id, name} format for SearchableAutocomplete
+        const transformedSemesters = semResponse.map((semester) => ({
+          id: semester.id,
+          name:
+            semester.name ||
+            `${semester.year || ''} - ${semester.term || ''}`.trim() ||
+            `Học kỳ ${semester.id}`,
+        }));
+        setSemesters(transformedSemesters);
       }
     } catch (error) {
       console.error('Error loading dropdown data:', error);
@@ -105,9 +113,9 @@ const RegistrationPeriod = () => {
         await registrationPeriodService.getAllRegistrationPeriods({
           pageNumber: page + 1,
           pageSize: rowsPerPage,
-          departmentId: filterDepartment || null,
-          semesterId: filterSemester || null,
-          isActive: filterStatus !== '' ? filterStatus : null,
+          departmentId: filterDepartment?.id || null,
+          semesterId: filterSemester?.id || null,
+          isActive: filterStatus?.id ?? null, // Dùng ?? thay vì || để giữ giá trị false
         });
       if (response) {
         setPeriods(response.items || []);
@@ -146,9 +154,9 @@ const RegistrationPeriod = () => {
   };
 
   const handleResetFilters = () => {
-    setFilterDepartment('');
-    setFilterSemester('');
-    setFilterStatus('');
+    setFilterDepartment(null);
+    setFilterSemester(null);
+    setFilterStatus(null);
     setPage(0);
   };
 
@@ -384,63 +392,43 @@ const RegistrationPeriod = () => {
       {/* Filter Section */}
       <FilterSection resultCount={periods.length}>
         <Grid item xs={12} sm={6} md={3}>
-          <Autocomplete
-            size="small"
-            options={[{ id: '', name: 'Tất cả' }, ...departments]}
-            getOptionLabel={(option) => option.name}
-            value={departments.find(d => d.id === filterDepartment) || { id: '', name: 'Tất cả' }}
+          <SearchableAutocomplete
+            options={departments}
+            placeholder="Tìm chuyên ngành..."
+            value={filterDepartment}
             onChange={(event, newValue) => {
-              setFilterDepartment(newValue?.id || '');
+              setFilterDepartment(newValue);
               setPage(0);
             }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Chuyên ngành"
-                placeholder="Tìm kiếm..."
-              />
-            )}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
           />
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Autocomplete
-            size="small"
-            options={[{ id: '', name: 'Tất cả' }, ...semesters]}
-            getOptionLabel={(option) => option.name}
-            value={semesters.find(s => s.id === filterSemester) || { id: '', name: 'Tất cả' }}
+          <SearchableAutocomplete
+            options={semesters}
+            placeholder="Tìm học kỳ..."
+            value={filterSemester}
             onChange={(event, newValue) => {
-              setFilterSemester(newValue?.id || '');
+              setFilterSemester(newValue);
               setPage(0);
             }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Học kỳ"
-                placeholder="Tìm kiếm..."
-              />
-            )}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
           />
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Trạng thái</InputLabel>
-            <Select
-              value={filterStatus}
-              label="Trạng thái"
-              onChange={(e) => {
-                setFilterStatus(e.target.value);
-                setPage(0);
-              }}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              <MenuItem value={true}>Đang hoạt động</MenuItem>
-              <MenuItem value={false}>Không hoạt động</MenuItem>
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={[
+              { id: '', name: 'Tất cả' },
+              { id: true, name: 'Đang diễn ra' },
+              { id: false, name: 'Đã kết thúc' },
+            ]}
+            placeholder="Tìm trạng thái..."
+            value={filterStatus}
+            onChange={(event, newValue) => {
+              setFilterStatus(newValue);
+              setPage(0);
+            }}
+          />
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -29,6 +29,7 @@ const ClassEditModal = ({ open, onClose, onSuccess, classData }) => {
   const [departments, setDepartments] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const previousDepartmentRef = useRef(null); // Track previous department
 
   const [formData, setFormData] = useState({
     className: '',
@@ -50,6 +51,7 @@ const ClassEditModal = ({ open, onClose, onSuccess, classData }) => {
       setPrograms([]);
       setDepartments([]);
       setIsInitialLoad(true);
+      previousDepartmentRef.current = null; // Reset ref
     }
   }, [open]);
 
@@ -62,17 +64,15 @@ const ClassEditModal = ({ open, onClose, onSuccess, classData }) => {
 
         // Load departments
         const deptResponse = await departmentService.getDepartmentsDropdown();
-        console.log(deptResponse);
         if (deptResponse) {
           setDepartments(deptResponse);
         }
-
+        let progResponse = [];
         // Load programs nếu có departmentId
         if (classData.departmentId) {
-          const progResponse =
-            await academicProgramService.getProgramsByDepartment(
-              classData.departmentId
-            );
+          progResponse = await academicProgramService.getProgramsByDepartment(
+            classData.departmentId
+          );
           if (progResponse) {
             setPrograms(progResponse);
           }
@@ -82,7 +82,7 @@ const ClassEditModal = ({ open, onClose, onSuccess, classData }) => {
         setSelectedDepartment(classData.departmentId || '');
         setFormData({
           className: classData.className || '',
-          programId: classData.programId || '',
+          programId: classData.programId ?? '', // Dùng ?? thay vì || để tránh mất giá trị 0
           lecturerId: classData.adviserId || '',
         });
 
@@ -96,7 +96,13 @@ const ClassEditModal = ({ open, onClose, onSuccess, classData }) => {
 
   // Load programs khi user thay đổi department (chỉ khi không phải initial load)
   useEffect(() => {
-    if (open && !isInitialLoad && selectedDepartment) {
+    // Chỉ chạy nếu selectedDepartment thực sự thay đổi (khác với giá trị trước)
+    const hasChanged =
+      previousDepartmentRef.current !== null &&
+      previousDepartmentRef.current !== '' &&
+      previousDepartmentRef.current !== selectedDepartment;
+
+    if (open && !isInitialLoad && selectedDepartment && hasChanged) {
       // Reset cả programs và programId đồng thời
       setPrograms([]);
       setFormData((prev) => ({
@@ -105,7 +111,10 @@ const ClassEditModal = ({ open, onClose, onSuccess, classData }) => {
       }));
       loadPrograms(selectedDepartment);
     }
-  }, [selectedDepartment, isInitialLoad]);
+    // Update ref
+    previousDepartmentRef.current = selectedDepartment;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDepartment]);
 
   const loadPrograms = async (departmentId) => {
     setLoadingData(true);
@@ -128,7 +137,6 @@ const ClassEditModal = ({ open, onClose, onSuccess, classData }) => {
       [field]: value,
     }));
   };
-
   const handleSubmit = async () => {
     // Validation
     if (!formData.className.trim()) {
@@ -244,14 +252,16 @@ const ClassEditModal = ({ open, onClose, onSuccess, classData }) => {
                 <MenuItem value="">
                   <em>-- Chọn chương trình đào tạo --</em>
                 </MenuItem>
-                {programs.map((program) => (
-                  <MenuItem
-                    key={program.academicProgramId}
-                    value={program.academicProgramId}
-                  >
-                    {program.programName} - {program.degreeLevel}
-                  </MenuItem>
-                ))}
+                {programs.map((program) => {
+                  return (
+                    <MenuItem
+                      key={program.academicProgramId}
+                      value={program.academicProgramId}
+                    >
+                      {program.programName} - {program.degreeLevel}
+                    </MenuItem>
+                  );
+                })}
               </Select>
             </FormControl>
 

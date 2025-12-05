@@ -9,25 +9,22 @@ import {
   Typography,
   Grid,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   IconButton,
   CircularProgress,
   Alert,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import sectionService from '../../../service/sectionService';
+import SearchableAutocomplete from '../../Common/SearchableAutocomplete';
 
 const SectionCreateModal = ({ open, onCancel, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [dropdownData, setDropdownData] = useState(null);
   const [formData, setFormData] = useState({
-    curriculumCourseId: '',
-    lecturerId: '',
-    semesterId: '',
-    classId: '',
+    curriculumCourse: null,
+    lecturer: null,
+    semester: null,
+    classItem: null,
     startDate: '',
     endDate: '',
     capacity: '',
@@ -42,10 +39,10 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
       fetchDropdownData();
       // Reset form
       setFormData({
-        curriculumCourseId: '',
-        lecturerId: '',
-        semesterId: '',
-        classId: '',
+        curriculumCourse: null,
+        lecturer: null,
+        semester: null,
+        classItem: null,
         startDate: '',
         endDate: '',
         capacity: '',
@@ -88,17 +85,17 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.curriculumCourseId) {
-      newErrors.curriculumCourseId = 'Vui lòng chọn môn học';
+    if (!formData.curriculumCourse) {
+      newErrors.curriculumCourse = 'Vui lòng chọn môn học';
     }
-    if (!formData.lecturerId) {
-      newErrors.lecturerId = 'Vui lòng chọn giảng viên';
+    if (!formData.lecturer) {
+      newErrors.lecturer = 'Vui lòng chọn giảng viên';
     }
-    if (!formData.semesterId) {
-      newErrors.semesterId = 'Vui lòng chọn học kỳ';
+    if (!formData.semester) {
+      newErrors.semester = 'Vui lòng chọn học kỳ';
     }
-    if (!formData.classId) {
-      newErrors.classId = 'Vui lòng chọn lớp';
+    if (!formData.classItem) {
+      newErrors.classItem = 'Vui lòng chọn lớp';
     }
     if (!formData.startDate) {
       newErrors.startDate = 'Vui lòng chọn ngày bắt đầu';
@@ -130,10 +127,10 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
     try {
       // Prepare data for API
       const submitData = {
-        curriculumCourseId: parseInt(formData.curriculumCourseId),
-        lecturerId: parseInt(formData.lecturerId),
-        semesterId: parseInt(formData.semesterId),
-        classId: parseInt(formData.classId),
+        curriculumCourseId: parseInt(formData.curriculumCourse.id),
+        lecturerId: parseInt(formData.lecturer.id),
+        semesterId: parseInt(formData.semester.id),
+        classId: parseInt(formData.classItem.classId),
         startDate: formData.startDate,
         endDate: formData.endDate,
         capacity: parseInt(formData.capacity),
@@ -183,98 +180,90 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
         <Grid container spacing={3}>
           {/* Môn học */}
           <Grid item xs={12}>
-            <FormControl fullWidth error={!!errors.curriculumCourseId} required>
-              <InputLabel>Môn học</InputLabel>
-              <Select
-                value={formData.curriculumCourseId}
-                label="Môn học"
-                onChange={handleChange('curriculumCourseId')}
-                disabled={loading}
-              >
-                {dropdownData?.curriculumCourses?.map((course) => (
-                  <MenuItem key={course.id} value={course.id}>
-                    {course.name} ({course.credits} tín chỉ)
-                  </MenuItem>
-                ))}
-              </Select>
-              {errors.curriculumCourseId && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                  {errors.curriculumCourseId}
-                </Typography>
-              )}
-            </FormControl>
+            <SearchableAutocomplete
+              options={dropdownData?.curriculumCourses || []}
+              value={formData.curriculumCourse}
+              onChange={(event, newValue) => {
+                setFormData((prev) => ({ ...prev, curriculumCourse: newValue }));
+                if (errors.curriculumCourse) {
+                  setErrors((prev) => ({ ...prev, curriculumCourse: '' }));
+                }
+              }}
+              getOptionLabel={(option) => `${option.name} (${option.credits} tín chỉ)`}
+              isOptionEqualToValue={(option, value) => option?.id === value?.id}
+              label="Môn học"
+              placeholder="Tìm môn học..."
+              required
+              disabled={loading}
+              error={!!errors.curriculumCourse}
+              helperText={errors.curriculumCourse}
+            />
           </Grid>
 
           {/* Giảng viên */}
           <Grid item xs={12} md={6}>
-            <FormControl fullWidth error={!!errors.lecturerId} required>
-              <InputLabel>Giảng viên</InputLabel>
-              <Select
-                value={formData.lecturerId}
-                label="Giảng viên"
-                onChange={handleChange('lecturerId')}
-                disabled={loading}
-              >
-                {dropdownData?.lecturers?.map((lecturer) => (
-                  <MenuItem key={lecturer.id} value={lecturer.id}>
-                    {lecturer.name} ({lecturer.lecturerCode})
-                  </MenuItem>
-                ))}
-              </Select>
-              {errors.lecturerId && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                  {errors.lecturerId}
-                </Typography>
-              )}
-            </FormControl>
+            <SearchableAutocomplete
+              options={dropdownData?.lecturers || []}
+              value={formData.lecturer}
+              onChange={(event, newValue) => {
+                setFormData((prev) => ({ ...prev, lecturer: newValue }));
+                if (errors.lecturer) {
+                  setErrors((prev) => ({ ...prev, lecturer: '' }));
+                }
+              }}
+              getOptionLabel={(option) => `${option.name} (${option.lecturerCode})`}
+              isOptionEqualToValue={(option, value) => option?.id === value?.id}
+              label="Giảng viên"
+              placeholder="Tìm giảng viên..."
+              required
+              disabled={loading}
+              error={!!errors.lecturer}
+              helperText={errors.lecturer}
+            />
           </Grid>
 
           {/* Học kỳ */}
           <Grid item xs={12} md={6}>
-            <FormControl fullWidth error={!!errors.semesterId} required>
-              <InputLabel>Học kỳ</InputLabel>
-              <Select
-                value={formData.semesterId}
-                label="Học kỳ"
-                onChange={handleChange('semesterId')}
-                disabled={loading}
-              >
-                {dropdownData?.semesters?.map((semester) => (
-                  <MenuItem key={semester.id} value={semester.id}>
-                    {semester.name}
-                  </MenuItem>
-                ))}
-              </Select>
-              {errors.semesterId && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                  {errors.semesterId}
-                </Typography>
-              )}
-            </FormControl>
+            <SearchableAutocomplete
+              options={dropdownData?.semesters || []}
+              value={formData.semester}
+              onChange={(event, newValue) => {
+                setFormData((prev) => ({ ...prev, semester: newValue }));
+                if (errors.semester) {
+                  setErrors((prev) => ({ ...prev, semester: '' }));
+                }
+              }}
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(option, value) => option?.id === value?.id}
+              label="Học kỳ"
+              placeholder="Tìm học kỳ..."
+              required
+              disabled={loading}
+              error={!!errors.semester}
+              helperText={errors.semester}
+            />
           </Grid>
 
           {/* Lớp */}
           <Grid item xs={12}>
-            <FormControl fullWidth error={!!errors.classId} required>
-              <InputLabel>Lớp</InputLabel>
-              <Select
-                value={formData.classId}
-                label="Lớp"
-                onChange={handleChange('classId')}
-                disabled={loading}
-              >
-                {dropdownData?.classes?.map((classItem) => (
-                  <MenuItem key={classItem.classId} value={classItem.classId}>
-                    {classItem.className} - {classItem.programName}
-                  </MenuItem>
-                ))}
-              </Select>
-              {errors.classId && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                  {errors.classId}
-                </Typography>
-              )}
-            </FormControl>
+            <SearchableAutocomplete
+              options={dropdownData?.classes || []}
+              value={formData.classItem}
+              onChange={(event, newValue) => {
+                setFormData((prev) => ({ ...prev, classItem: newValue }));
+                if (errors.classItem) {
+                  setErrors((prev) => ({ ...prev, classItem: '' }));
+                }
+              }}
+              getOptionLabel={(option) => `${option.className} - ${option.programName}`}
+              isOptionEqualToValue={(option, value) => option?.classId === value?.classId}
+              label="Lớp"
+              placeholder="Tìm lớp..."
+              required
+              disabled={loading}
+              error={!!errors.classItem}
+              helperText={errors.classItem}
+            />
           </Grid>
 
           {/* Ngày bắt đầu */}

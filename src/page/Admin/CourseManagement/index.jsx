@@ -10,10 +10,6 @@ import {
   IconButton,
   Tooltip,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -41,6 +37,7 @@ import { message } from 'antd';
 import CourseDetailModal from '../../../component/Admin/CourseManagement/CourseDetailModal';
 import CourseEditModal from '../../../component/Admin/CourseManagement/CourseEditModal';
 import CourseCreateModal from '../../../component/Admin/CourseManagement/CourseCreateModal';
+import SearchableAutocomplete from '../../../component/Common/SearchableAutocomplete';
 import { useDebounce } from '../../../hooks/useDebounce';
 
 const CourseManagement = () => {
@@ -50,9 +47,9 @@ const CourseManagement = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterProgram, setFilterProgram] = useState('');
-  const [filterDepartment, setFilterDepartment] = useState('');
-  const [filterCourseType, setFilterCourseType] = useState('');
+  const [filterProgram, setFilterProgram] = useState(null);
+  const [filterDepartment, setFilterDepartment] = useState(null);
+  const [filterCourseType, setFilterCourseType] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
@@ -67,6 +64,13 @@ const CourseManagement = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
 
+  // Course type options for filter
+  const courseTypeOptions = [
+    { id: null, name: 'Tất cả loại môn học' },
+    { id: 'required', name: 'Bắt buộc' },
+    { id: 'elective', name: 'Tự chọn' }
+  ];
+
   // Fetch programs for filter
   useEffect(() => {
     const fetchPrograms = async () => {
@@ -74,7 +78,16 @@ const CourseManagement = () => {
         pageSize: 100,
       });
       if (result) {
-        setPrograms(result.items || []);
+        const transformedPrograms = [
+          { id: null, name: 'Tất cả chương trình' },
+          ...(result.items?.map(prog => ({
+            id: prog.academicProgramId,
+            name: prog.programName
+          })) || [])
+        ];
+        setPrograms(transformedPrograms);
+      } else {
+        setPrograms([{ id: null, name: 'Tất cả chương trình' }]);
       }
     };
     fetchPrograms();
@@ -85,9 +98,16 @@ const CourseManagement = () => {
     const fetchDepartments = async () => {
       const result = await departmentService.getDepartmentsDropdown();
       if (result && Array.isArray(result)) {
-        setDepartments(result);
+        const transformedDepts = [
+          { id: null, name: 'Tất cả chuyên ngành' },
+          ...result.map(dept => ({
+            id: dept.departmentId,
+            name: dept.departmentName
+          }))
+        ];
+        setDepartments(transformedDepts);
       } else {
-        setDepartments([]);
+        setDepartments([{ id: null, name: 'Tất cả chuyên ngành' }]);
       }
     };
     fetchDepartments();
@@ -114,8 +134,8 @@ const CourseManagement = () => {
         pageSize: rowsPerPage,
         courseCode: debouncedSearchTerm, // ✅ Dùng debounced value
         courseName: debouncedSearchTerm, // ✅ Dùng debounced value
-        programId: filterProgram || null,
-        departmentId: filterDepartment || null,
+        programId: filterProgram?.id || null,
+        departmentId: filterDepartment?.id || null,
       });
 
       if (result) {
@@ -132,9 +152,9 @@ const CourseManagement = () => {
   const filteredCourses = useMemo(() => {
     return courses.filter((course) => {
       const matchesCourseType =
-        !filterCourseType ||
-        (filterCourseType === 'required' && course.isRequired) ||
-        (filterCourseType === 'elective' && !course.isRequired);
+        !filterCourseType?.id ||
+        (filterCourseType.id === 'required' && course.isRequired) ||
+        (filterCourseType.id === 'elective' && !course.isRequired);
       return matchesCourseType;
     });
   }, [courses, filterCourseType]);
@@ -150,32 +170,23 @@ const CourseManagement = () => {
 
   const handleResetFilters = () => {
     setSearchTerm('');
-    setFilterProgram('');
-    setFilterDepartment('');
-    setFilterCourseType('');
+    setFilterProgram(null);
+    setFilterDepartment(null);
+    setFilterCourseType(null);
+    setPage(0);
   };
 
   const handleExportExcel = async () => {
     let filterInfo = '';
     if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
-    if (filterProgram) {
-      const program = programs.find(
-        (p) => p.academicProgramId === filterProgram
-      );
-      filterInfo +=
-        (filterInfo ? ', ' : '') +
-        `Chương trình: ${program?.programName || ''}`;
+    if (filterProgram && filterProgram.id !== null) {
+      filterInfo += (filterInfo ? ', ' : '') + `Chương trình: ${filterProgram.name}`;
     }
     if (filterDepartment) {
-      const dept = departments.find((d) => d.departmentId === filterDepartment);
-      filterInfo +=
-        (filterInfo ? ', ' : '') +
-        `Chuyên ngành: ${dept?.departmentName || ''}`;
+      filterInfo += (filterInfo ? ', ' : '') + `Chuyên ngành: ${filterDepartment.name}`;
     }
-    if (filterCourseType) {
-      const typeLabel =
-        filterCourseType === 'required' ? 'Bắt buộc' : 'Tự chọn';
-      filterInfo += (filterInfo ? ', ' : '') + `Loại: ${typeLabel}`;
+    if (filterCourseType && filterCourseType.id !== null) {
+      filterInfo += (filterInfo ? ', ' : '') + `Loại: ${filterCourseType.name}`;
     }
 
     const result = await exportCoursesExcel(filteredCourses, filterInfo);
@@ -317,55 +328,40 @@ const CourseManagement = () => {
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Chương trình</InputLabel>
-            <Select
-              value={filterProgram || ''}
-              label="Chương trình"
-              onChange={(e) => setFilterProgram(e.target.value)}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              {programs.map((prog) => (
-                <MenuItem
-                  key={prog.academicProgramId}
-                  value={prog.academicProgramId}
-                >
-                  {prog.programName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={programs}
+            placeholder="Tìm chương trình..."
+            value={filterProgram}
+            onChange={(value) => {
+              setFilterProgram(value);
+              setPage(0);
+            }}
+            disableClearable={false}
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Chuyên ngành</InputLabel>
-            <Select
-              value={filterDepartment || ''}
-              label="Chuyên ngành"
-              onChange={(e) => setFilterDepartment(e.target.value)}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              {departments.map((dept) => (
-                <MenuItem key={dept.departmentId} value={dept.departmentId}>
-                  {dept.departmentName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={departments}
+            placeholder="Tìm chuyên ngành..."
+            value={filterDepartment}
+            onChange={(value) => {
+              setFilterDepartment(value);
+              setPage(0);
+            }}
+            disableClearable={false}
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Loại môn học</InputLabel>
-            <Select
-              value={filterCourseType || ''}
-              label="Loại môn học"
-              onChange={(e) => setFilterCourseType(e.target.value)}
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              <MenuItem value="required">Bắt buộc</MenuItem>
-              <MenuItem value="elective">Tự chọn</MenuItem>
-            </Select>
-          </FormControl>
+          <SearchableAutocomplete
+            options={courseTypeOptions}
+            placeholder="Tìm loại môn học..."
+            value={filterCourseType}
+            onChange={(value) => {
+              setFilterCourseType(value);
+              setPage(0);
+            }}
+            disableClearable={false}
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
           <Button

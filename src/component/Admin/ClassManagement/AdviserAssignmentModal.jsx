@@ -8,10 +8,6 @@ import {
   IconButton,
   Box,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   CircularProgress,
   Alert,
   useTheme,
@@ -25,18 +21,19 @@ import {
 import { message } from 'antd';
 import { lecturerService } from '../../../service/lecturerService';
 import { adviserAssignmentService } from '../../../service/adviserAssignmentService';
+import SearchableAutocomplete from '../../Common/SearchableAutocomplete';
 
 const AdviserAssignmentModal = ({ open, onClose, onSuccess, classData }) => {
   const theme = useTheme();
   const [loading, setLoading] = useState(false);
   const [loadingLecturers, setLoadingLecturers] = useState(false);
   const [lecturers, setLecturers] = useState([]);
-  const [selectedLecturerId, setSelectedLecturerId] = useState('');
+  const [selectedLecturer, setSelectedLecturer] = useState(null);
 
   useEffect(() => {
     if (open && classData) {
       loadLecturers();
-      setSelectedLecturerId('');
+      setSelectedLecturer(null);
     }
   }, [open, classData]);
 
@@ -62,7 +59,7 @@ const AdviserAssignmentModal = ({ open, onClose, onSuccess, classData }) => {
   };
 
   const handleSubmit = async () => {
-    if (!selectedLecturerId) {
+    if (!selectedLecturer) {
       message.warning('Vui lòng chọn giảng viên!');
       return;
     }
@@ -70,7 +67,7 @@ const AdviserAssignmentModal = ({ open, onClose, onSuccess, classData }) => {
     setLoading(true);
     try {
       const result = await adviserAssignmentService.assignLecturerToClass(
-        selectedLecturerId,
+        selectedLecturer.id,
         classData.classId
       );
       if (result) {
@@ -156,31 +153,32 @@ const AdviserAssignmentModal = ({ open, onClose, onSuccess, classData }) => {
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
             {/* Chọn giảng viên */}
-            <FormControl fullWidth required>
-              <InputLabel>Chọn giảng viên chủ nhiệm</InputLabel>
-              <Select
-                value={selectedLecturerId}
-                onChange={(e) => setSelectedLecturerId(e.target.value)}
-                label="Chọn giảng viên chủ nhiệm"
-              >
-                <MenuItem value="">
-                  <em>-- Chọn giảng viên --</em>
-                </MenuItem>
-                {lecturers.map((lecturer) => (
-                  <MenuItem key={lecturer.id} value={lecturer.id}>
-                    <Box>
-                      <Typography variant="body1" fontWeight={500}>
-                        {lecturer.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Mã GV: {lecturer.lecturerCode}
-                        {lecturer.email && ` - ${lecturer.email}`}
-                      </Typography>
-                    </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <SearchableAutocomplete
+              options={lecturers}
+              value={selectedLecturer}
+              onChange={(event, newValue) => setSelectedLecturer(newValue)}
+              getOptionLabel={(option) =>
+                `${option.name} - ${option.lecturerCode}`
+              }
+              isOptionEqualToValue={(option, value) => option?.id === value?.id}
+              label="Chọn giảng viên chủ nhiệm"
+              placeholder="Tìm theo tên hoặc mã giảng viên..."
+              noOptionsText="Không tìm thấy giảng viên"
+              required
+              renderOption={(props, option) => (
+                <li {...props} key={option.id}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                    <Typography variant="body1" fontWeight={500}>
+                      {option.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Mã GV: {option.lecturerCode}
+                      {option.email && ` - ${option.email}`}
+                    </Typography>
+                  </Box>
+                </li>
+              )}
+            />
 
             {lecturers.length === 0 && (
               <Alert severity="warning">
@@ -204,7 +202,7 @@ const AdviserAssignmentModal = ({ open, onClose, onSuccess, classData }) => {
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={loading || loadingLecturers || !selectedLecturerId}
+          disabled={loading || loadingLecturers || !selectedLecturer}
           startIcon={loading && <CircularProgress size={20} />}
         >
           {loading ? 'Đang phân công...' : 'Phân công'}

@@ -39,20 +39,24 @@ import {
 } from '../../../component/Common';
 import { exportClassesExcel } from '../../../until/exportClassesExcel';
 import { classService } from '../../../service/classService';
+import academicProgramService from '../../../service/academicProgramService';
 import ClassDetailModal from '../../../component/Admin/ClassManagement/ClassDetailModal';
 import ClassCreateModal from '../../../component/Admin/ClassManagement/ClassCreateModal';
 import ClassEditModal from '../../../component/Admin/ClassManagement/ClassEditModal';
 import AdviserAssignmentModal from '../../../component/Admin/ClassManagement/AdviserAssignmentModal';
+import SearchableAutocomplete from '../../../component/Common/SearchableAutocomplete';
 import { message, Modal as AntModal } from 'antd';
 import { useDebounce } from '../../../hooks/useDebounce';
 
 const Classes = () => {
   const theme = useTheme();
   const [classes, setClasses] = useState([]);
+  const [programs, setPrograms] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterProgram, setFilterProgram] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
 
   // ✅ Debounce search term
@@ -69,10 +73,29 @@ const Classes = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRowForMenu, setSelectedRowForMenu] = useState(null);
 
+  // Fetch programs on mount
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      try {
+        const result = await academicProgramService.getAllPrograms({
+          pageNumber: 1,
+          pageSize: 1000,
+          programName: '',
+        });
+        if (result?.items) {
+          setPrograms(result.items);
+        }
+      } catch (error) {
+        console.error('Error fetching programs:', error);
+      }
+    };
+    fetchPrograms();
+  }, []);
+
   // Load classes on mount and when pagination changes
   useEffect(() => {
     loadClasses();
-  }, [page, rowsPerPage, debouncedSearchTerm]); // ✅ Dùng debouncedSearchTerm
+  }, [page, rowsPerPage, debouncedSearchTerm, filterProgram]); // ✅ Dùng debouncedSearchTerm
 
   const loadClasses = async () => {
     setLoading(true);
@@ -80,7 +103,8 @@ const Classes = () => {
       const response = await classService.getAllClasses(
         page + 1,
         rowsPerPage,
-        debouncedSearchTerm // ✅ Dùng debounced value
+        debouncedSearchTerm, // ✅ Dùng debounced value
+        filterProgram?.academicProgramId || null
       );
       if (response) {
         setClasses(response.items || []);
@@ -114,6 +138,7 @@ const Classes = () => {
 
   const handleResetFilters = () => {
     setSearchTerm('');
+    setFilterProgram(null);
     setPage(0);
   };
 
@@ -159,7 +184,11 @@ const Classes = () => {
   };
 
   const handleExportExcel = async () => {
-    const filterInfo = searchTerm ? `Tìm kiếm: "${searchTerm}"` : '';
+    let filterInfo = '';
+    if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
+    if (filterProgram) {
+      filterInfo += (filterInfo ? ', ' : '') + `Chương trình: ${filterProgram.programName}`;
+    }
     const result = await exportClassesExcel(classes, filterInfo);
     if (result.success) {
       message.success('Xuất file Excel thành công');
@@ -350,7 +379,7 @@ const Classes = () => {
 
       {/* Filter Section */}
       <FilterSection resultCount={totalCount}>
-        <Grid item xs={12} sm={12} md={10} lg={10}>
+        <Grid item xs={12} sm={12} md={6} lg={7}>
           <TextField
             fullWidth
             placeholder="Tìm kiếm theo mã lớp, tên lớp..."
@@ -371,7 +400,20 @@ const Classes = () => {
             }
           />
         </Grid>
-        <Grid item xs={12} sm={12} md={2} lg={2}>
+        <Grid item xs={12} sm={6} md={4} lg={3}>
+          <SearchableAutocomplete
+            options={programs}
+            value={filterProgram}
+            onChange={(event, newValue) => setFilterProgram(newValue)}
+            getOptionLabel={(option) => option.programName}
+            isOptionEqualToValue={(option, value) => option?.academicProgramId === value?.academicProgramId}
+            label="Chương trình đào tạo"
+            placeholder="Tất cả"
+            size="small"
+            showSearchIcon={false}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={2} lg={2}>
           <Button
             fullWidth
             variant="outlined"

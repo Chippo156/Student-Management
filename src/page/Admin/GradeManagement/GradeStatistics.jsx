@@ -97,7 +97,7 @@ const GradeStatistics = () => {
   const fetchStudents = async (search = '') => {
     setLoadingStudents(true);
     try {
-      const result = await studentServices.getAllStudents(1, 50, search);
+      const result = await studentServices.getAllStudents(1, 50, search, {});
       if (result?.items) {
         setStudents(result.items);
       }

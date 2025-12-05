@@ -8,10 +8,6 @@ import {
   Grid,
   Button,
   TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   IconButton,
   Tooltip,
   InputAdornment,
@@ -39,6 +35,7 @@ import { useTheme, alpha } from '@mui/material/styles';
 import { userService } from '../../../service/userService';
 import UserDetailModal from '../../../component/Admin/UserManagementPage/UserDetailModal';
 import UserEditModal from '../../../component/Admin/UserManagementPage/UserEditModal';
+import SearchableAutocomplete from '../../../component/Common/SearchableAutocomplete';
 import { exportUsersExcel } from '../../../until/exportUsersExcel';
 import { useDebounce } from '../../../hooks/useDebounce';
 import DataTable from '../../../component/Common/DataTable';
@@ -52,7 +49,7 @@ const UserManagement = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all');
+  const [filterRole, setFilterRole] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [openDetail, setOpenDetail] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
@@ -63,7 +60,8 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
-    const roleId = filterRole !== 'all' ? getRoleIdFromName(filterRole) : null;
+    // Only pass roleId if it's not null and not undefined
+    const roleId = filterRole?.id !== null && filterRole?.id !== undefined ? filterRole.id : null;
     const res = await userService.getAllUsers(
       page + 1,
       rowsPerPage,
@@ -77,14 +75,13 @@ const UserManagement = () => {
     setLoading(false);
   };
 
-  const getRoleIdFromName = (roleName) => {
-    const roleMap = {
-      admin: 1,
-      'giảng viên': 2,
-      'sinh viên': 3,
-    };
-    return roleMap[roleName.toLowerCase()] || null;
-  };
+  // Role options for SearchableAutocomplete - ensure plain objects
+  const roleOptions = React.useMemo(() => [
+    { id: null, name: 'Tất cả vai trò' },
+    { id: 1, name: 'Admin' },
+    { id: 3, name: 'Giảng viên' },
+    { id: 2, name: 'Sinh viên' }
+  ], []);
 
   // ✅ Fetch users khi debounced search term thay đổi
   useEffect(() => {
@@ -111,7 +108,9 @@ const UserManagement = () => {
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value.target?.value || event.target.value, 10));
+    setRowsPerPage(
+      parseInt(event.target.value.target?.value || event.target.value, 10)
+    );
     setPage(0);
   };
 
@@ -131,14 +130,14 @@ const UserManagement = () => {
 
   const handleResetFilters = () => {
     setSearchTerm('');
-    setFilterRole('all');
+    setFilterRole(null);
   };
 
   const handleExportExcel = async () => {
     let filterInfo = '';
     if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
-    if (filterRole !== 'all')
-      filterInfo += (filterInfo ? ', ' : '') + `Vai trò: ${filterRole}`;
+    if (filterRole && filterRole.id !== null)
+      filterInfo += (filterInfo ? ', ' : '') + `Vai trò: ${filterRole.name}`;
 
     const result = await exportUsersExcel(users, filterInfo);
     if (result.success) {
@@ -333,10 +332,24 @@ const UserManagement = () => {
           gap: 2,
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            color: 'primary.main',
+            fontSize: { xs: '1.5rem', sm: '2rem' },
+          }}
+        >
           Quản lý người dùng
         </Typography>
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, width: { xs: '100%', sm: 'auto' } }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 1,
+            width: { xs: '100%', sm: 'auto' },
+          }}
+        >
           <Tooltip title="Làm mới">
             <IconButton
               onClick={fetchUsers}
@@ -422,7 +435,9 @@ const UserManagement = () => {
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <CheckCircle sx={{ fontSize: 50, mr: 2, color: 'success.main' }} />
+              <CheckCircle
+                sx={{ fontSize: 50, mr: 2, color: 'success.main' }}
+              />
               <Box>
                 <Typography
                   variant="h4"
@@ -476,7 +491,9 @@ const UserManagement = () => {
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <SchoolIcon sx={{ fontSize: 50, mr: 2, color: 'secondary.main' }} />
+              <SchoolIcon
+                sx={{ fontSize: 50, mr: 2, color: 'secondary.main' }}
+              />
               <Box>
                 <Typography
                   variant="h4"
@@ -498,7 +515,10 @@ const UserManagement = () => {
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <FilterList sx={{ mr: 1, color: 'primary.main' }} />
-            <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}
+            >
               Bộ lọc tìm kiếm
             </Typography>
           </Box>
@@ -525,19 +545,15 @@ const UserManagement = () => {
               />
             </Grid>
             <Grid item xs={12} sm={8} md={4} lg={4}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Vai trò</InputLabel>
-                <Select
-                  value={filterRole}
-                  label="Vai trò"
-                  onChange={(e) => setFilterRole(e.target.value)}
-                >
-                  <MenuItem value="all">Tất cả vai trò</MenuItem>
-                  <MenuItem value="admin">Admin</MenuItem>
-                  <MenuItem value="giảng viên">Giảng viên</MenuItem>
-                  <MenuItem value="sinh viên">Sinh viên</MenuItem>
-                </Select>
-              </FormControl>
+              <SearchableAutocomplete
+                options={roleOptions}
+                placeholder="Tìm vai trò..."
+                value={filterRole}
+                onChange={(value) => {
+                  setFilterRole(value);
+                  setPage(0);
+                }}
+              />
             </Grid>
             <Grid item xs={12} sm={4} md={2} lg={2}>
               <Button

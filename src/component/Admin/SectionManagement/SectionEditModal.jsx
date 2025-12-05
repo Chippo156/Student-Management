@@ -9,29 +9,33 @@ import {
   Typography,
   Grid,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   IconButton,
   CircularProgress,
   Alert,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import sectionService from '../../../service/sectionService';
+import SearchableAutocomplete from '../../Common/SearchableAutocomplete';
+
+const statusOptions = [
+  { value: 1, label: 'Chưa bắt đầu' },
+  { value: 2, label: 'Đang diễn ra' },
+  { value: 3, label: 'Đã kết thúc' },
+  { value: 4, label: 'Đã hủy' },
+];
 
 const SectionEditModal = ({ open, onCancel, onSave, section }) => {
   const [loading, setLoading] = useState(false);
   const [dropdownData, setDropdownData] = useState(null);
   const [formData, setFormData] = useState({
-    curriculumCourseId: '',
-    lecturerId: '',
-    semesterId: '',
-    classId: '',
+    curriculumCourse: null,
+    lecturer: null,
+    semester: null,
+    classItem: null,
     startDate: '',
     endDate: '',
     capacity: '',
-    status: '',
+    status: null,
     minEnrollment: '',
     minEnrollmentPercentage: '',
   });
@@ -39,24 +43,35 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
 
   // Load section data when modal opens
   useEffect(() => {
-    if (open && section) {
-      fetchDropdownData();
-      // Populate form with section data
+    if (open && section && dropdownData) {
+      // Find objects from IDs
+      const course = dropdownData.curriculumCourses?.find(c => c.id === section.courseId) || null;
+      const lecturer = dropdownData.lecturers?.find(l => l.id === section.lecturerId) || null;
+      const semester = dropdownData.semesters?.find(s => s.id === section.semesterId) || null;
+      const classItem = dropdownData.classes?.find(c => c.classId === section.classId) || null;
+      const statusOption = statusOptions.find(s => s.value === section.status) || null;
+
       setFormData({
-        curriculumCourseId: section.courseId || '',
-        lecturerId: section.lecturerId || '',
-        semesterId: section.semesterId || '',
-        classId: section.classId || '',
+        curriculumCourse: course,
+        lecturer: lecturer,
+        semester: semester,
+        classItem: classItem,
         startDate: section.startDate ? section.startDate.split('T')[0] : '',
         endDate: section.endDate ? section.endDate.split('T')[0] : '',
         capacity: section.capacity || '',
-        status: section.status || '',
+        status: statusOption,
         minEnrollment: '',
         minEnrollmentPercentage: '',
       });
       setErrors({});
     }
-  }, [open, section]);
+  }, [open, section, dropdownData]);
+
+  useEffect(() => {
+    if (open) {
+      fetchDropdownData();
+    }
+  }, [open]);
 
   const fetchDropdownData = async () => {
     setLoading(true);
@@ -116,17 +131,17 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
       // Prepare data for API - only send fields that have values
       const submitData = {};
 
-      if (formData.curriculumCourseId && formData.curriculumCourseId !== section.courseId) {
-        submitData.curriculumCourseId = parseInt(formData.curriculumCourseId);
+      if (formData.curriculumCourse && formData.curriculumCourse.id !== section.courseId) {
+        submitData.curriculumCourseId = parseInt(formData.curriculumCourse.id);
       }
-      if (formData.lecturerId && formData.lecturerId !== section.lecturerId) {
-        submitData.lecturerId = parseInt(formData.lecturerId);
+      if (formData.lecturer && formData.lecturer.id !== section.lecturerId) {
+        submitData.lecturerId = parseInt(formData.lecturer.id);
       }
-      if (formData.semesterId && formData.semesterId !== section.semesterId) {
-        submitData.semesterId = parseInt(formData.semesterId);
+      if (formData.semester && formData.semester.id !== section.semesterId) {
+        submitData.semesterId = parseInt(formData.semester.id);
       }
-      if (formData.classId && formData.classId !== section.classId) {
-        submitData.classId = parseInt(formData.classId);
+      if (formData.classItem && formData.classItem.classId !== section.classId) {
+        submitData.classId = parseInt(formData.classItem.classId);
       }
       if (formData.startDate) {
         submitData.startDate = formData.startDate;
@@ -137,8 +152,8 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
       if (formData.capacity) {
         submitData.capacity = parseInt(formData.capacity);
       }
-      if (formData.status && formData.status !== section.status) {
-        submitData.status = parseInt(formData.status);
+      if (formData.status && formData.status.value !== section.status) {
+        submitData.status = parseInt(formData.status.value);
       }
       if (formData.minEnrollment) {
         submitData.minEnrollment = parseInt(formData.minEnrollment);
@@ -172,13 +187,6 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
     );
   }
 
-  const statusOptions = [
-    { value: 1, label: 'Chưa bắt đầu' },
-    { value: 2, label: 'Đang diễn ra' },
-    { value: 3, label: 'Đã kết thúc' },
-    { value: 4, label: 'Đã hủy' },
-  ];
-
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="md" fullWidth>
       <DialogTitle sx={{ pb: 2 }}>
@@ -207,112 +215,89 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
 
           {/* Môn học */}
           <Grid item xs={12}>
-            <FormControl fullWidth>
-              <InputLabel>Môn học</InputLabel>
-              <Select
-                value={formData.curriculumCourseId}
-                label="Môn học"
-                onChange={handleChange('curriculumCourseId')}
-                disabled={loading}
-              >
-                <MenuItem value="">
-                  <em>Giữ nguyên: {section.courseName}</em>
-                </MenuItem>
-                {dropdownData?.curriculumCourses?.map((course) => (
-                  <MenuItem key={course.id} value={course.id}>
-                    {course.name} ({course.credits} tín chỉ)
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <SearchableAutocomplete
+              options={dropdownData?.curriculumCourses || []}
+              value={formData.curriculumCourse}
+              onChange={(event, newValue) => {
+                setFormData((prev) => ({ ...prev, curriculumCourse: newValue }));
+              }}
+              getOptionLabel={(option) => `${option.name} (${option.credits} tín chỉ)`}
+              isOptionEqualToValue={(option, value) => option?.id === value?.id}
+              label="Môn học"
+              placeholder="Tìm môn học..."
+              disabled={loading}
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+              Hiện tại: {section.courseName}
+            </Typography>
           </Grid>
 
           {/* Giảng viên */}
           <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Giảng viên</InputLabel>
-              <Select
-                value={formData.lecturerId}
-                label="Giảng viên"
-                onChange={handleChange('lecturerId')}
-                disabled={loading}
-              >
-                <MenuItem value="">
-                  <em>Giữ nguyên: {section.lecturerName || 'Chưa phân công'}</em>
-                </MenuItem>
-                {dropdownData?.lecturers?.map((lecturer) => (
-                  <MenuItem key={lecturer.id} value={lecturer.id}>
-                    {lecturer.name} ({lecturer.lecturerCode})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <SearchableAutocomplete
+              options={dropdownData?.lecturers || []}
+              value={formData.lecturer}
+              onChange={(event, newValue) => {
+                setFormData((prev) => ({ ...prev, lecturer: newValue }));
+              }}
+              getOptionLabel={(option) => `${option.name} (${option.lecturerCode})`}
+              isOptionEqualToValue={(option, value) => option?.id === value?.id}
+              label="Giảng viên"
+              placeholder="Tìm giảng viên..."
+              disabled={loading}
+              helperText={`Hiện tại: ${section.lecturerName || 'Chưa phân công'}`}
+            />
           </Grid>
 
           {/* Học kỳ */}
           <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Học kỳ</InputLabel>
-              <Select
-                value={formData.semesterId}
-                label="Học kỳ"
-                onChange={handleChange('semesterId')}
-                disabled={loading}
-              >
-                <MenuItem value="">
-                  <em>Giữ nguyên: {section.semesterName}</em>
-                </MenuItem>
-                {dropdownData?.semesters?.map((semester) => (
-                  <MenuItem key={semester.id} value={semester.id}>
-                    {semester.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <SearchableAutocomplete
+              options={dropdownData?.semesters || []}
+              value={formData.semester}
+              onChange={(event, newValue) => {
+                setFormData((prev) => ({ ...prev, semester: newValue }));
+              }}
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(option, value) => option?.id === value?.id}
+              label="Học kỳ"
+              placeholder="Tìm học kỳ..."
+              disabled={loading}
+              helperText={`Hiện tại: ${section.semesterName}`}
+            />
           </Grid>
 
           {/* Lớp */}
           <Grid item xs={12}>
-            <FormControl fullWidth>
-              <InputLabel>Lớp</InputLabel>
-              <Select
-                value={formData.classId}
-                label="Lớp"
-                onChange={handleChange('classId')}
-                disabled={loading}
-              >
-                <MenuItem value="">
-                  <em>Giữ nguyên: {section.className}</em>
-                </MenuItem>
-                {dropdownData?.classes?.map((classItem) => (
-                  <MenuItem key={classItem.classId} value={classItem.classId}>
-                    {classItem.className} - {classItem.programName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <SearchableAutocomplete
+              options={dropdownData?.classes || []}
+              value={formData.classItem}
+              onChange={(event, newValue) => {
+                setFormData((prev) => ({ ...prev, classItem: newValue }));
+              }}
+              getOptionLabel={(option) => `${option.className} - ${option.programName}`}
+              isOptionEqualToValue={(option, value) => option?.classId === value?.classId}
+              label="Lớp"
+              placeholder="Tìm lớp..."
+              disabled={loading}
+              helperText={`Hiện tại: ${section.className}`}
+            />
           </Grid>
 
           {/* Trạng thái */}
           <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Trạng thái</InputLabel>
-              <Select
-                value={formData.status}
-                label="Trạng thái"
-                onChange={handleChange('status')}
-                disabled={loading}
-              >
-                <MenuItem value="">
-                  <em>Giữ nguyên: {section.statusName}</em>
-                </MenuItem>
-                {statusOptions.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <SearchableAutocomplete
+              options={statusOptions}
+              value={formData.status}
+              onChange={(event, newValue) => {
+                setFormData((prev) => ({ ...prev, status: newValue }));
+              }}
+              getOptionLabel={(option) => option.label}
+              isOptionEqualToValue={(option, value) => option?.value === value?.value}
+              label="Trạng thái"
+              placeholder="Chọn trạng thái..."
+              disabled={loading}
+              helperText={`Hiện tại: ${section.statusName}`}
+            />
           </Grid>
 
           {/* Sức chứa */}

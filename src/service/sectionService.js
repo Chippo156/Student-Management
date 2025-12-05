@@ -389,7 +389,7 @@ const sectionService = {
   getAllSections: async (params = {}) => {
     try {
       const {
-        sectionCode = '',
+        search = '',
         courseName = '',
         lecturerName = '',
         semesterId = null,
@@ -404,13 +404,13 @@ const sectionService = {
 
       const response = await axios.get('/api/Section/GetAllSection', {
         params: {
-          SectionCode: sectionCode,
+          search: search,
           CourseName: courseName,
           LecturerName: lecturerName,
           SemesterId: semesterId,
           DepartmentId: departmentId,
           CourseId: courseId,
-          Status: status,
+          status: status,
           SortBy: sortBy,
           SortDirection: sortDirection,
           PageNumber: pageNumber,
