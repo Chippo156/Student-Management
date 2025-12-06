@@ -17,7 +17,7 @@ import { useTheme } from '@mui/material/styles';
 import { alpha } from '@mui/material/styles';
 import curriculumCourseService from '../../../service/curriculumCourseService';
 import academicProgramService from '../../../service/academicProgramService';
-import facultyService from '../../../service/facultyService';
+import { departmentService } from '../../../service/departmentService'; // ✅ Import departmentService
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -60,15 +60,13 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
     fetchPrograms();
   }, []);
 
-  // Load departments
+  // ✅ Load departments - SỬA LẠI
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const result = await facultyService.getAllFaculties({
-          pageSize: 100,
-        });
-        if (result) {
-          setDepartments(result.items || []);
+        const result = await departmentService.getDepartmentsDropdown();
+        if (result && Array.isArray(result)) {
+          setDepartments(result);
         }
       } catch (error) {
         console.error('Failed to fetch departments:', error);
@@ -103,15 +101,10 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
   // Set initial values
   useEffect(() => {
     if (course && open) {
-      const prereqIds =
-        course.prerequisites?.map((p) => p.curriculumCourseId) || [];
-      setSelectedPrerequisites(prereqIds);
-
       form.setFieldsValue({
         courseCode: course.courseCode,
         courseName: course.courseName,
         courseType: course.courseType,
-        isRequired: course.isRequired,
         totalCredits: course.totalCredits,
         creditsTheory: course.creditsTheory,
         creditsLab: course.creditsLab,
@@ -119,8 +112,10 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
         academicProgramId: course.academicProgramId,
         departmentId: course.departmentId,
         description: course.description,
-        prerequisites: prereqIds,
+        prerequisites:
+          course.prerequisites?.map((p) => p.curriculumCourseId) || [],
       });
+      setSelectedPrerequisites(course.prerequisites || []);
     }
   }, [course, open, form]);
 
@@ -138,11 +133,24 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
     }
 
     try {
+      // ✅ Build payload đầy đủ
       const payload = {
         curriculumCourseId: course.curriculumCourseId,
-        ...values,
-        isRequired: values.isRequired || false,
+        courseName: values.courseName,
+        courseCode: values.courseCode,
+        courseType: values.courseType,
+        totalCredits: values.totalCredits,
+        creditsTheory: values.creditsTheory,
+        creditsLab: values.creditsLab,
+        isRequired: values.courseType === 'Bắt buộc', // ✅ Convert từ courseType
+        semesterSuggested: values.semesterSuggested,
+        academicProgramId: values.academicProgramId,
+        departmentId: values.departmentId,
+        description: values.description || null,
+        prerequisites: values.prerequisites || [],
       };
+
+      console.log('📦 Update payload:', payload);
 
       const result =
         await curriculumCourseService.updateCurriculumCourse(payload);
@@ -151,8 +159,7 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
         onSave(result);
       }
     } catch (error) {
-      console.error('Failed to update course:', error);
-      message.error('Cập nhật môn học thất bại!');
+      console.error('❌ Failed to update course:', error);
     }
   };
 
@@ -245,18 +252,6 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
                 </Select>
               </Form.Item>
             </Col>
-            {/* <Col xs={24} md={8}>
-              <Form.Item
-                label="Loại hình"
-                name="isRequired"
-                valuePropName="checked"
-              >
-                <Switch
-                  checkedChildren="Bắt buộc"
-                  unCheckedChildren="Tự chọn"
-                />
-              </Form.Item>
-            </Col> */}
             <Col xs={24} md={12}>
               <Form.Item
                 label="Học kỳ đề xuất"
@@ -276,7 +271,7 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
 
           {/* Thông tin tín chỉ */}
           <Divider orientation="left" style={{ color: colors.primary }}>
-            ⏱️ Thông tin tín chỉ
+            🎯 Thông tin tín chỉ
           </Divider>
           <Row gutter={[24, 16]}>
             <Col xs={24} md={8}>
@@ -289,14 +284,14 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
                     type: 'number',
                     min: 1,
                     max: 10,
-                    message: 'Tổng tín chỉ từ 1-10',
+                    message: 'Tín chỉ từ 1-10',
                   },
                 ]}
               >
                 <InputNumber
                   min={1}
                   max={10}
-                  placeholder="0"
+                  placeholder="VD: 3"
                   style={{ width: '100%' }}
                 />
               </Form.Item>
@@ -321,7 +316,7 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
                 <InputNumber
                   min={0}
                   max={10}
-                  placeholder="0"
+                  placeholder="VD: 2"
                   style={{ width: '100%' }}
                 />
               </Form.Item>
@@ -411,8 +406,8 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
                   }
                 >
                   {departments.map((dept) => (
-                    <Option key={dept.facultyId} value={dept.facultyId}>
-                      {dept.facultyName}
+                    <Option key={dept.departmentId} value={dept.departmentId}>
+                      {dept.departmentName}
                     </Option>
                   ))}
                 </Select>

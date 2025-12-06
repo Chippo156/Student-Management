@@ -39,15 +39,25 @@ const curriculumCourseService = {
   // Get all curriculum courses (for admin)
   getAllCurriculumCourses: async (params = {}) => {
     try {
-      const { pageNumber = 1, pageSize = 10, search } = params;
+      const {
+        pageNumber = 1,
+        pageSize = 10,
+        courseCode = '',
+        courseName = '',
+        programId = null,
+        departmentId = null,
+      } = params;
 
       const response = await api.get(
-        '/api/CurriculumCourse/GetCoursesWithPrograms',
+        '/api/CurriculumCourse/GetAllCurriculumCourse',
         {
           params: {
             PageNumber: pageNumber,
             PageSize: pageSize,
-            search,
+            courseCode,
+            courseName,
+            programId,
+            departmentId,
           },
         }
       );
