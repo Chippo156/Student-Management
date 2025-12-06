@@ -23,3 +23,28 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# React Native / Expo
+.expo/
+.expo-shared/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# Metro
+.metro-health-check*
+
+# Native
+*.apk
+*.aab
+*.ipa
+
+# Debug
+android/.gradle/
+android/app/build/
+ios/Pods/
+ios/build/
