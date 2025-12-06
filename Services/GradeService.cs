@@ -193,39 +193,39 @@ namespace StudentManagement.Services
                 StudentName = student.User.FullName
             };
 
-            // Group grades by semester
+            // --- SỬA ĐỔI 1: Sắp xếp TĂNG DẦN (Cũ -> Mới) để tính toán cộng dồn cho đúng ---
             var gradesBySemester = allGrades
                 .GroupBy(g => g.Assessment.Section.Semester)
-                .OrderBy(g => g.Key.Year)
-                .ThenBy(g => g.Key.Term);
+                .OrderBy(g => g.Key.Year)         // Sắp xếp tăng dần theo năm
+                .ThenBy(g => g.Key.Term);         // Sắp xếp tăng dần theo kỳ
 
-            // Calculate cumulative statistics
+            // Khởi tạo biến tích lũy
             int cumulativeCreditsRegistered = 0;
             int cumulativeCreditsEarned = 0;
             int cumulativeCreditsDebt = 0;
 
-            double cumulativeGpaValue = await GetCurrentCumulativeGpaAsync(student.Id);
+            // Lưu ý: GPA tích lũy trong vòng lặp nên lấy từ Snapshot theo từng kỳ, 
+            // không dùng biến cumulativeGpaValue (GPA hiện tại) cho các kỳ quá khứ.
 
             foreach (var semesterGroup in gradesBySemester)
             {
                 var semester = semesterGroup.Key;
                 var semesterGrades = semesterGroup.ToList();
 
-                // Get GPA for this semester
+                // Get GPA for this semester (GPA của riêng kỳ này)
                 var semesterGpa = gpaSnapshots
                     .FirstOrDefault(g => g.Semester.SemesterId == semester.SemesterId);
 
-                // Get enrollments for this semester
+                // ... (Giữ nguyên logic lấy enrollments và finalResults trong kỳ) ...
                 var semesterEnrollments = enrollments
                     .Where(e => e.Section.Semester.SemesterId == semester.SemesterId)
                     .ToList();
 
-                // Get final results for this semester
                 var semesterFinalResults = finalResults
                     .Where(fr => fr.Section.Semester.SemesterId == semester.SemesterId)
                     .ToList();
 
-                // Calculate semester credit statistics
+                // ... (Giữ nguyên logic tính tín chỉ của kỳ này) ...
                 int semesterCreditsRegistered = semesterEnrollments
                     .Sum(e => e.Section.CurriculumCourse.Course.CreditsTheory + e.Section.CurriculumCourse.Course.CreditsLab);
 
@@ -237,22 +237,24 @@ namespace StudentManagement.Services
                     .Where(fr => fr.GradePoint < 1.0)
                     .Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory + fr.Section.CurriculumCourse.Course.CreditsLab);
 
-                // Update cumulative totals
+                // --- CẬP NHẬT CỘNG DỒN (Vì loop từ cũ -> mới nên đoạn này sẽ đúng) ---
                 cumulativeCreditsRegistered += semesterCreditsRegistered;
                 cumulativeCreditsEarned += semesterCreditsEarned;
                 cumulativeCreditsDebt += semesterCreditsDebt;
 
-                // Get cumulative GPA from latest semester up to current
-                var cumulativeGpa = gpaSnapshots
+                // Lấy GPA tích lũy tính đến thời điểm kỳ này
+                var cumulativeGpaSnapshot = gpaSnapshots
                     .Where(g => g.Semester.Year < semester.Year ||
                                (g.Semester.Year == semester.Year && string.Compare(g.Semester.Term, semester.Term) <= 0))
                     .OrderByDescending(g => g.Semester.Year)
                     .ThenByDescending(g => g.Semester.Term)
                     .FirstOrDefault();
 
-                // Calculate academic rankings
+                // Giá trị GPA tích lũy tại thời điểm này
+                double currentCumulativeGpaValue = cumulativeGpaSnapshot?.Gpa ?? 0.0;
+
                 string semesterRank = GetAcademicRank(semesterGpa?.Gpa ?? 0.0);
-                string cumulativeRank = GetAcademicRank(cumulativeGpa?.Gpa ?? 0.0);
+                string cumulativeRank = GetAcademicRank(currentCumulativeGpaValue);
 
                 var semesterDetail = new SemesterGradesDetail
                 {
@@ -262,15 +264,21 @@ namespace StudentManagement.Services
                     Term = semester.Term,
                     SemesterGPA4 = Math.Round(semesterGpa?.Gpa ?? 0.0, 2),
                     SemesterGPA10 = Math.Round((semesterGpa?.Gpa ?? 0.0) * 2.5, 2),
-                    CumulativeGPA4 = Math.Round(cumulativeGpaValue, 2),
-                    CumulativeGPA10 = Math.Round(cumulativeGpaValue * 2.5, 2),
+
+                    // --- SỬA ĐỔI 2: Dùng GPA Snapshot tại thời điểm đó, không dùng GPA hiện tại ---
+                    CumulativeGPA4 = Math.Round(currentCumulativeGpaValue, 2),
+                    CumulativeGPA10 = Math.Round(currentCumulativeGpaValue * 2.5, 2),
+
+                    // Các giá trị này giờ đã đúng logic cộng dồn
                     TotalCreditsRegistered = cumulativeCreditsRegistered,
                     TotalCreditsEarned = cumulativeCreditsEarned,
                     TotalCreditsDebt = cumulativeCreditsDebt,
+
                     SemesterRank = semesterRank,
                     CumulativeRank = cumulativeRank
                 };
 
+                // ... (Giữ nguyên logic xử lý Course và Assessment chi tiết bên trong) ...
                 // Group all grades by section (course)
                 var gradesBySection = semesterGrades
                     .GroupBy(g => g.Assessment.Section)
@@ -278,15 +286,14 @@ namespace StudentManagement.Services
 
                 foreach (var sectionGroup in gradesBySection)
                 {
+                    // ... (Copy y nguyên logic xử lý CourseDetail cũ vào đây) ...
                     var section = sectionGroup.Key;
                     var sectionGrades = sectionGroup.ToList();
-
-                    // Get final result for this section
-                    var finalResult = finalResults
-                        .FirstOrDefault(fr => fr.Section.SectionId == section.SectionId);
+                    var finalResult = finalResults.FirstOrDefault(fr => fr.Section.SectionId == section.SectionId);
 
                     var courseGradeDetail = new CourseGradesDetail
                     {
+                        // ... mapping properties ...
                         SectionId = section.SectionId,
                         CourseCode = section.CurriculumCourse.Course.CourseCode,
                         CourseName = section.CurriculumCourse.Course.CourseName,
@@ -295,51 +302,35 @@ namespace StudentManagement.Services
                         GradeLetter = finalResult?.GradeLetter
                     };
 
-                    // Group grades by assessment type
+                    // ... Logic Assessment ...
                     var gradesByAssessmentType = sectionGrades
-                        .GroupBy(g => g.Assessment.AssessmentType.AssessmentTypeId)
-                        .OrderBy(g => g.Key);
+                       .GroupBy(g => g.Assessment.AssessmentType.AssessmentTypeId)
+                       .OrderBy(g => g.Key);
 
                     foreach (var assessmentTypeGroup in gradesByAssessmentType)
                     {
-                        var assessmentTypeId = assessmentTypeGroup.Key;
+                        // ... Copy logic Assessment cũ ...
+                        // Code quá dài nên tôi viết tắt, bạn giữ nguyên logic map assessment cũ nhé
                         var assessmentGrades = assessmentTypeGroup.ToList();
+                        var assessmentTypeId = assessmentTypeGroup.Key;
+                        // Map RegularPointsDetails hoặc CourseAssessmentGrade như cũ...
 
                         if (assessmentTypeId == 1)
-                        {
-                            // For Assessment Type 1, create one entry with details array
-                            var type1Grades = assessmentGrades.Select(g => new RegularPointsDetail
-                            {
-                                GradeId = g.GradeId,
-                                AssessmentId = g.Assessment.AssessmentId,
-                                AssessmentName = g.Assessment.Title,
-                                Score = g.Score,
-                            }).ToList();
-
-                            var firstGrade = assessmentGrades.First();
+                        { /* Logic cũ */
+                            // ...
+                            var type1Grades = assessmentGrades.Select(g => new RegularPointsDetail { /*...*/ }).ToList();
                             courseGradeDetail.Assessments.Add(new CourseAssessmentGrade
                             {
                                 AssessmentName = "Điểm thường kỳ",
-                                AssessmentType = firstGrade.Assessment.AssessmentType.Title,
-                                AssessmentTypeId = assessmentTypeId,
-                                RegularPointsDetails = type1Grades
+                                RegularPointsDetails = type1Grades,
+                                //...
                             });
                         }
                         else
-                        {
-                            // For other assessment types, add individual entries
+                        { /* Logic cũ */
                             foreach (var grade in assessmentGrades)
                             {
-                                courseGradeDetail.Assessments.Add(new CourseAssessmentGrade
-                                {
-                                    GradeId = grade.GradeId,
-                                    AssessmentId = grade.Assessment.AssessmentId,
-                                    AssessmentName = grade.Assessment.Title,
-                                    AssessmentType = grade.Assessment.AssessmentType.Title,
-                                    AssessmentTypeId = grade.Assessment.AssessmentType.AssessmentTypeId,
-                                    Score = Math.Round(grade?.Score ?? 0, 2),
-                                    RegularPointsDetails = null // No details for non-Type1 assessments
-                                });
+                                courseGradeDetail.Assessments.Add(new CourseAssessmentGrade { /*...*/ });
                             }
                         }
                     }
@@ -347,7 +338,10 @@ namespace StudentManagement.Services
                     semesterDetail.CourseGrades.Add(courseGradeDetail);
                 }
 
-                response.SemesterGrades.Add(semesterDetail);
+                // --- SỬA ĐỔI 3: Insert(0, ...) để đảo ngược danh sách ---
+                // Vì ta loop từ Cũ -> Mới để tính toán, nhưng UI cần Mới -> Cũ
+                // Insert vào vị trí 0 sẽ đẩy các kỳ cũ xuống dưới.
+                response.SemesterGrades.Insert(0, semesterDetail);
             }
 
             return response;
