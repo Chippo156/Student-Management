@@ -1,0 +1,260 @@
+import customizeAxios from '../utils/customize-axios';
+import { toast } from '../utils/toast';
+
+export const studentServices = {
+  updateStudentInformation: async (data) => {
+    try {
+      const res = await customizeAxios.put(
+        `/api/Student/UpdateStudentInformation`,
+        data
+      );
+      if (res?.success === false) {
+        toast.error(res?.message || 'Cập nhật thông tin người dùng thất bại');
+        throw new Error(
+          res?.message || 'Cập nhật thông tin người dùng thất bại'
+        );
+      }
+      return res.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          toast.error(errData[0]);
+        } else {
+          toast.error(
+            error.response.data.message ||
+              'Cập nhật thông tin người dùng thất bại'
+          );
+        }
+      } else {
+        toast.error(
+          error.message || 'Cập nhật thông tin người dùng thất bại'
+        );
+      }
+      return null;
+    }
+  },
+
+  getAllStudents: async (pageNumber, pageSize, search = '', filters = {}) => {
+    try {
+      const params = {
+        PageNumber: pageNumber,
+        PageSize: pageSize,
+      };
+
+      if (search && search.trim() !== '') {
+        params.search = search.trim();
+      }
+
+      // Add filter parameters
+      if (filters.departmentId) params.departmentId = filters.departmentId;
+      if (filters.className) params.className = filters.className;
+      if (filters.yearOfAdmission) params.yearOfAdmission = filters.yearOfAdmission;
+      if (filters.studentStatus !== undefined && filters.studentStatus !== '') {
+        params.studentStatus = filters.studentStatus;
+      }
+
+      const response = await customizeAxios.get('/api/Student/GetAllStudents', {
+        params,
+      });
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          toast.error(errData[0]);
+        } else {
+          toast.error(
+            response?.message || 'Lấy danh sách sinh viên thất bại'
+          );
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          toast.error(errData[0]);
+        } else {
+          toast.error(
+            error.response.data.message || 'Lấy danh sách sinh viên thất bại'
+          );
+        }
+      } else {
+        toast.error(error.message || 'Lấy danh sách sinh viên thất bại');
+      }
+      return null;
+    }
+  },
+  // New: get students with section (paged, searchable)
+  getStudentsWithSection: async (
+    sectionId,
+    pageNumber = 1,
+    pageSize = 10,
+    searchTerm = ''
+  ) => {
+    try {
+      const response = await customizeAxios.get(
+        `/api/Student/GetStudentsWithSection/${sectionId}`,
+        {
+          params: {
+            PageNumber: pageNumber,
+            PageSize: pageSize,
+            searchTerm,
+          },
+        }
+      );
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          toast.error(errData[0]);
+        } else {
+          toast.error(
+            response?.message ||
+              'Lấy danh sách sinh viên theo lớp học phần thất bại'
+          );
+        }
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          toast.error(errData[0]);
+        } else {
+          toast.error(
+            error.response.data.message ||
+              'Lấy danh sách sinh viên theo lớp học phần thất bại'
+          );
+        }
+      } else {
+        toast.error(
+          error.message || 'Lấy danh sách sinh viên theo lớp học phần thất bại'
+        );
+      }
+      return null;
+    }
+  },
+
+  // Create new student
+  createStudent: async (studentData) => {
+    try {
+      const response = await customizeAxios.post(
+        '/api/Student/CreateStudent',
+        studentData
+      );
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          toast.error(errData[0]);
+        } else {
+          toast.error(response?.message || 'Tạo sinh viên thất bại');
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          toast.error(errData[0]);
+        } else {
+          toast.error(
+            error.response.data.message || 'Tạo sinh viên thất bại'
+          );
+        }
+      } else {
+        toast.error(error.message || 'Tạo sinh viên thất bại');
+      }
+      return null;
+    }
+  },
+
+  // Update student
+  updateStudent: async (studentData) => {
+    try {
+      const response = await customizeAxios.put(
+        '/api/Student/UpdateStudent',
+        studentData
+      );
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          toast.error(errData[0]);
+        } else {
+          toast.error(response?.message || 'Cập nhật sinh viên thất bại');
+        }
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          toast.error(errData[0]);
+        } else {
+          toast.error(
+            error.response.data.message || 'Cập nhật sinh viên thất bại'
+          );
+        }
+      } else {
+        toast.error(error.message || 'Cập nhật sinh viên thất bại');
+      }
+      return null;
+    }
+  },
+
+  // Lấy danh sách phiên điểm danh khả dụng cho sinh viên tự điểm danh
+  getAvailableCheckInSessions: async () => {
+    try {
+      const response = await customizeAxios.get(
+        '/api/student/attendance/available-sessions'
+      );
+      if (response?.success === false) {
+        toast.error(
+          response?.message || 'Lấy danh sách phiên điểm danh thất bại'
+        );
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching available sessions:', error);
+      toast.error('Lấy danh sách phiên điểm danh thất bại');
+      return null;
+    }
+  },
+
+  // Sinh viên tự điểm danh
+  selfCheckIn: async (attendanceSessionId, checkInCode = '', note = null) => {
+    try {
+      const response = await customizeAxios.post(
+        '/api/student/attendance/check-in',
+        {
+          attendanceSessionId,
+          checkInCode,
+          note,
+        }
+      );
+      if (response?.success === false) {
+        toast.error(response?.message || 'Điểm danh thất bại');
+        return null;
+      }
+      toast.success('Điểm danh thành công!');
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data;
+        if (Array.isArray(errData.data) && errData.data.length > 0) {
+          toast.error(errData.data[0]);
+        } else {
+          toast.error(errData.message || 'Điểm danh thất bại');
+        }
+      } else {
+        toast.error(error.message || 'Điểm danh thất bại');
+      }
+      return null;
+    }
+  },
+};
