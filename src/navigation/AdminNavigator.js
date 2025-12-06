@@ -2,20 +2,16 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 
 // Admin Screens
-import DashboardScreen from '../screens/Admin/DashboardScreen';
+import AdminDashboardScreen from '../screens/Admin/Dashboard/AdminDashboardScreen';
 import TeacherListScreen from '../screens/Admin/Teacher/TeacherListScreen';
-import TeacherDetailScreen from '../screens/Admin/Teacher/TeacherDetailScreen';
 import StudentListScreen from '../screens/Admin/Student/StudentListScreen';
 import StudentDetailScreen from '../screens/Admin/Student/StudentDetailScreen';
 import ClassListScreen from '../screens/Admin/Class/ClassListScreen';
 import SectionListScreen from '../screens/Admin/Section/SectionListScreen';
-import SectionDetailScreen from '../screens/Admin/Section/SectionDetailScreen';
 import GradeEntryScreen from '../screens/Admin/Grade/GradeEntryScreen';
-import GradeSheetScreen from '../screens/Admin/Grade/GradeSheetScreen';
-import GradeStatisticsScreen from '../screens/Admin/Grade/GradeStatisticsScreen';
 import RegistrationPeriodScreen from '../screens/Admin/Registration/RegistrationPeriodScreen';
 import TuitionFeesScreen from '../screens/Admin/Tuition/TuitionFeesScreen';
-import CurriculumScreen from '../screens/Admin/Education/CurriculumScreen';
+import CourseManagementScreen from '../screens/Admin/Course/CourseManagementScreen';
 
 const Stack = createStackNavigator();
 
@@ -28,7 +24,7 @@ const AdminNavigator = () => {
     >
       <Stack.Screen
         name="Dashboard"
-        component={DashboardScreen}
+        component={AdminDashboardScreen}
         options={{ title: 'Bảng điều khiển' }}
       />
 
@@ -37,11 +33,6 @@ const AdminNavigator = () => {
         name="TeacherList"
         component={TeacherListScreen}
         options={{ title: 'Quản lý Giảng viên' }}
-      />
-      <Stack.Screen
-        name="TeacherDetail"
-        component={TeacherDetailScreen}
-        options={{ title: 'Chi tiết Giảng viên' }}
       />
 
       {/* Student Management */}
@@ -69,27 +60,12 @@ const AdminNavigator = () => {
         component={SectionListScreen}
         options={{ title: 'Quản lý Lớp học phần' }}
       />
-      <Stack.Screen
-        name="SectionDetail"
-        component={SectionDetailScreen}
-        options={{ title: 'Chi tiết Lớp học phần' }}
-      />
 
       {/* Grade Management */}
       <Stack.Screen
         name="GradeEntry"
         component={GradeEntryScreen}
         options={{ title: 'Nhập điểm' }}
-      />
-      <Stack.Screen
-        name="GradeSheet"
-        component={GradeSheetScreen}
-        options={{ title: 'Bảng điểm' }}
-      />
-      <Stack.Screen
-        name="GradeStatistics"
-        component={GradeStatisticsScreen}
-        options={{ title: 'Thống kê điểm' }}
       />
 
       {/* Registration Period */}
@@ -106,11 +82,11 @@ const AdminNavigator = () => {
         options={{ title: 'Học phí' }}
       />
 
-      {/* Curriculum */}
+      {/* Course Management */}
       <Stack.Screen
-        name="Curriculum"
-        component={CurriculumScreen}
-        options={{ title: 'Chương trình đào tạo' }}
+        name="CourseManagement"
+        component={CourseManagementScreen}
+        options={{ title: 'Quản lý Môn học' }}
       />
     </Stack.Navigator>
   );
