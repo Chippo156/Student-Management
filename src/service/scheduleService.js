@@ -188,10 +188,7 @@ const scheduleService = {
 
       console.log('📤 Updating schedule with payload:', payload);
 
-      const response = await axios.put(
-        `/api/Schedule/${scheduleId}`,
-        payload
-      );
+      const response = await axios.put(`/api/Schedule/${scheduleId}`, payload);
 
       if (response?.success === false) {
         const errData = response?.data;
