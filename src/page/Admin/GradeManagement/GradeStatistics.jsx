@@ -52,6 +52,7 @@ import {
 } from 'recharts';
 import statisticsService from '../../../service/statisticsService';
 import { studentServices } from '../../../service/studentServices';
+import { departmentService } from '../../../service/departmentService'; // ✅ Import departmentService
 import { useDebounce } from '../../../hooks/useDebounce';
 
 const GradeStatistics = () => {
@@ -73,6 +74,10 @@ const GradeStatistics = () => {
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedSemester, setSelectedSemester] = useState('');
 
+  // ✅ Thêm state cho danh sách chuyên ngành
+  const [departments, setDepartments] = useState([]);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
@@ -80,6 +85,7 @@ const GradeStatistics = () => {
   useEffect(() => {
     fetchStudents();
     fetchAllStudentsStats();
+    fetchDepartments(); // ✅ Gọi API lấy danh sách chuyên ngành
   }, []);
 
   useEffect(() => {
@@ -93,6 +99,21 @@ const GradeStatistics = () => {
       fetchAllStudentsStats();
     }
   }, [selectedDepartment, selectedSemester]);
+
+  // ✅ Hàm fetch danh sách chuyên ngành
+  const fetchDepartments = async () => {
+    setLoadingDepartments(true);
+    try {
+      const result = await departmentService.getDepartmentsDropdown();
+      if (result && Array.isArray(result)) {
+        setDepartments(result);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    } finally {
+      setLoadingDepartments(false);
+    }
+  };
 
   const fetchStudents = async (search = '') => {
     setLoadingStudents(true);
@@ -184,7 +205,12 @@ const GradeStatistics = () => {
     <Box sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight={700} gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
+        <Typography
+          variant="h4"
+          fontWeight={700}
+          gutterBottom
+          sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+        >
           Thống kê điểm sinh viên
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -265,12 +291,25 @@ const GradeStatistics = () => {
             <>
               {/* Empty State Warning */}
               {statsData.overallStats?.totalSubjects === 0 && (
-                <Card sx={{ mb: 3, bgcolor: 'warning.lighter', borderLeft: 4, borderColor: 'warning.main' }}>
+                <Card
+                  sx={{
+                    mb: 3,
+                    bgcolor: 'warning.lighter',
+                    borderLeft: 4,
+                    borderColor: 'warning.main',
+                  }}
+                >
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <AssessmentIcon sx={{ fontSize: 40, color: 'warning.main' }} />
+                      <AssessmentIcon
+                        sx={{ fontSize: 40, color: 'warning.main' }}
+                      />
                       <Box>
-                        <Typography variant="h6" fontWeight={600} color="warning.dark">
+                        <Typography
+                          variant="h6"
+                          fontWeight={600}
+                          color="warning.dark"
+                        >
                           Chưa có dữ liệu điểm
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
@@ -846,24 +885,44 @@ const GradeStatistics = () => {
         </>
       ) : (
         <>
-          {/* Filters */}
+          {/* ✅ Filters - CẬP NHẬT PHẦN NÀY */}
           <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, mb: 3 }}>
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Lọc theo khoa"
-                  value={selectedDepartment}
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
-                >
-                  <MenuItem value="">Tất cả các khoa</MenuItem>
-                  {allStudentsStats?.departmentStats?.map((dept) => (
-                    <MenuItem key={dept.departmentId} value={dept.departmentId}>
-                      {dept.departmentName}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                <Autocomplete
+                  options={departments}
+                  getOptionLabel={(option) => option.departmentName || ''}
+                  value={
+                    departments.find(
+                      (d) => d.departmentId === selectedDepartment
+                    ) || null
+                  }
+                  onChange={(event, newValue) => {
+                    setSelectedDepartment(newValue?.departmentId || '');
+                  }}
+                  loading={loadingDepartments}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Lọc theo chuyên ngành"
+                      placeholder="Chọn chuyên ngành..."
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {loadingDepartments ? (
+                              <CircularProgress size={20} />
+                            ) : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) =>
+                    option.departmentId === value.departmentId
+                  }
+                />
               </Grid>
               <Grid item xs={12} md={6}>
                 <TextField
@@ -887,7 +946,7 @@ const GradeStatistics = () => {
             </Grid>
           </Paper>
 
-          {/* Overall Statistics Content */}
+          {/* Overall Statistics Content - GIỮ NGUYÊN PHẦN NÀY */}
           {allStudentsStats && (
             <>
               {/* Overall Overview Cards */}

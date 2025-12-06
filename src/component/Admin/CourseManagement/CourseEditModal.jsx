@@ -115,7 +115,6 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
         totalCredits: course.totalCredits,
         creditsTheory: course.creditsTheory,
         creditsLab: course.creditsLab,
-        creditsExercise: course.creditsExercise,
         semesterSuggested: course.semesterSuggested,
         academicProgramId: course.academicProgramId,
         departmentId: course.departmentId,
@@ -280,7 +279,7 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
             ⏱️ Thông tin tín chỉ
           </Divider>
           <Row gutter={[24, 16]}>
-            <Col xs={24} md={6}>
+            <Col xs={24} md={8}>
               <Form.Item
                 label="Tổng tín chỉ"
                 name="totalCredits"
@@ -302,7 +301,7 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
                 />
               </Form.Item>
             </Col>
-            <Col xs={24} md={6}>
+            <Col xs={24} md={8}>
               <Form.Item
                 label="Tín chỉ lý thuyết"
                 name="creditsTheory"
@@ -327,7 +326,7 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
                 />
               </Form.Item>
             </Col>
-            <Col xs={24} md={6}>
+            <Col xs={24} md={8}>
               <Form.Item
                 label="Tín chỉ thực hành"
                 name="creditsLab"
@@ -341,27 +340,6 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
                     min: 0,
                     max: 10,
                     message: 'Tín chỉ thực hành từ 0-10',
-                  },
-                ]}
-              >
-                <InputNumber
-                  min={0}
-                  max={10}
-                  placeholder="0"
-                  style={{ width: '100%' }}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={6}>
-              <Form.Item
-                label="Tín chỉ bài tập"
-                name="creditsExercise"
-                rules={[
-                  {
-                    type: 'number',
-                    min: 0,
-                    max: 10,
-                    message: 'Tín chỉ bài tập từ 0-10',
                   },
                 ]}
               >

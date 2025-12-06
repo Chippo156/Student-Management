@@ -324,227 +324,280 @@ const GradeSheet = () => {
           </Grid>
 
           {/* Semester Grades Table */}
-          {studentData.semesterGrades?.map((semester) => (
-            <Paper
-              key={semester.semesterId}
-              sx={{ mb: 3, p: { xs: 2, sm: 2, md: 3 } }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 3,
-                }}
-              >
-                <Box>
-                  <Typography variant="h6" fontWeight={600}>
-                    {semester.semesterName}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {semester.year} - {semester.term}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Chip
-                    label={`GPA HK: ${semester.semesterGPA10.toFixed(2)}`}
-                    color="primary"
-                  />
-                  <Chip
-                    label={`GPA TL: ${semester.cumulativeGPA10.toFixed(2)}`}
-                    color="secondary"
-                  />
-                  <Chip
-                    label={semester.semesterRank}
-                    color={getRankColor(semester.semesterRank)}
-                  />
-                </Box>
-              </Box>
+          {studentData.semesterGrades?.map((semester) => {
+            // ✅ Tính số cột động cho thường kỳ và thực hành
+            const maxRegularCount = Math.max(
+              ...semester.courseGrades.map(
+                (course) =>
+                  course.assessments?.find((a) => a.assessmentTypeId === 1)
+                    ?.regularPointsDetails?.length || 0
+              ),
+              0
+            );
 
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow
-                      sx={{ bgcolor: alpha(theme.palette.primary.main, 0.08) }}
-                    >
-                      <TableCell>
-                        <Typography variant="subtitle2" fontWeight={600}>
-                          Mã HP
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" fontWeight={600}>
-                          Tên học phần
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="subtitle2" fontWeight={600}>
-                          Tín chỉ
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="subtitle2" fontWeight={600}>
-                          Thường kỳ
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="subtitle2" fontWeight={600}>
-                          Thực hành
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="subtitle2" fontWeight={600}>
-                          Giữa kỳ
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="subtitle2" fontWeight={600}>
-                          Cuối kỳ
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="subtitle2" fontWeight={600}>
-                          Điểm TK
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="subtitle2" fontWeight={600}>
-                          Điểm chữ
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {semester.courseGrades?.map((course) => {
-                      // Extract scores by type
-                      const regularScore =
-                        course.assessments
-                          ?.find((a) => a.assessmentTypeId === 1)
-                          ?.regularPointsDetails?.reduce(
-                            (sum, detail) => sum + detail.score,
-                            0
-                          ) /
+            const maxPracticeCount = Math.max(
+              ...semester.courseGrades.map(
+                (course) =>
+                  course.assessments?.filter((a) => a.assessmentTypeId === 2)
+                    .length || 0
+              ),
+              0
+            );
+            return (
+              <Paper
+                key={semester.semesterId}
+                sx={{ mb: 3, p: { xs: 2, sm: 2, md: 3 } }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 3,
+                  }}
+                >
+                  <Box>
+                    <Typography variant="h6" fontWeight={600}>
+                      {semester.semesterName}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {semester.year} - {semester.term}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Chip
+                      label={`GPA HK: ${semester.semesterGPA10.toFixed(2)}`}
+                      color="primary"
+                    />
+                    <Chip
+                      label={`GPA TL: ${semester.cumulativeGPA10.toFixed(2)}`}
+                      color="secondary"
+                    />
+                    <Chip
+                      label={semester.semesterRank}
+                      color={getRankColor(semester.semesterRank)}
+                    />
+                  </Box>
+                </Box>
+
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow
+                        sx={{
+                          bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        }}
+                      >
+                        <TableCell>
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            Mã HP
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            Tên học phần
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            TC
+                          </Typography>
+                        </TableCell>
+
+                        {/* ✅ Cột thường kỳ động */}
+                        {Array.from({ length: maxRegularCount }).map(
+                          (_, idx) => (
+                            <TableCell key={`tk-${idx}`} align="center">
+                              <Typography variant="subtitle2" fontWeight={600}>
+                                TK {idx + 1}
+                              </Typography>
+                            </TableCell>
+                          )
+                        )}
+
+                        {/* ✅ Cột thực hành động */}
+                        {Array.from({ length: maxPracticeCount }).map(
+                          (_, idx) => (
+                            <TableCell key={`th-${idx}`} align="center">
+                              <Typography variant="subtitle2" fontWeight={600}>
+                                TH {idx + 1}
+                              </Typography>
+                            </TableCell>
+                          )
+                        )}
+
+                        <TableCell align="center">
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            Giữa kỳ
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            Cuối kỳ
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            Điểm TK
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            Điểm chữ
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {semester.courseGrades?.map((course) => {
+                        // ✅ Extract điểm thường kỳ
+                        const regularDetails =
                           course.assessments?.find(
                             (a) => a.assessmentTypeId === 1
-                          )?.regularPointsDetails?.length || 0;
+                          )?.regularPointsDetails || [];
 
-                      const practiceScores = course.assessments
-                        ?.filter((a) => a.assessmentTypeId === 2)
-                        .map((a) => a.score);
-                      const practiceScore =
-                        practiceScores?.length > 0
-                          ? practiceScores.reduce((sum, s) => sum + s, 0) /
-                            practiceScores.length
-                          : null;
+                        // ✅ Extract điểm thực hành
+                        const practiceScores =
+                          course.assessments
+                            ?.filter((a) => a.assessmentTypeId === 2)
+                            .map((a) => a.score) || [];
 
-                      const midtermScore = course.assessments?.find(
-                        (a) => a.assessmentTypeId === 3
-                      )?.score;
+                        // ✅ Extract điểm giữa kỳ và cuối kỳ
+                        const midtermScore = course.assessments?.find(
+                          (a) => a.assessmentTypeId === 3
+                        )?.score;
 
-                      const finalScore = course.assessments?.find(
-                        (a) => a.assessmentTypeId === 4
-                      )?.score;
+                        const finalScore = course.assessments?.find(
+                          (a) => a.assessmentTypeId === 4
+                        )?.score;
 
-                      return (
-                        <TableRow
-                          key={course.sectionId}
-                          sx={{
-                            '&:hover': {
-                              bgcolor: alpha(theme.palette.primary.main, 0.02),
-                            },
-                          }}
-                        >
-                          <TableCell>{course.courseCode}</TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight={500}>
-                              {course.courseName}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="center">{course.credits}</TableCell>
-                          <TableCell align="center">
-                            {regularScore > 0 ? regularScore.toFixed(1) : '-'}
-                          </TableCell>
-                          <TableCell align="center">
-                            {practiceScore ? practiceScore.toFixed(1) : '-'}
-                          </TableCell>
-                          <TableCell align="center">
-                            {midtermScore ? midtermScore.toFixed(1) : '-'}
-                          </TableCell>
-                          <TableCell align="center">
-                            {finalScore ? finalScore.toFixed(1) : '-'}
-                          </TableCell>
-                          <TableCell align="center">
-                            <Typography variant="subtitle2" fontWeight={600}>
-                              {course.finalScore.toFixed(2)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip
-                              label={course.gradeLetter}
-                              size="small"
-                              sx={{
+                        return (
+                          <TableRow
+                            key={`${course.sectionId}-${course.courseCode}`}
+                            sx={{
+                              '&:hover': {
                                 bgcolor: alpha(
-                                  getGradeColor(course.gradeLetter),
-                                  0.2
+                                  theme.palette.primary.main,
+                                  0.02
                                 ),
-                                color: getGradeColor(course.gradeLetter),
-                                fontWeight: 600,
-                              }}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                              },
+                            }}
+                          >
+                            <TableCell>{course.courseCode}</TableCell>
+                            <TableCell>
+                              <Typography variant="body2" fontWeight={500}>
+                                {course.courseName}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                              {course.credits}
+                            </TableCell>
 
-              {/* Semester Summary */}
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 2,
-                  bgcolor: alpha(theme.palette.info.main, 0.05),
-                  borderRadius: 1,
-                }}
-              >
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={3}>
-                    <Typography variant="body2" color="text.secondary">
-                      Tín chỉ đăng ký
-                    </Typography>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      {semester.totalCreditsRegistered} TC
-                    </Typography>
+                            {/* ✅ Render điểm thường kỳ động */}
+                            {Array.from({ length: maxRegularCount }).map(
+                              (_, idx) => (
+                                <TableCell key={`tk-${idx}`} align="center">
+                                  {regularDetails[idx]?.score !== undefined
+                                    ? regularDetails[idx].score.toFixed(1)
+                                    : '-'}
+                                </TableCell>
+                              )
+                            )}
+
+                            {/* ✅ Render điểm thực hành động */}
+                            {Array.from({ length: maxPracticeCount }).map(
+                              (_, idx) => (
+                                <TableCell key={`th-${idx}`} align="center">
+                                  {practiceScores[idx] !== undefined
+                                    ? practiceScores[idx].toFixed(1)
+                                    : '-'}
+                                </TableCell>
+                              )
+                            )}
+
+                            <TableCell align="center">
+                              {midtermScore !== undefined
+                                ? midtermScore.toFixed(1)
+                                : '-'}
+                            </TableCell>
+                            <TableCell align="center">
+                              {finalScore !== undefined
+                                ? finalScore.toFixed(1)
+                                : '-'}
+                            </TableCell>
+                            <TableCell align="center">
+                              <Typography variant="subtitle2" fontWeight={600}>
+                                {course.finalScore.toFixed(2)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                label={course.gradeLetter}
+                                size="small"
+                                sx={{
+                                  bgcolor: alpha(
+                                    getGradeColor(course.gradeLetter),
+                                    0.2
+                                  ),
+                                  color: getGradeColor(course.gradeLetter),
+                                  fontWeight: 600,
+                                }}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                {/* Semester Summary */}
+                <Box
+                  sx={{
+                    mt: 2,
+                    p: 2,
+                    bgcolor: alpha(theme.palette.info.main, 0.05),
+                    borderRadius: 1,
+                  }}
+                >
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={3}>
+                      <Typography variant="body2" color="text.secondary">
+                        Tín chỉ đăng ký
+                      </Typography>
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        {semester.totalCreditsRegistered} TC
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={3}>
+                      <Typography variant="body2" color="text.secondary">
+                        Tín chỉ đạt
+                      </Typography>
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        {semester.totalCreditsEarned} TC
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={3}>
+                      <Typography variant="body2" color="text.secondary">
+                        GPA học kỳ (4)
+                      </Typography>
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        {semester.semesterGPA4.toFixed(2)}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={3}>
+                      <Typography variant="body2" color="text.secondary">
+                        GPA tích lũy (4)
+                      </Typography>
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        {semester.cumulativeGPA4.toFixed(2)}
+                      </Typography>
+                    </Grid>
                   </Grid>
-                  <Grid item xs={12} sm={3}>
-                    <Typography variant="body2" color="text.secondary">
-                      Tín chỉ đạt
-                    </Typography>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      {semester.totalCreditsEarned} TC
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={3}>
-                    <Typography variant="body2" color="text.secondary">
-                      GPA học kỳ (4)
-                    </Typography>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      {semester.semesterGPA4.toFixed(2)}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={3}>
-                    <Typography variant="body2" color="text.secondary">
-                      GPA tích lũy (4)
-                    </Typography>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      {semester.cumulativeGPA4.toFixed(2)}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Box>
-            </Paper>
-          ))}
+                </Box>
+              </Paper>
+            );
+          })}
         </>
       )}
 
