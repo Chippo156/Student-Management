@@ -14,28 +14,7 @@ namespace StudentManagement.Services
     {
         public async Task<CurriculumCourse> CreateCurriculumCourseAsync(CurriculumCourseRequest request)
         {
-            if (request.Course != null)
-            {
-                var existingCourse = await context.Courses
-                    .FirstOrDefaultAsync(c => c.CourseCode == request.Course.CourseCode);
-                if (existingCourse != null)
-                {
-                    request.CourseId = existingCourse.CourseId;
-                }
-                else
-                {
-                    var newCourse = new Course
-                    {
-                        CourseCode = request.Course.CourseCode,
-                        CourseName = request.Course.CourseName,
-                        CreditsTheory = request.Course.CreditsTheory,
-                        CreditsLab = request.Course.CreditsLab
-                    };
-                    context.Courses.Add(newCourse);
-                    await context.SaveChangesAsync();
-                    request.CourseId = newCourse.CourseId;
-                }
-            }
+            
             var program = await context.Programs.FindAsync(request.ProgramId)
                 ?? throw new Exception("Program not found");
                 

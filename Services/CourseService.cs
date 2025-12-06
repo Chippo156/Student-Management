@@ -9,43 +9,20 @@ namespace StudentManagement.Services
 {
     public class CourseService(AppDbContext context) : ICourseService
     {
-        public async Task<Course> CreateCourseAsync(CourseRequest courseRequest)
+        public Task<Course> CreateCourseAsync(CourseRequest courseRequest)
         {
-            // 0. Chuẩn hóa dữ liệu đầu vào (Xóa khoảng trắng thừa + chuyển về chữ thường để so sánh)
-            // Lưu ý: Kiểm tra null trước khi Trim() nếu courseRequest không có validation [Required]
-            string normalizedCode = courseRequest.CourseCode?.Trim().ToLower() ?? "";
-            string normalizedName = courseRequest.CourseName?.Trim().ToLower() ?? "";
-
-            if (string.IsNullOrEmpty(normalizedCode) || string.IsNullOrEmpty(normalizedName))
-            {
-                throw new Exception("Mã môn và Tên môn không được để trống.");
-            }
-
-            // 1. KIỂM TRA TRÙNG LẶP (Bao gồm cả Upper/Lower case)
-            // Logic: Convert cả dữ liệu trong DB (c.CourseCode) và dữ liệu nhập vào về chữ thường rồi so sánh
-            bool isDuplicate = await context.Courses.AnyAsync(c =>
-                c.CourseCode.ToLower() == normalizedCode ||
-                c.CourseName.ToLower() == normalizedName);
-
-            if (isDuplicate)
-            {
-                throw new Exception($"Môn học '{courseRequest.CourseName}' hoặc mã '{courseRequest.CourseCode}' đã tồn tại.");
-            }
-
-            // 2. Kiểm tra Program
-            AcademicProgram program = await context.Programs.FindAsync(courseRequest.ProgramId)
-                ?? throw new Exception("Chương trình đào tạo (Program) không tồn tại.");
-
-            // 3. Khởi tạo Course (Lưu vào DB thì nên giữ nguyên format người dùng nhập, chỉ Trim thôi)
             Course newCourse = new Course
             {
-                CourseName = courseRequest.CourseName.Trim(),
-                CourseCode = courseRequest.CourseCode.Trim(), // Ví dụ nhập "Cse101" thì lưu y nguyên "Cse101"
+                CourseName = courseRequest.CourseName,
+                CourseCode = courseRequest.CourseCode,
                 CreditsTheory = courseRequest.CreditsTheory,
                 CreditsLab = courseRequest.CreditsLab
             };
+            context.Courses.Add(newCourse);
+            context.SaveChanges();
 
-            // 4. Khởi tạo CurriculumCourse
+            // With this line:
+            AcademicProgram program = context.Programs.Find(courseRequest.ProgramId) ?? throw new Exception("Program not found");
             CurriculumCourse curriculum = new CurriculumCourse
             {
                 Course = newCourse,
@@ -54,11 +31,10 @@ namespace StudentManagement.Services
                 Program = program
             };
 
-            // 5. Add và Save
-            await context.CurriculumCourses.AddAsync(curriculum);
-            await context.SaveChangesAsync();
+            context.CurriculumCourses.Add(curriculum);
+            context.SaveChanges();
 
-            return newCourse;
+            return Task.FromResult(newCourse);
         }
 
         public Task<bool> DeleteCourseAsync(int courseId)
@@ -188,5 +164,7 @@ namespace StudentManagement.Services
                 PageSize = pagination.PageSize
             };
         }
+
+
     }
 }
