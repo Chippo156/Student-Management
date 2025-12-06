@@ -40,14 +40,30 @@ const practiceService = {
     }
   },
 
-  /**
-   * Tạo nhóm thực hành kèm lịch học (scheduleTypeId = 2)
-   */
+  // ✅ API tạo nhóm thực hành kèm lịch học - CẬP NHẬT THEO SWAGGER
   createSchedulePractice: async (practiceData) => {
     try {
+      // ✅ Đảm bảo payload khớp với API
+      const payload = {
+        groupName: practiceData.groupName || '',
+        description: practiceData.description || null,
+        maxCapacity: practiceData.maxCapacity || 30,
+        sectionId: practiceData.sectionId,
+        dayOfWeek: practiceData.dayOfWeek || null,
+        date: practiceData.date || null,
+        startTime: practiceData.startTime,
+        endTime: practiceData.endTime,
+        room: practiceData.room || '',
+        onlineLink: practiceData.onlineLink || null,
+        scheduleTypeId: 2, // ✅ Luôn là 2 (Thực hành)
+        lecturerId: practiceData.lecturerId || null,
+      };
+
+      console.log('📤 Creating practice schedule with payload:', payload);
+
       const response = await axios.post(
         '/api/PracticeGroup/CreateSchedulePractice',
-        practiceData
+        payload
       );
 
       if (response?.success === false) {
@@ -63,6 +79,7 @@ const practiceService = {
       message.success('Tạo nhóm thực hành thành công!');
       return response.data;
     } catch (error) {
+      console.error('❌ Create practice schedule error:', error);
       if (error.response && error.response.data) {
         const errData = error.response.data.data;
         if (Array.isArray(errData) && errData.length > 0) {

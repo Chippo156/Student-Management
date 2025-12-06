@@ -15,7 +15,7 @@ import { EditOutlined } from '@ant-design/icons';
 import { useTheme } from '@mui/material/styles';
 import { alpha } from '@mui/material/styles';
 import dayjs from 'dayjs';
-import { studentServices } from '../../../service/studentServices';
+import { userService } from '../../../service/userService';
 import facultyService from '../../../service/facultyService';
 import { departmentService } from '../../../service/departmentService';
 import { classService } from '../../../service/classService';
@@ -149,6 +149,10 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
           : undefined,
         issuedPlace: student.user?.issuedPlace,
         placeOfBirth: student.user?.placeOfBirth,
+        healthInsuranceNumber: student.user?.healthInsuranceNumber,
+        healthInsuranceRegistrationPlace: student.user?.registeredHospital,
+        object: student.user?.object,
+        policyArea: student.user?.policyArea,
         // Address fields
         hometownProvince: student.user?.hometownProvince,
         hometownDistrict: student.user?.hometownDistrict,
@@ -170,51 +174,68 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
 
   const handleFinish = async (values) => {
     try {
+      // ✅ Build payload theo đúng format API update-with-role
       const payload = {
-        studentId: student.studentId,
-        mssv: values.mssv,
-        classId: values.classId,
-        yearOfAdmission: values.yearOfAdmission,
-        studentStatus: values.studentStatus,
-        userUpdateRequest: {
-          fullName: values.fullName,
-          gender: values.gender,
-          dateOfBirth: values.dateOfBirth
-            ? values.dateOfBirth.format('YYYY-MM-DD')
-            : null,
-          email: values.email || null,
-          phone: values.phone || null,
-          address: values.address || null,
-          temporaryAddress: values.temporaryAddress || null,
-          ethnicity: values.ethnicity || null,
-          religion: values.religion || null,
-          nationality: values.nationality || null,
-          citizenIdCard: values.citizenIdCard || null,
-          issuedDate: values.issuedDate
-            ? values.issuedDate.format('YYYY-MM-DD')
-            : null,
-          issuedPlace: values.issuedPlace || null,
-          placeOfBirth: values.placeOfBirth || null,
-          // Address selector fields
-          hometownProvince: values.hometownProvince || null,
-          hometownDistrict: values.hometownDistrict || null,
-          hometownWard: values.hometownWard || null,
-          birthProvince: values.birthProvince || null,
-          birthDistrict: values.birthDistrict || null,
-          birthWard: values.birthWard || null,
-          permanentProvince: values.permanentProvince || null,
-          permanentDistrict: values.permanentDistrict || null,
-          permanentWard: values.permanentWard || null,
+        fullName: values.fullName,
+        gender: values.gender,
+        roleId: 2, // ✅ roleId = 2 cho sinh viên
+        email: values.email || null,
+        phone: values.phone || null,
+        address: values.address || null,
+        temporaryAddress: values.temporaryAddress || null,
+        dateOfBirth: values.dateOfBirth
+          ? values.dateOfBirth.format('YYYY-MM-DD')
+          : null,
+        ethnicity: values.ethnicity || null,
+        nationality: values.nationality || null,
+        citizenIdCard: values.citizenIdCard || null,
+        issuedDate: values.issuedDate
+          ? values.issuedDate.format('YYYY-MM-DD')
+          : null,
+        issuedPlace: values.issuedPlace || null,
+        healthInsuranceNumber: values.healthInsuranceNumber || null,
+        healthInsuranceRegistrationPlace:
+          values.healthInsuranceRegistrationPlace || null,
+        placeOfBirth: values.placeOfBirth || null,
+        religion: values.religion || null,
+        object: values.object || null,
+        policyArea: values.policyArea || null,
+        dateOfJoinUnion: null,
+        dateOfJoinParty: null,
+        // ✅ Address fields từ AddressSelector
+        hometownProvince: values.hometownProvince || null,
+        hometownDistrict: values.hometownDistrict || null,
+        hometownWard: values.hometownWard || null,
+        birthProvince: values.birthProvince || null,
+        birthDistrict: values.birthDistrict || null,
+        birthWard: values.birthWard || null,
+        permanentProvince: values.permanentProvince || null,
+        permanentDistrict: values.permanentDistrict || null,
+        permanentWard: values.permanentWard || null,
+        // ✅ Student-specific data
+        studentSpecificData: {
+          classId: values.classId,
+          studentStatus: values.studentStatus,
+          admissionDate: null,
+          year: values.yearOfAdmission ? String(values.yearOfAdmission) : null,
         },
+        // ✅ Lecturer-specific data (null cho sinh viên)
+        lecturerSpecificData: null,
       };
 
-      const result = await studentServices.updateStudent(payload);
+      console.log('📤 Updating student with payload:', payload);
+
+      const result = await userService.updateUserWithRole(
+        student.user?.userId,
+        payload
+      );
+
       if (result) {
         message.success('Cập nhật thông tin sinh viên thành công!');
         onSave(result);
       }
     } catch (error) {
-      console.error('Failed to update student:', error);
+      console.error('❌ Failed to update student:', error);
       message.error('Cập nhật thông tin sinh viên thất bại!');
     }
   };
@@ -269,7 +290,7 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
                   { min: 6, max: 20, message: 'MSSV từ 6-20 ký tự' },
                 ]}
               >
-                <Input placeholder="Nhập mã số sinh viên" />
+                <Input placeholder="Nhập mã số sinh viên" disabled />
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>
@@ -413,6 +434,19 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
             <Col xs={24} md={8}>
               <Form.Item label="Nơi cấp" name="issuedPlace">
                 <Input placeholder="Nhập nơi cấp CCCD" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="Số BHYT" name="healthInsuranceNumber">
+                <Input placeholder="Nhập số bảo hiểm y tế" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Nơi đăng ký KCB"
+                name="healthInsuranceRegistrationPlace"
+              >
+                <Input placeholder="Nhập nơi đăng ký khám chữa bệnh" />
               </Form.Item>
             </Col>
           </Row>

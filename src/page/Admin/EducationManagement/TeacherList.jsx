@@ -500,11 +500,11 @@ const TeacherList = () => {
         <Grid item xs={6} sm={4} md={3} lg={1.5}>
           <SearchableAutocomplete
             options={[
-              { id: 'GS', name: 'Giáo sư' },
-              { id: 'PGS', name: 'Phó Giáo sư' },
-              { id: 'TS.', name: 'Tiến sĩ' },
-              { id: 'ThS.', name: 'Thạc sĩ' },
-              { id: 'CN', name: 'Cử nhân' },
+              { id: 'Giáo sư', name: 'Giáo sư' },
+              { id: 'Phó Giáo sư', name: 'Phó Giáo sư' },
+              { id: 'Tiến sĩ', name: 'Tiến sĩ' },
+              { id: 'Thạc sĩ', name: 'Thạc sĩ' },
+              { id: 'Cử nhâ', name: 'Cử nhân' },
             ]}
             placeholder="Tìm học hàm..."
             value={filterAcademicTitle}

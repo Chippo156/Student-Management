@@ -18,6 +18,7 @@ import dayjs from 'dayjs';
 import { lecturerService } from '../../../service/lecturerService';
 import facultyService from '../../../service/facultyService';
 import { departmentService } from '../../../service/departmentService';
+import { userService } from '../../../service/userService';
 
 const { Option } = Select;
 
@@ -128,43 +129,54 @@ const TeacherEditModal = ({ open, onCancel, onSave, lecturer, loading }) => {
 
   const handleFinish = async (values) => {
     try {
+      // ✅ Build payload theo đúng format API update-with-role
       const payload = {
-        lecturerId: lecturer.lecturerId,
-        departmentId: values.departmentId,
-        academicTitle: values.academicTitle,
-        position: values.position,
-        joiningDate: values.joiningDate
-          ? values.joiningDate.format('YYYY-MM-DD')
+        fullName: values.fullName,
+        gender: values.gender,
+        roleId: 3, // ✅ roleId = 3 cho giảng viên
+        email: values.email || null,
+        phone: values.phone || null,
+        address: values.address || null,
+        temporaryAddress: values.temporaryAddress || null,
+        dateOfBirth: values.dateOfBirth
+          ? values.dateOfBirth.format('YYYY-MM-DD')
           : null,
-        userUpdateRequest: {
-          fullName: values.fullName,
-          gender: values.gender,
-          dateOfBirth: values.dateOfBirth
-            ? values.dateOfBirth.format('YYYY-MM-DD')
-            : null,
-          email: values.email || null,
-          phone: values.phone || null,
-          address: values.address || null,
-          temporaryAddress: values.temporaryAddress || null,
-          ethnicity: values.ethnicity || null,
-          religion: values.religion || null,
-          nationality: values.nationality || null,
-          citizenIdCard: values.citizenIdCard || null,
-          issuedDate: values.issuedDate
-            ? values.issuedDate.format('YYYY-MM-DD')
-            : null,
-          issuedPlace: values.issuedPlace || null,
-          placeOfBirth: values.placeOfBirth || null,
+        ethnicity: values.ethnicity || null,
+        nationality: values.nationality || null,
+        citizenIdCard: values.citizenIdCard || null,
+        issuedDate: values.issuedDate
+          ? values.issuedDate.format('YYYY-MM-DD')
+          : null,
+        issuedPlace: values.issuedPlace || null,
+        healthInsuranceNumber: null,
+        healthInsuranceRegistrationPlace: null,
+        placeOfBirth: values.placeOfBirth || null,
+        religion: values.religion || null,
+        object: null,
+        policyArea: null,
+        dateOfJoinUnion: null,
+        dateOfJoinParty: null,
+        // ✅ Student-specific data (null cho giảng viên)
+        studentSpecificData: null,
+        // ✅ Lecturer-specific data
+        lecturerSpecificData: {
+          departmentId: values.departmentId,
+          position: values.position || null,
+          academicTitle: values.academicTitle || null,
         },
       };
 
-      const result = await lecturerService.updateLecturer(payload);
+      const result = await userService.updateUserWithRole(
+        lecturer.user?.userId,
+        payload
+      );
+
       if (result) {
         message.success('Cập nhật thông tin giảng viên thành công!');
         onSave(result);
       }
     } catch (error) {
-      console.error('Failed to update lecturer:', error);
+      console.error('❌ Failed to update lecturer:', error);
       message.error('Cập nhật thông tin giảng viên thất bại!');
     }
   };

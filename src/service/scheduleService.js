@@ -21,6 +21,7 @@ const scheduleService = {
     }
     return res.data;
   },
+
   getSchedulesOfLecturer: async (date, scheduleTypeId) => {
     try {
       const res = await axios.get('/api/Schedule/GetSchedulesOfLecturer', {
@@ -32,7 +33,6 @@ const scheduleService = {
         throw new Error(res.message || 'Không lấy được lịch giảng viên');
       }
 
-      // API returns array in data
       return res.data || [];
     } catch (error) {
       const errMsg =
@@ -43,6 +43,7 @@ const scheduleService = {
       throw error;
     }
   },
+
   countSchedulesOfLecturer: async () => {
     try {
       const res = await axios.get('/api/Schedule/countSchedulesOfLecturer');
@@ -54,7 +55,6 @@ const scheduleService = {
         );
       }
 
-      // returns { countScheduleOfWeek, countTestOfWeek }
       return res.data || null;
     } catch (error) {
       const errMsg =
@@ -66,9 +66,6 @@ const scheduleService = {
     }
   },
 
-  /**
-   * Lấy tất cả lịch học theo sectionId
-   */
   getAllSchedulesBySectionId: async (
     sectionId,
     pageNumber = 1,
@@ -114,14 +111,30 @@ const scheduleService = {
     }
   },
 
-  /**
-   * Tạo lịch lý thuyết/thi (scheduleTypeId: 1 = Lý thuyết, 3 = Thi)
-   */
+  // ✅ API tạo lịch lý thuyết/thi - CẬP NHẬT THEO SWAGGER
   createScheduleTheory: async (scheduleData) => {
     try {
+      // ✅ Đảm bảo payload khớp với API
+      const payload = {
+        sectionId: scheduleData.sectionId,
+        scheduleTypeId: scheduleData.scheduleTypeId,
+        date: scheduleData.date || null,
+        dayOfWeek: scheduleData.dayOfWeek || null,
+        startTime: scheduleData.startTime,
+        endTime: scheduleData.endTime,
+        room: scheduleData.room || '',
+        onlineLink: scheduleData.onlineLink || null,
+        practiceGroupId: null,
+        practiceGroupName: null,
+        lecturerId: scheduleData.lecturerId || null,
+        maxCapacity: null,
+      };
+
+      console.log('📤 Creating theory/exam schedule with payload:', payload);
+
       const response = await axios.post(
         '/api/Schedule/CreateScheduleTheory',
-        scheduleData
+        payload
       );
 
       if (response?.success === false) {
@@ -137,6 +150,7 @@ const scheduleService = {
       message.success('Tạo lịch học thành công!');
       return response.data;
     } catch (error) {
+      console.error('❌ Create theory schedule error:', error);
       if (error.response && error.response.data) {
         const errData = error.response.data.data;
         if (Array.isArray(errData) && errData.length > 0) {
@@ -153,14 +167,30 @@ const scheduleService = {
     }
   },
 
-  /**
-   * Cập nhật lịch học
-   */
+  // ✅ API update lịch - THÊM ĐẦY ĐỦ FIELD THEO SWAGGER
   updateSchedule: async (scheduleId, scheduleData) => {
     try {
+      // ✅ Payload đầy đủ theo đúng Swagger
+      const payload = {
+        sectionId: scheduleData.sectionId,
+        scheduleTypeId: scheduleData.scheduleTypeId,
+        date: scheduleData.date || null,
+        dayOfWeek: scheduleData.dayOfWeek || null,
+        startTime: scheduleData.startTime,
+        endTime: scheduleData.endTime,
+        room: scheduleData.room || '',
+        onlineLink: scheduleData.onlineLink || null,
+        practiceGroupId: scheduleData.practiceGroupId || null,
+        practiceGroupName: scheduleData.practiceGroupName || null,
+        lecturerId: scheduleData.lecturerId || null,
+        maxCapacity: scheduleData.maxCapacity || null,
+      };
+
+      console.log('📤 Updating schedule with payload:', payload);
+
       const response = await axios.put(
         `/api/Schedule/${scheduleId}`,
-        scheduleData
+        payload
       );
 
       if (response?.success === false) {
@@ -176,6 +206,7 @@ const scheduleService = {
       message.success('Cập nhật lịch học thành công!');
       return response.data;
     } catch (error) {
+      console.error('❌ Update schedule error:', error);
       if (error.response && error.response.data) {
         const errData = error.response.data.data;
         if (Array.isArray(errData) && errData.length > 0) {
@@ -192,9 +223,6 @@ const scheduleService = {
     }
   },
 
-  /**
-   * Xóa lịch học
-   */
   deleteSchedule: async (scheduleId) => {
     try {
       const response = await axios.delete(`/api/Schedule/${scheduleId}`);
