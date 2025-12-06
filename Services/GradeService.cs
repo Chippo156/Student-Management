@@ -196,8 +196,8 @@ namespace StudentManagement.Services
             // Group grades by semester
             var gradesBySemester = allGrades
                 .GroupBy(g => g.Assessment.Section.Semester)
-                .OrderByDescending(g => g.Key.Year)
-                .ThenByDescending(g => g.Key.Term);
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.Term);
 
             // Calculate cumulative statistics
             int cumulativeCreditsRegistered = 0;

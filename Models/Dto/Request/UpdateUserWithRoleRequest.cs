@@ -41,7 +41,7 @@ namespace StudentManagement.Models.Dto.Request
         public string? Nationality { get; set; }
 
         [StringLength(20)]
-        [RegularExpression(@"^\d{9}(\d{3})?$", ErrorMessage = "Citizen ID must be 9 or 12 digits")]
+        [RegularExpression(@"^(\d{9}|\d{12})$", ErrorMessage = "Citizen ID must be 9 or 12 digits")]
         public string? CitizenIdCard { get; set; }
 
         public DateOnly? IssuedDate { get; set; }

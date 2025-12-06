@@ -1,4 +1,4 @@
-using StudentManagement.Enum;
+﻿using StudentManagement.Enum;
 using System.ComponentModel.DataAnnotations;
 
 namespace StudentManagement.Models.Dto.Request
@@ -17,7 +17,7 @@ namespace StudentManagement.Models.Dto.Request
         [Required]
         [StringLength(100)]
         public string FullName { get; set; } = string.Empty;
-
+        
         [Required]
         public int RoleId { get; set; }
 
@@ -120,7 +120,7 @@ namespace StudentManagement.Models.Dto.Request
         //[StringLength(20)]
         //public string MSSV { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "ClassId là bắt buộc")]
         public int ClassId { get; set; }
 
         public StudentStatus? StudentStatus { get; set; }

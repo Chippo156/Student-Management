@@ -55,6 +55,7 @@ namespace StudentManagement.Services
                 .Include(s => s.Class)
                     .ThenInclude(c => c.Program)
                         .ThenInclude(p => p.Department)
+                         .ThenInclude(p => p.Faculty)
                 .AsQueryable();
 
             // Apply search filter - tìm kiếm theo tên, email, MSSV
