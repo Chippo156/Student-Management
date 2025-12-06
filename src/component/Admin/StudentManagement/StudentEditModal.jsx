@@ -81,9 +81,10 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
     fetchProvinces();
   }, []);
 
-  // Load departments when faculty changes
+  // Load departments when faculty changes - ✅ KHÔNG reset department khi init
   useEffect(() => {
-    if (selectedFaculty) {
+    if (selectedFaculty && !student) {
+      // ✅ Chỉ reset khi user thay đổi, không phải khi init
       const fetchDepartments = async () => {
         const res =
           await departmentService.getDepartmentsDropdownByFaculty(
@@ -96,17 +97,16 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
         }
       };
       fetchDepartments();
-    } else {
-      setDepartments([]);
+      setSelectedDepartment(undefined);
+      setClasses([]);
+      form.setFieldsValue({ departmentId: undefined, classId: undefined });
     }
-    setSelectedDepartment(undefined);
-    setClasses([]);
-    form.setFieldsValue({ departmentId: undefined, classId: undefined });
   }, [selectedFaculty, form]);
 
-  // Load classes when department changes
+  // Load classes when department changes - ✅ KHÔNG reset class khi init
   useEffect(() => {
-    if (selectedDepartment) {
+    if (selectedDepartment && !student) {
+      // ✅ Chỉ reset khi user thay đổi
       const fetchClasses = async () => {
         const res =
           await classService.getClassesDropdownByDepartment(selectedDepartment);
@@ -117,17 +117,19 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
         }
       };
       fetchClasses();
-    } else {
-      setClasses([]);
+      form.setFieldsValue({ classId: undefined });
     }
-    form.setFieldsValue({ classId: undefined });
   }, [selectedDepartment, form]);
 
   // Set initial values
   useEffect(() => {
     if (student && open) {
-      setSelectedFaculty(student.class?.program?.department?.facultyId);
-      setSelectedDepartment(student.class?.program?.departmentId);
+      // ✅ Lấy faculty và department từ nested structure
+      const facultyId = student.class?.program?.department?.faculty?.facultyId;
+      const departmentId = student.class?.program?.department?.departmentId;
+
+      setSelectedFaculty(facultyId);
+      setSelectedDepartment(departmentId);
 
       form.setFieldsValue({
         mssv: student.mssv,
@@ -150,10 +152,11 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
         issuedPlace: student.user?.issuedPlace,
         placeOfBirth: student.user?.placeOfBirth,
         healthInsuranceNumber: student.user?.healthInsuranceNumber,
-        healthInsuranceRegistrationPlace: student.user?.registeredHospital,
+        healthInsuranceRegistrationPlace:
+          student.user?.healthInsuranceRegistrationPlace,
         object: student.user?.object,
         policyArea: student.user?.policyArea,
-        // Address fields
+        // ✅ Address fields
         hometownProvince: student.user?.hometownProvince,
         hometownDistrict: student.user?.hometownDistrict,
         hometownWard: student.user?.hometownWard,
@@ -163,12 +166,19 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
         permanentProvince: student.user?.permanentProvince,
         permanentDistrict: student.user?.permanentDistrict,
         permanentWard: student.user?.permanentWard,
-        facultyId: student.class?.program?.department?.facultyId,
-        departmentId: student.class?.program?.departmentId,
-        classId: student.classId,
+        // ✅ Academic fields - Fix nested path
+        facultyId: facultyId,
+        departmentId: departmentId,
+        classId: student.class?.classId,
         yearOfAdmission: student.yearOfAdmission,
         studentStatus: student.studentStatus,
       });
+
+      // ✅ Debug log để kiểm tra
+      console.log('🔍 Student data:', student);
+      console.log('🔍 Faculty ID:', facultyId);
+      console.log('🔍 Department ID:', departmentId);
+      console.log('🔍 Class ID:', student.class?.classId);
     }
   }, [student, open, form]);
 
