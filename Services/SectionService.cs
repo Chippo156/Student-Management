@@ -849,7 +849,9 @@ namespace StudentManagement.Services
                     HasPracticeGroups = section.CurriculumCourse.Course.CreditsLab > 0 && practiceGroupCount > 0,
                     
                     // Additional info
-                    CreatedAt = DateTime.Now, // Add if you have CreatedAt field
+                    CreatedAt = section.CreatedAt,
+                    UpdatedAt = section.UpdatedAt,
+
                     IsActive = section.Status != SectionStatus.IsClosed
                 });
             }

@@ -55,7 +55,9 @@ namespace StudentManagement.Models.Dto.Response
         public bool HasPracticeGroups { get; set; }
         
         // Creation info
-        public DateTime CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+
         public bool IsActive { get; set; }
     }
 }
