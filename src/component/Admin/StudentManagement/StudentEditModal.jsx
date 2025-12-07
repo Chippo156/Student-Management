@@ -83,7 +83,7 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
 
   // Load departments when faculty changes - ✅ KHÔNG reset department khi init
   useEffect(() => {
-    if (selectedFaculty && !student) {
+    if (selectedFaculty) {
       // ✅ Chỉ reset khi user thay đổi, không phải khi init
       const fetchDepartments = async () => {
         const res =
@@ -503,6 +503,7 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
                   onChange={handleDepartmentChange}
                   value={selectedDepartment}
                   disabled={!selectedFaculty}
+                  defaultValue={3}
                   showSearch
                   filterOption={(input, option) =>
                     option.children

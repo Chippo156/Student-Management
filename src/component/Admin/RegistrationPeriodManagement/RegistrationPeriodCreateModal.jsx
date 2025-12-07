@@ -63,10 +63,10 @@ const RegistrationPeriodCreateModal = ({ open, onClose, onSuccess }) => {
 
       if (deptResponse) {
         // Transform department data to expected structure
-        const transformedDepts = deptResponse.map(dept => ({
+        const transformedDepts = deptResponse.map((dept) => ({
           departmentId: dept.departmentId,
           departmentName: dept.departmentName,
-          facultyName: dept.facultyName
+          facultyName: dept.facultyName,
         }));
         setDepartments(transformedDepts);
       }
@@ -125,9 +125,8 @@ const RegistrationPeriodCreateModal = ({ open, onClose, onSuccess }) => {
         endDate: formData.endDate.format('YYYY-MM-DD'),
       };
 
-      const result = await registrationPeriodService.createRegistrationPeriod(
-        payload
-      );
+      const result =
+        await registrationPeriodService.createRegistrationPeriod(payload);
       if (result) {
         onSuccess();
       }
@@ -145,7 +144,7 @@ const RegistrationPeriodCreateModal = ({ open, onClose, onSuccess }) => {
       maxWidth="sm"
       fullWidth
       PaperProps={{
-        sx: { borderRadius: 2 },
+        sx: { borderRadius: 5, overflow: 'unset' },
       }}
     >
       <DialogTitle
@@ -156,6 +155,7 @@ const RegistrationPeriodCreateModal = ({ open, onClose, onSuccess }) => {
           justifyContent: 'space-between',
           alignItems: 'center',
           py: 2.5,
+          borderRadius: 5,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -188,7 +188,11 @@ const RegistrationPeriodCreateModal = ({ open, onClose, onSuccess }) => {
               getOptionLabel={(option) =>
                 option ? `${option.departmentName} - ${option.facultyName}` : ''
               }
-              value={departments.find(d => d.departmentId === formData.departmentId) || null}
+              value={
+                departments.find(
+                  (d) => d.departmentId === formData.departmentId
+                ) || null
+              }
               onChange={(newValue) => {
                 handleChange('departmentId', newValue?.departmentId || '');
               }}
@@ -209,8 +213,10 @@ const RegistrationPeriodCreateModal = ({ open, onClose, onSuccess }) => {
             {/* Semester */}
             <Autocomplete
               options={semesters}
-              getOptionLabel={(option) => option ? option.name : ''}
-              value={semesters.find(s => s.id === formData.semesterId) || null}
+              getOptionLabel={(option) => (option ? option.name : '')}
+              value={
+                semesters.find((s) => s.id === formData.semesterId) || null
+              }
               onChange={(newValue) => {
                 handleChange('semesterId', newValue?.id || '');
               }}
@@ -228,11 +234,7 @@ const RegistrationPeriodCreateModal = ({ open, onClose, onSuccess }) => {
 
             {/* Start Date */}
             <Box>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mb: 1 }}
-              >
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                 Ngày bắt đầu <span style={{ color: 'red' }}>*</span>
               </Typography>
               <DatePicker
@@ -247,11 +249,7 @@ const RegistrationPeriodCreateModal = ({ open, onClose, onSuccess }) => {
 
             {/* End Date */}
             <Box>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mb: 1 }}
-              >
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                 Ngày kết thúc <span style={{ color: 'red' }}>*</span>
               </Typography>
               <DatePicker
