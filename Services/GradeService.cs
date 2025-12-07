@@ -316,21 +316,40 @@ namespace StudentManagement.Services
                         // Map RegularPointsDetails hoặc CourseAssessmentGrade như cũ...
 
                         if (assessmentTypeId == 1)
-                        { /* Logic cũ */
-                            // ...
-                            var type1Grades = assessmentGrades.Select(g => new RegularPointsDetail { /*...*/ }).ToList();
+                        {
+                            // For Assessment Type 1, create one entry with details array
+                            var type1Grades = assessmentGrades.Select(g => new RegularPointsDetail
+                            {
+                                GradeId = g.GradeId,
+                                AssessmentId = g.Assessment.AssessmentId,
+                                AssessmentName = g.Assessment.Title,
+                                Score = g.Score,
+                            }).ToList();
+
+                            var firstGrade = assessmentGrades.First();
                             courseGradeDetail.Assessments.Add(new CourseAssessmentGrade
                             {
                                 AssessmentName = "Điểm thường kỳ",
-                                RegularPointsDetails = type1Grades,
-                                //...
+                                AssessmentType = firstGrade.Assessment.AssessmentType.Title,
+                                AssessmentTypeId = assessmentTypeId,
+                                RegularPointsDetails = type1Grades
                             });
                         }
                         else
-                        { /* Logic cũ */
+                        {
+                            // For other assessment types, add individual entries
                             foreach (var grade in assessmentGrades)
                             {
-                                courseGradeDetail.Assessments.Add(new CourseAssessmentGrade { /*...*/ });
+                                courseGradeDetail.Assessments.Add(new CourseAssessmentGrade
+                                {
+                                    GradeId = grade.GradeId,
+                                    AssessmentId = grade.Assessment.AssessmentId,
+                                    AssessmentName = grade.Assessment.Title,
+                                    AssessmentType = grade.Assessment.AssessmentType.Title,
+                                    AssessmentTypeId = grade.Assessment.AssessmentType.AssessmentTypeId,
+                                    Score = Math.Round(grade?.Score ?? 0, 2),
+                                    RegularPointsDetails = null // No details for non-Type1 assessments
+                                });
                             }
                         }
                     }
