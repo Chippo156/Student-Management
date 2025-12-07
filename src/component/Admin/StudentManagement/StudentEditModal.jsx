@@ -105,7 +105,7 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
 
   // Load classes when department changes - ✅ KHÔNG reset class khi init
   useEffect(() => {
-    if (selectedDepartment && !student) {
+    if (selectedDepartment) {
       // ✅ Chỉ reset khi user thay đổi
       const fetchClasses = async () => {
         const res =
