@@ -396,7 +396,7 @@ const RegistrationPeriod = () => {
             options={departments}
             placeholder="Tìm chuyên ngành..."
             value={filterDepartment}
-            onChange={(event, newValue) => {
+            onChange={(newValue) => {
               setFilterDepartment(newValue);
               setPage(0);
             }}
@@ -408,7 +408,7 @@ const RegistrationPeriod = () => {
             options={semesters}
             placeholder="Tìm học kỳ..."
             value={filterSemester}
-            onChange={(event, newValue) => {
+            onChange={(newValue) => {
               setFilterSemester(newValue);
               setPage(0);
             }}
@@ -424,7 +424,7 @@ const RegistrationPeriod = () => {
             ]}
             placeholder="Tìm trạng thái..."
             value={filterStatus}
-            onChange={(event, newValue) => {
+            onChange={(newValue) => {
               setFilterStatus(newValue);
               setPage(0);
             }}

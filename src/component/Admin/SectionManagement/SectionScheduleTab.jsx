@@ -618,7 +618,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                   value={
                     lecturers.find((l) => l.id === formData.lecturerId) || null
                   }
-                  onChange={(event, newValue) => {
+                  onChange={(newValue) => {
                     setFormData({
                       ...formData,
                       lecturerId: newValue?.id || null,
@@ -662,7 +662,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                       lecturers.find((l) => l.id === formData.lecturerId) ||
                       null
                     }
-                    onChange={(event, newValue) => {
+                    onChange={(newValue) => {
                       setFormData({
                         ...formData,
                         lecturerId: newValue?.id || null,

@@ -189,7 +189,7 @@ const RegistrationPeriodCreateModal = ({ open, onClose, onSuccess }) => {
                 option ? `${option.departmentName} - ${option.facultyName}` : ''
               }
               value={departments.find(d => d.departmentId === formData.departmentId) || null}
-              onChange={(event, newValue) => {
+              onChange={(newValue) => {
                 handleChange('departmentId', newValue?.departmentId || '');
               }}
               renderInput={(params) => (
@@ -211,7 +211,7 @@ const RegistrationPeriodCreateModal = ({ open, onClose, onSuccess }) => {
               options={semesters}
               getOptionLabel={(option) => option ? option.name : ''}
               value={semesters.find(s => s.id === formData.semesterId) || null}
-              onChange={(event, newValue) => {
+              onChange={(newValue) => {
                 handleChange('semesterId', newValue?.id || '');
               }}
               renderInput={(params) => (

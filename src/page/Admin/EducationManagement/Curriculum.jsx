@@ -379,7 +379,7 @@ const Curriculum = () => {
           <SearchableAutocomplete
             options={degreeLevels}
             value={filterDegree}
-            onChange={(event, newValue) => {
+            onChange={(newValue) => {
               setFilterDegree(newValue);
               setPage(0);
             }}
@@ -395,7 +395,7 @@ const Curriculum = () => {
           <SearchableAutocomplete
             options={departments}
             value={filterDepartment}
-            onChange={(event, newValue) => {
+            onChange={(newValue) => {
               setFilterDepartment(newValue);
               setPage(0);
             }}

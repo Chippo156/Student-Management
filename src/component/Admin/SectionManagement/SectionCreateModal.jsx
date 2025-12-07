@@ -183,7 +183,7 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
             <SearchableAutocomplete
               options={dropdownData?.curriculumCourses || []}
               value={formData.curriculumCourse}
-              onChange={(event, newValue) => {
+              onChange={(newValue) => {
                 setFormData((prev) => ({ ...prev, curriculumCourse: newValue }));
                 if (errors.curriculumCourse) {
                   setErrors((prev) => ({ ...prev, curriculumCourse: '' }));
@@ -205,7 +205,7 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
             <SearchableAutocomplete
               options={dropdownData?.lecturers || []}
               value={formData.lecturer}
-              onChange={(event, newValue) => {
+              onChange={(newValue) => {
                 setFormData((prev) => ({ ...prev, lecturer: newValue }));
                 if (errors.lecturer) {
                   setErrors((prev) => ({ ...prev, lecturer: '' }));
@@ -227,7 +227,7 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
             <SearchableAutocomplete
               options={dropdownData?.semesters || []}
               value={formData.semester}
-              onChange={(event, newValue) => {
+              onChange={(newValue) => {
                 setFormData((prev) => ({ ...prev, semester: newValue }));
                 if (errors.semester) {
                   setErrors((prev) => ({ ...prev, semester: '' }));
@@ -249,7 +249,7 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
             <SearchableAutocomplete
               options={dropdownData?.classes || []}
               value={formData.classItem}
-              onChange={(event, newValue) => {
+              onChange={(newValue) => {
                 setFormData((prev) => ({ ...prev, classItem: newValue }));
                 if (errors.classItem) {
                   setErrors((prev) => ({ ...prev, classItem: '' }));

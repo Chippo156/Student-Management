@@ -476,7 +476,7 @@ const TeacherList = () => {
             options={departments}
             placeholder="Tìm chuyên ngành..."
             value={filterDepartment}
-            onChange={(event, newValue) => {
+            onChange={(newValue) => {
               setFilterDepartment(newValue);
               setPage(0);
             }}
@@ -491,7 +491,7 @@ const TeacherList = () => {
             ]}
             placeholder="Tìm chức vụ..."
             value={filterPosition}
-            onChange={(event, newValue) => {
+            onChange={(newValue) => {
               setFilterPosition(newValue);
               setPage(0);
             }}
@@ -508,7 +508,7 @@ const TeacherList = () => {
             ]}
             placeholder="Tìm học hàm..."
             value={filterAcademicTitle}
-            onChange={(event, newValue) => {
+            onChange={(newValue) => {
               setFilterAcademicTitle(newValue);
               setPage(0);
             }}
@@ -522,7 +522,7 @@ const TeacherList = () => {
             ]}
             placeholder="Tìm trạng thái..."
             value={filterStatus}
-            onChange={(event, newValue) => {
+            onChange={(newValue) => {
               setFilterStatus(newValue);
               setPage(0);
             }}

@@ -14,7 +14,7 @@ import { Search as SearchIcon } from '@mui/icons-material';
  *
  * @param {Array} options - Danh sách các option để chọn
  * @param {*} value - Giá trị hiện tại (object hoặc array nếu multiple)
- * @param {Function} onChange - Callback khi thay đổi giá trị (event, newValue) => void
+ * @param {Function} onChange - Callback khi thay đổi giá trị (newValue) => void
  * @param {Function} getOptionLabel - Function để lấy label từ option (option) => string
  * @param {string} label - Label hiển thị
  * @param {string} placeholder - Placeholder text
@@ -244,7 +244,8 @@ const SearchableAutocomplete = ({
         value={sanitizedValue}
         style={{ padding: 0 }}
         onChange={(event, newValue) => {
-          onChange && onChange(event, newValue);
+          // Only pass newValue to avoid circular reference issues with event object
+          onChange && onChange(newValue);
         }}
         getOptionLabel={getOptionLabel || defaultGetOptionLabel}
         isOptionEqualToValue={

@@ -156,7 +156,7 @@ const AdviserAssignmentModal = ({ open, onClose, onSuccess, classData }) => {
             <SearchableAutocomplete
               options={lecturers}
               value={selectedLecturer}
-              onChange={(event, newValue) => setSelectedLecturer(newValue)}
+              onChange={(newValue) => setSelectedLecturer(newValue)}
               getOptionLabel={(option) =>
                 `${option.name} - ${option.lecturerCode}`
               }

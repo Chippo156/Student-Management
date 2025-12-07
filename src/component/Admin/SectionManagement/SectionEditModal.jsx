@@ -218,7 +218,7 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
             <SearchableAutocomplete
               options={dropdownData?.curriculumCourses || []}
               value={formData.curriculumCourse}
-              onChange={(event, newValue) => {
+              onChange={(newValue) => {
                 setFormData((prev) => ({ ...prev, curriculumCourse: newValue }));
               }}
               getOptionLabel={(option) => `${option.name} (${option.credits} tín chỉ)`}
@@ -237,7 +237,7 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
             <SearchableAutocomplete
               options={dropdownData?.lecturers || []}
               value={formData.lecturer}
-              onChange={(event, newValue) => {
+              onChange={(newValue) => {
                 setFormData((prev) => ({ ...prev, lecturer: newValue }));
               }}
               getOptionLabel={(option) => `${option.name} (${option.lecturerCode})`}
@@ -254,7 +254,7 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
             <SearchableAutocomplete
               options={dropdownData?.semesters || []}
               value={formData.semester}
-              onChange={(event, newValue) => {
+              onChange={(newValue) => {
                 setFormData((prev) => ({ ...prev, semester: newValue }));
               }}
               getOptionLabel={(option) => option.name}
@@ -271,7 +271,7 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
             <SearchableAutocomplete
               options={dropdownData?.classes || []}
               value={formData.classItem}
-              onChange={(event, newValue) => {
+              onChange={(newValue) => {
                 setFormData((prev) => ({ ...prev, classItem: newValue }));
               }}
               getOptionLabel={(option) => `${option.className} - ${option.programName}`}
@@ -288,7 +288,7 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
             <SearchableAutocomplete
               options={statusOptions}
               value={formData.status}
-              onChange={(event, newValue) => {
+              onChange={(newValue) => {
                 setFormData((prev) => ({ ...prev, status: newValue }));
               }}
               getOptionLabel={(option) => option.label}

@@ -404,7 +404,7 @@ const Classes = () => {
           <SearchableAutocomplete
             options={programs}
             value={filterProgram}
-            onChange={(event, newValue) => setFilterProgram(newValue)}
+            onChange={(newValue) => setFilterProgram(newValue)}
             getOptionLabel={(option) => option.programName}
             isOptionEqualToValue={(option, value) => option?.academicProgramId === value?.academicProgramId}
             label="Chương trình đào tạo"

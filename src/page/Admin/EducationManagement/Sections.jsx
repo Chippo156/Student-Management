@@ -503,7 +503,7 @@ const Sections = () => {
           <SearchableAutocomplete
             options={semesters}
             value={filterSemester}
-            onChange={(event, newValue) => {
+            onChange={(newValue) => {
               setFilterSemester(newValue);
               setPage(0);
             }}
@@ -517,7 +517,7 @@ const Sections = () => {
           <SearchableAutocomplete
             options={statusOptions}
             value={filterStatus}
-            onChange={(event, newValue) => {
+            onChange={(newValue) => {
               setFilterStatus(newValue);
               setPage(0);
             }}

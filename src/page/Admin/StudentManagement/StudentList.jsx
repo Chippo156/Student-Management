@@ -532,7 +532,7 @@ const StudentList = () => {
           <SearchableAutocomplete
             options={departments}
             value={filterDepartment}
-            onChange={(event, newValue) => setFilterDepartment(newValue)}
+            onChange={(newValue) => setFilterDepartment(newValue)}
             getOptionLabel={(option) => option.departmentName}
             isOptionEqualToValue={(option, value) => option?.departmentId === value?.departmentId}
             label="Chuyên ngành"
@@ -545,7 +545,7 @@ const StudentList = () => {
           <SearchableAutocomplete
             options={classes}
             value={filterClass}
-            onChange={(event, newValue) => setFilterClass(newValue)}
+            onChange={(newValue) => setFilterClass(newValue)}
             getOptionLabel={(option) => option.className}
             isOptionEqualToValue={(option, value) => option?.classId === value?.classId}
             label="Lớp"
@@ -558,7 +558,7 @@ const StudentList = () => {
           <SearchableAutocomplete
             options={yearOptions}
             value={filterYearOfAdmission}
-            onChange={(event, newValue) => setFilterYearOfAdmission(newValue)}
+            onChange={(newValue) => setFilterYearOfAdmission(newValue)}
             getOptionLabel={(option) => option.label}
             isOptionEqualToValue={(option, value) => option?.value === value?.value}
             label="Năm"
@@ -571,7 +571,7 @@ const StudentList = () => {
           <SearchableAutocomplete
             options={statusOptions}
             value={filterStatus}
-            onChange={(event, newValue) => setFilterStatus(newValue)}
+            onChange={(newValue) => setFilterStatus(newValue)}
             getOptionLabel={(option) => option.label}
             isOptionEqualToValue={(option, value) => option?.value === value?.value}
             label="Trạng thái"

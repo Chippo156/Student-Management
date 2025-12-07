@@ -332,8 +332,8 @@ const CourseManagement = () => {
             options={programs}
             placeholder="Tìm chương trình..."
             value={filterProgram}
-            onChange={(value) => {
-              setFilterProgram(value);
+            onChange={(newValue) => {
+              setFilterProgram(newValue);
               setPage(0);
             }}
             disableClearable={false}
@@ -344,8 +344,8 @@ const CourseManagement = () => {
             options={departments}
             placeholder="Tìm chuyên ngành..."
             value={filterDepartment}
-            onChange={(value) => {
-              setFilterDepartment(value);
+            onChange={(newValue) => {
+              setFilterDepartment(newValue);
               setPage(0);
             }}
             disableClearable={false}
@@ -356,8 +356,8 @@ const CourseManagement = () => {
             options={courseTypeOptions}
             placeholder="Tìm loại môn học..."
             value={filterCourseType}
-            onChange={(value) => {
-              setFilterCourseType(value);
+            onChange={(newValue) => {
+              setFilterCourseType(newValue);
               setPage(0);
             }}
             disableClearable={false}
