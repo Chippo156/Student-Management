@@ -29,7 +29,7 @@ namespace StudentManagement.Services
                 SemeterSuggested = request.SemesterSuggested,
                 CreatedAt = DateTime.Now
             };
-
+            
             context.CurriculumCourses.Add(curriculumCourse);
             await context.SaveChangesAsync();
             return curriculumCourse;
@@ -58,8 +58,7 @@ namespace StudentManagement.Services
         }
         public async Task<PagedResult<CurriculumCourseResponse>> GetAllCurriculumCoursesWithPaginationAsync(
     PaginationParams pagination,
-    string? searchCourseCode = null,
-    string? searchCourseName = null,
+    string? search = null,
     int? programId = null,
     int? departmentId = null)
         {
@@ -70,15 +69,13 @@ namespace StudentManagement.Services
                 .Include(cc => cc.Course)
                 .AsQueryable();
 
-            // Apply filters
-            if (!string.IsNullOrWhiteSpace(searchCourseCode))
+            if (!string.IsNullOrWhiteSpace(search))
             {
-                query = query.Where(cc => cc.Course.CourseCode.Contains(searchCourseCode.Trim()));
-            }
-
-            if (!string.IsNullOrWhiteSpace(searchCourseName))
-            {
-                query = query.Where(cc => cc.Course.CourseName.Contains(searchCourseName.Trim()));
+                var searchTerm = search.Trim().ToLower();
+                query = query.Where(s =>
+                    (s.Course.CourseName != null && s.Course.CourseName.ToLower().Contains(searchTerm)) ||
+                    s.Course.CourseCode.ToLower().Contains(searchTerm)
+                    );
             }
 
             if (programId.HasValue)

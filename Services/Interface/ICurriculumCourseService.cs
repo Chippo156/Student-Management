@@ -11,8 +11,7 @@ namespace StudentManagement.Services.Interface
         Task<IEnumerable<CurriculumCourse>> GetAllCurriculumCoursesAsync();
         Task<PagedResult<CurriculumCourseResponse>> GetAllCurriculumCoursesWithPaginationAsync(
               PaginationParams pagination,
-              string? searchCourseCode = null,
-              string? searchCourseName = null,
+              string? search = null,
               int? programId = null,
               int? departmentId = null);
         Task<IEnumerable<CurriculumCourse>> GetCurriculumCoursesByProgramAsync(int programId);

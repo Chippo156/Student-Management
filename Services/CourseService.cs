@@ -81,7 +81,11 @@ namespace StudentManagement.Services
 
         public Task<Course?> UpdateCourseAsync(int courseId, CourseRequest courseRequest)
         {
-            Course? course = context.Courses.Find(courseId);
+            Course? course = context.CurriculumCourses 
+                .Include(cc => cc.Course)
+                .Where(cc => cc.Id == courseId)
+                .Select(cc => cc.Course)
+                .FirstOrDefault();
             if (course is null)
             {
                 return Task.FromResult<Course?>(null);
@@ -91,6 +95,35 @@ namespace StudentManagement.Services
             course.CourseCode = courseRequest.CourseCode;
             course.CreditsTheory = courseRequest.CreditsTheory;
             course.CreditsLab = courseRequest.CreditsLab;
+
+            if (courseRequest.ProgramId != 0)
+            {
+                AcademicProgram? program = context.Programs.Find(courseRequest.ProgramId);
+                if (program is null)
+                {
+                    throw new Exception("Program not found");
+                }
+                CurriculumCourse? curriculumCourse = context.CurriculumCourses
+                    .Include(cc => cc.Program)
+                    .FirstOrDefault(cc => cc.Id == courseId && cc.Program.AcademicProgramId == courseRequest.ProgramId);
+                if (curriculumCourse is null)
+                {
+                    curriculumCourse = new CurriculumCourse
+                    {
+                        Course = course,
+                        Program = program,
+                        SemeterSuggested = courseRequest.SemesterSuggested,
+                        isRequired = courseRequest.isRequired
+                    };
+                    context.CurriculumCourses.Add(curriculumCourse);
+                }
+                else
+                {
+                    curriculumCourse.SemeterSuggested = courseRequest.SemesterSuggested;
+                    curriculumCourse.isRequired = courseRequest.isRequired;
+                    context.CurriculumCourses.Update(curriculumCourse);
+                }
+            }
 
             context.Courses.Update(course);
             context.SaveChanges();

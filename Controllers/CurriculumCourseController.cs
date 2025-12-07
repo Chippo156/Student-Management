@@ -24,15 +24,14 @@ namespace StudentManagement.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetCurriculumCoursesWithPagination(
           [FromQuery] PaginationParams pagination,
-          [FromQuery] string? courseCode = null,
-          [FromQuery] string? courseName = null,
+          [FromQuery] string? search = null,
           [FromQuery] int? programId = null,
           [FromQuery] int? departmentId = null)
         {
             try
             {
                 var result = await curriculumCourseService.GetAllCurriculumCoursesWithPaginationAsync(
-                    pagination, courseCode, courseName, programId, departmentId);
+                    pagination, search, programId, departmentId);
 
                 return Ok(ApiResponse.SuccessResponse(result, "Curriculum courses retrieved successfully"));
             }
