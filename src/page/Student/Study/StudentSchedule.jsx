@@ -81,7 +81,7 @@ const StudentSchedule = () => {
   const weekDays = useMemo(() => {
     const start = baseDate.startOf('week');
     const days = [];
-    for (let i = 1; i <= 7; i++) {
+    for (let i = 0; i < 7; i++) {
       days.push(start.add(i, 'day'));
     }
     return days;
@@ -143,7 +143,8 @@ const StudentSchedule = () => {
   return (
     <div
       style={{
-        padding: window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 16 : 24,
+        padding:
+          window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 16 : 24,
         width: '100%',
         minHeight: '100vh',
         background: theme.palette.background.default,
@@ -184,7 +185,12 @@ const StudentSchedule = () => {
               style={{
                 margin: 0,
                 color: theme.palette.text.primary,
-                fontSize: window.innerWidth < 600 ? '1.5rem' : window.innerWidth < 960 ? '1.75rem' : '2rem'
+                fontSize:
+                  window.innerWidth < 600
+                    ? '1.5rem'
+                    : window.innerWidth < 960
+                      ? '1.75rem'
+                      : '2rem',
               }}
             >
               <CalendarOutlined
@@ -192,9 +198,12 @@ const StudentSchedule = () => {
               />
               Lịch học, lịch thi theo tuần
             </Title>
-            <Text type="secondary" style={{
-              fontSize: window.innerWidth < 600 ? 11 : 13
-            }}>
+            <Text
+              type="secondary"
+              style={{
+                fontSize: window.innerWidth < 600 ? 11 : 13,
+              }}
+            >
               Tuần ngày {startOfWeek.format('DD/MM')} -{' '}
               {endOfWeek.format('DD/MM/YYYY')}
             </Text>
