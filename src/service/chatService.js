@@ -217,7 +217,7 @@ class ChatService {
     try {
       // Đảm bảo roomId là số nguyên
       const chatRoomId = parseInt(roomId);
-      
+
       // ✅ Build payload với optional replyToMessageId
       const payload = {
         chatRoomId: chatRoomId,
