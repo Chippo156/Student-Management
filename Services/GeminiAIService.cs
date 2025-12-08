@@ -21,6 +21,7 @@ namespace StudentManagement.Services
             _httpClient = httpClient;
             _apiKey = configuration["GeminiAI:ApiKey"] ?? throw new ArgumentNullException("GeminiAI:ApiKey");
             _baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+
             _context = context;
         }
 
@@ -47,14 +48,14 @@ namespace StudentManagement.Services
                         temperature = 0.4,
                         topK = 40,
                         topP = 0.95,
-                        maxOutputTokens = 500 // Giảm từ 1024 xuống 500 để ép AI không viết văn dài
+                        maxOutputTokens = 2000 
                     },
                     safetySettings = new[]
                     {
-                        new { category = "HARM_CATEGORY_HARASSMENT", threshold = "BLOCK_MEDIUM_AND_ABOVE" },
-                        new { category = "HARM_CATEGORY_HATE_SPEECH", threshold = "BLOCK_MEDIUM_AND_ABOVE" },
-                        new { category = "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold = "BLOCK_MEDIUM_AND_ABOVE" },
-                        new { category = "HARM_CATEGORY_DANGEROUS_CONTENT", threshold = "BLOCK_MEDIUM_AND_ABOVE" }
+                        new { category = "HARM_CATEGORY_HARASSMENT", threshold = "BLOCK_ONLY_HIGH" },
+                        new { category = "HARM_CATEGORY_HATE_SPEECH", threshold = "BLOCK_ONLY_HIGH" },
+                        new { category = "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold = "BLOCK_ONLY_HIGH" },
+                        new { category = "HARM_CATEGORY_DANGEROUS_CONTENT", threshold = "BLOCK_ONLY_HIGH" }
                     }
                 };
 
@@ -91,6 +92,7 @@ namespace StudentManagement.Services
                 }
 
                 return "Không thể tạo phản hồi từ AI.";
+
             }
             catch (Exception ex)
             {
@@ -315,7 +317,7 @@ namespace StudentManagement.Services
                     baseContext += "\n**Lịch sử GPA theo học kỳ:**";
                     foreach (var gpa in studentInfo.GpaSnapshots.TakeLast(5))
                     {
-                        baseContext += $"• {gpa.Semester}: {gpa.GPA}/4.0 ({gpa.GPA10Scale}/10)\n";
+                        baseContext += $"• {gpa.Semester}: {gpa.GPA}/4.0 ({gpa.GPA10Scale}/10)";
                     }
                 }
 

@@ -90,7 +90,7 @@ namespace StudentManagement.Services
         public async Task<EnrollmentResultResponse> EnrollInCourseAsync(string mssv, CourseEnrollmentRequest request)
         {
             using var transaction = await context.Database.BeginTransactionAsync();
-            
+
             try
             {
                 // Get student information
@@ -119,6 +119,7 @@ namespace StudentManagement.Services
                     .Include(s => s.Semester)
                     .Include(s => s.Enrollments)
                     .Include(s => s.Schedules)
+                      .ThenInclude(s => s.ScheduleType)
                     .FirstOrDefaultAsync(s => s.SectionId == request.SectionId);
 
                 if (section == null)
@@ -140,9 +141,11 @@ namespace StudentManagement.Services
                         Errors = { "Lớp học phần đã đầy!" }
                     };
                 }
+
                 var sectionStudentEnrolled = await context.Enrollments
                     .Where(e => section.Semester.SemesterId == e.Section.Semester.SemesterId && e.Student.MSSV == mssv && e.enrollmentStatus == EnrollmentStatus.Enrolled)
                     .CountAsync();
+
                 if (sectionStudentEnrolled > 30)
                 {
                     return new EnrollmentResultResponse
@@ -152,8 +155,9 @@ namespace StudentManagement.Services
                         Errors = { "Sinh viên đã đăng ký vượt quá số lượng học phần tối đa trong học kỳ này!" }
                     };
                 }
-                    // Validation checks
-                    var validationResult = await ValidateEnrollmentAsync(student, section);
+
+                // Validation checks
+                var validationResult = await ValidateEnrollmentAsync(student, section);
                 if (!validationResult.IsValid)
                 {
                     return new EnrollmentResultResponse
@@ -166,7 +170,7 @@ namespace StudentManagement.Services
 
                 // Check if student is already enrolled in this section
                 var existingEnrollment = await context.Enrollments
-                    .FirstOrDefaultAsync(e => e.Student.Id == student.Id && 
+                    .FirstOrDefaultAsync(e => e.Student.Id == student.Id &&
                                             e.Section.SectionId == section.SectionId);
 
                 if (existingEnrollment != null)
@@ -197,6 +201,18 @@ namespace StudentManagement.Services
                     };
                 }
 
+                // **NEW: Check schedule conflicts before enrollment**
+                var scheduleConflictResult = await CheckScheduleConflictsForStudentAsync(student.Id, section);
+                if (!scheduleConflictResult.IsValid)
+                {
+                    return new EnrollmentResultResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Xung đột lịch học",
+                        Errors = scheduleConflictResult.Errors
+                    };
+                }
+
                 // Create enrollment
                 var enrollment = new Enrollment
                 {
@@ -221,7 +237,7 @@ namespace StudentManagement.Services
                     {
                         // Sinh viên đã chọn nhóm thực hành cụ thể
                         var practiceGroupResult = await EnrollInSpecificPracticeGroupAsync(student.Id, request.PracticeGroupId.Value);
-                        if (practiceGroupResult.IsSuccess == false )
+                        if (practiceGroupResult.IsSuccess == false)
                         {
                             await transaction.RollbackAsync();
                             return new EnrollmentResultResponse
@@ -231,14 +247,13 @@ namespace StudentManagement.Services
                                 Errors = { practiceGroupResult.ErrorMessage }
                             };
                         }
-                        practiceGroupInfo = practiceGroupResult.IsSuccess ? 
-                            $". Đã đăng ký nhóm thực hành {practiceGroupResult.GroupName}" : 
+                        practiceGroupInfo = practiceGroupResult.IsSuccess ?
+                            $". Đã đăng ký nhóm thực hành {practiceGroupResult.GroupName}" :
                             $". Lỗi đăng ký nhóm thực hành: {practiceGroupResult.ErrorMessage}";
                     }
                     else
                     {
                         // Không chọn nhóm - có thể tự động phân hoặc để trống
-
                         practiceGroupInfo = ". Chưa chọn nhóm thực hành - vui lòng chọn nhóm sau";
                     }
                 }
@@ -248,6 +263,7 @@ namespace StudentManagement.Services
 
                 await context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
                 // Create successful response
                 return new EnrollmentResultResponse
                 {
@@ -277,6 +293,199 @@ namespace StudentManagement.Services
                     Message = "Đăng ký không thành công do lỗi hệ thống",
                     Errors = { ex.Message }
                 };
+            }
+        }
+
+        // **NEW: Method to check schedule conflicts for student enrollment**
+        private async Task<(bool IsValid, List<string> Errors)> CheckScheduleConflictsForStudentAsync(int studentId, Section newSection)
+        {
+            var errors = new List<string>();
+
+            // Get all schedules of the new section (lịch lý thuyết của section mới)
+            var newSectionSchedules = newSection.Schedules
+                .Where(sch => !sch.PracticeGroupId.HasValue && // Lịch lý thuyết
+                             sch.ScheduleType.ScheduleTypeId != 3) // Không phải lịch thi
+                .ToList();
+
+            if (!newSectionSchedules.Any())
+            {
+                // Nếu section mới chưa có lịch thì không có xung đột
+                return (true, errors);
+            }
+
+            // Get all current enrolled sections of the student in the same semester
+            var studentCurrentEnrollments = await context.Enrollments
+                .Include(e => e.Section)
+                    .ThenInclude(s => s.Schedules)
+                        .ThenInclude(sch => sch.ScheduleType)
+                .Include(e => e.Section)
+                    .ThenInclude(s => s.Semester)
+                .Include(e => e.Section)
+                    .ThenInclude(s => s.CurriculumCourse)
+                        .ThenInclude(cc => cc.Course)
+                .Where(e => e.Student.Id == studentId &&
+                       e.Section.Semester.SemesterId == newSection.Semester.SemesterId &&
+                       e.enrollmentStatus == EnrollmentStatus.Enrolled)
+                .ToListAsync();
+
+            // Get all theory schedules from student's current enrollments
+            var studentTheorySchedules = new List<Schedule>();
+            foreach (var enrollment in studentCurrentEnrollments)
+            {
+                var theorySchedules = enrollment.Section.Schedules
+                    .Where(sch => !sch.PracticeGroupId.HasValue && // Lịch lý thuyết
+                                 sch.ScheduleType.ScheduleTypeId != 3) // Không phải lịch thi
+                    .ToList();
+
+                studentTheorySchedules.AddRange(theorySchedules);
+            }
+
+            // Get all practice group schedules that student is enrolled in the same semester
+            var studentPracticeSchedules = await context.PracticeGroupEnrollments
+                .Include(pge => pge.PracticeGroup)
+                    .ThenInclude(pg => pg.Schedules)
+                        .ThenInclude(sch => sch.ScheduleType)
+                .Include(pge => pge.PracticeGroup)
+                    .ThenInclude(pg => pg.Section)
+                        .ThenInclude(s => s.Semester)
+                .Include(pge => pge.PracticeGroup)
+                    .ThenInclude(pg => pg.Section)
+                        .ThenInclude(s => s.CurriculumCourse)
+                            .ThenInclude(cc => cc.Course)
+                .Where(pge => pge.StudentId == studentId &&
+                             pge.IsActive &&
+                             pge.PracticeGroup.Section.Semester.SemesterId == newSection.Semester.SemesterId)
+                .SelectMany(pge => pge.PracticeGroup.Schedules)
+                .Where(sch => sch.ScheduleType.ScheduleTypeId != 3) // Không phải lịch thi
+                .ToListAsync();
+
+            // Combine all student's current schedules (theory + practice)
+            var allStudentCurrentSchedules = studentTheorySchedules.Concat(studentPracticeSchedules).ToList();
+
+            // Check conflicts between new section schedules and student's current schedules
+            foreach (var newSchedule in newSectionSchedules)
+            {
+                foreach (var existingSchedule in allStudentCurrentSchedules)
+                {
+                    // Check conflict on recurring schedule (same day of week)
+                    if (newSchedule.DayOfWeek.HasValue && existingSchedule.DayOfWeek.HasValue &&
+                        newSchedule.DayOfWeek == existingSchedule.DayOfWeek &&
+                        DoTimesOverlap(newSchedule.StartTime, newSchedule.EndTime,
+                                      existingSchedule.StartTime, existingSchedule.EndTime))
+                    {
+                        var existingCourse = GetCourseFromSchedule(existingSchedule, studentCurrentEnrollments);
+                        var existingScheduleType = existingSchedule.PracticeGroupId.HasValue ? "lịch thực hành" : "lịch lý thuyết";
+
+                        errors.Add($"Lịch học bị trùng với {existingScheduleType} của môn {existingCourse}: " +
+                                  $"{GetDayOfWeekInVietnamese(newSchedule.DayOfWeek.Value)} " +
+                                  $"từ {newSchedule.StartTime:HH:mm} đến {newSchedule.EndTime:HH:mm}");
+                    }
+
+                    // Check conflict on specific dates
+                    if (newSchedule.Date.HasValue && existingSchedule.Date.HasValue &&
+                        newSchedule.Date == existingSchedule.Date &&
+                        DoTimesOverlap(newSchedule.StartTime, newSchedule.EndTime,
+                                      existingSchedule.StartTime, existingSchedule.EndTime))
+                    {
+                        var existingCourse = GetCourseFromSchedule(existingSchedule, studentCurrentEnrollments);
+                        var existingScheduleType = existingSchedule.PracticeGroupId.HasValue ? "lịch thực hành" : "lịch lý thuyết";
+
+                        errors.Add($"Lịch học bị trùng với {existingScheduleType} của môn {existingCourse}: " +
+                                  $"{newSchedule.Date:dd/MM/yyyy} " +
+                                  $"từ {newSchedule.StartTime:HH:mm} đến {newSchedule.EndTime:HH:mm}");
+                    }
+                }
+            }
+
+            return (errors.Count == 0, errors);
+        }
+
+        // **NEW: Helper method to get course info from schedule**
+        private string GetCourseFromSchedule(Schedule schedule, List<Enrollment> enrollments)
+        {
+            if (schedule.PracticeGroupId.HasValue)
+            {
+                // This is a practice schedule, find from practice group enrollments
+                var practiceGroup = context.PracticeGroups
+                    .Include(pg => pg.Section)
+                        .ThenInclude(s => s.CurriculumCourse)
+                            .ThenInclude(cc => cc.Course)
+                    .FirstOrDefault(pg => pg.PracticeGroupId == schedule.PracticeGroupId);
+
+                return practiceGroup != null ?
+                    $"{practiceGroup.Section.CurriculumCourse.Course.CourseCode} - {practiceGroup.Section.CurriculumCourse.Course.CourseName}" :
+                    "Unknown Practice Course";
+            }
+            else
+            {
+                // This is a theory schedule, find from enrollments
+                var enrollment = enrollments.FirstOrDefault(e => e.Section.SectionId == schedule.Section.SectionId);
+                return enrollment != null ?
+                    $"{enrollment.Section.CurriculumCourse.Course.CourseCode} - {enrollment.Section.CurriculumCourse.Course.CourseName}" :
+                    "Unknown Theory Course";
+            }
+        }
+
+        // **UPDATED: Enhanced EnrollInSpecificPracticeGroupAsync to include schedule conflict check**
+        private async Task<(bool IsSuccess, string GroupName, string ErrorMessage)> EnrollInSpecificPracticeGroupAsync(int studentId, int practiceGroupId)
+        {
+            try
+            {
+                // Kiểm tra nhóm thực hành có tồn tại và còn chỗ không
+                var practiceGroup = await context.PracticeGroups
+                    .Include(pg => pg.Schedules) // Include schedules để kiểm tra xung đột
+                        .ThenInclude(sch => sch.ScheduleType)
+                    .Include(pg => pg.Section)
+                        .ThenInclude(s => s.Semester)
+                    .FirstOrDefaultAsync(pg => pg.PracticeGroupId == practiceGroupId && pg.IsActive);
+
+                if (practiceGroup == null)
+                {
+                    return (false, "", "Nhóm thực hành không tồn tại");
+                }
+
+                if (practiceGroup.CurrentCount >= practiceGroup.MaxCapacity)
+                {
+                    return (false, "", "Nhóm thực hành đã đầy");
+                }
+
+                // Kiểm tra sinh viên đã có nhóm thực hành cho section này chưa
+                var existingPracticeEnrollment = await context.PracticeGroupEnrollments
+                    .Include(pge => pge.PracticeGroup)
+                    .FirstOrDefaultAsync(pge => pge.StudentId == studentId &&
+                                              pge.PracticeGroup.SectionId == practiceGroup.SectionId &&
+                                              pge.IsActive);
+
+                if (existingPracticeEnrollment != null)
+                {
+                    return (false, "", "Sinh viên đã có nhóm thực hành cho học phần này");
+                }
+
+                // **ENHANCED: Comprehensive schedule conflict check for practice group**
+                var conflictErrors = await CheckPracticeGroupScheduleConflictsForStudentAsync(studentId, practiceGroup);
+                if (conflictErrors.Any())
+                {
+                    return (false, "", string.Join(", ", conflictErrors));
+                }
+
+                // Tạo enrollment vào nhóm thực hành
+                var practiceGroupEnrollment = new PracticeGroupEnrollment
+                {
+                    PracticeGroupId = practiceGroupId,
+                    StudentId = studentId
+                };
+
+                context.PracticeGroupEnrollments.Add(practiceGroupEnrollment);
+                practiceGroup.CurrentCount++;
+                context.PracticeGroups.Update(practiceGroup);
+
+                await context.SaveChangesAsync();
+
+                return (true, practiceGroup.GroupName, "");
+            }
+            catch (Exception ex)
+            {
+                return (false, "", ex.Message);
             }
         }
 
@@ -864,66 +1073,6 @@ namespace StudentManagement.Services
             const decimal feePerCredit = 500000; // 500k per credit
             return totalCredits * feePerCredit;
         }       
-
-        // Helper method để đăng ký nhóm thực hành cụ thể
-        private async Task<(bool IsSuccess, string GroupName, string ErrorMessage)> EnrollInSpecificPracticeGroupAsync(int studentId, int practiceGroupId)
-        {
-            try
-            {
-                // Kiểm tra nhóm thực hành có tồn tại và còn chỗ không
-                var practiceGroup = await context.PracticeGroups
-                    .Include(pg => pg.Schedules) // Include schedules để kiểm tra xung đột
-                    .FirstOrDefaultAsync(pg => pg.PracticeGroupId == practiceGroupId && pg.IsActive);
-
-                if (practiceGroup == null)
-                {
-                    return (false, "", "Nhóm thực hành không tồn tại");
-                }
-
-                if (practiceGroup.CurrentCount >= practiceGroup.MaxCapacity)
-                {
-                    return (false, "", "Nhóm thực hành đã đầy");
-                }
-
-                // Kiểm tra sinh viên đã có nhóm thực hành cho section này chưa
-                var existingPracticeEnrollment = await context.PracticeGroupEnrollments
-                    .Include(pge => pge.PracticeGroup)
-                    .FirstOrDefaultAsync(pge => pge.StudentId == studentId && 
-                                              pge.PracticeGroup.SectionId == practiceGroup.SectionId && 
-                                              pge.IsActive);
-
-                if (existingPracticeEnrollment != null)
-                {
-                    return (false, "", "Sinh viên đã có nhóm thực hành cho học phần này");
-                }
-
-                // Kiểm tra xung đột lịch với lịch lý thuyết và lịch thực hành mà sinh viên đã đăng ký
-                var conflictErrors = await CheckPracticeGroupScheduleConflictsForStudentAsync(studentId, practiceGroup);
-                if (conflictErrors.Any())
-                {
-                    return (false, "", string.Join(", ", conflictErrors));
-                }
-
-                // Tạo enrollment vào nhóm thực hành
-                var practiceGroupEnrollment = new PracticeGroupEnrollment
-                {
-                    PracticeGroupId = practiceGroupId,
-                    StudentId = studentId
-                };
-
-                context.PracticeGroupEnrollments.Add(practiceGroupEnrollment);
-                practiceGroup.CurrentCount++;
-                context.PracticeGroups.Update(practiceGroup);
-
-                await context.SaveChangesAsync();
-
-                return (true, practiceGroup.GroupName, "");
-            }
-            catch (Exception ex)
-            {
-                return (false, "", ex.Message);
-            }
-        }
 
         // Helper method để kiểm tra xung đột lịch practice group với lịch của sinh viên trong cùng semester
         private async Task<List<string>> CheckPracticeGroupScheduleConflictsForStudentAsync(int studentId, PracticeGroup practiceGroup)

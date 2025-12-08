@@ -5,6 +5,7 @@ using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
+using System.Diagnostics;
 
 namespace StudentManagement.Services
 {
@@ -857,21 +858,40 @@ namespace StudentManagement.Services
                     return response;
                 }
 
-                // Get all student IDs to validate
+                bool isFinalExam = assessment.AssessmentType.AssessmentTypeId == 4;
+
                 var studentIds = request.StudentGrades.Select(sg => sg.StudentId).ToList();
                 var students = await context.Students
                     .Include(s => s.User)
                     .Where(s => studentIds.Contains(s.Id))
                     .ToDictionaryAsync(s => s.Id, s => s);
 
-                // Check for existing grades
                 var existingGrades = await context.Grades
                     .Where(g => g.Assessment.AssessmentId == request.AssessmentId &&
                                studentIds.Contains(g.Student.Id))
                     .ToDictionaryAsync(g => g.Student.Id, g => g);
 
+                Dictionary<int, bool> studentFinalExamStatus = new();
+                if (isFinalExam)
+                {
+                    var existingFinalExams = await context.Grades
+                        .Include(g => g.Assessment)
+                            .ThenInclude(a => a.AssessmentType)
+                        .Where(g => studentIds.Contains(g.Student.Id) &&
+                                   g.Assessment.Section.SectionId == assessment.Section.SectionId &&
+                                   g.Assessment.AssessmentType.AssessmentTypeId == 4)
+                        .Select(g => g.Student.Id)
+                        .ToListAsync();
+
+                    foreach (var studentId in studentIds)
+                    {
+                        studentFinalExamStatus[studentId] = existingFinalExams.Contains(studentId);
+                    }
+                }
+
                 var processResults = new List<GradeProcessResult>();
                 var gradesToAdd = new List<Grade>();
+                var gradesToUpdate = new List<Grade>();
                 var studentsToUpdateFinalResult = new List<int>();
 
                 foreach (var studentGrade in request.StudentGrades)
@@ -893,11 +913,13 @@ namespace StudentManagement.Services
                     result.StudentName = student.User.FullName;
                     result.MSSV = student.MSSV;
 
-                    // Check if grade already exists
-                    if (existingGrades.ContainsKey(studentGrade.StudentId))
+                    var existingGrade = existingGrades.GetValueOrDefault(studentGrade.StudentId);
+
+                    if (isFinalExam && studentFinalExamStatus.GetValueOrDefault(studentGrade.StudentId, false)
+                        && existingGrade?.Assessment.AssessmentId != request.AssessmentId)
                     {
                         result.IsSuccess = false;
-                        result.ErrorMessage = "Grade already exists for this student and assessment";
+                        result.ErrorMessage = "Student already has final exam score for this section. Cannot add another final exam grade.";
                         processResults.Add(result);
                         continue;
                     }
@@ -925,31 +947,78 @@ namespace StudentManagement.Services
                         continue;
                     }
 
-                    // Create grade object
-                    var grade = new Grade
+                    if (!isFinalExam)
                     {
-                        Student = student,
-                        Assessment = assessment,
-                        Score = studentGrade.Score
-                    };
+                        var hasCompletedCourse = await context.FinalResults
+                            .AnyAsync(fr => fr.Student.Id == studentGrade.StudentId &&
+                                       fr.Section.SectionId == assessment.Section.SectionId);
 
-                    gradesToAdd.Add(grade);
-                    studentsToUpdateFinalResult.Add(studentGrade.StudentId);
+                        if (hasCompletedCourse)
+                        {
+                            result.IsSuccess = false;
+                            result.ErrorMessage = "Student has already completed this course. Cannot modify component grades.";
+                            processResults.Add(result);
+                            continue;
+                        }
+                    }
 
-                    result.IsSuccess = true;
-                    result.Score = studentGrade.Score;
+                    if (existingGrade != null)
+                    {
+                        // **UPDATE existing grade**
+                        existingGrade.Score = studentGrade.Score;
+                        gradesToUpdate.Add(existingGrade);
+
+                        result.GradeId = existingGrade.GradeId;
+                        result.IsSuccess = true;
+                        result.Score = studentGrade.Score;
+                        result.Operation = "Updated"; // Track operation type
+
+                        if (isFinalExam)
+                        {
+                            studentsToUpdateFinalResult.Add(studentGrade.StudentId);
+                        }
+                    }
+                    else
+                    {
+                        // **CREATE new grade**
+                        var newGrade = new Grade
+                        {
+                            Student = student,
+                            Assessment = assessment,
+                            Score = studentGrade.Score
+                        };
+
+                        gradesToAdd.Add(newGrade);
+
+                        result.IsSuccess = true;
+                        result.Score = studentGrade.Score;
+                        result.Operation = "Created"; // Track operation type
+
+                        if (isFinalExam)
+                        {
+                            studentsToUpdateFinalResult.Add(studentGrade.StudentId);
+                        }
+                    }
+
                     processResults.Add(result);
                 }
 
-                // Add all valid grades
                 if (gradesToAdd.Any())
                 {
                     context.Grades.AddRange(gradesToAdd);
+                }
+
+                if (gradesToUpdate.Any())
+                {
+                    context.Grades.UpdateRange(gradesToUpdate);
+                }
+
+                if (gradesToAdd.Any() || gradesToUpdate.Any())
+                {
                     await context.SaveChangesAsync();
 
-                    // Update GradeIds in results
                     var addedGrades = gradesToAdd.ToDictionary(g => g.Student.Id, g => g.GradeId);
-                    foreach (var result in processResults.Where(r => r.IsSuccess))
+                    foreach (var result in processResults.Where(r => r.IsSuccess && r.Operation == "Created"))
                     {
                         if (addedGrades.TryGetValue(result.StudentId, out var gradeId))
                         {
@@ -958,8 +1027,7 @@ namespace StudentManagement.Services
                     }
                 }
 
-                // Update final results and GPA if this is a final exam assessment
-                if (assessment.AssessmentType.AssessmentTypeId == 4 && studentsToUpdateFinalResult.Any())
+                if (isFinalExam && studentsToUpdateFinalResult.Any())
                 {
                     foreach (var studentId in studentsToUpdateFinalResult.Distinct())
                     {
@@ -970,8 +1038,11 @@ namespace StudentManagement.Services
                         }
                         catch (Exception ex)
                         {
-                            // Log but don't fail the entire operation
-                            Console.WriteLine($"Failed to update final result for student {studentId}: {ex.Message}");
+                            var studentResult = processResults.FirstOrDefault(r => r.StudentId == studentId);
+                            if (studentResult != null)
+                            {
+                                studentResult.ErrorMessage = $"Grade processed but failed to update final result: {ex.Message}";
+                            }
                         }
                     }
                 }
@@ -983,7 +1054,17 @@ namespace StudentManagement.Services
                 response.SuccessfulCount = processResults.Count(r => r.IsSuccess);
                 response.FailedCount = processResults.Count(r => !r.IsSuccess);
                 response.IsSuccess = response.SuccessfulCount > 0;
-                response.Message = $"Processed {response.TotalProcessed} grades: {response.SuccessfulCount} successful, {response.FailedCount} failed";
+
+                var createdCount = processResults.Count(r => r.IsSuccess && r.Operation == "Created");
+                var updatedCount = processResults.Count(r => r.IsSuccess && r.Operation == "Updated");
+
+                var message = $"Processed {response.TotalProcessed} grades: {createdCount} created, {updatedCount} updated, {response.FailedCount} failed";
+                if (isFinalExam && response.SuccessfulCount > 0)
+                {
+                    message += $". Final results and GPA updated for {studentsToUpdateFinalResult.Distinct().Count()} students.";
+                }
+
+                response.Message = message;
 
                 return response;
             }

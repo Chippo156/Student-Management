@@ -13,6 +13,7 @@ namespace StudentManagement.Services
         public async Task<PracticeGroup> CreatePracticeGroupAsync(PracticeGroupRequest request)
         {
             var section = await context.Sections
+                .Include(s => s.Lecturer)
                 .Include(s => s.CurriculumCourse)
                     .ThenInclude(cc => cc.Course)
                 .FirstOrDefaultAsync(s => s.SectionId == request.SectionId);
