@@ -10,8 +10,6 @@ import {
   TextField,
   Button,
   Typography,
-  Checkbox,
-  FormControlLabel,
   Alert,
   IconButton,
   Container,
@@ -20,8 +18,13 @@ import {
   DialogContent,
   DialogActions,
   Grid,
+  InputAdornment,
 } from '@mui/material';
-import { Close as CloseIcon } from '@mui/icons-material';
+import {
+  Close as CloseIcon,
+  Visibility,
+  VisibilityOff,
+} from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 
 import { userService } from '../../service/userService';
@@ -32,7 +35,7 @@ const Login = () => {
   const theme = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [openForgotPassword, setOpenForgotPassword] = useState(false);
   const [mssv, setMssv] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -100,6 +103,10 @@ const Login = () => {
 
   const handleClearError = () => {
     dispatch(clearError());
+  };
+
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleForgotPassword = async () => {
@@ -202,26 +209,29 @@ const Login = () => {
 
                   <TextField
                     fullWidth
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     label="Mật khẩu"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
                     placeholder="Nhập mật khẩu"
-                    sx={{ mb: 2 }}
-                  />
-
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        disabled={isLoading}
-                      />
-                    }
-                    label="Ghi nhớ đăng nhập"
                     sx={{ mb: 3 }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label="toggle password visibility"
+                            onClick={handleTogglePasswordVisibility}
+                            onMouseDown={(e) => e.preventDefault()}
+                            edge="end"
+                            disabled={isLoading}
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
                   />
 
                   <Button

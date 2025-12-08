@@ -4,7 +4,9 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from 'react';
+import { useSelector } from 'react-redux';
 import { chatService, chatApi } from '../service/chatService';
 import { message } from 'antd';
 
@@ -19,6 +21,8 @@ export const useChat = () => {
 };
 
 export const ChatProvider = ({ children }) => {
+  const { isAuthenticated, account } = useSelector((state) => state.user);
+
   const [isConnected, setIsConnected] = useState(false);
   const [currentRoom, setCurrentRoom] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -26,6 +30,10 @@ export const ChatProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [typingUsers, setTypingUsers] = useState(new Set());
   const [isLoading, setIsLoading] = useState(false);
+
+  // ✅ Ref để track trạng thái connecting
+  const isConnectingRef = useRef(false);
+  const connectionListenersRef = useRef(false);
 
   /**
    * Khởi tạo kết nối SignalR
@@ -35,13 +43,53 @@ export const ChatProvider = ({ children }) => {
       const token = localStorage.getItem('access_token');
       if (!token) {
         console.warn('No access token found for chat connection');
-        return;
+        return false;
       }
 
+      // ✅ Tránh connect nhiều lần
+      if (isConnectingRef.current || chatService.isConnected) {
+        console.log('⏭️ Already connecting or connected, skipping...');
+        return chatService.isConnected;
+      }
+
+      isConnectingRef.current = true;
+      console.log('🔌 Connecting to SignalR...');
+
       await chatService.connect(token);
+
+      // ✅ Đợi connection được establish (timeout 5s)
+      const connectionPromise = new Promise((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (chatService.isConnected) {
+            clearInterval(checkInterval);
+            resolve(true);
+          }
+        }, 100);
+
+        // Timeout sau 5s
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          resolve(chatService.isConnected);
+        }, 5000);
+      });
+
+      const connected = await connectionPromise;
+      isConnectingRef.current = false;
+
+      if (connected) {
+        console.log('✅ SignalR connected successfully');
+        setIsConnected(true);
+        return true;
+      } else {
+        console.warn('⚠️ SignalR connection timeout');
+        setIsConnected(false);
+        return false;
+      }
     } catch (error) {
       console.error('Failed to connect chat:', error);
+      isConnectingRef.current = false;
       setIsConnected(false);
+      return false;
     }
   }, []);
 
@@ -55,6 +103,7 @@ export const ChatProvider = ({ children }) => {
       setCurrentRoom(null);
       setMessages([]);
       setTypingUsers(new Set());
+      isConnectingRef.current = false;
     } catch (error) {
       console.error('Failed to disconnect chat:', error);
     }
@@ -69,7 +118,7 @@ export const ChatProvider = ({ children }) => {
       if (response?.data) {
         const rooms = Array.isArray(response.data) ? response.data : [];
         setChatRooms(rooms);
-        // Tính tổng số tin nhắn chưa đọc
+
         const totalUnread = rooms.reduce(
           (sum, room) => sum + (room.unreadCount || 0),
           0
@@ -83,8 +132,6 @@ export const ChatProvider = ({ children }) => {
 
   /**
    * Mở chat room
-   * @param {number|object} roomOrId - Room object hoặc chatRoomId
-   * @param {string} roomName - Tên room (optional, dùng khi truyền roomId)
    */
   const openChatRoom = useCallback(
     async (roomOrId, roomName) => {
@@ -94,63 +141,46 @@ export const ChatProvider = ({ children }) => {
         let room;
         let roomId;
 
-        // Kiểm tra nếu truyền vào là object (room từ danh sách)
-        if (typeof roomOrId === 'object' && roomOrId !== null) {
+        if (typeof roomOrId === 'object') {
           room = roomOrId;
           roomId = room.chatRoomId;
         } else {
-          // Truyền vào là ID - legacy support
           roomId = roomOrId;
-          // Tìm room trong danh sách
-          const existingRoom = chatRooms.find((r) => r.chatRoomId === roomId);
-          if (existingRoom) {
-            room = existingRoom;
-          } else {
-            // Fallback: tạo room object tạm
-            room = { chatRoomId: roomId, roomName: roomName || 'Chat' };
+          room = chatRooms.find((r) => r.chatRoomId === roomId);
+          if (!room) {
+            room = {
+              chatRoomId: roomId,
+              roomName: roomName || `Room ${roomId}`,
+            };
           }
         }
 
-        // Join room qua SignalR (chỉ khi đã kết nối)
         if (isConnected) {
           try {
             await chatService.joinChatRoom(roomId);
           } catch (error) {
-            console.warn(
-              'Failed to join room via SignalR, continuing with REST API only:',
-              error
-            );
-            // Không throw error, vẫn cho phép xem tin nhắn qua REST API
+            console.warn('Failed to join room via SignalR:', error);
           }
-        } else {
-          console.warn('SignalR not connected, using REST API only');
         }
 
-        // Lấy lịch sử tin nhắn
-        const response = await chatApi.getMessages(roomId);
-        if (response?.data?.items) {
-          // API đã trả về sorted theo sentAt, giữ nguyên thứ tự
-          setMessages(response.data.items);
-        } else {
-          setMessages([]);
-        }
+        // ✅ SỬA: Dùng getMessages() thay vì getMessagesByRoom()
+        const messagesResponse = await chatApi.getMessages(roomId, 1, 50);
+        const roomMessages =
+          messagesResponse?.data?.items || messagesResponse?.data || [];
 
-        // Set current room
         setCurrentRoom(room);
+        setMessages(roomMessages);
 
-        // Đánh dấu đã đọc
         await chatApi.markAsRead(roomId);
-
-        return room;
+        await fetchChatRooms();
       } catch (error) {
         console.error('Failed to open chat room:', error);
-        message.error('Không thể mở chat room');
-        return null;
+        message.error('Không thể mở phòng chat');
       } finally {
         setIsLoading(false);
       }
     },
-    [isConnected, chatRooms]
+    [chatRooms, isConnected, fetchChatRooms]
   );
 
   /**
@@ -161,7 +191,7 @@ export const ChatProvider = ({ children }) => {
       try {
         await chatService.leaveChatRoom(currentRoom.chatRoomId);
       } catch (error) {
-        console.error('Failed to leave chat room:', error);
+        console.warn('Failed to leave room:', error);
       }
     }
     setCurrentRoom(null);
@@ -173,25 +203,21 @@ export const ChatProvider = ({ children }) => {
    * Gửi tin nhắn
    */
   const sendMessage = useCallback(
-    async (content, messageType = 1) => {
-      if (!currentRoom) {
-        console.error('No current room');
-        message.error('Chưa mở chat room');
+    async (content, replyToMessageId = null, messageType = 'Text') => {
+      if (!currentRoom || !isConnected) {
+        message.warning('Vui lòng chờ kết nối được thiết lập');
         return false;
       }
 
-      if (!isConnected) {
-        console.error('Not connected to SignalR');
-        message.error(
-          'Chưa kết nối real-time chat. Vui lòng đợi kết nối hoặc tải lại trang.'
-        );
+      if (!content?.trim()) {
         return false;
       }
 
       try {
         await chatService.sendMessage(
           currentRoom.chatRoomId,
-          content,
+          content.trim(),
+          replyToMessageId,
           messageType
         );
         return true;
@@ -228,7 +254,6 @@ export const ChatProvider = ({ children }) => {
     try {
       setIsLoading(true);
 
-      // Lấy hoặc tạo chat room với giảng viên chủ nhiệm
       const response = await chatApi.getClassTeacherRoom();
       if (!response?.data) {
         message.error('Không thể mở chat với giảng viên chủ nhiệm');
@@ -237,37 +262,27 @@ export const ChatProvider = ({ children }) => {
 
       const room = response.data;
 
-      // Join room qua SignalR (chỉ khi đã kết nối)
       if (isConnected) {
         try {
           await chatService.joinChatRoom(room.chatRoomId);
         } catch (error) {
-          console.warn(
-            'Failed to join room via SignalR, continuing with REST API only:',
-            error
-          );
-          // Không throw error, vẫn cho phép xem tin nhắn qua REST API
+          console.warn('Failed to join class teacher room:', error);
         }
-      } else {
-        console.warn('SignalR not connected, using REST API only');
       }
 
-      // Lấy lịch sử tin nhắn
-      const messagesResponse = await chatApi.getMessages(room.chatRoomId);
-      if (messagesResponse?.data?.items) {
-        // API đã trả về sorted theo sentAt, giữ nguyên thứ tự
-        setMessages(messagesResponse.data.items);
-      } else {
-        setMessages([]);
-      }
+      // ✅ SỬA: Dùng getMessages() thay vì getMessagesByRoom()
+      const messagesResponse = await chatApi.getMessages(
+        room.chatRoomId,
+        1,
+        50
+      );
+      const roomMessages =
+        messagesResponse?.data?.items || messagesResponse?.data || [];
 
-      // Set current room
       setCurrentRoom(room);
+      setMessages(roomMessages);
 
-      // Đánh dấu đã đọc
       await chatApi.markAsRead(room.chatRoomId);
-
-      // Refresh danh sách rooms
       await fetchChatRooms();
 
       return room;
@@ -281,71 +296,61 @@ export const ChatProvider = ({ children }) => {
   }, [isConnected, fetchChatRooms]);
 
   /**
-   * Đăng ký CONNECTION event listeners - CHỈ ĐĂNG KÝ 1 LẦN KHI MOUNT
-   * ⚠️ Sử dụng useRef để tránh cleanup trong StrictMode
+   * ✅ CONNECTION event listeners - CHỈ ĐĂNG KÝ 1 LẦN
    */
-  const connectionListenersRef = React.useRef(false);
-
   useEffect(() => {
-    // ✅ Chỉ đăng ký 1 lần duy nhất, ngay cả trong StrictMode
     if (connectionListenersRef.current) {
       return;
     }
-
     connectionListenersRef.current = true;
-    console.log('Registering SignalR CONNECTION event listeners...');
+    console.log('📡 Registering SignalR CONNECTION event listeners...');
 
-    // Connection events - Đăng ký TRƯỚC khi connect
     chatService.addEventListener('connected', () => {
-      console.log('Event: connected received');
+      console.log('✅ Event: connected');
       setIsConnected(true);
+      isConnectingRef.current = false;
     });
 
     chatService.addEventListener('reconnected', () => {
-      console.log('Event: reconnected received');
+      console.log('✅ Event: reconnected');
       setIsConnected(true);
+      isConnectingRef.current = false;
       message.success('Đã kết nối lại chat');
     });
 
     chatService.addEventListener('closed', () => {
-      console.log('Event: closed received');
+      console.log('❌ Event: closed');
       setIsConnected(false);
+      isConnectingRef.current = false;
       message.warning('Mất kết nối chat');
     });
 
     chatService.addEventListener('reconnecting', () => {
-      console.log('Event: reconnecting received');
+      console.log('🔄 Event: reconnecting');
       setIsConnected(false);
     });
-
-    // ✅ KHÔNG cleanup - để listeners tồn tại suốt đời app
-  }, []); // ✅ KHÔNG có dependencies - chỉ đăng ký 1 lần
+  }, []);
 
   /**
-   * Đăng ký MESSAGE event listeners - Phụ thuộc vào currentRoom
+   * ✅ MESSAGE event listeners
    */
   useEffect(() => {
-    console.log('Registering SignalR MESSAGE event listeners...');
+    console.log('📨 Registering SignalR MESSAGE event listeners...');
 
-    // Nhận tin nhắn mới
     const unsubReceiveMessage = chatService.addEventListener(
       'ReceiveMessage',
       (newMessage) => {
         setMessages((prev) => [...prev, newMessage]);
 
-        // Cập nhật unread count nếu không phải room hiện tại
         if (!currentRoom || newMessage.chatRoomId !== currentRoom.chatRoomId) {
           setUnreadCount((prev) => prev + 1);
-          // Refresh chat rooms list
           fetchChatRooms();
         } else {
-          // Đánh dấu đã đọc nếu đang mở room này
           chatApi.markAsRead(currentRoom.chatRoomId);
         }
       }
     );
 
-    // User typing - Backend chỉ gửi username, vì user chỉ typing trong room họ đang join
     const unsubTyping = chatService.addEventListener('UserTyping', (data) => {
       const username = data.username || data.Username;
       if (username && currentRoom) {
@@ -357,7 +362,6 @@ export const ChatProvider = ({ children }) => {
       }
     });
 
-    // User stopped typing
     const unsubStopTyping = chatService.addEventListener(
       'UserStoppedTyping',
       (data) => {
@@ -372,33 +376,47 @@ export const ChatProvider = ({ children }) => {
       }
     );
 
-    // Cleanup
     return () => {
-      console.log('Unregistering SignalR MESSAGE event listeners...');
+      console.log('🔇 Unregistering SignalR MESSAGE event listeners...');
       unsubReceiveMessage();
       unsubTyping();
       unsubStopTyping();
     };
-  }, [currentRoom, fetchChatRooms]); // Phụ thuộc vào currentRoom
+  }, [currentRoom, fetchChatRooms]);
 
   /**
-   * Auto connect khi mount
+   * ✅ Auto connect khi user login - WITH PROPER WAITING
    */
   useEffect(() => {
     const initializeChat = async () => {
-      await connectChat();
-      // Chỉ fetch chat rooms nếu kết nối thành công
-      if (chatService.isConnected) {
-        await fetchChatRooms();
+      if (isAuthenticated && account) {
+        console.log('🔄 User authenticated, initializing chat...');
+
+        // ✅ Đợi connection thành công trước khi fetch rooms
+        const connected = await connectChat();
+
+        if (connected) {
+          console.log('✅ Connection established, fetching chat rooms...');
+          await fetchChatRooms();
+        } else {
+          console.warn('⚠️ Connection failed, will retry on next interaction');
+        }
+      } else {
+        console.log('⏸️ User not authenticated, disconnecting chat...');
+        if (isConnected) {
+          await disconnectChat();
+        }
       }
     };
 
     initializeChat();
 
     return () => {
-      disconnectChat();
+      if (!isAuthenticated) {
+        disconnectChat();
+      }
     };
-  }, []);
+  }, [isAuthenticated, account]); // ✅ Chỉ chạy khi auth state thay đổi
 
   const value = {
     isConnected,
