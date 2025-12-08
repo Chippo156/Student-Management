@@ -25,7 +25,8 @@ import {
   CalendarMonth,
   Schedule as ScheduleIcon,
 } from '@mui/icons-material';
-import { Table, Tag, Space } from 'antd';
+import { Table, Tag, Space, Modal, message } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { useTheme } from '@mui/material/styles';
 import scheduleService from '../../../service/scheduleService';
 import practiceService from '../../../service/practiceService';
@@ -45,7 +46,7 @@ const DAY_OF_WEEK = [
   { value: 4, label: 'Thứ 5' },
   { value: 5, label: 'Thứ 6' },
   { value: 6, label: 'Thứ 7' },
-  { value: 7, label: 'Chủ nhật' },
+  { value: 0, label: 'Chủ nhật' },
 ];
 
 const SectionScheduleTab = ({ sectionId, section }) => {
@@ -55,11 +56,12 @@ const SectionScheduleTab = ({ sectionId, section }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [lecturers, setLecturers] = useState([]);
+  const [errors, setErrors] = useState({});
 
   const [formData, setFormData] = useState({
     scheduleTypeId: 1,
     dayOfWeek: null,
-    date: null, // ✅ Thêm field date cho lịch thi
+    date: null,
     startTime: '07:00',
     endTime: '09:00',
     room: '',
@@ -76,7 +78,6 @@ const SectionScheduleTab = ({ sectionId, section }) => {
     }
   }, [sectionId]);
 
-  // Fetch lecturers once when section loads
   useEffect(() => {
     if (
       section &&
@@ -121,27 +122,87 @@ const SectionScheduleTab = ({ sectionId, section }) => {
     }
   };
 
-  // Calculate capacity per practice group
   const calculatePracticeGroupCapacity = () => {
     if (!section || !section.capacity || !section.practiceGroupCount) {
-      return 30; // Default
+      return 30;
     }
     return Math.ceil(section.capacity / section.practiceGroupCount);
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Validate scheduleTypeId
+    if (!formData.scheduleTypeId) {
+      newErrors.scheduleTypeId = 'Vui lòng chọn loại lịch';
+    }
+
+    // Validate dayOfWeek or date
+    if (formData.scheduleTypeId === 3) {
+      // Lịch thi cần ngày thi
+      if (!formData.date) {
+        newErrors.date = 'Vui lòng chọn ngày thi';
+      }
+    } else {
+      // Lý thuyết và thực hành cần thứ
+      if (!formData.dayOfWeek) {
+        newErrors.dayOfWeek = 'Vui lòng chọn thứ';
+      }
+    }
+
+    // Validate time
+    if (!formData.startTime) {
+      newErrors.startTime = 'Vui lòng nhập giờ bắt đầu';
+    }
+    if (!formData.endTime) {
+      newErrors.endTime = 'Vui lòng nhập giờ kết thúc';
+    }
+    if (
+      formData.startTime &&
+      formData.endTime &&
+      formData.startTime >= formData.endTime
+    ) {
+      newErrors.endTime = 'Giờ kết thúc phải sau giờ bắt đầu';
+    }
+
+    // Validate room
+    if (!formData.room || formData.room.trim() === '') {
+      newErrors.room = 'Vui lòng nhập phòng học';
+    }
+
+    // Validate practice group fields
+    if (formData.scheduleTypeId === 2 && !editingSchedule) {
+      if (!formData.groupName || formData.groupName.trim() === '') {
+        newErrors.groupName = 'Vui lòng nhập tên nhóm thực hành';
+      }
+      if (!formData.maxCapacity || formData.maxCapacity <= 0) {
+        newErrors.maxCapacity = 'Vui lòng nhập sĩ số tối đa hợp lệ';
+      }
+      // ✅ Validate maxCapacity không được vượt quá capacity của section
+      if (
+        section &&
+        section.capacity &&
+        formData.maxCapacity > section.capacity
+      ) {
+        newErrors.maxCapacity = `Sĩ số tối đa không được vượt quá ${section.capacity} sinh viên`;
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleOpenDialog = (schedule = null) => {
     const defaultPracticeCapacity = calculatePracticeGroupCapacity();
 
     if (schedule) {
-      // Fix scheduleTypeId if it's 0 or invalid
       let correctScheduleTypeId = schedule.scheduleTypeId;
       if (!correctScheduleTypeId || correctScheduleTypeId === 0) {
-        // Map from scheduleType string to ID
         if (schedule.scheduleType === 'Lý thuyết') correctScheduleTypeId = 1;
         else if (schedule.scheduleType === 'Thực hành')
           correctScheduleTypeId = 2;
         else if (schedule.scheduleType === 'Thi') correctScheduleTypeId = 3;
-        else correctScheduleTypeId = 1; // Default
+        else correctScheduleTypeId = 1;
       }
 
       const newFormData = {
@@ -162,7 +223,6 @@ const SectionScheduleTab = ({ sectionId, section }) => {
       setEditingSchedule(schedule);
       setFormData(newFormData);
 
-      // Always fetch lecturers when opening dialog (will be used if practice schedule)
       if (
         section &&
         section.departmentId !== null &&
@@ -193,7 +253,6 @@ const SectionScheduleTab = ({ sectionId, section }) => {
         lecturerId: null,
       });
 
-      // Fetch lecturers for new schedule too
       if (
         section &&
         section.departmentId !== null &&
@@ -206,15 +265,22 @@ const SectionScheduleTab = ({ sectionId, section }) => {
         fetchLecturers(section.departmentId);
       }
     }
+    setErrors({});
     setDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingSchedule(null);
+    setErrors({});
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      message.error('Vui lòng điền đầy đủ thông tin bắt buộc');
+      return;
+    }
+
     setLoading(true);
     try {
       const basePayload = {
@@ -229,17 +295,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
       };
 
       let result;
-      console.log('aa,', editingSchedule);
       if (editingSchedule) {
-        // ✅ LOG để debug
-        console.log('🔍 editingSchedule full object:', editingSchedule);
-        console.log('🔍 practiceGroupId:', editingSchedule.practiceGroupId);
-        console.log('🔍 practiceGroupName:', editingSchedule.practiceGroupName);
-        console.log(
-          '🔍 practiceGroupCapacity:',
-          editingSchedule.practiceGroupCapacity
-        );
-
         const updatePayload = {
           ...basePayload,
           practiceGroupId: editingSchedule.practiceGroupId || null,
@@ -250,7 +306,6 @@ const SectionScheduleTab = ({ sectionId, section }) => {
             : null,
         };
 
-        console.log('📤 Updating schedule with payload:', updatePayload);
         result = await scheduleService.updateSchedule(
           editingSchedule.scheduleId,
           updatePayload
@@ -259,15 +314,12 @@ const SectionScheduleTab = ({ sectionId, section }) => {
         if (formData.scheduleTypeId === 2) {
           const practicePayload = {
             ...basePayload,
-            groupName:
-              formData.groupName ||
-              `Nhóm ${schedules.filter((s) => s.scheduleTypeId === 2).length + 1}`,
+            groupName: formData.groupName,
             maxCapacity: parseInt(formData.maxCapacity),
             description: formData.description || null,
             lecturerId: formData.lecturerId || null,
           };
 
-          console.log('🆕 Creating practice schedule:', practicePayload);
           result =
             await practiceService.createSchedulePractice(practicePayload);
         } else {
@@ -276,36 +328,50 @@ const SectionScheduleTab = ({ sectionId, section }) => {
             lecturerId: formData.lecturerId || null,
           };
 
-          console.log('🆕 Creating theory/exam schedule:', theoryPayload);
           result = await scheduleService.createScheduleTheory(theoryPayload);
         }
       }
 
       if (result) {
+        message.success(
+          editingSchedule ? 'Cập nhật lịch thành công' : 'Tạo lịch thành công'
+        );
         await fetchSchedules();
         handleCloseDialog();
       }
     } catch (error) {
       console.error('❌ Failed to save schedule:', error);
+      message.error('Có lỗi xảy ra, vui lòng thử lại');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (scheduleId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa lịch học này?')) return;
-
-    setLoading(true);
-    try {
-      const result = await scheduleService.deleteSchedule(scheduleId);
-      if (result) {
-        await fetchSchedules();
-      }
-    } catch (error) {
-      console.error('Failed to delete schedule:', error);
-    } finally {
-      setLoading(false);
-    }
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      icon: <ExclamationCircleOutlined />,
+      content: 'Bạn có chắc chắn muốn xóa lịch học này?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      centered: true,
+      async onOk() {
+        setLoading(true);
+        try {
+          const result = await scheduleService.deleteSchedule(scheduleId);
+          if (result) {
+            message.success('Xóa lịch thành công');
+            await fetchSchedules();
+          }
+        } catch (error) {
+          console.error('Failed to delete schedule:', error);
+          message.error('Có lỗi xảy ra khi xóa lịch');
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   const columns = [
@@ -475,24 +541,23 @@ const SectionScheduleTab = ({ sectionId, section }) => {
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Loại lịch</InputLabel>
+              <FormControl fullWidth error={!!errors.scheduleTypeId}>
+                <InputLabel>Loại lịch *</InputLabel>
                 <Select
                   value={formData.scheduleTypeId}
-                  label="Loại lịch"
+                  label="Loại lịch *"
                   onChange={(e) => {
                     setFormData({
                       ...formData,
                       scheduleTypeId: e.target.value,
-                      // ✅ Reset date và dayOfWeek khi thay đổi loại lịch
                       date: null,
                       dayOfWeek: null,
                     });
+                    setErrors({ ...errors, scheduleTypeId: '' });
                   }}
                   disabled={!!editingSchedule}
                 >
                   {SCHEDULE_TYPES.filter((type) => {
-                    // Hide practice option if no lab credits
                     if (type.value === 2 && section?.creditsLab === 0) {
                       return false;
                     }
@@ -503,24 +568,29 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                     </MenuItem>
                   ))}
                 </Select>
+                {errors.scheduleTypeId && (
+                  <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                    {errors.scheduleTypeId}
+                  </Typography>
+                )}
               </FormControl>
             </Grid>
 
-            {/* ✅ Thêm DatePicker cho lịch thi (scheduleTypeId === 3) */}
             {formData.scheduleTypeId === 3 ? (
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Ngày thi"
+                  label="Ngày thi *"
                   type="date"
                   value={formData.date || ''}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData({
                       ...formData,
                       date: e.target.value,
-                      dayOfWeek: null, // ✅ Clear dayOfWeek khi chọn date
-                    })
-                  }
+                      dayOfWeek: null,
+                    });
+                    setErrors({ ...errors, date: '' });
+                  }}
                   InputLabelProps={{ shrink: true }}
                   inputProps={{
                     min: section?.startDate
@@ -530,30 +600,41 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                       ? dayjs(section.endDate).format('YYYY-MM-DD')
                       : undefined,
                   }}
+                  error={!!errors.date}
+                  helperText={errors.date}
                 />
               </Grid>
             ) : (
               <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Thứ</InputLabel>
+                <FormControl fullWidth error={!!errors.dayOfWeek}>
+                  <InputLabel>Thứ *</InputLabel>
                   <Select
                     value={formData.dayOfWeek || ''}
-                    label="Thứ"
-                    onChange={(e) =>
+                    label="Thứ *"
+                    onChange={(e) => {
                       setFormData({
                         ...formData,
                         dayOfWeek: e.target.value,
-                        date: null, // ✅ Clear date khi chọn dayOfWeek
-                      })
-                    }
+                        date: null,
+                      });
+                      setErrors({ ...errors, dayOfWeek: '' });
+                    }}
                   >
-                    <MenuItem value="">Không chọn</MenuItem>
                     {DAY_OF_WEEK.map((day) => (
                       <MenuItem key={day.value} value={day.value}>
                         {day.label}
                       </MenuItem>
                     ))}
                   </Select>
+                  {errors.dayOfWeek && (
+                    <Typography
+                      variant="caption"
+                      color="error"
+                      sx={{ mt: 0.5 }}
+                    >
+                      {errors.dayOfWeek}
+                    </Typography>
+                  )}
                 </FormControl>
               </Grid>
             )}
@@ -561,38 +642,47 @@ const SectionScheduleTab = ({ sectionId, section }) => {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Giờ bắt đầu"
+                label="Giờ bắt đầu *"
                 type="time"
                 value={formData.startTime}
-                onChange={(e) =>
-                  setFormData({ ...formData, startTime: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, startTime: e.target.value });
+                  setErrors({ ...errors, startTime: '' });
+                }}
                 InputLabelProps={{ shrink: true }}
+                error={!!errors.startTime}
+                helperText={errors.startTime}
               />
             </Grid>
 
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Giờ kết thúc"
+                label="Giờ kết thúc *"
                 type="time"
                 value={formData.endTime}
-                onChange={(e) =>
-                  setFormData({ ...formData, endTime: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, endTime: e.target.value });
+                  setErrors({ ...errors, endTime: '' });
+                }}
                 InputLabelProps={{ shrink: true }}
+                error={!!errors.endTime}
+                helperText={errors.endTime}
               />
             </Grid>
 
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Phòng học"
+                label="Phòng học *"
                 value={formData.room}
-                onChange={(e) =>
-                  setFormData({ ...formData, room: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, room: e.target.value });
+                  setErrors({ ...errors, room: '' });
+                }}
                 placeholder="VD: H3.2, Lab 1"
+                error={!!errors.room}
+                helperText={errors.room}
               />
             </Grid>
 
@@ -608,9 +698,8 @@ const SectionScheduleTab = ({ sectionId, section }) => {
               />
             </Grid>
 
-            {/* ✅ Giảng viên cho lý thuyết/thi */}
-            {(formData.scheduleTypeId === 1 ||
-              formData.scheduleTypeId === 3) && (
+            {/* ✅ Chỉ hiện Giảng viên cho Lịch thi (scheduleTypeId === 3) */}
+            {formData.scheduleTypeId === 3 && (
               <Grid item xs={12} md={6}>
                 <Autocomplete
                   options={lecturers}
@@ -618,7 +707,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                   value={
                     lecturers.find((l) => l.id === formData.lecturerId) || null
                   }
-                  onChange={(newValue) => {
+                  onChange={(event, newValue) => {
                     setFormData({
                       ...formData,
                       lecturerId: newValue?.id || null,
@@ -639,19 +728,21 @@ const SectionScheduleTab = ({ sectionId, section }) => {
               </Grid>
             )}
 
-            {/* Practice Group Fields */}
             {formData.scheduleTypeId === 2 && (
               <>
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
-                    label="Tên nhóm thực hành"
+                    label="Tên nhóm thực hành *"
                     value={formData.groupName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, groupName: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, groupName: e.target.value });
+                      setErrors({ ...errors, groupName: '' });
+                    }}
                     placeholder="VD: Nhóm 1, Nhóm A"
                     disabled={!!editingSchedule}
+                    error={!!errors.groupName}
+                    helperText={errors.groupName}
                   />
                 </Grid>
                 <Grid item xs={12} md={6}>
@@ -662,7 +753,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                       lecturers.find((l) => l.id === formData.lecturerId) ||
                       null
                     }
-                    onChange={(newValue) => {
+                    onChange={(event, newValue) => {
                       setFormData({
                         ...formData,
                         lecturerId: newValue?.id || null,
@@ -684,14 +775,25 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                 <Grid item xs={12} md={4}>
                   <TextField
                     fullWidth
-                    label="Sĩ số tối đa"
+                    label="Sĩ số tối đa *"
                     type="number"
                     value={formData.maxCapacity}
-                    onChange={(e) =>
-                      setFormData({ ...formData, maxCapacity: e.target.value })
-                    }
-                    inputProps={{ min: 1, max: 100 }}
+                    onChange={(e) => {
+                      setFormData({ ...formData, maxCapacity: e.target.value });
+                      setErrors({ ...errors, maxCapacity: '' });
+                    }}
+                    inputProps={{
+                      min: 1,
+                      max: section?.capacity || 100,
+                    }}
                     disabled={!!editingSchedule}
+                    error={!!errors.maxCapacity}
+                    helperText={
+                      errors.maxCapacity ||
+                      (section?.capacity
+                        ? `Tối đa ${section.capacity} sinh viên`
+                        : '')
+                    }
                   />
                 </Grid>
                 {!editingSchedule && (
@@ -718,11 +820,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Hủy</Button>
-          <Button
-            onClick={handleSubmit}
-            variant="contained"
-            disabled={loading || !formData.startTime || !formData.endTime}
-          >
+          <Button onClick={handleSubmit} variant="contained" disabled={loading}>
             {editingSchedule ? 'Cập nhật' : 'Tạo lịch'}
           </Button>
         </DialogActions>

@@ -28,26 +28,32 @@ const SchedulePage = () => {
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
 
-  const colors = useMemo(() => ({
-    primary: theme.palette.primary.main,
-    secondary: theme.palette.secondary.main,
-    success: theme.palette.success.main,
-    textPrimary: theme.palette.text.primary,
-    textSecondary: theme.palette.text.secondary,
-    bgLightBlue: alpha(theme.palette.primary.main, 0.1),
-    bgLightPurple: alpha(theme.palette.secondary.main, 0.1),
-    bgLightGreen: alpha(theme.palette.success.main, 0.1),
-    iconBlue: theme.palette.primary.main,
-    iconPurple: theme.palette.secondary.main,
-    iconGreen: theme.palette.success.main,
-  }), [theme]);
+  const colors = useMemo(
+    () => ({
+      primary: theme.palette.primary.main,
+      secondary: theme.palette.secondary.main,
+      success: theme.palette.success.main,
+      textPrimary: theme.palette.text.primary,
+      textSecondary: theme.palette.text.secondary,
+      bgLightBlue: alpha(theme.palette.primary.main, 0.1),
+      bgLightPurple: alpha(theme.palette.secondary.main, 0.1),
+      bgLightGreen: alpha(theme.palette.success.main, 0.1),
+      iconBlue: theme.palette.primary.main,
+      iconPurple: theme.palette.secondary.main,
+      iconGreen: theme.palette.success.main,
+    }),
+    [theme]
+  );
 
   const fetchSchedule = async (date, scheduleTypeId = 0) => {
     if (!lecturerId) return;
 
     setLoading(true);
     try {
-      const data = await scheduleService.getSchedulesOfLecturer(date, scheduleTypeId);
+      const data = await scheduleService.getSchedulesOfLecturer(
+        date,
+        scheduleTypeId
+      );
       const startOfWeek = baseDate.startOf('week').add(1, 'day');
       const mapped = data.map((item) => {
         let eventDate = item.date;
@@ -89,7 +95,7 @@ const SchedulePage = () => {
   const weekDays = useMemo(() => {
     const start = baseDate.startOf('week');
     const days = [];
-    for (let i = 1; i <= 7; i++) {
+    for (let i = 0; i <= 6; i++) {
       days.push(start.add(i, 'day'));
     }
     return days;
@@ -116,8 +122,8 @@ const SchedulePage = () => {
   const todayItems = weekScheduleItems.filter((item) =>
     dayjs(item.date).isSame(today, 'day')
   );
-  const upcomingItems = weekScheduleItems.filter(
-    (item) => dayjs(item.date).isAfter(today, 'day')
+  const upcomingItems = weekScheduleItems.filter((item) =>
+    dayjs(item.date).isAfter(today, 'day')
   );
 
   const goPrevWeek = () => setBaseDate(baseDate.subtract(1, 'week'));
@@ -158,13 +164,24 @@ const SchedulePage = () => {
   return (
     <Box sx={{ flexGrow: 1, p: 3, minHeight: '100vh' }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 4,
+        }}
+      >
         <div>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: colors.primary }}>
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 700, color: colors.primary }}
+          >
             Lịch giảng dạy theo tuần
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Tuần ngày {startOfWeek.format('DD/MM')} - {endOfWeek.format('DD/MM/YYYY')}
+            Tuần ngày {startOfWeek.format('DD/MM')} -{' '}
+            {endOfWeek.format('DD/MM/YYYY')}
           </Typography>
         </div>
       </Box>
@@ -183,10 +200,16 @@ const SchedulePage = () => {
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
               <Schedule sx={{ fontSize: 50, mr: 2, color: colors.iconBlue }} />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconBlue }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconBlue }}
+                >
                   {totalLessons}
                 </Typography>
-                <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: colors.textSecondary }}
+                >
                   Tổng tiết tuần này
                 </Typography>
               </Box>
@@ -204,12 +227,20 @@ const SchedulePage = () => {
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <CalendarToday sx={{ fontSize: 50, mr: 2, color: colors.iconPurple }} />
+              <CalendarToday
+                sx={{ fontSize: 50, mr: 2, color: colors.iconPurple }}
+              />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconPurple }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconPurple }}
+                >
                   {uniqueCourses}
                 </Typography>
-                <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: colors.textSecondary }}
+                >
                   Môn học
                 </Typography>
               </Box>
@@ -227,12 +258,20 @@ const SchedulePage = () => {
             }}
           >
             <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-              <AccessTime sx={{ fontSize: 50, mr: 2, color: colors.iconGreen }} />
+              <AccessTime
+                sx={{ fontSize: 50, mr: 2, color: colors.iconGreen }}
+              />
               <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconGreen }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 'bold', mb: 0.5, color: colors.iconGreen }}
+                >
                   {todayItems.length}
                 </Typography>
-                <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: colors.textSecondary }}
+                >
                   Lịch hôm nay
                 </Typography>
               </Box>

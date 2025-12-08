@@ -311,7 +311,11 @@ const AttendancePage = () => {
       setClassType('theory');
       setSelectedPracticeGroupId(null);
     } else {
-      console.log('Setting classType to: practice (practiceGroupId:', session.practiceGroupId, ')');
+      console.log(
+        'Setting classType to: practice (practiceGroupId:',
+        session.practiceGroupId,
+        ')'
+      );
       setClassType('practice');
       setSelectedPracticeGroupId(session.practiceGroupId);
     }
@@ -615,7 +619,7 @@ const AttendancePage = () => {
       });
 
       // Export using new utility (sessions are generated from startDate/endDate/schedules)
-      const result = exportAttendanceExcel(
+      const result = await exportAttendanceExcel(
         exportSectionData,
         studentsWithAttendance
       );
@@ -1304,8 +1308,12 @@ const AttendancePage = () => {
                         ...sessionData,
                         allowSelfCheckIn: e.target.checked,
                         // Reset related fields if disabled
-                        selfCheckInStartTime: e.target.checked ? sessionData.selfCheckInStartTime : null,
-                        selfCheckInEndTime: e.target.checked ? sessionData.selfCheckInEndTime : null,
+                        selfCheckInStartTime: e.target.checked
+                          ? sessionData.selfCheckInStartTime
+                          : null,
+                        selfCheckInEndTime: e.target.checked
+                          ? sessionData.selfCheckInEndTime
+                          : null,
                       })
                     }
                     color="primary"
@@ -1402,12 +1410,17 @@ const AttendancePage = () => {
       {/* Check-in Code Dialog */}
       <Dialog
         open={checkInCodeDialog.open}
-        onClose={() => setCheckInCodeDialog({ ...checkInCodeDialog, open: false })}
+        onClose={() =>
+          setCheckInCodeDialog({ ...checkInCodeDialog, open: false })
+        }
         maxWidth="sm"
         fullWidth
       >
         <DialogTitle>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+          <Typography
+            variant="h5"
+            sx={{ fontWeight: 'bold', color: 'primary.main' }}
+          >
             Mã điểm danh tự động
           </Typography>
         </DialogTitle>
@@ -1460,7 +1473,9 @@ const AttendancePage = () => {
             Sao chép mã
           </Button>
           <Button
-            onClick={() => setCheckInCodeDialog({ ...checkInCodeDialog, open: false })}
+            onClick={() =>
+              setCheckInCodeDialog({ ...checkInCodeDialog, open: false })
+            }
             variant="contained"
             color="primary"
           >

@@ -8,7 +8,12 @@ import { studentServices } from '../../service/studentServices';
 import { useDispatch, useSelector } from 'react-redux';
 import { doGetAccountAction } from '../../redux/UserSlice';
 
-const AvatarUpload = ({ currentAvatarUrl, userId, size = 120, showUploadButton = true }) => {
+const AvatarUpload = ({
+  currentAvatarUrl,
+  userId,
+  size = 120,
+  showUploadButton = true,
+}) => {
   const [loading, setLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(currentAvatarUrl);
   const dispatch = useDispatch();
@@ -43,9 +48,10 @@ const AvatarUpload = ({ currentAvatarUrl, userId, size = 120, showUploadButton =
       let updateResult;
 
       // Check if current user is a student (role name or role ID)
-      const isStudent = account?.role?.roleName === 'Student' ||
-                        account?.role?.roleId === 3 ||
-                        account?.mssv; // Student có MSSV
+      const isStudent =
+        account?.role?.roleName === 'Student' ||
+        account?.role?.roleId === 3 ||
+        account?.mssv; // Student có MSSV
 
       if (isStudent) {
         // Use student API - need to get full student info first
@@ -89,7 +95,8 @@ const AvatarUpload = ({ currentAvatarUrl, userId, size = 120, showUploadButton =
           dateOfJoinParty: null,
         };
 
-        updateResult = await studentServices.updateStudentInformation(fullPayload);
+        updateResult =
+          await studentServices.updateStudentInformation(fullPayload);
       } else {
         // Use general user API (for admin, lecturer, etc.)
         updateResult = await userService.updateUser(userId, {
@@ -105,12 +112,14 @@ const AvatarUpload = ({ currentAvatarUrl, userId, size = 120, showUploadButton =
         const userInfo = await userService.getUserInfo();
         if (userInfo) {
           // Update Redux with full user info to refresh UI everywhere
-          dispatch(doGetAccountAction({
-            ...account, // Keep existing account data (tokens, etc.)
-            ...userInfo, // Update with fresh user data
-            avatarUrl: uploadResult.filePath, // Ensure new avatar is set
-            user: userInfo.user, // Include nested user object if exists
-          }));
+          dispatch(
+            doGetAccountAction({
+              ...account, // Keep existing account data (tokens, etc.)
+              ...userInfo, // Update with fresh user data
+              avatarUrl: uploadResult.filePath, // Ensure new avatar is set
+              user: userInfo.user, // Include nested user object if exists
+            })
+          );
         }
       }
     } catch (error) {
@@ -125,15 +134,10 @@ const AvatarUpload = ({ currentAvatarUrl, userId, size = 120, showUploadButton =
     handleUpload(file);
     onSuccess('ok');
   };
-
   return (
     <Box sx={{ position: 'relative', display: 'inline-block' }}>
       <Spin spinning={loading}>
-        <Avatar
-          size={size}
-          src={avatarUrl}
-          icon={<UserOutlined />}
-        />
+        <Avatar size={size} src={avatarUrl} icon={<UserOutlined />} />
       </Spin>
 
       {showUploadButton && (
