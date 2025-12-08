@@ -199,8 +199,12 @@ class ChatService {
 
   /**
    * Gửi tin nhắn
+   * @param {number} roomId - Chat room ID
+   * @param {string} content - Nội dung tin nhắn
+   * @param {number} messageType - Loại tin nhắn (1: Text, 2: Image, 3: File)
+   * @param {number|null} replyToMessageId - ID tin nhắn được reply (optional)
    */
-  async sendMessage(roomId, content, messageType = 1) {
+  async sendMessage(roomId, content, messageType = 1, replyToMessageId = null) {
     // Kiểm tra cả connection state của SignalR
     if (
       !this.connection ||
@@ -213,11 +217,20 @@ class ChatService {
     try {
       // Đảm bảo roomId là số nguyên
       const chatRoomId = parseInt(roomId);
-      await this.connection.invoke('SendMessage', {
+      
+      // ✅ Build payload với optional replyToMessageId
+      const payload = {
         chatRoomId: chatRoomId,
         content: content,
         messageType: messageType,
-      });
+      };
+
+      // Chỉ thêm replyToMessageId nếu có giá trị
+      if (replyToMessageId) {
+        payload.replyToMessageId = parseInt(replyToMessageId);
+      }
+
+      await this.connection.invoke('SendMessage', payload);
     } catch (error) {
       console.error('Failed to send message:', error);
       throw error;

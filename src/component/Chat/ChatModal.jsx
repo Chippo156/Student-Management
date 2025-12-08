@@ -50,10 +50,8 @@ import remarkBreaks from 'remark-breaks';
 
 const ChatModal = ({ open, onClose }) => {
   const theme = useTheme();
+  // ✅ Lấy user từ Redux
   const reduxUser = useSelector((state) => state.user?.account);
-
-  // ✅ Lấy role từ Redux
-  const userRole = localStorage.getItem('role');
 
   const {
     currentRoom,
@@ -78,12 +76,18 @@ const ChatModal = ({ open, onClose }) => {
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
+  // Auto scroll to bottom khi:
+  // 1. Có tin nhắn mới
+  // 2. Có người đang typing (typingUsers thay đổi)
+  // 3. Mở room mới (currentRoom thay đổi)
+  // 4. Mở modal (open thay đổi từ false -> true)
   useEffect(() => {
     if (messagesEndRef.current && !isMinimized && open) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, typingUsers, currentRoom, open, isMinimized]);
 
+  // Filter chat rooms - tìm theo tên room hoặc tên giảng viên
   const filteredRooms = chatRooms.filter((room) => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -108,13 +112,16 @@ const ChatModal = ({ open, onClose }) => {
   const handleInputChange = (e) => {
     setInputMessage(e.target.value);
 
+    // Gửi typing indicator
     if (e.target.value.length > 0) {
       startTyping();
 
+      // Clear timeout cũ
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
 
+      // Set timeout mới để stop typing sau 2s
       typingTimeoutRef.current = setTimeout(() => {
         stopTyping();
       }, 2000);
@@ -131,13 +138,13 @@ const ChatModal = ({ open, onClose }) => {
   };
 
   const handleSelectRoom = async (room) => {
-    await openChatRoom(room);
-    setTabValue(1);
+    await openChatRoom(room); // Truyền toàn bộ room object
+    setTabValue(1); // Chuyển sang tab chat
   };
 
   const handleOpenTeacherChat = async () => {
     await openClassTeacherChat();
-    setTabValue(1);
+    setTabValue(1); // Chuyển sang tab chat
   };
 
   const handleOpenAIChat = async () => {
@@ -145,7 +152,7 @@ const ChatModal = ({ open, onClose }) => {
       const response = await chatApi.createAIRoom();
       if (response?.data) {
         await openChatRoom(response.data);
-        setTabValue(1);
+        setTabValue(1); // Chuyển sang tab chat
       }
     } catch (error) {
       console.error('Failed to create AI chat room:', error);
@@ -157,7 +164,7 @@ const ChatModal = ({ open, onClose }) => {
       const response = await chatApi.createAcademicStaffRoom();
       if (response?.data) {
         await openChatRoom(response.data);
-        setTabValue(1);
+        setTabValue(1); // Chuyển sang tab chat
       }
     } catch (error) {
       console.error('Failed to create academic staff chat room:', error);
@@ -166,7 +173,7 @@ const ChatModal = ({ open, onClose }) => {
 
   const handleBack = () => {
     closeChatRoom();
-    setTabValue(0);
+    setTabValue(0); // Quay về tab danh sách
   };
 
   const handleClearHistory = async () => {
@@ -176,6 +183,7 @@ const ChatModal = ({ open, onClose }) => {
     try {
       const success = await chatApi.clearHistory(currentRoom.chatRoomId);
       if (success) {
+        // Refresh messages by closing and reopening the room
         await closeChatRoom();
         await openChatRoom(currentRoom);
       }
@@ -257,72 +265,6 @@ const ChatModal = ({ open, onClose }) => {
 
   const currentUser = getUserInfo();
 
-  // ✅ Render Quick Actions dựa trên role
-  const renderQuickActions = () => {
-    // Chỉ sinh viên mới thấy quick actions
-    if (userRole == 2) {
-      return (
-        <Box
-          sx={{
-            px: 2,
-            pb: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1,
-            flexShrink: 0,
-          }}
-        >
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<PersonIcon />}
-            onClick={handleOpenTeacherChat}
-            disabled={!isConnected || isLoading}
-            size="small"
-          >
-            Chat với giảng viên chủ nhiệm
-          </Button>
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<SmartToyIcon />}
-            onClick={handleOpenAIChat}
-            disabled={!isConnected || isLoading}
-            size="small"
-            color="secondary"
-          >
-            Chat với AI
-          </Button>
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<SchoolIcon />}
-            onClick={handleOpenAcademicStaffChat}
-            disabled={!isConnected || isLoading}
-            size="small"
-            color="info"
-          >
-            Chat với Học vụ
-          </Button>
-        </Box>
-      );
-    }
-
-    // Giảng viên và Admin chỉ thấy danh sách chat rooms
-    return null;
-  };
-
-  // ✅ Get title dựa trên role
-  const getChatTitle = () => {
-    if (userRole == 3) {
-      return 'Tin nhắn từ sinh viên';
-    }
-    if (userRole == 1) {
-      return 'Tin nhắn';
-    }
-    return 'Chat';
-  };
-
   if (!open) return null;
 
   return (
@@ -382,9 +324,7 @@ const ChatModal = ({ open, onClose }) => {
                 variant="subtitle1"
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                {currentRoom?.roomName ||
-                  currentRoom?.lecturerName ||
-                  getChatTitle()}
+                {currentRoom?.roomName || currentRoom?.lecturerName || 'Chat'}
               </Typography>
               {isConnected && (
                 <Typography variant="caption" sx={{ opacity: 0.9 }}>
@@ -444,6 +384,7 @@ const ChatModal = ({ open, onClose }) => {
           }}
         >
           {!currentRoom ? (
+            // Danh sách chat rooms - TOÀN BỘ KHU VỰC CÓ SCROLLBAR
             <Box
               sx={{
                 flex: 1,
@@ -451,6 +392,7 @@ const ChatModal = ({ open, onClose }) => {
                 flexDirection: 'column',
                 overflow: 'auto',
                 overflowY: 'auto',
+                // Custom scrollbar cho toàn bộ khu vực danh sách phòng chat
                 '&::-webkit-scrollbar': {
                   width: '8px',
                 },
@@ -488,17 +430,57 @@ const ChatModal = ({ open, onClose }) => {
                 />
               </Box>
 
-              {/* ✅ Quick actions - chỉ hiện cho Student */}
-              {renderQuickActions()}
+              {/* Quick actions */}
+              <Box
+                sx={{
+                  px: 2,
+                  pb: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                  flexShrink: 0,
+                }}
+              >
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<PersonIcon />}
+                  onClick={handleOpenTeacherChat}
+                  disabled={!isConnected || isLoading}
+                  size="small"
+                >
+                  Chat với giảng viên chủ nhiệm
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<SmartToyIcon />}
+                  onClick={handleOpenAIChat}
+                  disabled={!isConnected || isLoading}
+                  size="small"
+                  color="secondary"
+                >
+                  Chat với AI
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<SchoolIcon />}
+                  onClick={handleOpenAcademicStaffChat}
+                  disabled={!isConnected || isLoading}
+                  size="small"
+                  color="info"
+                >
+                  Chat với Học vụ
+                </Button>
+              </Box>
 
-              {/* Rooms List */}
+              {/* Rooms List - KHÔNG CÓ SCROLLBAR Ở ĐÂY NỮA */}
               <List sx={{ p: 0, flexShrink: 0 }}>
                 {filteredRooms.length === 0 ? (
                   <Box sx={{ p: 4, textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary">
-                      {userRole == 2
-                        ? 'Chưa có cuộc trò chuyện nào'
-                        : 'Chưa có tin nhắn nào từ sinh viên'}
+                      Chưa có cuộc trò chuyện nào
                     </Typography>
                   </Box>
                 ) : (
@@ -593,7 +575,7 @@ const ChatModal = ({ open, onClose }) => {
               </List>
             </Box>
           ) : (
-            // Chat messages (giữ nguyên phần này)
+            // Chat messages
             <Box
               sx={{
                 flex: 1,
@@ -603,6 +585,7 @@ const ChatModal = ({ open, onClose }) => {
                 overflow: 'hidden',
               }}
             >
+              {/* Back button */}
               <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider' }}>
                 <Chip
                   label="← Quay lại"
@@ -612,6 +595,7 @@ const ChatModal = ({ open, onClose }) => {
                 />
               </Box>
 
+              {/* Messages */}
               <Box
                 sx={{
                   flex: 1,
@@ -623,7 +607,7 @@ const ChatModal = ({ open, onClose }) => {
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 1,
-                  minHeight: 0,
+                  minHeight: 0, // Important for flex scrolling
                 }}
               >
                 {isLoading ? (
@@ -668,6 +652,7 @@ const ChatModal = ({ open, onClose }) => {
                             alignItems: isMyMessage ? 'flex-end' : 'flex-start',
                           }}
                         >
+                          {/* Hiển thị tên người gửi nếu không phải tin nhắn của mình */}
                           {!isMyMessage && (
                             <Typography
                               variant="caption"
@@ -690,6 +675,7 @@ const ChatModal = ({ open, onClose }) => {
                               borderTopLeftRadius: isMyMessage ? 2 : 0,
                             }}
                           >
+                            {/* Reply indicator */}
                             {msg.replyToMessage && (
                               <Box
                                 sx={{
@@ -833,6 +819,7 @@ const ChatModal = ({ open, onClose }) => {
                   })
                 )}
 
+                {/* Typing indicator as message bubble - Zalo/Messenger style */}
                 {typingUsers?.length > 0 &&
                   typingUsers.map((username) => (
                     <Box
@@ -877,6 +864,7 @@ const ChatModal = ({ open, onClose }) => {
                             justifyContent: 'center',
                           }}
                         >
+                          {/* Wave animation dots - Zalo style */}
                           <Box
                             sx={{
                               display: 'flex',
@@ -917,6 +905,7 @@ const ChatModal = ({ open, onClose }) => {
                 <div ref={messagesEndRef} />
               </Box>
 
+              {/* Input */}
               <Box
                 sx={{
                   p: 2,
@@ -973,6 +962,7 @@ const ChatModal = ({ open, onClose }) => {
           )}
         </Box>
 
+        {/* Confirm Delete Dialog */}
         <Dialog
           open={showDeleteDialog}
           onClose={() => setShowDeleteDialog(false)}
