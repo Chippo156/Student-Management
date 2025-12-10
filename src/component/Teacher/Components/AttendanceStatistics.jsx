@@ -83,19 +83,25 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
     setLoading(true);
     setError(null);
     try {
-      const exportData = await attendanceService.exportAttendanceData(sectionId);
+      const exportData =
+        await attendanceService.exportAttendanceData(sectionId);
       if (exportData) {
         // Use the new export function that works directly with API response
         const result = await exportAttendanceAllStatisticsExcel(exportData);
 
         if (!result.success) {
-          setError(`Lỗi khi xuất Excel: ${result.error || 'Lỗi không xác định'}`);
+          setError(
+            `Lỗi khi xuất Excel: ${result.error || 'Lỗi không xác định'}`
+          );
         }
       } else {
         setError('Không thể lấy dữ liệu xuất từ server');
       }
     } catch (err) {
-      const errorMessage = err?.response?.data?.message || err?.message || 'Lỗi không xác định khi xuất Excel';
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Lỗi không xác định khi xuất Excel';
       setError(errorMessage);
       console.error('Export error:', err);
     } finally {
@@ -173,9 +179,7 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
   // Bar chart data - top 10 students by absence count
   const barData = studentAttendances
     .map((student) => ({
-      name:
-        student.studentName?.split(' ').slice(-2).join(' ') ||
-        student.mssv,
+      name: student.studentName?.split(' ').slice(-2).join(' ') || student.mssv,
       absentCount: student.absentCount || 0,
       presentCount: student.presentCount || 0,
       attendanceRate: parseFloat(student.attendanceRate?.toFixed(1) || 0),
@@ -187,7 +191,12 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
     <Box>
       {/* Header with Export Button */}
       <Box
-        sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          mb: 3,
+          alignItems: 'center',
+        }}
       >
         <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
           Thống kê điểm danh - {sectionName || statisticsData.courseName}
@@ -204,7 +213,7 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
           <Card sx={{ backgroundColor: alpha(colors.primary, 0.1) }}>
             <CardContent>
@@ -283,7 +292,7 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
       </Grid>
 
       {/* Charts */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 3 }}>
         {/* Pie Chart */}
         <Grid item xs={12} md={6}>
           <Card>
@@ -327,11 +336,20 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={barData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                  <XAxis
+                    dataKey="name"
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="absentCount" fill={colors.error} name="Số buổi vắng" />
+                  <Bar
+                    dataKey="absentCount"
+                    fill={colors.error}
+                    name="Số buổi vắng"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -345,7 +363,10 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
             Chi tiết điểm danh sinh viên ({totalStudents} sinh viên)
           </Typography>
-          <TableContainer component={Paper} sx={{ maxHeight: 600, overflowX: 'auto' }}>
+          <TableContainer
+            component={Paper}
+            sx={{ maxHeight: 600, overflowX: 'auto' }}
+          >
             <Table stickyHeader size="small" sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow>
@@ -376,9 +397,10 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
               <TableBody>
                 {studentAttendances?.map((student, index) => {
                   // Calculate absent rate
-                  const absentRate = totalSessions > 0
-                    ? ((student.absentCount || 0) / totalSessions * 100)
-                    : 0;
+                  const absentRate =
+                    totalSessions > 0
+                      ? ((student.absentCount || 0) / totalSessions) * 100
+                      : 0;
 
                   return (
                     <TableRow key={student.studentId || index} hover>
@@ -419,7 +441,9 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
                         />
                       </TableCell>
                       <TableCell sx={{ textAlign: 'center' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                        >
                           <LinearProgress
                             variant="determinate"
                             value={student.attendanceRate || 0}
@@ -439,7 +463,9 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
                         </Box>
                       </TableCell>
                       <TableCell sx={{ textAlign: 'center' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                        >
                           <LinearProgress
                             variant="determinate"
                             value={absentRate}

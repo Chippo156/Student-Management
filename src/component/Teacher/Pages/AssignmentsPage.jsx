@@ -364,7 +364,7 @@ const AssignmentsPage = () => {
       </Fade>
 
       {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Grow in={true} timeout={800}>
             <Card
@@ -493,7 +493,12 @@ const AssignmentsPage = () => {
       {/* Filter Section */}
       <Fade in={true} timeout={1000}>
         <Card sx={{ mb: 3, p: 2 }}>
-          <Grid container spacing={2} alignItems="center">
+          <Grid
+            container
+            className="equal-height-cards"
+            spacing={2}
+            alignItems="center"
+          >
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
                 <InputLabel>Chọn môn học</InputLabel>
@@ -563,7 +568,7 @@ const AssignmentsPage = () => {
           {editingAssignment ? 'Chỉnh sửa bài tập' : 'Tạo bài tập mới'}
         </DialogTitle>
         <DialogContent dividers>
-          <Grid container spacing={2}>
+          <Grid container className="equal-height-cards" spacing={2}>
             <Grid item xs={12}>
               <TextField
                 fullWidth

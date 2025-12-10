@@ -79,7 +79,10 @@ const ClassDetailModal = ({ open, onClose, classData }) => {
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <Icon sx={{ color: cardColor.color, mr: 1.5, fontSize: 28 }} />
-            <Typography variant="h6" sx={{ color: cardColor.color, fontWeight: 600 }}>
+            <Typography
+              variant="h6"
+              sx={{ color: cardColor.color, fontWeight: 600 }}
+            >
               {title}
             </Typography>
           </Box>
@@ -136,10 +139,16 @@ const ClassDetailModal = ({ open, onClose, classData }) => {
           },
         }}
       >
-        <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 1 }}>
+        <Typography
+          variant="body2"
+          sx={{ color: theme.palette.text.secondary, mb: 1 }}
+        >
           {label}
         </Typography>
-        <Typography variant="h5" sx={{ color: statColor.color, fontWeight: 700 }}>
+        <Typography
+          variant="h5"
+          sx={{ color: statColor.color, fontWeight: 700 }}
+        >
           {value}
         </Typography>
       </Box>
@@ -188,9 +197,18 @@ const ClassDetailModal = ({ open, onClose, classData }) => {
 
       <DialogContent sx={{ mt: 3, pb: 3 }}>
         {/* Thông tin cơ bản */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid
+          container
+          className="equal-height-cards"
+          spacing={3}
+          sx={{ mb: 3 }}
+        >
           <Grid item xs={12}>
-            <InfoCard icon={SchoolIcon} title="Thông tin lớp học" colorType="primary">
+            <InfoCard
+              icon={SchoolIcon}
+              title="Thông tin lớp học"
+              colorType="primary"
+            >
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <Box>
                   <Typography variant="body2" color="text.secondary">
@@ -216,7 +234,12 @@ const ClassDetailModal = ({ open, onClose, classData }) => {
         </Grid>
 
         {/* Thông tin chương trình đào tạo */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid
+          container
+          className="equal-height-cards"
+          spacing={3}
+          sx={{ mb: 3 }}
+        >
           <Grid item xs={12} md={6}>
             <InfoCard
               icon={LibraryBooksIcon}
@@ -289,9 +312,13 @@ const ClassDetailModal = ({ open, onClose, classData }) => {
         {/* Thông tin giảng viên và sinh viên */}
         <Divider sx={{ my: 3 }} />
 
-        <Grid container spacing={3}>
+        <Grid container className="equal-height-cards" spacing={3}>
           <Grid item xs={12} md={6}>
-            <InfoCard icon={PersonIcon} title="Giảng viên chủ nhiệm" colorType="warning">
+            <InfoCard
+              icon={PersonIcon}
+              title="Giảng viên chủ nhiệm"
+              colorType="warning"
+            >
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <Box>
                   <Typography variant="body2" color="text.secondary">
@@ -316,7 +343,11 @@ const ClassDetailModal = ({ open, onClose, classData }) => {
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <InfoCard icon={GroupIcon} title="Thống kê sinh viên" colorType="info">
+            <InfoCard
+              icon={GroupIcon}
+              title="Thống kê sinh viên"
+              colorType="info"
+            >
               <StatBox
                 label="Tổng số sinh viên"
                 value={classData.studentCount || 0}

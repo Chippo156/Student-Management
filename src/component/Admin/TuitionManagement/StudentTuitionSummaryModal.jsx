@@ -194,7 +194,7 @@ const StudentTuitionSummaryModal = ({ open, onClose, mssv }) => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {/* Thông tin sinh viên */}
             <InfoCard icon={PersonIcon} title="Thông tin sinh viên">
-              <Grid container spacing={2}>
+              <Grid container className="equal-height-cards" spacing={2}>
                 <Grid item xs={6}>
                   <Typography variant="caption" color="text.secondary">
                     MSSV
@@ -236,13 +236,11 @@ const StudentTuitionSummaryModal = ({ open, onClose, mssv }) => {
               title="Tổng quan học phí toàn khóa"
               colorType="primary"
             >
-              <Grid container spacing={3}>
+              <Grid container className="equal-height-cards" spacing={3}>
                 <Grid item xs={3}>
                   <StatBox
                     label="Tổng học phí"
-                    value={formatCurrency(
-                      summaryData.totalTuitionAllSemesters
-                    )}
+                    value={formatCurrency(summaryData.totalTuitionAllSemesters)}
                     colorType="primary"
                   />
                 </Grid>
@@ -371,8 +369,8 @@ const StudentTuitionSummaryModal = ({ open, onClose, mssv }) => {
                               semester.status === 3
                                 ? 'Đã đóng đủ'
                                 : semester.status === 2
-                                ? 'Đã đóng 1 phần'
-                                : 'Chưa đóng'
+                                  ? 'Đã đóng 1 phần'
+                                  : 'Chưa đóng'
                             }
                             color={getStatusColor(semester.status)}
                             size="small"

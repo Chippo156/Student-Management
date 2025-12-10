@@ -186,7 +186,12 @@ const Login = () => {
           alignItems: 'center',
         }}
       >
-        <Grid container spacing={3} sx={{ height: 'auto', maxHeight: '100%' }}>
+        <Grid
+          container
+          className="equal-height-cards"
+          spacing={3}
+          sx={{ height: 'auto', maxHeight: '100%' }}
+        >
           {/* Login Form */}
           <Grid item xs={12} md={5} sx={{ display: 'flex' }}>
             <Card
@@ -324,9 +329,7 @@ const Login = () => {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>
-          {otpSent ? 'Xác thực OTP' : 'Quên mật khẩu'}
-        </DialogTitle>
+        <DialogTitle>{otpSent ? 'Xác thực OTP' : 'Quên mật khẩu'}</DialogTitle>
         <DialogContent>
           {!otpSent ? (
             <>
@@ -370,10 +373,7 @@ const Login = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={handleCloseForgotPassword}
-            disabled={isSubmitting}
-          >
+          <Button onClick={handleCloseForgotPassword} disabled={isSubmitting}>
             Hủy
           </Button>
           {!otpSent ? (

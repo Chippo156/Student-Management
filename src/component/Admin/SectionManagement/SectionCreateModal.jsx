@@ -134,7 +134,9 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
         startDate: formData.startDate,
         endDate: formData.endDate,
         capacity: parseInt(formData.capacity),
-        minEnrollment: formData.minEnrollment ? parseInt(formData.minEnrollment) : null,
+        minEnrollment: formData.minEnrollment
+          ? parseInt(formData.minEnrollment)
+          : null,
         minEnrollmentPercentage: formData.minEnrollmentPercentage
           ? parseFloat(formData.minEnrollmentPercentage)
           : null,
@@ -155,7 +157,14 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
     return (
       <Dialog open={open} onClose={onCancel} maxWidth="md" fullWidth>
         <DialogContent>
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              py: 4,
+            }}
+          >
             <CircularProgress />
           </Box>
         </DialogContent>
@@ -166,7 +175,13 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="md" fullWidth>
       <DialogTitle sx={{ pb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
             Tạo lớp học phần mới
           </Typography>
@@ -177,19 +192,24 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
       </DialogTitle>
 
       <DialogContent dividers>
-        <Grid container spacing={3}>
+        <Grid container className="equal-height-cards" spacing={3}>
           {/* Môn học */}
           <Grid item xs={12}>
             <SearchableAutocomplete
               options={dropdownData?.curriculumCourses || []}
               value={formData.curriculumCourse}
               onChange={(newValue) => {
-                setFormData((prev) => ({ ...prev, curriculumCourse: newValue }));
+                setFormData((prev) => ({
+                  ...prev,
+                  curriculumCourse: newValue,
+                }));
                 if (errors.curriculumCourse) {
                   setErrors((prev) => ({ ...prev, curriculumCourse: '' }));
                 }
               }}
-              getOptionLabel={(option) => `${option.name} (${option.credits} tín chỉ)`}
+              getOptionLabel={(option) =>
+                `${option.name} (${option.credits} tín chỉ)`
+              }
               isOptionEqualToValue={(option, value) => option?.id === value?.id}
               label="Môn học"
               placeholder="Tìm môn học..."
@@ -211,7 +231,9 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
                   setErrors((prev) => ({ ...prev, lecturer: '' }));
                 }
               }}
-              getOptionLabel={(option) => `${option.name} (${option.lecturerCode})`}
+              getOptionLabel={(option) =>
+                `${option.name} (${option.lecturerCode})`
+              }
               isOptionEqualToValue={(option, value) => option?.id === value?.id}
               label="Giảng viên"
               placeholder="Tìm giảng viên..."
@@ -255,8 +277,12 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
                   setErrors((prev) => ({ ...prev, classItem: '' }));
                 }
               }}
-              getOptionLabel={(option) => `${option.className} - ${option.programName}`}
-              isOptionEqualToValue={(option, value) => option?.classId === value?.classId}
+              getOptionLabel={(option) =>
+                `${option.className} - ${option.programName}`
+              }
+              isOptionEqualToValue={(option, value) =>
+                option?.classId === value?.classId
+              }
               label="Lớp"
               placeholder="Tìm lớp..."
               required
@@ -344,7 +370,8 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
 
           <Grid item xs={12}>
             <Alert severity="info">
-              Lưu ý: Ngày bắt đầu và ngày kết thúc phải nằm trong khoảng thời gian của học kỳ đã chọn.
+              Lưu ý: Ngày bắt đầu và ngày kết thúc phải nằm trong khoảng thời
+              gian của học kỳ đã chọn.
             </Alert>
           </Grid>
         </Grid>

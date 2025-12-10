@@ -9,7 +9,11 @@ import { useTheme } from '@mui/material/styles';
  * @param {string} title - Tiêu đề section (mặc định: "Bộ lọc tìm kiếm")
  * @param {number|string} resultCount - Số lượng kết quả tìm được
  */
-const FilterSection = ({ children, title = 'Bộ lọc tìm kiếm', resultCount }) => {
+const FilterSection = ({
+  children,
+  title = 'Bộ lọc tìm kiếm',
+  resultCount,
+}) => {
   const theme = useTheme();
 
   return (
@@ -17,11 +21,14 @@ const FilterSection = ({ children, title = 'Bộ lọc tìm kiếm', resultCount
       <CardContent sx={{ py: 2.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <FilterList sx={{ mr: 1, color: theme.palette.primary.main }} />
-          <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 600, color: theme.palette.text.primary }}
+          >
             {title}
           </Typography>
         </Box>
-        <Grid container spacing={2}>
+        <Grid container className="equal-height-cards" spacing={2}>
           {children}
         </Grid>
         {resultCount !== undefined && resultCount !== null && (

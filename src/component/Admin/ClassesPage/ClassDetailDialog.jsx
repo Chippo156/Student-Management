@@ -15,7 +15,10 @@ import {
   Box,
   Chip,
 } from '@mui/material';
-import { Schedule as ScheduleIcon, Edit as EditIcon } from '@mui/icons-material';
+import {
+  Schedule as ScheduleIcon,
+  Edit as EditIcon,
+} from '@mui/icons-material';
 import { getStatusColor, getStatusLabel } from './constants';
 
 /**
@@ -28,7 +31,12 @@ const ClassDetailDialog = ({ open, onClose, classData }) => {
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Chi tiết lớp học: {classData.className}</DialogTitle>
       <DialogContent>
-        <Grid container spacing={3} sx={{ mt: 1 }}>
+        <Grid
+          container
+          className="equal-height-cards"
+          spacing={3}
+          sx={{ mt: 1 }}
+        >
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
@@ -37,10 +45,16 @@ const ClassDetailDialog = ({ open, onClose, classData }) => {
                 </Typography>
                 <List dense>
                   <ListItem>
-                    <ListItemText primary="Mã lớp" secondary={classData.classCode} />
+                    <ListItemText
+                      primary="Mã lớp"
+                      secondary={classData.classCode}
+                    />
                   </ListItem>
                   <ListItem>
-                    <ListItemText primary="Tên lớp" secondary={classData.className} />
+                    <ListItemText
+                      primary="Tên lớp"
+                      secondary={classData.className}
+                    />
                   </ListItem>
                   <ListItem>
                     <ListItemText
@@ -67,13 +81,22 @@ const ClassDetailDialog = ({ open, onClose, classData }) => {
                 </Typography>
                 <List dense>
                   <ListItem>
-                    <ListItemText primary="Giảng viên" secondary={classData.instructor} />
+                    <ListItemText
+                      primary="Giảng viên"
+                      secondary={classData.instructor}
+                    />
                   </ListItem>
                   <ListItem>
-                    <ListItemText primary="Lịch học" secondary={classData.schedule} />
+                    <ListItemText
+                      primary="Lịch học"
+                      secondary={classData.schedule}
+                    />
                   </ListItem>
                   <ListItem>
-                    <ListItemText primary="Phòng học" secondary={classData.room} />
+                    <ListItemText
+                      primary="Phòng học"
+                      secondary={classData.room}
+                    />
                   </ListItem>
                   <ListItem>
                     <ListItemText
@@ -92,11 +115,13 @@ const ClassDetailDialog = ({ open, onClose, classData }) => {
                 <Typography variant="h6" gutterBottom color="primary">
                   Thời gian
                 </Typography>
-                <Grid container spacing={2}>
+                <Grid container className="equal-height-cards" spacing={2}>
                   <Grid item xs={6}>
                     <Typography variant="body2">
                       <strong>Bắt đầu:</strong>{' '}
-                      {new Date(classData.startDate).toLocaleDateString('vi-VN')}
+                      {new Date(classData.startDate).toLocaleDateString(
+                        'vi-VN'
+                      )}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>

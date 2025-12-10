@@ -61,7 +61,10 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     // Only pass roleId if it's not null and not undefined
-    const roleId = filterRole?.id !== null && filterRole?.id !== undefined ? filterRole.id : null;
+    const roleId =
+      filterRole?.id !== null && filterRole?.id !== undefined
+        ? filterRole.id
+        : null;
     const res = await userService.getAllUsers(
       page + 1,
       rowsPerPage,
@@ -76,12 +79,15 @@ const UserManagement = () => {
   };
 
   // Role options for SearchableAutocomplete - ensure plain objects
-  const roleOptions = React.useMemo(() => [
-    { id: null, name: 'Tất cả vai trò' },
-    { id: 1, name: 'Admin' },
-    { id: 3, name: 'Giảng viên' },
-    { id: 2, name: 'Sinh viên' }
-  ], []);
+  const roleOptions = React.useMemo(
+    () => [
+      { id: null, name: 'Tất cả vai trò' },
+      { id: 1, name: 'Admin' },
+      { id: 3, name: 'Giảng viên' },
+      { id: 2, name: 'Sinh viên' },
+    ],
+    []
+  );
 
   // ✅ Fetch users khi debounced search term thay đổi
   useEffect(() => {
@@ -398,7 +404,7 @@ const UserManagement = () => {
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card
             sx={{
@@ -522,7 +528,7 @@ const UserManagement = () => {
               Bộ lọc tìm kiếm
             </Typography>
           </Box>
-          <Grid container spacing={2}>
+          <Grid container className="equal-height-cards" spacing={2}>
             <Grid item xs={12} sm={12} md={6} lg={6}>
               <TextField
                 fullWidth

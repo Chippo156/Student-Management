@@ -883,7 +883,7 @@ const GradesPage = () => {
         </Typography>
       </Fade>
 
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={3}>
           <Grow in={true} timeout={800}>
             <Card
@@ -1003,7 +1003,12 @@ const GradesPage = () => {
 
       <Fade in={true} timeout={1000}>
         <Card sx={{ mb: 3, p: 2 }}>
-          <Grid container spacing={2} alignItems="center">
+          <Grid
+            container
+            className="equal-height-cards"
+            spacing={2}
+            alignItems="center"
+          >
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
                 <InputLabel>Chọn lớp học phần</InputLabel>

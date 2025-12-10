@@ -1,5 +1,4 @@
 /* Global CSS - Text wrapping and overflow handling */
-
 /* Prevent text overflow and wrap long text */
 .ant-descriptions-item-content,
 .ant-statistic-content,
@@ -30,19 +29,10 @@
   box-sizing: border-box;
 }
 
-/* Specific fix for long text in cards */
-.ant-card-body,
-.MuiCard-root {
-  overflow: hidden;
-}
-
-.ant-card-body > *,
-.MuiCard-root > * {
-  max-width: 100%;
-}
-
 /* Handle long emails and URLs */
-a, .email, .url {
+a,
+.email,
+.url {
   word-break: break-all;
   overflow-wrap: break-word;
 }
@@ -59,3 +49,92 @@ a, .email, .url {
 .mssv {
   white-space: nowrap;
 }
+/* 
+.text-wrap-content {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.ant-modal-body,
+.MuiDialog-paper {
+  overflow-x: hidden;
+}
+
+.ant-table-cell .ant-typography {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ant-row.equal-height-cards {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.ant-row.equal-height-cards > .ant-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.ant-row.equal-height-cards > .ant-col > .ant-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ant-row.equal-height-cards > .ant-col > .ant-card > .ant-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.MuiGrid-container.equal-height-cards {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.MuiGrid-container.equal-height-cards > .MuiGrid-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.MuiGrid-container.equal-height-cards > .MuiGrid-item > * {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.MuiGrid-container.equal-height-cards > .MuiGrid-item > * > .MuiCard-root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.MuiGrid-container.equal-height-cards .MuiCard-root > .MuiCardContent-root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.MuiBox-root {
+  text-align: center;
+  margin-right: 16px;
+}
+.ant-card-body canvas,
+.ant-card-body svg,
+.MuiCardContent-root canvas,
+.MuiCardContent-root svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.recharts-responsive-container {
+  width: 100%;
+}
+ */

@@ -441,7 +441,7 @@ const Sections = () => {
       />
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
           <StatsCard
             icon={<School />}

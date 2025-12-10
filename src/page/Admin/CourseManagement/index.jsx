@@ -68,7 +68,7 @@ const CourseManagement = () => {
   const courseTypeOptions = [
     { id: null, name: 'Tất cả loại môn học' },
     { id: 'required', name: 'Bắt buộc' },
-    { id: 'elective', name: 'Tự chọn' }
+    { id: 'elective', name: 'Tự chọn' },
   ];
 
   // Fetch programs for filter
@@ -80,10 +80,10 @@ const CourseManagement = () => {
       if (result) {
         const transformedPrograms = [
           { id: null, name: 'Tất cả chương trình' },
-          ...(result.items?.map(prog => ({
+          ...(result.items?.map((prog) => ({
             id: prog.academicProgramId,
-            name: prog.programName
-          })) || [])
+            name: prog.programName,
+          })) || []),
         ];
         setPrograms(transformedPrograms);
       } else {
@@ -100,10 +100,10 @@ const CourseManagement = () => {
       if (result && Array.isArray(result)) {
         const transformedDepts = [
           { id: null, name: 'Tất cả chuyên ngành' },
-          ...result.map(dept => ({
+          ...result.map((dept) => ({
             id: dept.departmentId,
-            name: dept.departmentName
-          }))
+            name: dept.departmentName,
+          })),
         ];
         setDepartments(transformedDepts);
       } else {
@@ -180,10 +180,12 @@ const CourseManagement = () => {
     let filterInfo = '';
     if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
     if (filterProgram && filterProgram.id !== null) {
-      filterInfo += (filterInfo ? ', ' : '') + `Chương trình: ${filterProgram.name}`;
+      filterInfo +=
+        (filterInfo ? ', ' : '') + `Chương trình: ${filterProgram.name}`;
     }
     if (filterDepartment) {
-      filterInfo += (filterInfo ? ', ' : '') + `Chuyên ngành: ${filterDepartment.name}`;
+      filterInfo +=
+        (filterInfo ? ', ' : '') + `Chuyên ngành: ${filterDepartment.name}`;
     }
     if (filterCourseType && filterCourseType.id !== null) {
       filterInfo += (filterInfo ? ', ' : '') + `Loại: ${filterCourseType.name}`;
@@ -243,14 +245,25 @@ const CourseManagement = () => {
         title="Quản lý Môn học"
         onRefresh={fetchCourses}
         actions={
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, width: { xs: '100%', sm: 'auto' } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 1,
+              width: { xs: '100%', sm: 'auto' },
+            }}
+          >
             <Button
               variant="contained"
               startIcon={<FileDownload />}
               onClick={handleExportExcel}
               disabled={filteredCourses.length === 0}
               color="success"
-              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              sx={{
+                textTransform: 'none',
+                px: 3,
+                width: { xs: '100%', sm: 'auto' },
+              }}
               size="small"
             >
               Xuất Excel
@@ -259,7 +272,11 @@ const CourseManagement = () => {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={handleCreateCourse}
-              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              sx={{
+                textTransform: 'none',
+                px: 3,
+                width: { xs: '100%', sm: 'auto' },
+              }}
               size="small"
             >
               Thêm môn học
@@ -269,7 +286,7 @@ const CourseManagement = () => {
       />
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
           <StatsCard
             icon={<MenuBook />}

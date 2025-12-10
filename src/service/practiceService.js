@@ -45,18 +45,18 @@ const practiceService = {
     try {
       // ✅ Đảm bảo payload khớp với API
       const payload = {
-        groupName: practiceData.groupName || '',
-        description: practiceData.description || null,
-        maxCapacity: practiceData.maxCapacity || 30,
+        groupName: practiceData.groupName,
+        description: practiceData.description,
+        maxCapacity: practiceData.maxCapacity,
         sectionId: practiceData.sectionId,
-        dayOfWeek: practiceData.dayOfWeek || null,
-        date: practiceData.date || null,
+        dayOfWeek: practiceData.dayOfWeek,
+        date: practiceData.date,
         startTime: practiceData.startTime,
         endTime: practiceData.endTime,
-        room: practiceData.room || '',
-        onlineLink: practiceData.onlineLink || null,
+        room: practiceData.room,
+        onlineLink: practiceData.onlineLink,
         scheduleTypeId: 2, // ✅ Luôn là 2 (Thực hành)
-        lecturerId: practiceData.lecturerId || null,
+        lecturerId: practiceData.lecturerId,
       };
 
       console.log('📤 Creating practice schedule with payload:', payload);

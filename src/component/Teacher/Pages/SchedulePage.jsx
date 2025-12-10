@@ -187,7 +187,7 @@ const SchedulePage = () => {
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} md={4}>
           <Card
             sx={{

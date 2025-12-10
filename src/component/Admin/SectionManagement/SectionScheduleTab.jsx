@@ -67,7 +67,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
     room: '',
     onlineLink: null,
     groupName: '',
-    maxCapacity: 30,
+    maxCapacity: 0,
     description: '',
     lecturerId: null,
   });
@@ -124,7 +124,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
 
   const calculatePracticeGroupCapacity = () => {
     if (!section || !section.capacity || !section.practiceGroupCount) {
-      return 30;
+      return 0;
     }
     return Math.ceil(section.capacity / section.practiceGroupCount);
   };
@@ -145,7 +145,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
       }
     } else {
       // Lý thuyết và thực hành cần thứ
-      if (!formData.dayOfWeek) {
+      if (formData.dayOfWeek === null) {
         newErrors.dayOfWeek = 'Vui lòng chọn thứ';
       }
     }
@@ -286,14 +286,13 @@ const SectionScheduleTab = ({ sectionId, section }) => {
       const basePayload = {
         sectionId: parseInt(sectionId),
         scheduleTypeId: parseInt(formData.scheduleTypeId),
-        dayOfWeek: formData.dayOfWeek ? parseInt(formData.dayOfWeek) : null,
+        dayOfWeek: formData.dayOfWeek !== null ? formData.dayOfWeek : null,
         date: formData.date || null,
         startTime: formData.startTime + ':00',
         endTime: formData.endTime + ':00',
         room: formData.room || '',
         onlineLink: formData.onlineLink || null,
       };
-
       let result;
       if (editingSchedule) {
         const updatePayload = {
@@ -539,7 +538,12 @@ const SectionScheduleTab = ({ sectionId, section }) => {
           {editingSchedule ? 'Chỉnh sửa lịch học' : 'Thêm lịch học mới'}
         </DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid
+            container
+            className="equal-height-cards"
+            spacing={2}
+            sx={{ mt: 1 }}
+          >
             <Grid item xs={12} md={6}>
               <FormControl fullWidth error={!!errors.scheduleTypeId}>
                 <InputLabel>Loại lịch *</InputLabel>
@@ -609,7 +613,12 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                 <FormControl fullWidth error={!!errors.dayOfWeek}>
                   <InputLabel>Thứ *</InputLabel>
                   <Select
-                    value={formData.dayOfWeek !== null && formData.dayOfWeek !== undefined ? formData.dayOfWeek : ''}
+                    value={
+                      formData.dayOfWeek !== null &&
+                      formData.dayOfWeek !== undefined
+                        ? formData.dayOfWeek
+                        : ''
+                    }
                     label="Thứ *"
                     onChange={(e) => {
                       setFormData({

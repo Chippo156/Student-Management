@@ -26,11 +26,18 @@ const UserDetailModal = ({ open, onCancel, user }) => {
 
   const InfoRow = ({ label, value }) => (
     <Box sx={{ mb: 2 }}>
-      <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 0.5, fontWeight: 500 }}>
+      <Typography
+        variant="body2"
+        sx={{ color: theme.palette.text.secondary, mb: 0.5, fontWeight: 500 }}
+      >
         {label}
       </Typography>
       <Typography variant="body1" sx={{ color: theme.palette.text.primary }}>
-        {value || <span style={{ color: theme.palette.text.disabled }}>Chưa cập nhật</span>}
+        {value || (
+          <span style={{ color: theme.palette.text.disabled }}>
+            Chưa cập nhật
+          </span>
+        )}
       </Typography>
     </Box>
   );
@@ -46,15 +53,16 @@ const UserDetailModal = ({ open, onCancel, user }) => {
           borderRadius: 3,
           bgcolor: theme.palette.background.paper,
           backgroundImage: 'none',
-        }
+        },
       }}
     >
       {/* Header với gradient */}
       <Box
         sx={{
-          background: theme.palette.mode === 'light'
-            ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
-            : `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.background.paper} 100%)`,
+          background:
+            theme.palette.mode === 'light'
+              ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
+              : `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.background.paper} 100%)`,
           px: 4,
           py: 3,
           position: 'relative',
@@ -92,8 +100,14 @@ const UserDetailModal = ({ open, onCancel, user }) => {
           <Chip
             label={user.role?.roleName}
             sx={{
-              bgcolor: theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.25)' : theme.palette.background.paper,
-              color: theme.palette.mode === 'light' ? 'white' : theme.palette.text.primary,
+              bgcolor:
+                theme.palette.mode === 'light'
+                  ? 'rgba(255, 255, 255, 0.25)'
+                  : theme.palette.background.paper,
+              color:
+                theme.palette.mode === 'light'
+                  ? 'white'
+                  : theme.palette.text.primary,
               fontWeight: 600,
               fontSize: 14,
               backdropFilter: 'blur(10px)',
@@ -133,20 +147,28 @@ const UserDetailModal = ({ open, onCancel, user }) => {
                 gap: 1,
               }}
             >
-              <Box component="span" sx={{ fontSize: 24 }}>👤</Box>
+              <Box component="span" sx={{ fontSize: 24 }}>
+                👤
+              </Box>
               Thông tin cá nhân
             </Typography>
-            <Grid container spacing={3}>
+            <Grid container className="equal-height-cards" spacing={3}>
               <Grid item xs={12} sm={6}>
                 <InfoRow label="Tên đăng nhập" value={user.username} />
                 <InfoRow label="Họ và tên" value={user.fullName} />
                 <InfoRow
                   label="Giới tính"
-                  value={genderOptions.find((g) => g.value === user.gender)?.label}
+                  value={
+                    genderOptions.find((g) => g.value === user.gender)?.label
+                  }
                 />
                 <InfoRow
                   label="Ngày sinh"
-                  value={user.dateOfBirth ? dayjs(user.dateOfBirth).format('DD/MM/YYYY') : null}
+                  value={
+                    user.dateOfBirth
+                      ? dayjs(user.dateOfBirth).format('DD/MM/YYYY')
+                      : null
+                  }
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -173,16 +195,21 @@ const UserDetailModal = ({ open, onCancel, user }) => {
                 gap: 1,
               }}
             >
-              <Box component="span" sx={{ fontSize: 24 }}>🏠</Box>
+              <Box component="span" sx={{ fontSize: 24 }}>
+                🏠
+              </Box>
               Thông tin địa chỉ
             </Typography>
-            <Grid container spacing={3}>
+            <Grid container className="equal-height-cards" spacing={3}>
               <Grid item xs={12} sm={6}>
                 <InfoRow label="Địa chỉ thường trú" value={user.address} />
                 <InfoRow label="Dân tộc" value={user.ethnicity} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <InfoRow label="Địa chỉ tạm trú" value={user.temporaryAddress} />
+                <InfoRow
+                  label="Địa chỉ tạm trú"
+                  value={user.temporaryAddress}
+                />
                 <InfoRow label="Tôn giáo" value={user.religion} />
               </Grid>
             </Grid>
@@ -203,21 +230,34 @@ const UserDetailModal = ({ open, onCancel, user }) => {
                 gap: 1,
               }}
             >
-              <Box component="span" sx={{ fontSize: 24 }}>🪪</Box>
+              <Box component="span" sx={{ fontSize: 24 }}>
+                🪪
+              </Box>
               Giấy tờ cá nhân
             </Typography>
-            <Grid container spacing={3}>
+            <Grid container className="equal-height-cards" spacing={3}>
               <Grid item xs={12} sm={6}>
                 <InfoRow label="Số CCCD" value={user.citizenIdCard} />
                 <InfoRow
                   label="Ngày cấp"
-                  value={user.issuedDate ? dayjs(user.issuedDate).format('DD/MM/YYYY') : null}
+                  value={
+                    user.issuedDate
+                      ? dayjs(user.issuedDate).format('DD/MM/YYYY')
+                      : null
+                  }
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <InfoRow label="Nơi cấp" value={user.issuedPlace} />
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 0.5, fontWeight: 500 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: theme.palette.text.secondary,
+                      mb: 0.5,
+                      fontWeight: 500,
+                    }}
+                  >
                     Trạng thái tài khoản
                   </Typography>
                   {(() => {
@@ -230,7 +270,10 @@ const UserDetailModal = ({ open, onCancel, user }) => {
                         sx={{ mt: 0.5 }}
                       />
                     ) : (
-                      <Typography variant="body1" sx={{ color: theme.palette.text.disabled }}>
+                      <Typography
+                        variant="body1"
+                        sx={{ color: theme.palette.text.disabled }}
+                      >
                         Chưa cập nhật
                       </Typography>
                     );

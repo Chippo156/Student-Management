@@ -327,7 +327,12 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
         {/* Header Status */}
         <Card sx={{ mb: 3, borderRadius: 2, boxShadow: 3 }}>
           <CardContent sx={{ p: 3 }}>
-            <Grid container spacing={3} alignItems="center">
+            <Grid
+              container
+              className="equal-height-cards"
+              spacing={3}
+              alignItems="center"
+            >
               <Grid item xs={12} md={6}>
                 <Box
                   sx={{
@@ -428,7 +433,7 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
 
         <Box sx={{ mt: 3 }}>
           {activeTab === 0 && (
-            <Grid container spacing={3}>
+            <Grid container className="equal-height-cards" spacing={3}>
               {/* Thông tin môn học */}
               <Grid item xs={12} md={6}>
                 <InfoCard icon={SchoolIcon} title="Môn học" colorType="primary">
@@ -438,7 +443,12 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
                     value={section.courseName}
                     bold
                   />
-                  <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                  <Grid
+                    container
+                    className="equal-height-cards"
+                    spacing={2}
+                    sx={{ mt: 0.5 }}
+                  >
                     <Grid item xs={4}>
                       <InfoRow
                         label="Lý thuyết"
@@ -498,7 +508,12 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
                     bold
                   />
                   <InfoRow label="Học kỳ" value={section.semesterName} bold />
-                  <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                  <Grid
+                    container
+                    className="equal-height-cards"
+                    spacing={2}
+                    sx={{ mt: 0.5 }}
+                  >
                     <Grid item xs={6}>
                       <InfoRow
                         label="Năm học"
@@ -530,7 +545,7 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
                   title="Thời gian"
                   colorType="warning"
                 >
-                  <Grid container spacing={2}>
+                  <Grid container className="equal-height-cards" spacing={2}>
                     <Grid item xs={6}>
                       <InfoRow
                         label="Ngày bắt đầu"
@@ -556,7 +571,7 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
                   title="Thông tin sinh viên"
                   colorType="info"
                 >
-                  <Grid container spacing={2}>
+                  <Grid container className="equal-height-cards" spacing={2}>
                     <Grid item xs={12} sm={6} md={3}>
                       <StatBox
                         value={section.capacity}
@@ -634,67 +649,74 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
                     <TableHead>
                       <TableRow
                         sx={{
-                          bgcolor: theme.palette.mode === 'light'
-                            ? theme.palette.grey[100]
-                            : theme.palette.primary.main
+                          bgcolor:
+                            theme.palette.mode === 'light'
+                              ? theme.palette.grey[100]
+                              : theme.palette.primary.main,
                         }}
                       >
                         <TableCell
                           sx={{
-                            color: theme.palette.mode === 'light'
-                              ? theme.palette.text.primary
-                              : 'white',
-                            fontWeight: 700
+                            color:
+                              theme.palette.mode === 'light'
+                                ? theme.palette.text.primary
+                                : 'white',
+                            fontWeight: 700,
                           }}
                         >
                           STT
                         </TableCell>
                         <TableCell
                           sx={{
-                            color: theme.palette.mode === 'light'
-                              ? theme.palette.text.primary
-                              : 'white',
-                            fontWeight: 700
+                            color:
+                              theme.palette.mode === 'light'
+                                ? theme.palette.text.primary
+                                : 'white',
+                            fontWeight: 700,
                           }}
                         >
                           Mã SV
                         </TableCell>
                         <TableCell
                           sx={{
-                            color: theme.palette.mode === 'light'
-                              ? theme.palette.text.primary
-                              : 'white',
-                            fontWeight: 700
+                            color:
+                              theme.palette.mode === 'light'
+                                ? theme.palette.text.primary
+                                : 'white',
+                            fontWeight: 700,
                           }}
                         >
                           Họ và tên
                         </TableCell>
                         <TableCell
                           sx={{
-                            color: theme.palette.mode === 'light'
-                              ? theme.palette.text.primary
-                              : 'white',
-                            fontWeight: 700
+                            color:
+                              theme.palette.mode === 'light'
+                                ? theme.palette.text.primary
+                                : 'white',
+                            fontWeight: 700,
                           }}
                         >
                           Email
                         </TableCell>
                         <TableCell
                           sx={{
-                            color: theme.palette.mode === 'light'
-                              ? theme.palette.text.primary
-                              : 'white',
-                            fontWeight: 700
+                            color:
+                              theme.palette.mode === 'light'
+                                ? theme.palette.text.primary
+                                : 'white',
+                            fontWeight: 700,
                           }}
                         >
                           Giới tính
                         </TableCell>
                         <TableCell
                           sx={{
-                            color: theme.palette.mode === 'light'
-                              ? theme.palette.text.primary
-                              : 'white',
-                            fontWeight: 700
+                            color:
+                              theme.palette.mode === 'light'
+                                ? theme.palette.text.primary
+                                : 'white',
+                            fontWeight: 700,
                           }}
                         >
                           Ngày sinh

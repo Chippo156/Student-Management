@@ -358,7 +358,7 @@ const StudentsPage = () => {
       </Fade>
 
       {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={4}>
           <Grow in={true} timeout={800}>
             <Card
@@ -481,7 +481,7 @@ const StudentsPage = () => {
                 Bộ lọc tìm kiếm
               </Typography>
             </Box>
-            <Grid container spacing={2}>
+            <Grid container className="equal-height-cards" spacing={2}>
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
@@ -594,7 +594,7 @@ const StudentsPage = () => {
         </DialogTitle>
         <DialogContent dividers>
           {selectedStudent && (
-            <Grid container spacing={3}>
+            <Grid container className="equal-height-cards" spacing={3}>
               <Grid item xs={12} sx={{ textAlign: 'center' }}>
                 <Avatar sx={{ width: 80, height: 80, margin: '0 auto', mb: 2 }}>
                   {selectedStudent.fullName?.charAt(0).toUpperCase()}

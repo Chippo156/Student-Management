@@ -77,10 +77,13 @@ const SettingsPage = () => {
   const dispatch = useDispatch();
   const lecturerId = user?.lecturerId;
 
-  const colors = useMemo(() => ({
-    primary: theme.palette.primary.main,
-    bgPrimary: alpha(theme.palette.primary.main, 0.1),
-  }), [theme]);
+  const colors = useMemo(
+    () => ({
+      primary: theme.palette.primary.main,
+      bgPrimary: alpha(theme.palette.primary.main, 0.1),
+    }),
+    [theme]
+  );
 
   useEffect(() => {
     const fetchTeacherInfo = async () => {
@@ -90,7 +93,12 @@ const SettingsPage = () => {
 
         // Sử dụng dữ liệu từ user account nếu API không có
         setProfileData({
-          fullName: data.fullName || user?.user?.fullName || user?.fullName || user?.username || '',
+          fullName:
+            data.fullName ||
+            user?.user?.fullName ||
+            user?.fullName ||
+            user?.username ||
+            '',
           email: data.email || user?.user?.email || user?.email || '',
           phone: data.phone || user?.user?.phone || user?.phone || '',
           department: data.department || user?.departmentName || '',
@@ -101,7 +109,8 @@ const SettingsPage = () => {
         console.error('Error fetching teacher info:', error);
         // Fallback to user data if API call fails
         setProfileData({
-          fullName: user?.user?.fullName || user?.fullName || user?.username || '',
+          fullName:
+            user?.user?.fullName || user?.fullName || user?.username || '',
           email: user?.user?.email || user?.email || '',
           phone: user?.user?.phone || user?.phone || '',
           department: user?.departmentName || '',
@@ -116,7 +125,8 @@ const SettingsPage = () => {
     } else if (user) {
       // Nếu chưa có lecturerId, sử dụng dữ liệu từ user luôn
       setProfileData({
-        fullName: user?.user?.fullName || user?.fullName || user?.username || '',
+        fullName:
+          user?.user?.fullName || user?.fullName || user?.username || '',
         email: user?.user?.email || user?.email || '',
         phone: user?.user?.phone || user?.phone || '',
         department: user?.departmentName || '',
@@ -232,7 +242,7 @@ const SettingsPage = () => {
         </Typography>
       </Fade>
 
-      <Grid container spacing={3}>
+      <Grid container className="equal-height-cards" spacing={3}>
         {/* Profile Summary Card */}
         <Grid item xs={12} md={4}>
           <Grow in={true} timeout={800}>
@@ -301,7 +311,7 @@ const SettingsPage = () => {
 
               {/* Profile Tab */}
               <TabPanel value={tabValue} index={0}>
-                <Grid container spacing={3}>
+                <Grid container className="equal-height-cards" spacing={3}>
                   <Grid item xs={12}>
                     <Typography variant="h6" gutterBottom>
                       Thông tin cá nhân
@@ -387,7 +397,7 @@ const SettingsPage = () => {
 
               {/* Password Tab */}
               <TabPanel value={tabValue} index={1}>
-                <Grid container spacing={3}>
+                <Grid container className="equal-height-cards" spacing={3}>
                   <Grid item xs={12}>
                     <Typography variant="h6" gutterBottom>
                       Đổi mật khẩu
@@ -448,7 +458,7 @@ const SettingsPage = () => {
 
               {/* Notifications Tab */}
               <TabPanel value={tabValue} index={2}>
-                <Grid container spacing={3}>
+                <Grid container className="equal-height-cards" spacing={3}>
                   <Grid item xs={12}>
                     <Typography variant="h6" gutterBottom>
                       Cài đặt thông báo

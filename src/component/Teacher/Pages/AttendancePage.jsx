@@ -856,7 +856,9 @@ const AttendancePage = () => {
               variant={status === 'absent_no_excuse' ? 'contained' : 'outlined'}
               color="error"
               size="small"
-              onClick={() => handleAttendanceChange(record.studentId, 'absent_no_excuse')}
+              onClick={() =>
+                handleAttendanceChange(record.studentId, 'absent_no_excuse')
+              }
             >
               Không phép
             </Button>
@@ -864,7 +866,9 @@ const AttendancePage = () => {
               variant={status === 'excused' ? 'contained' : 'outlined'}
               color="info"
               size="small"
-              onClick={() => handleAttendanceChange(record.studentId, 'excused')}
+              onClick={() =>
+                handleAttendanceChange(record.studentId, 'excused')
+              }
             >
               Có phép
             </Button>
@@ -933,7 +937,12 @@ const AttendancePage = () => {
             }}
           >
             <CardContent>
-              <Grid container spacing={2} alignItems="center">
+              <Grid
+                container
+                className="equal-height-cards"
+                spacing={2}
+                alignItems="center"
+              >
                 <Grid item xs={12} md={8}>
                   <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
                     Đang điểm danh: {selectedSession.sessionName}
@@ -996,7 +1005,7 @@ const AttendancePage = () => {
       <Fade in={true} timeout={1000}>
         <Card sx={{ mb: 3 }}>
           <CardContent sx={{ pb: 2 }}>
-            <Grid container spacing={2}>
+            <Grid container className="equal-height-cards" spacing={2}>
               {/* Row 1: Filters */}
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth>
@@ -1231,7 +1240,12 @@ const AttendancePage = () => {
       >
         <DialogTitle>Tạo phiên điểm danh</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid
+            container
+            className="equal-height-cards"
+            spacing={2}
+            sx={{ mt: 1 }}
+          >
             <Grid item xs={12}>
               <TextField
                 fullWidth

@@ -293,7 +293,13 @@ const SystemSettings = () => {
   };
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 2, md: 3 }, backgroundColor: colors.background, minHeight: '100vh' }}>
+    <Box
+      sx={{
+        p: { xs: 2, sm: 2, md: 3 },
+        backgroundColor: colors.background,
+        minHeight: '100vh',
+      }}
+    >
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography
@@ -308,7 +314,7 @@ const SystemSettings = () => {
       </Box>
 
       {/* Quick Actions */}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
+      <Grid container className="equal-height-cards" spacing={2} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card
             sx={{
@@ -382,7 +388,12 @@ const SystemSettings = () => {
       {/* Filter and Search */}
       <Card sx={{ mb: 3, borderRadius: 2 }}>
         <CardContent sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
-          <Grid container spacing={2} alignItems="center">
+          <Grid
+            container
+            className="equal-height-cards"
+            spacing={2}
+            alignItems="center"
+          >
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth

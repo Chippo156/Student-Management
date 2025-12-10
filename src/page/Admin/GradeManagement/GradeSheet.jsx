@@ -230,7 +230,12 @@ const GradeSheet = () => {
       {/* Student Info & Overall Stats */}
       {studentData && (
         <>
-          <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid
+            container
+            className="equal-height-cards"
+            spacing={3}
+            sx={{ mb: 3 }}
+          >
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
@@ -276,7 +281,7 @@ const GradeSheet = () => {
                     Tổng quan học tập
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  <Grid container spacing={2}>
+                  <Grid container className="equal-height-cards" spacing={2}>
                     <Grid item xs={6}>
                       <Typography variant="body2" color="text.secondary">
                         GPA tích lũy (10)
@@ -560,7 +565,7 @@ const GradeSheet = () => {
                     borderRadius: 1,
                   }}
                 >
-                  <Grid container spacing={2}>
+                  <Grid container className="equal-height-cards" spacing={2}>
                     <Grid item xs={12} sm={3}>
                       <Typography variant="body2" color="text.secondary">
                         Tín chỉ đăng ký

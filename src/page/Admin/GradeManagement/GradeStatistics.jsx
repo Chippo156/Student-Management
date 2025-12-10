@@ -324,7 +324,7 @@ const GradeStatistics = () => {
               {/* Student Info Card */}
               <Card sx={{ mb: 3 }}>
                 <CardContent>
-                  <Grid container spacing={2}>
+                  <Grid container className="equal-height-cards" spacing={2}>
                     <Grid item xs={12} md={3}>
                       <Typography variant="body2" color="text.secondary">
                         Mã số sinh viên
@@ -362,7 +362,12 @@ const GradeStatistics = () => {
               </Card>
 
               {/* Overview Cards */}
-              <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid
+                container
+                className="equal-height-cards"
+                spacing={3}
+                sx={{ mb: 3 }}
+              >
                 <Grid item xs={12} md={2.4}>
                   <Card sx={{ height: '100%' }}>
                     <CardContent>
@@ -535,7 +540,12 @@ const GradeStatistics = () => {
               </Grid>
 
               {/* Additional Stats Cards */}
-              <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid
+                container
+                className="equal-height-cards"
+                spacing={3}
+                sx={{ mb: 3 }}
+              >
                 <Grid item xs={12} md={3}>
                   <Card sx={{ height: '100%' }}>
                     <CardContent>
@@ -630,7 +640,12 @@ const GradeStatistics = () => {
               </Grid>
 
               {/* Charts */}
-              <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid
+                container
+                className="equal-height-cards"
+                spacing={3}
+                sx={{ mb: 3 }}
+              >
                 {/* Grade Distribution */}
                 <Grid item xs={12} md={6}>
                   <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, height: '100%' }}>
@@ -887,7 +902,7 @@ const GradeStatistics = () => {
         <>
           {/* ✅ Filters - CẬP NHẬT PHẦN NÀY */}
           <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, mb: 3 }}>
-            <Grid container spacing={2}>
+            <Grid container className="equal-height-cards" spacing={2}>
               <Grid item xs={12} md={6}>
                 <Autocomplete
                   options={departments}
@@ -950,7 +965,12 @@ const GradeStatistics = () => {
           {allStudentsStats && (
             <>
               {/* Overall Overview Cards */}
-              <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid
+                container
+                className="equal-height-cards"
+                spacing={3}
+                sx={{ mb: 3 }}
+              >
                 <Grid item xs={12} md={2.4}>
                   <Card sx={{ height: '100%' }}>
                     <CardContent>
@@ -1128,7 +1148,12 @@ const GradeStatistics = () => {
               </Grid>
 
               {/* Grade Distribution Chart */}
-              <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid
+                container
+                className="equal-height-cards"
+                spacing={3}
+                sx={{ mb: 3 }}
+              >
                 <Grid item xs={12} md={6}>
                   <Paper sx={{ p: { xs: 2, sm: 2, md: 3 }, height: '100%' }}>
                     <Typography variant="h6" fontWeight={600} gutterBottom>

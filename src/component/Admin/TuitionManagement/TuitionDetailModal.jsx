@@ -191,7 +191,7 @@ const TuitionDetailModal = ({ open, onClose, tuitionFeeId }) => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {/* Thông tin sinh viên */}
             <InfoCard icon={SchoolIcon} title="Thông tin sinh viên">
-              <Grid container spacing={2}>
+              <Grid container className="equal-height-cards" spacing={2}>
                 <Grid item xs={6}>
                   <Typography variant="caption" color="text.secondary">
                     MSSV
@@ -212,7 +212,9 @@ const TuitionDetailModal = ({ open, onClose, tuitionFeeId }) => {
                   <Typography variant="caption" color="text.secondary">
                     Lớp học
                   </Typography>
-                  <Typography variant="body1">{tuitionData.className}</Typography>
+                  <Typography variant="body1">
+                    {tuitionData.className}
+                  </Typography>
                 </Grid>
                 <Grid item xs={6}>
                   <Typography variant="caption" color="text.secondary">
@@ -231,7 +233,7 @@ const TuitionDetailModal = ({ open, onClose, tuitionFeeId }) => {
               title="Thông tin học phí"
               colorType="primary"
             >
-              <Grid container spacing={2}>
+              <Grid container className="equal-height-cards" spacing={2}>
                 <Grid item xs={4}>
                   <Typography variant="caption" color="text.secondary">
                     Tổng học phí
@@ -383,9 +385,7 @@ const TuitionDetailModal = ({ open, onClose, tuitionFeeId }) => {
                           <TableCell>
                             {formatDate(payment.paymentDate)}
                           </TableCell>
-                          <TableCell>
-                            {payment.paymentMethodName}
-                          </TableCell>
+                          <TableCell>{payment.paymentMethodName}</TableCell>
                           <TableCell
                             align="right"
                             sx={{ fontWeight: 600, color: 'success.main' }}

@@ -42,7 +42,9 @@ function TabPanel(props) {
       aria-labelledby={`tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: { xs: 2, sm: 2, md: 3 } }}>{children}</Box>}
+      {value === index && (
+        <Box sx={{ p: { xs: 2, sm: 2, md: 3 } }}>{children}</Box>
+      )}
     </div>
   );
 }
@@ -147,17 +149,29 @@ const SystemSettings = () => {
 
       {/* Tabs */}
       <Paper>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="system settings tabs">
-          <Tab label="Cài đặt chung" icon={<SettingsIcon />} {...a11yProps(0)} />
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          aria-label="system settings tabs"
+        >
+          <Tab
+            label="Cài đặt chung"
+            icon={<SettingsIcon />}
+            {...a11yProps(0)}
+          />
           <Tab label="Học vụ" icon={<SchoolIcon />} {...a11yProps(1)} />
-          <Tab label="Thông báo" icon={<NotificationsIcon />} {...a11yProps(2)} />
+          <Tab
+            label="Thông báo"
+            icon={<NotificationsIcon />}
+            {...a11yProps(2)}
+          />
           <Tab label="Bảo mật" icon={<SecurityIcon />} {...a11yProps(3)} />
           <Tab label="Thông tin" icon={<InfoIcon />} {...a11yProps(4)} />
         </Tabs>
 
         {/* Tab 1 - Cài đặt chung */}
         <TabPanel value={tabValue} index={0}>
-          <Grid container spacing={3}>
+          <Grid container className="equal-height-cards" spacing={3}>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -215,7 +229,7 @@ const SystemSettings = () => {
 
         {/* Tab 2 - Học vụ */}
         <TabPanel value={tabValue} index={1}>
-          <Grid container spacing={3}>
+          <Grid container className="equal-height-cards" spacing={3}>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -289,14 +303,16 @@ const SystemSettings = () => {
 
         {/* Tab 3 - Thông báo */}
         <TabPanel value={tabValue} index={2}>
-          <Grid container spacing={3}>
+          <Grid container className="equal-height-cards" spacing={3}>
             <Grid item xs={12} sm={6}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Cài đặt thông báo
                   </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box
+                    sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                  >
                     <FormControlLabel
                       control={
                         <Switch
@@ -347,7 +363,9 @@ const SystemSettings = () => {
                   <Typography variant="h6" gutterBottom>
                     Cấu hình email
                   </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box
+                    sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                  >
                     <TextField
                       fullWidth
                       label="SMTP Server"
@@ -387,14 +405,16 @@ const SystemSettings = () => {
 
         {/* Tab 4 - Bảo mật */}
         <TabPanel value={tabValue} index={3}>
-          <Grid container spacing={3}>
+          <Grid container className="equal-height-cards" spacing={3}>
             <Grid item xs={12} sm={6}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Chính sách mật khẩu
                   </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box
+                    sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                  >
                     <FormControl fullWidth size="small">
                       <InputLabel>Độ mạnh mật khẩu</InputLabel>
                       <Select
@@ -404,8 +424,12 @@ const SystemSettings = () => {
                         label="Độ mạnh mật khẩu"
                       >
                         <MenuItem value="weak">Yếu (6+ ký tự)</MenuItem>
-                        <MenuItem value="medium">Trung bình (8+ ký tự, chữ và số)</MenuItem>
-                        <MenuItem value="strong">Mạnh (12+ ký tự, chữ, số, ký tự đặc biệt)</MenuItem>
+                        <MenuItem value="medium">
+                          Trung bình (8+ ký tự, chữ và số)
+                        </MenuItem>
+                        <MenuItem value="strong">
+                          Mạnh (12+ ký tự, chữ, số, ký tự đặc biệt)
+                        </MenuItem>
                       </Select>
                     </FormControl>
                     <TextField
@@ -440,7 +464,9 @@ const SystemSettings = () => {
                   <Typography variant="h6" gutterBottom>
                     Cài đặt bảo trì
                   </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box
+                    sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                  >
                     <FormControlLabel
                       control={
                         <Switch
@@ -487,45 +513,83 @@ const SystemSettings = () => {
         <TabPanel value={tabValue} index={4}>
           <Card>
             <CardContent>
-              <Grid container spacing={3}>
+              <Grid container className="equal-height-cards" spacing={3}>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
                     Tên hệ thống
                   </Typography>
                   <Typography variant="body2">{config.systemName}</Typography>
 
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }} gutterBottom>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    sx={{ mt: 2 }}
+                    gutterBottom
+                  >
                     Phiên bản
                   </Typography>
                   <Typography variant="body2">v1.0.0</Typography>
 
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }} gutterBottom>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    sx={{ mt: 2 }}
+                    gutterBottom
+                  >
                     Ngày phát hành
                   </Typography>
                   <Typography variant="body2">27/09/2025</Typography>
 
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }} gutterBottom>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    sx={{ mt: 2 }}
+                    gutterBottom
+                  >
                     Nhà phát triển
                   </Typography>
                   <Typography variant="body2">Đại học XYZ</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
                     Số lượng sinh viên
                   </Typography>
                   <Typography variant="body2">1,250 sinh viên</Typography>
 
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }} gutterBottom>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    sx={{ mt: 2 }}
+                    gutterBottom
+                  >
                     Số lượng môn học
                   </Typography>
                   <Typography variant="body2">325 môn học</Typography>
 
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }} gutterBottom>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    sx={{ mt: 2 }}
+                    gutterBottom
+                  >
                     Dung lượng database
                   </Typography>
                   <Typography variant="body2">2.5 GB</Typography>
 
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }} gutterBottom>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    sx={{ mt: 2 }}
+                    gutterBottom
+                  >
                     Lần sao lưu cuối
                   </Typography>
                   <Typography variant="body2">27/09/2025 02:00 AM</Typography>
@@ -533,7 +597,11 @@ const SystemSettings = () => {
               </Grid>
 
               <Divider sx={{ my: 3 }} />
-              <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ textAlign: 'center', display: 'block' }}
+              >
                 © 2025 Hệ thống quản lý sinh viên. Tất cả quyền được bảo lưu.
               </Typography>
             </CardContent>

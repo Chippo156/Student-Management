@@ -250,7 +250,7 @@ const GradeEntry = () => {
         <>
           <Card sx={{ mb: 3 }}>
             <CardContent>
-              <Grid container spacing={3}>
+              <Grid container className="equal-height-cards" spacing={3}>
                 <Grid item xs={12} md={6}>
                   <Typography variant="body2" color="text.secondary">
                     Mã số sinh viên

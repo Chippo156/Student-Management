@@ -1,28 +1,28 @@
 import React, { useMemo } from 'react';
 import { Grid, Card, CardContent, Box, Typography, Grow } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
-import {
-  School,
-  Person,
-  Assignment,
-  Schedule,
-} from '@mui/icons-material';
+import { School, Person, Assignment, Schedule } from '@mui/icons-material';
 
 const TeacherStatisticsCards = ({ dashboardData, loading }) => {
   const theme = useTheme();
 
-  const colors = useMemo(() => ({
-    primary: theme.palette.primary.main,
-    success: theme.palette.success.main,
-    warning: theme.palette.warning.main,
-    error: theme.palette.error.main,
-    primaryLight: alpha(theme.palette.primary.main, 0.08),
-    successLight: alpha(theme.palette.success.main, 0.08),
-    warningLight: alpha(theme.palette.warning.main, 0.08),
-    errorLight: alpha(theme.palette.error.main, 0.08),
-    shadow: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)',
-    shadowHover: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.15)',
-  }), [theme]);
+  const colors = useMemo(
+    () => ({
+      primary: theme.palette.primary.main,
+      success: theme.palette.success.main,
+      warning: theme.palette.warning.main,
+      error: theme.palette.error.main,
+      primaryLight: alpha(theme.palette.primary.main, 0.08),
+      successLight: alpha(theme.palette.success.main, 0.08),
+      warningLight: alpha(theme.palette.warning.main, 0.08),
+      errorLight: alpha(theme.palette.error.main, 0.08),
+      shadow:
+        theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)',
+      shadowHover:
+        theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.15)',
+    }),
+    [theme]
+  );
 
   const statCards = [
     {
@@ -56,7 +56,7 @@ const TeacherStatisticsCards = ({ dashboardData, loading }) => {
   ];
 
   return (
-    <Grid container spacing={3} sx={{ mb: 4 }}>
+    <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 4 }}>
       {statCards.map((card, index) => (
         <Grid item xs={12} sm={6} md={3} key={index}>
           <Grow in={!loading} timeout={800 + index * 200}>

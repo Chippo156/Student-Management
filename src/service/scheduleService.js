@@ -55,7 +55,7 @@ const scheduleService = {
         );
       }
 
-      return res.data || null;
+      return res.data;
     } catch (error) {
       const errMsg =
         error?.response?.data?.message ||
@@ -118,15 +118,15 @@ const scheduleService = {
       const payload = {
         sectionId: scheduleData.sectionId,
         scheduleTypeId: scheduleData.scheduleTypeId,
-        date: scheduleData.date || null,
-        dayOfWeek: scheduleData.dayOfWeek || null,
+        date: scheduleData.date,
+        dayOfWeek: scheduleData.dayOfWeek,
         startTime: scheduleData.startTime,
         endTime: scheduleData.endTime,
         room: scheduleData.room || '',
-        onlineLink: scheduleData.onlineLink || null,
+        onlineLink: scheduleData.onlineLink,
         practiceGroupId: null,
         practiceGroupName: null,
-        lecturerId: scheduleData.lecturerId || null,
+        lecturerId: scheduleData.lecturerId,
         maxCapacity: null,
       };
 
@@ -174,16 +174,16 @@ const scheduleService = {
       const payload = {
         sectionId: scheduleData.sectionId,
         scheduleTypeId: scheduleData.scheduleTypeId,
-        date: scheduleData.date || null,
-        dayOfWeek: scheduleData.dayOfWeek || null,
+        date: scheduleData.date,
+        dayOfWeek: scheduleData.dayOfWeek,
         startTime: scheduleData.startTime,
         endTime: scheduleData.endTime,
         room: scheduleData.room || '',
-        onlineLink: scheduleData.onlineLink || null,
-        practiceGroupId: scheduleData.practiceGroupId || null,
-        practiceGroupName: scheduleData.practiceGroupName || null,
-        lecturerId: scheduleData.lecturerId || null,
-        maxCapacity: scheduleData.maxCapacity || null,
+        onlineLink: scheduleData.onlineLink,
+        practiceGroupId: scheduleData.practiceGroupId,
+        practiceGroupName: scheduleData.practiceGroupName,
+        lecturerId: scheduleData.lecturerId,
+        maxCapacity: scheduleData.maxCapacity,
       };
 
       console.log('📤 Updating schedule with payload:', payload);
@@ -235,7 +235,7 @@ const scheduleService = {
       }
 
       message.success('Xóa lịch học thành công!');
-      return response.data;
+      return response;
     } catch (error) {
       if (error.response && error.response.data) {
         const errData = error.response.data.data;

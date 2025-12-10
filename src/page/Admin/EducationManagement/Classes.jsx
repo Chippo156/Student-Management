@@ -187,7 +187,8 @@ const Classes = () => {
     let filterInfo = '';
     if (searchTerm) filterInfo += `Tìm kiếm: "${searchTerm}"`;
     if (filterProgram) {
-      filterInfo += (filterInfo ? ', ' : '') + `Chương trình: ${filterProgram.programName}`;
+      filterInfo +=
+        (filterInfo ? ', ' : '') + `Chương trình: ${filterProgram.programName}`;
     }
     const result = await exportClassesExcel(classes, filterInfo);
     if (result.success) {
@@ -324,14 +325,25 @@ const Classes = () => {
         title="Quản lý Lớp học"
         onRefresh={loadClasses}
         actions={
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, width: { xs: '100%', sm: 'auto' } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 1,
+              width: { xs: '100%', sm: 'auto' },
+            }}
+          >
             <Button
               variant="contained"
               startIcon={<FileDownload />}
               onClick={handleExportExcel}
               disabled={classes.length === 0}
               color="success"
-              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              sx={{
+                textTransform: 'none',
+                px: 3,
+                width: { xs: '100%', sm: 'auto' },
+              }}
               size="small"
             >
               Xuất Excel
@@ -340,7 +352,11 @@ const Classes = () => {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setCreateModalOpen(true)}
-              sx={{ textTransform: 'none', px: 3, width: { xs: '100%', sm: 'auto' } }}
+              sx={{
+                textTransform: 'none',
+                px: 3,
+                width: { xs: '100%', sm: 'auto' },
+              }}
               size="small"
             >
               Thêm lớp học
@@ -350,7 +366,7 @@ const Classes = () => {
       />
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={4}>
           <StatsCard
             icon={<ClassIcon />}
@@ -406,7 +422,9 @@ const Classes = () => {
             value={filterProgram}
             onChange={(newValue) => setFilterProgram(newValue)}
             getOptionLabel={(option) => option.programName}
-            isOptionEqualToValue={(option, value) => option?.academicProgramId === value?.academicProgramId}
+            isOptionEqualToValue={(option, value) =>
+              option?.academicProgramId === value?.academicProgramId
+            }
             label="Chương trình đào tạo"
             placeholder="Tất cả"
             size="small"

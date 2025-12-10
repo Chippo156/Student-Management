@@ -132,8 +132,9 @@ const StudentList = () => {
   useEffect(() => {
     const fetchClasses = async () => {
       if (filterDepartment) {
-        const result =
-          await classService.getClassesDropdownByDepartment(filterDepartment.departmentId);
+        const result = await classService.getClassesDropdownByDepartment(
+          filterDepartment.departmentId
+        );
         if (result && Array.isArray(result)) {
           setClasses(result);
         } else {
@@ -213,11 +214,11 @@ const StudentList = () => {
       filterInfo += (filterInfo ? ', ' : '') + `Lớp: ${filterClass.className}`;
     if (filterYearOfAdmission)
       filterInfo +=
-        (filterInfo ? ', ' : '') + `Năm nhập học: ${filterYearOfAdmission.value}`;
+        (filterInfo ? ', ' : '') +
+        `Năm nhập học: ${filterYearOfAdmission.value}`;
     if (filterStatus) {
       filterInfo +=
-        (filterInfo ? ', ' : '') +
-        `Trạng thái: ${filterStatus.label}`;
+        (filterInfo ? ', ' : '') + `Trạng thái: ${filterStatus.label}`;
     }
 
     const result = await exportStudentsExcel(students, filterInfo);
@@ -463,7 +464,7 @@ const StudentList = () => {
       />
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
           <StatsCard
             icon={<People />}
@@ -534,7 +535,9 @@ const StudentList = () => {
             value={filterDepartment}
             onChange={(newValue) => setFilterDepartment(newValue)}
             getOptionLabel={(option) => option.departmentName}
-            isOptionEqualToValue={(option, value) => option?.departmentId === value?.departmentId}
+            isOptionEqualToValue={(option, value) =>
+              option?.departmentId === value?.departmentId
+            }
             label="Chuyên ngành"
             placeholder="Tất cả"
             size="small"
@@ -547,7 +550,9 @@ const StudentList = () => {
             value={filterClass}
             onChange={(newValue) => setFilterClass(newValue)}
             getOptionLabel={(option) => option.className}
-            isOptionEqualToValue={(option, value) => option?.classId === value?.classId}
+            isOptionEqualToValue={(option, value) =>
+              option?.classId === value?.classId
+            }
             label="Lớp"
             placeholder="Tất cả"
             size="small"
@@ -560,7 +565,9 @@ const StudentList = () => {
             value={filterYearOfAdmission}
             onChange={(newValue) => setFilterYearOfAdmission(newValue)}
             getOptionLabel={(option) => option.label}
-            isOptionEqualToValue={(option, value) => option?.value === value?.value}
+            isOptionEqualToValue={(option, value) =>
+              option?.value === value?.value
+            }
             label="Năm"
             placeholder="Tất cả"
             size="small"
@@ -573,7 +580,9 @@ const StudentList = () => {
             value={filterStatus}
             onChange={(newValue) => setFilterStatus(newValue)}
             getOptionLabel={(option) => option.label}
-            isOptionEqualToValue={(option, value) => option?.value === value?.value}
+            isOptionEqualToValue={(option, value) =>
+              option?.value === value?.value
+            }
             label="Trạng thái"
             placeholder="Tất cả"
             size="small"

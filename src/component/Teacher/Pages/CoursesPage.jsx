@@ -251,7 +251,7 @@ const CoursesPage = () => {
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={4}>
           <Card
             sx={{
@@ -353,7 +353,7 @@ const CoursesPage = () => {
               Bộ lọc tìm kiếm
             </Typography>
           </Box>
-          <Grid container spacing={2}>
+          <Grid container className="equal-height-cards" spacing={2}>
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
@@ -428,27 +428,13 @@ const CoursesPage = () => {
           <Table sx={{ minWidth: 800 }}>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>
-                  STT
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>
-                  Mã lớp HP
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>
-                  Mã môn học
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>
-                  Tên môn học
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>
-                  Số sinh viên
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>
-                  Học kỳ
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>
-                  Trạng thái
-                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>STT</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Mã lớp HP</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Mã môn học</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Tên môn học</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Số sinh viên</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Học kỳ</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Trạng thái</TableCell>
                 <TableCell
                   sx={{
                     fontWeight: 'bold',

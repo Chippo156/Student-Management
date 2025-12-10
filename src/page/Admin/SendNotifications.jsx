@@ -208,12 +208,24 @@ const SendNotifications = () => {
   const years = [1, 2, 3, 4, 5];
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 2, md: 3 }, maxWidth: '100%', overflow: 'hidden' }}>
-      <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} gap={2} mb={3}>
+    <Box
+      sx={{ p: { xs: 2, sm: 2, md: 3 }, maxWidth: '100%', overflow: 'hidden' }}
+    >
+      <Box
+        display="flex"
+        flexDirection={{ xs: 'column', sm: 'row' }}
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        gap={2}
+        mb={3}
+      >
         <Avatar sx={{ bgcolor: 'primary.main' }}>
           <AnnouncementIcon />
         </Avatar>
-        <Typography variant="h4" component="h1" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+        >
           Gửi thông báo
         </Typography>
       </Box>
@@ -224,7 +236,7 @@ const SendNotifications = () => {
         </Alert>
       )}
 
-      <Grid container spacing={3}>
+      <Grid container className="equal-height-cards" spacing={3}>
         {/* Form */}
         <Grid item xs={12} lg={8}>
           <Paper sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
@@ -232,7 +244,7 @@ const SendNotifications = () => {
               Nội dung thông báo
             </Typography>
 
-            <Grid container spacing={2}>
+            <Grid container className="equal-height-cards" spacing={2}>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -428,7 +440,7 @@ const SendNotifications = () => {
 
         {/* Recipients & Actions */}
         <Grid item xs={12} lg={4}>
-          <Grid container spacing={2}>
+          <Grid container className="equal-height-cards" spacing={2}>
             {/* Recipients */}
             <Grid item xs={12}>
               <Paper sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
@@ -489,7 +501,11 @@ const SendNotifications = () => {
                   Thao tác
                 </Typography>
 
-                <Box display="flex" flexDirection={{ xs: 'column', sm: 'column' }} gap={2}>
+                <Box
+                  display="flex"
+                  flexDirection={{ xs: 'column', sm: 'column' }}
+                  gap={2}
+                >
                   <Button
                     variant="outlined"
                     startIcon={<PreviewIcon />}

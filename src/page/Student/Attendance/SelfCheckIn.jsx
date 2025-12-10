@@ -82,8 +82,8 @@ const SelfCheckIn = () => {
       const data = await studentServices.getCheckInHistory();
       if (data) {
         // Sắp xếp theo thời gian mới nhất trước (giảm dần)
-        const sortedData = [...data].sort((a, b) =>
-          new Date(b.checkInTime) - new Date(a.checkInTime)
+        const sortedData = [...data].sort(
+          (a, b) => new Date(b.checkInTime) - new Date(a.checkInTime)
         );
         setCheckInHistory(sortedData);
       }
@@ -169,13 +169,7 @@ const SelfCheckIn = () => {
       );
     }
 
-    return (
-      <Chip
-        label="Đã đóng"
-        color="default"
-        size="small"
-      />
-    );
+    return <Chip label="Đã đóng" color="default" size="small" />;
   };
 
   const formatTime = (timeString) => {
@@ -240,15 +234,15 @@ const SelfCheckIn = () => {
                 fetchCheckInHistory();
               }}
               disabled={loading}
-            sx={{
-              bgcolor: 'background.paper',
-              '&:hover': { bgcolor: 'action.hover' },
-              boxShadow: 1,
-            }}
-          >
-            <RefreshIcon />
-          </IconButton>
-        </Tooltip>
+              sx={{
+                bgcolor: 'background.paper',
+                '&:hover': { bgcolor: 'action.hover' },
+                boxShadow: 1,
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Box>
 
@@ -257,172 +251,201 @@ const SelfCheckIn = () => {
           {/* Info Alert */}
           <Alert severity="info" sx={{ mb: 3 }}>
             <Typography variant="body2">
-              Bạn chỉ có thể điểm danh trong khung thời gian quy định. Hãy đảm bảo
-              điểm danh đúng giờ để tránh bị ghi nhận là đi muộn hoặc vắng mặt.
+              Bạn chỉ có thể điểm danh trong khung thời gian quy định. Hãy đảm
+              bảo điểm danh đúng giờ để tránh bị ghi nhận là đi muộn hoặc vắng
+              mặt.
             </Typography>
           </Alert>
 
           {/* Sessions List */}
           {sessions.length === 0 ? (
-        <Card sx={{ textAlign: 'center', py: 6 }}>
-          <CardContent>
-            <ScheduleIcon
-              sx={{ fontSize: 80, color: 'text.disabled', mb: 2 }}
-            />
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              Không có phiên điểm danh nào
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Hiện tại chưa có phiên điểm danh nào khả dụng cho bạn
-            </Typography>
-          </CardContent>
-        </Card>
-      ) : (
-        <Grid container spacing={3}>
-          {sessions.map((session) => (
-            <Grid item xs={12} md={6} lg={4} key={session.attendanceSessionId}>
-              <Card
-                sx={{
-                  height: '100%',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 4,
-                  },
-                }}
-              >
-                <CardContent>
-                  {/* Header */}
-                  <Box
+            <Card sx={{ textAlign: 'center', py: 6 }}>
+              <CardContent>
+                <ScheduleIcon
+                  sx={{ fontSize: 80, color: 'text.disabled', mb: 2 }}
+                />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  Không có phiên điểm danh nào
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Hiện tại chưa có phiên điểm danh nào khả dụng cho bạn
+                </Typography>
+              </CardContent>
+            </Card>
+          ) : (
+            <Grid container className="equal-height-cards" spacing={3}>
+              {sessions.map((session) => (
+                <Grid
+                  item
+                  xs={12}
+                  md={6}
+                  lg={4}
+                  key={session.attendanceSessionId}
+                >
+                  <Card
                     sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      mb: 2,
+                      height: '100%',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: 4,
+                      },
                     }}
                   >
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant="h6"
+                    <CardContent>
+                      {/* Header */}
+                      <Box
                         sx={{
-                          fontWeight: 600,
-                          color: 'primary.main',
-                          mb: 0.5,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          mb: 2,
                         }}
                       >
-                        {session.sessionName}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {session.sectionCode}
-                      </Typography>
-                    </Box>
-                    {getStatusChip(session)}
-                  </Box>
-
-                  <Divider sx={{ my: 2 }} />
-
-                  {/* Course Info */}
-                  <Box sx={{ mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <SchoolIcon
-                        sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }}
-                      />
-                      <Typography variant="body2">
-                        <strong>{session.courseCode}</strong> - {session.courseName}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <PersonIcon
-                        sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }}
-                      />
-                      <Typography variant="body2">
-                        GV: {session.lecturerName}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Time Info */}
-                  <Box
-                    sx={{
-                      bgcolor: alpha(theme.palette.primary.main, 0.05),
-                      p: 2,
-                      borderRadius: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <ScheduleIcon
-                        sx={{ fontSize: 18, mr: 1, color: 'primary.main' }}
-                      />
-                      <Typography variant="body2">
-                        <strong>Buổi học:</strong>{' '}
-                        {formatTime(session.startTime)} -{' '}
-                        {formatTime(session.endTime)}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <AccessTimeIcon
-                        sx={{ fontSize: 18, mr: 1, color: 'success.main' }}
-                      />
-                      <Typography variant="body2">
-                        <strong>Điểm danh:</strong>{' '}
-                        {formatDateTime(session.selfCheckInStartTime)} -{' '}
-                        {formatDateTime(session.selfCheckInEndTime)}
-                      </Typography>
-                    </Box>
-                    {session.room && (
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <RoomIcon
-                          sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }}
-                        />
-                        <Typography variant="body2">
-                          <strong>Phòng:</strong> {session.room}
-                        </Typography>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 600,
+                              color: 'primary.main',
+                              mb: 0.5,
+                            }}
+                          >
+                            {session.sessionName}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {session.sectionCode}
+                          </Typography>
+                        </Box>
+                        {getStatusChip(session)}
                       </Box>
-                    )}
-                  </Box>
 
-                  {/* Check-in Status */}
-                  {session.hasCheckedIn && session.checkedInAt && (
-                    <Alert severity="success" sx={{ mb: 2 }}>
-                      <Typography variant="body2">
-                        Đã điểm danh lúc: {formatDateTime(session.checkedInAt)}
-                      </Typography>
-                    </Alert>
-                  )}
+                      <Divider sx={{ my: 2 }} />
 
-                  {/* Action Button */}
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    color={session.hasCheckedIn ? 'success' : 'primary'}
-                    disabled={
-                      session.hasCheckedIn ||
-                      !session.isCheckInActive ||
-                      submitting
-                    }
-                    onClick={() => handleOpenCheckInDialog(session)}
-                    startIcon={
-                      session.hasCheckedIn ? (
-                        <CheckCircleIcon />
-                      ) : (
-                        <CheckCircleOutlineIcon />
-                      )
-                    }
-                  >
-                    {session.hasCheckedIn
-                      ? 'Đã điểm danh'
-                      : session.isCheckInActive
-                        ? 'Điểm danh ngay'
-                        : 'Chưa đến giờ'}
-                  </Button>
-                </CardContent>
-              </Card>
+                      {/* Course Info */}
+                      <Box sx={{ mb: 2 }}>
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                        >
+                          <SchoolIcon
+                            sx={{
+                              fontSize: 18,
+                              mr: 1,
+                              color: 'text.secondary',
+                            }}
+                          />
+                          <Typography variant="body2">
+                            <strong>{session.courseCode}</strong> -{' '}
+                            {session.courseName}
+                          </Typography>
+                        </Box>
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                        >
+                          <PersonIcon
+                            sx={{
+                              fontSize: 18,
+                              mr: 1,
+                              color: 'text.secondary',
+                            }}
+                          />
+                          <Typography variant="body2">
+                            GV: {session.lecturerName}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      {/* Time Info */}
+                      <Box
+                        sx={{
+                          bgcolor: alpha(theme.palette.primary.main, 0.05),
+                          p: 2,
+                          borderRadius: 1,
+                          mb: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                        >
+                          <ScheduleIcon
+                            sx={{ fontSize: 18, mr: 1, color: 'primary.main' }}
+                          />
+                          <Typography variant="body2">
+                            <strong>Buổi học:</strong>{' '}
+                            {formatTime(session.startTime)} -{' '}
+                            {formatTime(session.endTime)}
+                          </Typography>
+                        </Box>
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                        >
+                          <AccessTimeIcon
+                            sx={{ fontSize: 18, mr: 1, color: 'success.main' }}
+                          />
+                          <Typography variant="body2">
+                            <strong>Điểm danh:</strong>{' '}
+                            {formatDateTime(session.selfCheckInStartTime)} -{' '}
+                            {formatDateTime(session.selfCheckInEndTime)}
+                          </Typography>
+                        </Box>
+                        {session.room && (
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <RoomIcon
+                              sx={{
+                                fontSize: 18,
+                                mr: 1,
+                                color: 'text.secondary',
+                              }}
+                            />
+                            <Typography variant="body2">
+                              <strong>Phòng:</strong> {session.room}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+
+                      {/* Check-in Status */}
+                      {session.hasCheckedIn && session.checkedInAt && (
+                        <Alert severity="success" sx={{ mb: 2 }}>
+                          <Typography variant="body2">
+                            Đã điểm danh lúc:{' '}
+                            {formatDateTime(session.checkedInAt)}
+                          </Typography>
+                        </Alert>
+                      )}
+
+                      {/* Action Button */}
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        color={session.hasCheckedIn ? 'success' : 'primary'}
+                        disabled={
+                          session.hasCheckedIn ||
+                          !session.isCheckInActive ||
+                          submitting
+                        }
+                        onClick={() => handleOpenCheckInDialog(session)}
+                        startIcon={
+                          session.hasCheckedIn ? (
+                            <CheckCircleIcon />
+                          ) : (
+                            <CheckCircleOutlineIcon />
+                          )
+                        }
+                      >
+                        {session.hasCheckedIn
+                          ? 'Đã điểm danh'
+                          : session.isCheckInActive
+                            ? 'Điểm danh ngay'
+                            : 'Chưa đến giờ'}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
-          ))}
-        </Grid>
-      )}
-      </>
+          )}
+        </>
       ) : null}
 
       {/* Check-in Dialog */}
@@ -432,9 +455,7 @@ const SelfCheckIn = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>
-          Xác nhận điểm danh
-        </DialogTitle>
+        <DialogTitle sx={{ fontWeight: 600 }}>Xác nhận điểm danh</DialogTitle>
         <DialogContent>
           {selectedSession && (
             <Box sx={{ pt: 1 }}>
@@ -514,7 +535,9 @@ const SelfCheckIn = () => {
             <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
               <Table>
                 <TableHead>
-                  <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.08) }}>
+                  <TableRow
+                    sx={{ bgcolor: alpha(theme.palette.primary.main, 0.08) }}
+                  >
                     <TableCell sx={{ fontWeight: 600 }}>STT</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Môn học</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Phiên</TableCell>
@@ -528,7 +551,9 @@ const SelfCheckIn = () => {
                       key={index}
                       hover
                       sx={{
-                        '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.04) },
+                        '&:hover': {
+                          bgcolor: alpha(theme.palette.primary.main, 0.04),
+                        },
                       }}
                     >
                       <TableCell>{index + 1}</TableCell>
@@ -555,8 +580,8 @@ const SelfCheckIn = () => {
                             history.attendanceStatus === 'Có mặt'
                               ? 'success'
                               : history.attendanceStatus === 'Đi muộn'
-                              ? 'warning'
-                              : 'default'
+                                ? 'warning'
+                                : 'default'
                           }
                         />
                       </TableCell>

@@ -45,11 +45,21 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
   useEffect(() => {
     if (open && section && dropdownData) {
       // Find objects from IDs
-      const course = dropdownData.curriculumCourses?.find(c => c.id === section.courseId) || null;
-      const lecturer = dropdownData.lecturers?.find(l => l.id === section.lecturerId) || null;
-      const semester = dropdownData.semesters?.find(s => s.id === section.semesterId) || null;
-      const classItem = dropdownData.classes?.find(c => c.classId === section.classId) || null;
-      const statusOption = statusOptions.find(s => s.value === section.status) || null;
+      const course =
+        dropdownData.curriculumCourses?.find(
+          (c) => c.id === section.courseId
+        ) || null;
+      const lecturer =
+        dropdownData.lecturers?.find((l) => l.id === section.lecturerId) ||
+        null;
+      const semester =
+        dropdownData.semesters?.find((s) => s.id === section.semesterId) ||
+        null;
+      const classItem =
+        dropdownData.classes?.find((c) => c.classId === section.classId) ||
+        null;
+      const statusOption =
+        statusOptions.find((s) => s.value === section.status) || null;
 
       setFormData({
         curriculumCourse: course,
@@ -131,7 +141,10 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
       // Prepare data for API - only send fields that have values
       const submitData = {};
 
-      if (formData.curriculumCourse && formData.curriculumCourse.id !== section.courseId) {
+      if (
+        formData.curriculumCourse &&
+        formData.curriculumCourse.id !== section.courseId
+      ) {
         submitData.curriculumCourseId = parseInt(formData.curriculumCourse.id);
       }
       if (formData.lecturer && formData.lecturer.id !== section.lecturerId) {
@@ -140,7 +153,10 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
       if (formData.semester && formData.semester.id !== section.semesterId) {
         submitData.semesterId = parseInt(formData.semester.id);
       }
-      if (formData.classItem && formData.classItem.classId !== section.classId) {
+      if (
+        formData.classItem &&
+        formData.classItem.classId !== section.classId
+      ) {
         submitData.classId = parseInt(formData.classItem.classId);
       }
       if (formData.startDate) {
@@ -159,10 +175,15 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
         submitData.minEnrollment = parseInt(formData.minEnrollment);
       }
       if (formData.minEnrollmentPercentage) {
-        submitData.minEnrollmentPercentage = parseFloat(formData.minEnrollmentPercentage);
+        submitData.minEnrollmentPercentage = parseFloat(
+          formData.minEnrollmentPercentage
+        );
       }
 
-      const result = await sectionService.updateSection(section.sectionId, submitData);
+      const result = await sectionService.updateSection(
+        section.sectionId,
+        submitData
+      );
       if (result) {
         onSave(result);
       }
@@ -179,7 +200,14 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
     return (
       <Dialog open={open} onClose={onCancel} maxWidth="md" fullWidth>
         <DialogContent>
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              py: 4,
+            }}
+          >
             <CircularProgress />
           </Box>
         </DialogContent>
@@ -190,7 +218,13 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="md" fullWidth>
       <DialogTitle sx={{ pb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               Chỉnh sửa lớp học phần
@@ -206,10 +240,11 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
       </DialogTitle>
 
       <DialogContent dividers>
-        <Grid container spacing={3}>
+        <Grid container className="equal-height-cards" spacing={3}>
           <Grid item xs={12}>
             <Alert severity="info" sx={{ mb: 2 }}>
-              Chỉ các trường được thay đổi sẽ được cập nhật. Để trống nếu không muốn thay đổi.
+              Chỉ các trường được thay đổi sẽ được cập nhật. Để trống nếu không
+              muốn thay đổi.
             </Alert>
           </Grid>
 
@@ -219,15 +254,24 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
               options={dropdownData?.curriculumCourses || []}
               value={formData.curriculumCourse}
               onChange={(newValue) => {
-                setFormData((prev) => ({ ...prev, curriculumCourse: newValue }));
+                setFormData((prev) => ({
+                  ...prev,
+                  curriculumCourse: newValue,
+                }));
               }}
-              getOptionLabel={(option) => `${option.name} (${option.credits} tín chỉ)`}
+              getOptionLabel={(option) =>
+                `${option.name} (${option.credits} tín chỉ)`
+              }
               isOptionEqualToValue={(option, value) => option?.id === value?.id}
               label="Môn học"
               placeholder="Tìm môn học..."
               disabled={loading}
             />
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mt: 0.5, display: 'block' }}
+            >
               Hiện tại: {section.courseName}
             </Typography>
           </Grid>
@@ -240,7 +284,9 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
               onChange={(newValue) => {
                 setFormData((prev) => ({ ...prev, lecturer: newValue }));
               }}
-              getOptionLabel={(option) => `${option.name} (${option.lecturerCode})`}
+              getOptionLabel={(option) =>
+                `${option.name} (${option.lecturerCode})`
+              }
               isOptionEqualToValue={(option, value) => option?.id === value?.id}
               label="Giảng viên"
               placeholder="Tìm giảng viên..."
@@ -274,8 +320,12 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
               onChange={(newValue) => {
                 setFormData((prev) => ({ ...prev, classItem: newValue }));
               }}
-              getOptionLabel={(option) => `${option.className} - ${option.programName}`}
-              isOptionEqualToValue={(option, value) => option?.classId === value?.classId}
+              getOptionLabel={(option) =>
+                `${option.className} - ${option.programName}`
+              }
+              isOptionEqualToValue={(option, value) =>
+                option?.classId === value?.classId
+              }
               label="Lớp"
               placeholder="Tìm lớp..."
               disabled={loading}
@@ -292,7 +342,9 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
                 setFormData((prev) => ({ ...prev, status: newValue }));
               }}
               getOptionLabel={(option) => option.label}
-              isOptionEqualToValue={(option, value) => option?.value === value?.value}
+              isOptionEqualToValue={(option, value) =>
+                option?.value === value?.value
+              }
               label="Trạng thái"
               placeholder="Chọn trạng thái..."
               disabled={loading}

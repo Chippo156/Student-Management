@@ -207,7 +207,9 @@ const StudentInfo = () => {
   };
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 2, md: 3 }, maxWidth: '100%', overflow: 'hidden' }}>
+    <Box
+      sx={{ p: { xs: 2, sm: 2, md: 3 }, maxWidth: '100%', overflow: 'hidden' }}
+    >
       <Box display="flex" alignItems="center" gap={2} mb={3}>
         <Avatar sx={{ bgcolor: 'primary.main' }}>
           <AccountBoxIcon />
@@ -219,7 +221,12 @@ const StudentInfo = () => {
 
       {/* Filters */}
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
+        <Grid
+          container
+          className="equal-height-cards"
+          spacing={2}
+          alignItems="center"
+        >
           <Grid item xs={12} md={3}>
             <TextField
               fullWidth
@@ -306,7 +313,9 @@ const StudentInfo = () => {
 
       {/* Student Info Table */}
       <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-        <TableContainer sx={{ maxHeight: 'calc(100vh - 400px)', overflowX: 'auto' }}>
+        <TableContainer
+          sx={{ maxHeight: 'calc(100vh - 400px)', overflowX: 'auto' }}
+        >
           <Table stickyHeader sx={{ minWidth: 650 }}>
             <TableHead>
               <TableRow>
@@ -416,7 +425,12 @@ const StudentInfo = () => {
         </DialogTitle>
         <DialogContent>
           {selectedStudent && (
-            <Grid container spacing={3} sx={{ mt: 1 }}>
+            <Grid
+              container
+              className="equal-height-cards"
+              spacing={3}
+              sx={{ mt: 1 }}
+            >
               {/* Thông tin cá nhân */}
               <Grid item xs={12} md={6}>
                 <Card>

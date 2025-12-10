@@ -1,12 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  Paper,
-  Typography,
-  Box,
-  Grid,
-  Button,
-  Fade,
-} from '@mui/material';
+import { Paper, Typography, Box, Grid, Button, Fade } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 import {
   Grade,
@@ -22,14 +15,17 @@ const TeacherQuickActions = () => {
   const theme = useTheme();
   const navigate = useNavigate();
 
-  const colors = useMemo(() => ({
-    primary: theme.palette.primary.main,
-    success: theme.palette.success.main,
-    warning: theme.palette.warning.main,
-    secondary: theme.palette.secondary.main,
-    error: theme.palette.error.main,
-    info: theme.palette.info.main,
-  }), [theme]);
+  const colors = useMemo(
+    () => ({
+      primary: theme.palette.primary.main,
+      success: theme.palette.success.main,
+      warning: theme.palette.warning.main,
+      secondary: theme.palette.secondary.main,
+      error: theme.palette.error.main,
+      info: theme.palette.info.main,
+    }),
+    [theme]
+  );
 
   const actions = [
     {
@@ -77,7 +73,12 @@ const TeacherQuickActions = () => {
           Thao tác nhanh
         </Typography>
 
-        <Grid container spacing={2} sx={{ mt: 1 }}>
+        <Grid
+          container
+          className="equal-height-cards"
+          spacing={2}
+          sx={{ mt: 1 }}
+        >
           {actions.map((action, index) => (
             <Grid item xs={6} sm={4} md={2} key={index}>
               <Button

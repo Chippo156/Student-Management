@@ -414,7 +414,12 @@ const AdminDashboard = () => {
             }}
           >
             <Box sx={{ position: 'relative', zIndex: 1 }}>
-              <Grid container spacing={3} alignItems="center">
+              <Grid
+                container
+                className="equal-height-cards"
+                spacing={3}
+                alignItems="center"
+              >
                 <Grid item xs={12} md={8}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Avatar
@@ -483,7 +488,12 @@ const AdminDashboard = () => {
         </Fade>
 
         {/* Stats Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid
+          container
+          className="equal-height-cards"
+          spacing={3}
+          sx={{ mb: 4 }}
+        >
           {statsData.map((stat, index) => (
             <Grid item xs={12} sm={6} md={3} key={index}>
               <Grow in={true} timeout={600 + index * 200}>
