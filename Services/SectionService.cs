@@ -410,7 +410,9 @@ namespace StudentManagement.Services
 
             var response = sections.Select(s => new SectionDetailWithRegistrationResponse
             {
+                
                 SectionId = s.SectionId,
+                SectionCode = s.SectionCode,
                 MaxCapacity = s.Capacity,
                 CurrentEnrollment = s.EnrolledCount,
                 StartDate = s.StartDate,

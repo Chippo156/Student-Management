@@ -6,6 +6,7 @@ namespace StudentManagement.Models.Dto.Response
     {
         public int SectionId { get; set; }
         public string SectionName { get; set; } = string.Empty;
+        public string SectionCode { get; set; } = string.Empty;
         public int MaxCapacity { get; set; }
         public int CurrentEnrollment { get; set; }
         public DateOnly StartDate { get; set; }
