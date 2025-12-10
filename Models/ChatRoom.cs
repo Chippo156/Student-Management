@@ -36,7 +36,7 @@ namespace StudentManagement.Models
         public string? Description { get; set; }
         
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         
         // Navigation properties
         [JsonIgnore]
@@ -81,7 +81,7 @@ namespace StudentManagement.Models
         public User User { get; set; } = null!;
         
         public ParticipantRole Role { get; set; }
-        public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
+        public DateTime JoinedAt { get; set; } = DateTime.Now;
         public DateTime? LastSeenAt { get; set; }
         public bool IsActive { get; set; } = true;
     }

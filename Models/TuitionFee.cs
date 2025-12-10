@@ -20,7 +20,7 @@ namespace StudentManagement.Models
         
         public TuitionStatus Status { get; set; } = TuitionStatus.Pending;
         public DateTime DueDate { get; set; } // Hạn đóng học phí
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? PaidAt { get; set; } // Ngày đóng hoàn thành
         
         // Thông tin bổ sung

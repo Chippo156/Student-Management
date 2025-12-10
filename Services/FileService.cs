@@ -60,7 +60,7 @@ namespace StudentManagement.Services
                 FileType = request.File.ContentType,
                 FilePath = uploadResult.SecureUrl.ToString(), // URL từ Cloudinary
                 UploadedBy = user,
-                UploadedAt = DateTime.UtcNow
+                UploadedAt = DateTime.Now
             };
 
             // Lưu thông tin file vào database

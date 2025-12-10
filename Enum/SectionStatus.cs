@@ -7,5 +7,6 @@
         IsClosed = 2,
         IsCancelled = 3,
         IsCompleted = 4,
+        IsStudying = 5
     }
 }

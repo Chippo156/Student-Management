@@ -42,7 +42,7 @@ namespace StudentManagement.Services
 
             if (isActive.HasValue)
             {
-                var now = DateTime.UtcNow;
+                var now = DateTime.Now;
                 if (isActive.Value)
                 {
                     query = query.Where(rp => rp.StartDate <= now && rp.EndDate >= now);
@@ -132,7 +132,7 @@ namespace StudentManagement.Services
                 // Additional detail info
                 TotalSections = sections.Count,
                 TotalEnrollments = totalEnrollments,
-                CreatedAt = DateTime.UtcNow, // You might want to add this field to model
+                CreatedAt = DateTime.Now, // You might want to add this field to model
                 SectionStats = sectionStats
             };
         }
@@ -233,7 +233,7 @@ namespace StudentManagement.Services
                 return false;
 
             // Check if period is currently active
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             if (now >= registrationPeriod.StartDate && now <= registrationPeriod.EndDate)
             {
                 throw new InvalidOperationException("Cannot delete an active registration period");
@@ -264,7 +264,7 @@ namespace StudentManagement.Services
 
         public async Task<List<RegistrationPeriodResponse>> GetActiveRegistrationPeriodsAsync()
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             
             var activeRegistrationPeriods = await _context.RegistrationPeriods
                 .Include(rp => rp.Semester)
@@ -279,7 +279,7 @@ namespace StudentManagement.Services
 
         public async Task<RegistrationPeriodResponse?> GetActiveRegistrationPeriodByDepartmentAsync(int departmentId)
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             
             var activeRegistrationPeriod = await _context.RegistrationPeriods
                 .Include(rp => rp.Semester)
@@ -306,7 +306,7 @@ namespace StudentManagement.Services
 
         private static RegistrationPeriodResponse MapToRegistrationPeriodResponse(RegistrationPeriod rp)
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             var isActive = now >= rp.StartDate && now <= rp.EndDate;
             var hasStarted = now >= rp.StartDate;
             var hasEnded = now > rp.EndDate;

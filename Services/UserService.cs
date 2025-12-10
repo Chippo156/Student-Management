@@ -935,7 +935,7 @@ namespace StudentManagement.Services
 
                 // Optionally clear refresh token to force logout
                 user.RefreshToken = null;
-                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(-1); // Set to past date
+                user.RefreshTokenExpiryTime = DateTime.Now.AddDays(-1); // Set to past date
 
                 context.Users.Update(user);
 
@@ -1050,7 +1050,7 @@ namespace StudentManagement.Services
                     .Where(o => o.Code == request.MSSV && 
                                o.Purpose == "ForgotPassword" && 
                                !o.IsUsed && 
-                               o.ExpiresAt > DateTime.UtcNow)
+                               o.ExpiresAt > DateTime.Now)
                     .FirstOrDefaultAsync();
 
                 if (existingOtp != null)
@@ -1059,20 +1059,20 @@ namespace StudentManagement.Services
                     {
                         IsSuccess = false,
                         Message = "Vui lòng chờ",
-                        Errors = { $"Mã OTP cũ vẫn còn hiệu lực. Vui lòng chờ {(existingOtp.ExpiresAt - DateTime.UtcNow).TotalSeconds:F0} giây." }
+                        Errors = { $"Mã OTP cũ vẫn còn hiệu lực. Vui lòng chờ {(existingOtp.ExpiresAt - DateTime.Now).TotalSeconds:F0} giây." }
                     };
                 }
 
                 // **NEW: Tạo mã OTP 6 số**
                 var otpCode = GenerateOtpCode();
-                var otpExpiry = DateTime.UtcNow.AddMinutes(5); // 5 phút
+                var otpExpiry = DateTime.Now.AddMinutes(5); // 5 phút
 
                 var otpVerification = new OtpVerification
                 {
                     Email = user.Email,
                     Code = request.MSSV,
                     OtpCode = otpCode,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.Now,
                     ExpiresAt = otpExpiry,
                     Purpose = "ForgotPassword"
                 };
@@ -1145,7 +1145,7 @@ namespace StudentManagement.Services
                     };
                 }
 
-                if (otpRecord.ExpiresAt < DateTime.UtcNow)
+                if (otpRecord.ExpiresAt < DateTime.Now)
                 {
                     return new VerifyOtpResponse
                     {
@@ -1166,7 +1166,7 @@ namespace StudentManagement.Services
 
                 // Xóa refresh token để buộc đăng nhập lại
                 user.RefreshToken = null;
-                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(-1);
+                user.RefreshTokenExpiryTime = DateTime.Now.AddDays(-1);
 
                 context.Users.Update(user);
                 await context.SaveChangesAsync();

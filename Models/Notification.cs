@@ -8,6 +8,6 @@ namespace StudentManagement.Models
         public Announcement Announcement { get; set; } = null!;
         public User User { get; set; } = null!;
         public NotificationStatus Status { get; set; } = NotificationStatus.Unread;
-        public DateTime SentAt { get; set; } = DateTime.UtcNow;
+        public DateTime SentAt { get; set; } = DateTime.Now;
     }
 }

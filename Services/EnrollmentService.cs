@@ -219,7 +219,7 @@ namespace StudentManagement.Services
                     Student = student,
                     Section = section,
                     enrollmentStatus = EnrollmentStatus.Enrolled,
-                    RegisteredAt = DateTime.UtcNow
+                    RegisteredAt = DateTime.Now
                 };
 
                 context.Enrollments.Add(enrollment);
@@ -513,7 +513,7 @@ namespace StudentManagement.Services
                     RemainingAmount = courseAmount,
                     Status = TuitionStatus.Pending,
                     DueDate = section.Semester.EndDate.AddDays(30).ToDateTime(TimeOnly.MinValue),
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.Now,
                     IsLate = false,
                 };
 

@@ -8,7 +8,7 @@ namespace StudentManagement.Models
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public string SourceUrl { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         
         // Thêm các field mới
         public AnnouncementPriority Priority { get; set; } = AnnouncementPriority.Normal;

@@ -89,7 +89,7 @@ namespace StudentManagement.Services
                 issuer: configuration.GetValue<string>("AppSettings:Issuer"),
                 audience: configuration.GetValue<string>("AppSettings:Audience"),
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(1),
+                expires: DateTime.Now.AddDays(1),
                 signingCredentials: creds
                 );
 
@@ -107,7 +107,7 @@ namespace StudentManagement.Services
         {
             var refreshToken = GenerateRefreshToken();
             user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
             await context.SaveChangesAsync();
             return refreshToken;
         }
@@ -119,7 +119,7 @@ namespace StudentManagement.Services
                 .FirstOrDefaultAsync(u => u.UserId == userId);
 
             if (user is null || user.RefreshToken != refreshetToken
-                || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+                || user.RefreshTokenExpiryTime <= DateTime.Now)
             {
                 return null;
             }
@@ -179,7 +179,7 @@ namespace StudentManagement.Services
 
                 // Invalidate refresh token
                 user.RefreshToken = "";
-                user.RefreshTokenExpiryTime = DateTime.UtcNow;
+                user.RefreshTokenExpiryTime = DateTime.Now;
 
                 // Update the user in the database
                 context.Users.Update(user);

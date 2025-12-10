@@ -128,7 +128,7 @@ namespace StudentManagement.Services
             if (onlyActive == true)
             {
                 query = query.Where(a => a.IsActive && 
-                                    (a.ExpiryDate == null || a.ExpiryDate > DateTime.UtcNow));
+                                    (a.ExpiryDate == null || a.ExpiryDate > DateTime.Now));
             }
 
             if (type.HasValue)
@@ -170,9 +170,9 @@ namespace StudentManagement.Services
                 TargetDescription = GetTargetDescription(a),
                 CreatedByUserName = a.CreatedByUser.Username,
                 CreatedByFullName = a.CreatedByUser.FullName,
-                IsExpired = a.ExpiryDate.HasValue && a.ExpiryDate.Value <= DateTime.UtcNow,
+                IsExpired = a.ExpiryDate.HasValue && a.ExpiryDate.Value <= DateTime.Now,
                 DaysUntilExpiry = a.ExpiryDate.HasValue ? 
-                    Math.Max(0, (int)(a.ExpiryDate.Value - DateTime.UtcNow).TotalDays) : -1,
+                    Math.Max(0, (int)(a.ExpiryDate.Value - DateTime.Now).TotalDays) : -1,
                 ViewCount = 0, // TODO: Implement view tracking
                 LastViewedAt = null // TODO: Implement view tracking
             }).ToList();
@@ -331,7 +331,7 @@ namespace StudentManagement.Services
             return await context.Announcements
                 .Where(a => 
                     a.IsActive &&
-                    (a.ExpiryDate == null || a.ExpiryDate > DateTime.UtcNow) &&
+                    (a.ExpiryDate == null || a.ExpiryDate > DateTime.Now) &&
                     (a.TargetType == AnnouncementTargetType.All ||
                     (a.TargetType == AnnouncementTargetType.Students && user.Role.RoleId == 2) ||
                     (a.TargetType == AnnouncementTargetType.Lecturers && user.Role.RoleId == 3) ||
@@ -350,7 +350,7 @@ namespace StudentManagement.Services
                 .Where(a => 
                     a.Type == type &&
                     a.IsActive && 
-                    (a.ExpiryDate == null || a.ExpiryDate > DateTime.UtcNow) &&
+                    (a.ExpiryDate == null || a.ExpiryDate > DateTime.Now) &&
                     (a.TargetType == AnnouncementTargetType.All || 
                      a.TargetType == AnnouncementTargetType.Students || 
                      a.TargetType == AnnouncementTargetType.Lecturers) // Chỉ lấy thông báo công khai
@@ -385,9 +385,9 @@ namespace StudentManagement.Services
                 TargetDescription = GetTargetDescription(a),
                 CreatedByUserName = a.CreatedByUser.Username,
                 CreatedByFullName = a.CreatedByUser.FullName,
-                IsExpired = a.ExpiryDate.HasValue && a.ExpiryDate.Value <= DateTime.UtcNow,
+                IsExpired = a.ExpiryDate.HasValue && a.ExpiryDate.Value <= DateTime.Now,
                 DaysUntilExpiry = a.ExpiryDate.HasValue ? 
-                    Math.Max(0, (int)(a.ExpiryDate.Value - DateTime.UtcNow).TotalDays) : -1,
+                    Math.Max(0, (int)(a.ExpiryDate.Value - DateTime.Now).TotalDays) : -1,
                 ViewCount = 0, // TODO: Implement view tracking if needed
                 LastViewedAt = null // TODO: Implement view tracking if needed
             }).ToList();
@@ -423,9 +423,9 @@ namespace StudentManagement.Services
                 TargetDescription = GetTargetDescription(announcement),
                 CreatedByUserName = announcement.CreatedByUser.Username,
                 CreatedByFullName = announcement.CreatedByUser.FullName,
-                IsExpired = announcement.ExpiryDate.HasValue && announcement.ExpiryDate.Value <= DateTime.UtcNow,
+                IsExpired = announcement.ExpiryDate.HasValue && announcement.ExpiryDate.Value <= DateTime.Now,
                 DaysUntilExpiry = announcement.ExpiryDate.HasValue ? 
-                    Math.Max(0, (int)(announcement.ExpiryDate.Value - DateTime.UtcNow).TotalDays) : -1
+                    Math.Max(0, (int)(announcement.ExpiryDate.Value - DateTime.Now).TotalDays) : -1
             };
         }
 

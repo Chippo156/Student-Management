@@ -1,11 +1,12 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using StudentManagement.Data;
+using StudentManagement.Enum;
+using StudentManagement.Models;
+using StudentManagement.Services.Interface;
 using System.Text;
 using System.Text.Json;
-using StudentManagement.Services.Interface;
-using Microsoft.EntityFrameworkCore;
-using StudentManagement.Data;
 using System.Text.RegularExpressions;
-using StudentManagement.Models;
 
 namespace StudentManagement.Services
 {
@@ -45,10 +46,10 @@ namespace StudentManagement.Services
                     },
                     generationConfig = new
                     {
-                        temperature = 0.4,
+                        temperature = 0.5,
                         topK = 40,
                         topP = 0.95,
-                        maxOutputTokens = 2000 
+                        maxOutputTokens = 1000 
                     },
                     safetySettings = new[]
                     {
@@ -163,6 +164,14 @@ namespace StudentManagement.Services
             if (student == null)
                 return new StudentDatabaseInfo { MSSV = mssv, NotFound = true };
 
+            // **MỚI: Xác định học kỳ hiện tại**
+            var currentDate = DateTime.UtcNow;
+            var currentSemester = await _context.Semesters
+                .Where(s => s.StartDate <= DateOnly.FromDateTime(currentDate) &&
+                           s.EndDate >= DateOnly.FromDateTime(currentDate))
+                .OrderByDescending(s => s.Year)
+                .ThenByDescending(s => s.Term)
+                .FirstOrDefaultAsync();
             // Get GPA Snapshots (all semesters)
             var gpaSnapshots = await _context.GpaSnapshots
                 .Include(g => g.Semester)
@@ -201,13 +210,63 @@ namespace StudentManagement.Services
                 .Take(3) // Last 3 semesters
                 .ToListAsync();
 
-            var schedules = await _context.Schedules
-                .Include(s => s.Section)
-                    .ThenInclude(sec => sec.CurriculumCourse.Course)
-                .Where(s => s.Section.Enrollments.Any(e => e.Student.MSSV == mssv))
-                                .OrderByDescending(fr => fr.Section.Semester.Year)
-                .ThenByDescending(fr => fr.Section.Semester.Term)
-                .ToListAsync();
+            var schedules = new List<Schedule>();
+            if (currentSemester != null)
+            {
+                // Lấy các section mà sinh viên đang học trong học kỳ hiện tại
+                var currentSemesterSections = await _context.Enrollments
+                    .Where(e => e.Student.MSSV == mssv &&
+                               e.Section.Semester.SemesterId == currentSemester.SemesterId &&
+                               e.enrollmentStatus == EnrollmentStatus.Enrolled)
+                    .Select(e => e.Section.SectionId)
+                    .ToListAsync();
+
+                if (currentSemesterSections.Any())
+                {
+                    // Lấy lịch học chính (lý thuyết) của học kỳ hiện tại
+                    var mainSchedules = await _context.Schedules
+                        .Include(s => s.Section)
+                            .ThenInclude(sec => sec.CurriculumCourse.Course)
+                        .Include(s => s.ScheduleType)
+                        .Where(s => currentSemesterSections.Contains(s.Section.SectionId) &&
+                                   !s.PracticeGroupId.HasValue && // Lịch lý thuyết
+                                   s.ScheduleType.ScheduleTypeId != 3) // Không phải lịch thi
+                        .ToListAsync();
+
+                    // Lấy lịch thực hành của sinh viên trong học kỳ hiện tại
+                    var studentPracticeGroups = await _context.PracticeGroupEnrollments
+                        .Include(pge => pge.PracticeGroup)
+                            .ThenInclude(pg => pg.Section)
+                        .Where(pge => pge.StudentId == student.Id &&
+                                     pge.IsActive &&
+                                     currentSemesterSections.Contains(pge.PracticeGroup.SectionId))
+                        .Select(pge => pge.PracticeGroupId)
+                        .ToListAsync();
+
+                    var practiceSchedules = await _context.Schedules
+                        .Include(s => s.Section)
+                            .ThenInclude(sec => sec.CurriculumCourse.Course)
+                        .Include(s => s.ScheduleType)
+                        .Include(s => s.PracticeGroup)
+                        .Where(s => s.PracticeGroupId.HasValue &&
+                                   studentPracticeGroups.Contains(s.PracticeGroupId.Value) &&
+                                   s.ScheduleType.ScheduleTypeId != 3) // Không phải lịch thi
+                        .ToListAsync();
+
+                    // Lấy lịch thi trong học kỳ hiện tại
+                    var examSchedules = await _context.Schedules
+                        .Include(s => s.Section)
+                            .ThenInclude(sec => sec.CurriculumCourse.Course)
+                        .Include(s => s.ScheduleType)
+                        .Where(s => currentSemesterSections.Contains(s.Section.SectionId) &&
+                                   s.ScheduleType.ScheduleTypeId == 3 && // Lịch thi
+                                   s.Date.HasValue) // Có ngày cụ thể
+                        .ToListAsync();
+
+                    // Kết hợp tất cả lịch của học kỳ hiện tại
+                    schedules = mainSchedules.Concat(practiceSchedules).Concat(examSchedules).ToList();
+                }
+            }
 
             // Calculate statistics
             var totalCreditsCompleted = finalResults.Where(fr => fr.GradePoint >= 1.0)

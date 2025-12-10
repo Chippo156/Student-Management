@@ -20,7 +20,7 @@ namespace StudentManagement.Models
         [JsonIgnore]
 
         public DateTime RefreshTokenExpiryTime { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         // --- Thông tin cá nhân ---
         public string FullName { get; set; } = string.Empty;

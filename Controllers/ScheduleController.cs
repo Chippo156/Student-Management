@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Extensions;
@@ -83,7 +83,7 @@ namespace StudentManagement.Controllers
             var result = await scheduleService.DeleteScheduleAsync(id);
             if (!result)
             {
-                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Schedule with ID {id} not found", null));
+                return NotFound(ApiResponse.ErrorResponse(ErrorCodes.NotFound, $"Xóa lịch không thành công", null));
             }
             return Ok(ApiResponse.SuccessResponse(null, "Schedule deleted successfully"));
         }

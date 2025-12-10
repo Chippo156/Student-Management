@@ -63,7 +63,7 @@ namespace StudentManagement.Models
         public bool IsHouseholder { get; set; } = false; // Là chủ hộ?
 
         // --- Thời gian tạo/cập nhật ---
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
     }
 }

@@ -12,7 +12,7 @@ namespace StudentManagement.Models
         public string Branch { get; set; } = string.Empty;
         public string AccountHolderName { get; set; } = string.Empty;
         public AccountStatus AccountStatus { get; set; } = AccountStatus.Active;
-        public DateOnly DateCreateAccount { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+        public DateOnly DateCreateAccount { get; set; } = DateOnly.FromDateTime(DateTime.Now);
         public bool IsDefault { get; set; } = false;
 
         [JsonIgnore]

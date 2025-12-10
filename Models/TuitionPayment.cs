@@ -23,6 +23,6 @@ namespace StudentManagement.Models
         // Thông tin người xử lý
         public int? ProcessedByUserId { get; set; }
         public User? ProcessedBy { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }

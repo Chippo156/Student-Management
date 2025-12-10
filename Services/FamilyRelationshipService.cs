@@ -40,8 +40,8 @@ namespace StudentManagement.Services
                 DetailAddress = request.DetailAddress,
                 IsDeceased = request.IsDeceased,
                 IsHouseholder = request.IsHouseholder,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
             };
 
             context.FamilyRelationships.Add(familyRelationship);
@@ -102,7 +102,7 @@ namespace StudentManagement.Services
             familyRelationship.DetailAddress = request.DetailAddress;
             familyRelationship.IsDeceased = request.IsDeceased;
             familyRelationship.IsHouseholder = request.IsHouseholder;
-            familyRelationship.UpdatedAt = DateTime.UtcNow;
+            familyRelationship.UpdatedAt = DateTime.Now;
 
             context.FamilyRelationships.Update(familyRelationship);
             await context.SaveChangesAsync();
@@ -136,7 +136,7 @@ namespace StudentManagement.Services
                 DetailAddress = fr.DetailAddress,
                 IsDeceased = fr.IsDeceased,
                 IsHouseholder = fr.IsHouseholder,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.Now
             };
         }
     }

@@ -18,7 +18,7 @@ namespace StudentManagement.Models.Dto.Request
         [Required]
         [StringLength(100)]
         public string Branch { get; set; } = string.Empty;
-        public DateOnly? DateCreateAccount { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+        public DateOnly? DateCreateAccount { get; set; } = DateOnly.FromDateTime(DateTime.Now);
 
         [Required]
         [StringLength(100)]

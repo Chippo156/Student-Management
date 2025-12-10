@@ -1644,7 +1644,7 @@ namespace StudentManagement.Services
                     TotalStudents = 0,
                     EligibleStudents = 0,
                     IneligibleStudents = 0,
-                    GeneratedAt = DateTime.UtcNow
+                    GeneratedAt = DateTime.Now
                 };
             }
 
@@ -1723,7 +1723,7 @@ namespace StudentManagement.Services
                 TotalStudents = studentExamList.Count,
                 EligibleStudents = eligibleCount,
                 IneligibleStudents = ineligibleCount,
-                GeneratedAt = DateTime.UtcNow
+                GeneratedAt = DateTime.Now
             };
         }
 

@@ -26,7 +26,7 @@ namespace StudentManagement.Models
         public int? LecturerId { get; set; }
         public Lecturer? Lecturer { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public bool IsActive { get; set; } = true;
     }
 }

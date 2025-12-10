@@ -30,7 +30,7 @@ namespace StudentManagement.Services
                 AccountHolderName = request.AccountHolderName,
                 IsDefault = request.IsDefault,
                 AccountStatus = Enum.AccountStatus.Active,
-                DateCreateAccount = request.DateCreateAccount ?? DateOnly.FromDateTime(DateTime.UtcNow)
+                DateCreateAccount = request.DateCreateAccount ?? DateOnly.FromDateTime(DateTime.Now)
             };
 
             context.BankAccounts.Add(bankAccount);

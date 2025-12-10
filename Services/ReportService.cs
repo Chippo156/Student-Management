@@ -790,7 +790,7 @@ namespace StudentManagement.Services
             {
                 YearDistribution = yearDistribution,
                 TotalStudents = totalStudents,
-                GeneratedAt = DateTime.UtcNow
+                GeneratedAt = DateTime.Now
             };
         }
 

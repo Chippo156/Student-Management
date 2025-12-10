@@ -48,11 +48,11 @@ namespace StudentManagement.Services
             {
                 if (request.IsOverdue.Value)
                 {
-                    query = query.Where(tf => tf.DueDate < DateTime.UtcNow && tf.Status != TuitionStatus.FullyPaid);
+                    query = query.Where(tf => tf.DueDate < DateTime.Now && tf.Status != TuitionStatus.FullyPaid);
                 }
                 else
                 {
-                    query = query.Where(tf => tf.DueDate >= DateTime.UtcNow || tf.Status == TuitionStatus.FullyPaid);
+                    query = query.Where(tf => tf.DueDate >= DateTime.Now || tf.Status == TuitionStatus.FullyPaid);
                 }
             }
 
@@ -127,7 +127,7 @@ namespace StudentManagement.Services
                 RemainingAmount = tf.RemainingAmount,
                 Status = tf.Status,
                 DueDate = tf.DueDate,
-                IsOverdue = tf.DueDate < DateTime.UtcNow && tf.Status != TuitionStatus.FullyPaid
+                IsOverdue = tf.DueDate < DateTime.Now && tf.Status != TuitionStatus.FullyPaid
             }).OrderByDescending(st => st.SemesterName).ToList();
 
             return new StudentTuitionSummaryResponse
@@ -141,7 +141,7 @@ namespace StudentManagement.Services
                 TotalPaidAllSemesters = tuitionFees.Sum(tf => tf.PaidAmount),
                 TotalRemainingAllSemesters = tuitionFees.Sum(tf => tf.RemainingAmount),
                 TotalSemestersWithDebt = tuitionFees.Count(tf => tf.RemainingAmount > 0),
-                TotalOverdueSemesters = tuitionFees.Count(tf => tf.DueDate < DateTime.UtcNow && tf.Status != TuitionStatus.FullyPaid),
+                TotalOverdueSemesters = tuitionFees.Count(tf => tf.DueDate < DateTime.Now && tf.Status != TuitionStatus.FullyPaid),
                 SemesterTuitions = semesterTuitions
             };
         }
@@ -190,8 +190,8 @@ namespace StudentManagement.Services
 
             foreach (var tuition in tuitionFees)
             {
-                var isOverdue = tuition.DueDate < DateTime.UtcNow && tuition.Status != TuitionStatus.FullyPaid;
-                var daysOverdue = isOverdue ? (DateTime.UtcNow - tuition.DueDate).Days : 0;
+                var isOverdue = tuition.DueDate < DateTime.Now && tuition.Status != TuitionStatus.FullyPaid;
+                var daysOverdue = isOverdue ? (DateTime.Now - tuition.DueDate).Days : 0;
 
                 // Lấy thông tin enrollment cho các section trong tuition này
                 var sectionIds = tuition.Details.Select(d => d.SectionId).ToList();
@@ -318,7 +318,7 @@ namespace StudentManagement.Services
                     StudentId = student.Id,
                     SemesterId = semesterId,
                     DueDate = semester.EndDate.AddDays(30).ToDateTime(TimeOnly.MinValue), // 30 days after semester end
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
 
                 decimal totalAmount = 0;
@@ -392,14 +392,14 @@ namespace StudentManagement.Services
                 {
                     TuitionFeeId = request.TuitionFeeId,
                     Amount = request.Amount,
-                    PaymentDate = DateTime.UtcNow,
+                    PaymentDate = DateTime.Now,
                     PaymentMethod = request.PaymentMethod,
                     PaymentStatus = PaymentStatus.Completed,
                     TransactionId = request.TransactionId,
                     PaymentReference = request.PaymentReference,
                     Note = request.Note,
                     ProcessedByUserId = processedByUserId,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
 
                 context.TuitionPayments.Add(payment);
@@ -411,7 +411,7 @@ namespace StudentManagement.Services
                 if (tuitionFee.RemainingAmount <= 0)
                 {
                     tuitionFee.Status = TuitionStatus.FullyPaid;
-                    tuitionFee.PaidAt = DateTime.UtcNow;
+                    tuitionFee.PaidAt = DateTime.Now;
                     tuitionFee.RemainingAmount = 0;
                 }
                 else if (tuitionFee.PaidAmount > 0)
@@ -535,7 +535,7 @@ namespace StudentManagement.Services
                 .Include(tf => tf.Semester)
                 .Include(tf => tf.Details)
                 .Include(tf => tf.Payments)
-                .Where(tf => tf.DueDate < DateTime.UtcNow && 
+                .Where(tf => tf.DueDate < DateTime.Now && 
                            tf.Status != TuitionStatus.FullyPaid &&
                            tf.Status != TuitionStatus.Cancelled)
                 .ToListAsync();
@@ -546,7 +546,7 @@ namespace StudentManagement.Services
         public async Task UpdateOverdueTuitionFeesAsync()
         {
             var overdueTuitions = await context.TuitionFees
-                .Where(tf => tf.DueDate < DateTime.UtcNow && 
+                .Where(tf => tf.DueDate < DateTime.Now && 
                            tf.Status != TuitionStatus.FullyPaid &&
                            tf.Status != TuitionStatus.Cancelled &&
                            tf.Status != TuitionStatus.Overdue)

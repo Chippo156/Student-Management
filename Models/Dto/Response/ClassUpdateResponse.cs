@@ -23,6 +23,6 @@ namespace StudentManagement.Models.Dto.Response
         
         // Statistics
         public int StudentCount { get; set; }
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
     }
 }

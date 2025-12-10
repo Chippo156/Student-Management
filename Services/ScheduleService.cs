@@ -258,7 +258,7 @@ namespace StudentManagement.Services
 
                         if (registrationPeriod != null)
                         {
-                            var currentDate = DateTime.UtcNow;
+                            var currentDate = DateTime.Now;
                             var today = DateOnly.FromDateTime(currentDate);
 
                             // Kiểm tra điều kiện để mở đăng ký
@@ -301,19 +301,214 @@ namespace StudentManagement.Services
 
         public async Task<bool> DeleteScheduleAsync(int scheduleId)
         {
-            var schedule = await context.Schedules.FindAsync(scheduleId);
-            if (schedule is null)
+            using var transaction = await context.Database.BeginTransactionAsync();
+
+            try
             {
+                var schedule = await context.Schedules
+                    .Include(s => s.Section)
+                        .ThenInclude(s => s.Semester)
+                    .Include(s => s.Section)
+                        .ThenInclude(s => s.Enrollments)
+                    .Include(s => s.ScheduleType)
+                    .Include(s => s.PracticeGroup)
+                    .FirstOrDefaultAsync(s => s.ScheduleId == scheduleId);
+
+                if (schedule is null)
+                {
+                    return false;
+                }
+
+                // **KIỂM TRA CÁC ĐIỀU KIỆN KHÔNG ĐƯỢC XÓA LỊCH**
+
+                // 1. Kiểm tra học phần đã bắt đầu chưa
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                if (today >= schedule.Section.StartDate)
+                {
+                    return false;
+                }
+
+                // 2. Kiểm tra học phần đã kết thúc chưa
+                if (today > schedule.Section.EndDate)
+                {
+                    return false;
+                }
+
+                // 3. Kiểm tra có sinh viên đăng ký không
+                if (schedule.Section.EnrolledCount > 0)
+                {
+                    // Kiểm tra chi tiết có enrollment nào đang active không
+                    var hasActiveEnrollments = await context.Enrollments
+                        .AnyAsync(e => e.Section.SectionId == schedule.Section.SectionId &&
+                                      e.enrollmentStatus == EnrollmentStatus.Enrolled);
+
+                    if (hasActiveEnrollments)
+                    {
+                        return false;
+                    }
+                }
+
+                // 4. Kiểm tra lịch thi không được xóa nếu gần ngày thi (ví dụ: trong vòng 7 ngày)
+                if (schedule.ScheduleType.ScheduleTypeId == 3 && schedule.Date.HasValue)
+                {
+                    var examDate = schedule.Date.Value;
+                    var daysUntilExam = examDate.DayNumber - today.DayNumber;
+
+                    if (daysUntilExam <= 7 && daysUntilExam >= 0)
+                    {
+                        return false;
+                    }
+
+                    if (daysUntilExam < 0)
+                    {
+                        return false;
+                    }
+                }
+
+                // 5. Kiểm tra có điểm danh nào đã được tạo cho lịch học này chưa
+                var hasAttendanceRecords = await context.AttendanceSessions
+                    .AnyAsync(a => a.SectionId == schedule.Section.SectionId &&
+                                  a.PracticeGroupId == schedule.PracticeGroupId);
+
+                if (hasAttendanceRecords)
+                {
+                    return false;
+                }
+
+                // 6. Kiểm tra có đánh giá/bài kiểm tra nào liên quan không
+                var hasAssessments = await context.Assessment
+                    .AnyAsync(a => a.Section.SectionId == schedule.Section.SectionId);
+
+                if (hasAssessments && schedule.ScheduleType.ScheduleTypeId == 3) // Lịch thi
+                {
+                    return false;
+                }
+
+                // 7. Kiểm tra trạng thái section
+                if (schedule.Section.Status == SectionStatus.IsClosed)
+                {
+                    return false;
+                }
+
+                if (schedule.Section.Status == SectionStatus.IsStudying)
+                {
+                    return false;
+                }
+
+                if (schedule.Section.IsCancelled)
+                {
+                    return false;
+                }
+
+                // **8. KIỂM TRA ĐẶC BIỆT CHO LỊCH THỰC HÀNH**
+                if (schedule.PracticeGroupId.HasValue)
+                {
+                    var practiceGroup = schedule.PracticeGroup;
+
+                    // Kiểm tra nhóm thực hành có sinh viên không
+                    if (practiceGroup != null && practiceGroup.CurrentCount > 0)
+                    {
+                        var hasActivePracticeEnrollments = await context.PracticeGroupEnrollments
+                            .AnyAsync(pge => pge.PracticeGroupId == schedule.PracticeGroupId && pge.IsActive);
+
+                        if (hasActivePracticeEnrollments)
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                // **9. KIỂM TRA ĐẶC BIỆT CHO LỊCH LÝ THUYẾT CHÍNH**
+                if (!schedule.PracticeGroupId.HasValue && schedule.ScheduleType.ScheduleTypeId != 3)
+                {
+                    // Đây là lịch lý thuyết chính - cần kiểm tra đặc biệt
+                    var mainScheduleCount = await context.Schedules
+                        .CountAsync(s => s.Section.SectionId == schedule.Section.SectionId &&
+                                        !s.PracticeGroupId.HasValue &&
+                                        s.ScheduleType.ScheduleTypeId != 3);
+
+                    if (mainScheduleCount == 1)
+                    {
+                        // Đây là lịch lý thuyết duy nhất
+                        if (schedule.Section.Status == SectionStatus.IsStudying)
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                // **NẾU TẤT CẢ ĐIỀU KIỆN ĐỀU OK, TIẾN HÀNH XÓA**
+
+                // Xử lý đặc biệt cho practice group nếu cần
+                if (schedule.PracticeGroupId.HasValue)
+                {
+                    // Chỉ đánh dấu inactive thay vì delete hoàn toàn
+                    var practiceGroup = await context.PracticeGroups
+                        .FirstOrDefaultAsync(pg => pg.PracticeGroupId == schedule.PracticeGroupId);
+
+                    if (practiceGroup != null)
+                    {
+                        practiceGroup.IsActive = false;
+                        context.PracticeGroups.Update(practiceGroup);
+                    }
+                }
+
+                // Xóa schedule
+                context.Schedules.Remove(schedule);
+
+                // Kiểm tra và cập nhật trạng thái section nếu cần
+                await UpdateSectionStatusAfterScheduleDeletionAsync(schedule.Section.SectionId);
+
+                await context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                // Log thông tin
+                var scheduleTypeText = schedule.PracticeGroupId.HasValue ? "thực hành" :
+                                      (schedule.ScheduleType.ScheduleTypeId == 3 ? "thi" : "lý thuyết");
+
+                Console.WriteLine($"Đã xóa lịch {scheduleTypeText} (ID: {scheduleId}) của học phần {schedule.Section.SectionCode ?? $"LHP{schedule.Section.SectionId}"}");
+
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                await transaction.RollbackAsync();
+                throw; // Re-throw để controller có thể xử lý và trả về thông báo lỗi phù hợp
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
                 return false;
             }
-            if (schedule.PracticeGroupId.HasValue)
-            {
-                // Nếu là lịch của nhóm thực hành, cần cập nhật số lượng hiện tại của nhóm
-                await practiceGroupService.DeletePracticeGroupAsync(schedule.PracticeGroupId.Value);
-            }
+        }
 
-            context.Schedules.Remove(schedule);
-            return await context.SaveChangesAsync() > 0;
+        // **Helper method để cập nhật trạng thái section sau khi xóa lịch**
+        private async Task UpdateSectionStatusAfterScheduleDeletionAsync(int sectionId)
+        {
+            var section = await context.Sections
+                .Include(s => s.Schedules)
+                  .ThenInclude(s => s.ScheduleType)
+                .Include(s => s.Semester)
+                .Include(s => s.CurriculumCourse)
+                    .ThenInclude(cc => cc.Program)
+                        .ThenInclude(p => p.Department)
+                .FirstOrDefaultAsync(s => s.SectionId == sectionId);
+
+            if (section == null) return;
+
+            // Kiểm tra xem còn lịch lý thuyết chính không
+            var hasMainSchedules = section.Schedules.Any(s => !s.PracticeGroupId.HasValue &&
+                                                             s.ScheduleType.ScheduleTypeId != 3);
+
+            // Nếu không còn lịch lý thuyết chính và đang ở trạng thái IsOpening
+            if (!hasMainSchedules && section.Status == SectionStatus.IsOpening)
+            {
+                // Chuyển về IsPreparing
+                section.Status = SectionStatus.IsPreparing;
+                context.Sections.Update(section);
+
+                Console.WriteLine($"Đã cập nhật trạng thái học phần {section.SectionCode ?? $"LHP{sectionId}"} về IsPreparing do không còn lịch lý thuyết chính");
+            }
         }
 
         public async Task<PagedResult<ScheduleListResponse>> GetAllSchedulesWithFiltersAsync(int sectionId)
@@ -679,26 +874,39 @@ namespace StudentManagement.Services
                 .Distinct()
                 .ToListAsync();
 
-            if (!lecturerSections.Any())
-            {
-                return new List<Schedule>();
-            }
-
-            // Lấy các nhóm thực hành mà giáo viên đang phụ trách (nếu có)
+            // **SỬA LỖI: Lấy TẤT CẢ nhóm thực hành mà giáo viên đang phụ trách, không chỉ trong lecturerSections**
             var lecturerPracticeGroups = await context.PracticeGroups
                 .Include(pg => pg.Section)
                 .Where(pg => pg.LecturerId == lecturer.Id &&
                             pg.IsActive &&
-                            lecturerSections.Contains(pg.SectionId))
+                            pg.Section.StartDate <= weekEnd &&
+                            pg.Section.EndDate >= weekStart) // Kiểm tra thời gian section trực tiếp
                 .Select(pg => pg.PracticeGroupId)
                 .ToListAsync();
+
+            // Lấy tất cả sections có liên quan (cả main sections + sections có practice groups của lecturer)
+            var practiceGroupSections = await context.PracticeGroups
+                .Where(pg => pg.LecturerId == lecturer.Id &&
+                            pg.IsActive &&
+                            pg.Section.StartDate <= weekEnd &&
+                            pg.Section.EndDate >= weekStart)
+                .Select(pg => pg.SectionId)
+                .ToListAsync();
+
+            // Kết hợp tất cả sections liên quan
+            var allRelevantSections = lecturerSections.Concat(practiceGroupSections).Distinct().ToList();
+
+            if (!allRelevantSections.Any())
+            {
+                return new List<Schedule>();
+            }
 
             // **MỚI: Lấy danh sách CourseId có lịch thi trong tuần này cho giáo viên**
             var coursesWithExamThisWeek = await context.Schedules
                 .Include(s => s.Section)
                     .ThenInclude(s => s.CurriculumCourse)
                 .Where(s =>
-                    lecturerSections.Contains(s.Section.SectionId) &&
+                    allRelevantSections.Contains(s.Section.SectionId) &&
                     s.ScheduleType.ScheduleTypeId == 3 && // Lịch thi
                     s.Date.HasValue && // Có ngày cụ thể
                     s.Date >= weekStart && s.Date <= weekEnd // Nằm trong tuần này
@@ -709,11 +917,10 @@ namespace StudentManagement.Services
 
             if (scheduleTypeId == 0)
             {
-                // Lấy lịch giảng dạy chính (không phải lịch thi và không phải lịch thực hành)
-                // **CẬP NHẬT: Loại bỏ lịch học của môn có thi trong tuần**
+                // Lấy lịch giảng dạy chính (chỉ từ lecturerSections)
                 var regularSchedules = await context.Schedules
                     .Where(s =>
-                        lecturerSections.Contains(s.Section.SectionId) &&
+                        lecturerSections.Contains(s.Section.SectionId) && // Chỉ lấy sections mà lecturer là chủ nhiệm
                         s.ScheduleType.ScheduleTypeId != 3 && // Không phải lịch thi
                         !s.PracticeGroupId.HasValue && // Không phải lịch thực hành
                         !coursesWithExamThisWeek.Contains(s.Section.CurriculumCourse.Course.CourseId) // **MỚI: Loại bỏ môn có thi**
@@ -726,8 +933,7 @@ namespace StudentManagement.Services
                     .Include(s => s.Section.Class)
                     .ToListAsync();
 
-                // Lấy lịch thực hành mà giáo viên đang phụ trách
-                // **CẬP NHẬT: Loại bỏ lịch thực hành của môn có thi trong tuần**
+                // **SỬA LỖI: Lấy lịch thực hành từ TẤT CẢ practice groups mà lecturer phụ trách**
                 var practiceSchedules = await context.Schedules
                     .Where(s =>
                         s.PracticeGroupId.HasValue &&
@@ -744,10 +950,10 @@ namespace StudentManagement.Services
                     .Include(s => s.PracticeGroup)
                     .ToListAsync();
 
-                // Lấy lịch thi trong tuần này (giáo viên coi thi)
+                // Lấy lịch thi trong tuần này (từ tất cả sections liên quan)
                 var examSchedules = await context.Schedules
                     .Where(s =>
-                        lecturerSections.Contains(s.Section.SectionId) &&
+                        allRelevantSections.Contains(s.Section.SectionId) &&
                         s.ScheduleType.ScheduleTypeId == 3 && // Lịch thi
                         s.Date.HasValue && // Có ngày cụ thể
                         s.Date >= weekStart && s.Date <= weekEnd // Nằm trong tuần này
@@ -769,10 +975,10 @@ namespace StudentManagement.Services
             }
             else if (scheduleTypeId == 3) // Lịch thi
             {
-                // Đối với lịch thi, chỉ lấy các lịch có ngày cụ thể trong tuần này
+                // Đối với lịch thi, lấy từ tất cả sections liên quan
                 return await context.Schedules
                     .Where(s =>
-                        lecturerSections.Contains(s.Section.SectionId) &&
+                        allRelevantSections.Contains(s.Section.SectionId) &&
                         s.ScheduleType.ScheduleTypeId == 3 &&
                         s.Date.HasValue &&
                         s.Date >= weekStart && s.Date <= weekEnd
@@ -788,10 +994,9 @@ namespace StudentManagement.Services
             else
             {
                 // Các loại lịch khác - bao gồm cả lịch chính và lịch thực hành
-                // **CẬP NHẬT: Loại bỏ lịch học của môn có thi trong tuần**
                 var regularSchedules = await context.Schedules
                     .Where(s =>
-                        lecturerSections.Contains(s.Section.SectionId) &&
+                        lecturerSections.Contains(s.Section.SectionId) && // Lịch chính từ sections mà lecturer chủ nhiệm
                         s.ScheduleType.ScheduleTypeId == scheduleTypeId &&
                         !s.PracticeGroupId.HasValue && // Lịch chính
                         !coursesWithExamThisWeek.Contains(s.Section.CurriculumCourse.Course.CourseId) // **MỚI: Loại bỏ môn có thi**
@@ -804,8 +1009,7 @@ namespace StudentManagement.Services
                     .Include(s => s.Section.Class)
                     .ToListAsync();
 
-                // Lấy lịch thực hành của cùng loại schedule type
-                // **CẬP NHẬT: Loại bỏ lịch thực hành của môn có thi trong tuần**
+                // **SỬA LỖI: Lấy lịch thực hành từ TẤT CẢ practice groups của lecturer**
                 var practiceSchedules = await context.Schedules
                     .Where(s =>
                         s.PracticeGroupId.HasValue &&
@@ -860,16 +1064,12 @@ namespace StudentManagement.Services
                 .Distinct()
                 .ToListAsync();
 
-            if (lecturerSections.Count == 0)
-            {
-                return new CountSchedule { CountScheduleOfWeek = 0, CountTestOfWeek = 0 };
-            }
-
-            // Lấy các nhóm thực hành mà giáo viên đang phụ trách
+            // **SỬA LỖI: Lấy TẤT CẢ nhóm thực hành mà giáo viên đang phụ trách**
             var lecturerPracticeGroups = await context.PracticeGroups
                 .Where(pg => pg.LecturerId == lecturer.Id &&
                             pg.IsActive &&
-                            lecturerSections.Contains(pg.SectionId))
+                            pg.Section.StartDate <= weekEnd &&
+                            pg.Section.EndDate >= weekStart)
                 .Select(pg => pg.PracticeGroupId)
                 .ToListAsync();
 
@@ -891,10 +1091,22 @@ namespace StudentManagement.Services
                            s.DayOfWeek.HasValue) // Regular recurring schedules
                 .CountAsync();
 
+            // Lấy tất cả sections liên quan cho exam schedules
+            var allRelevantSections = lecturerSections
+                .Concat(await context.PracticeGroups
+                    .Where(pg => pg.LecturerId == lecturer.Id &&
+                                pg.IsActive &&
+                                pg.Section.StartDate <= weekEnd &&
+                                pg.Section.EndDate >= weekStart)
+                    .Select(pg => pg.SectionId)
+                    .ToListAsync())
+                .Distinct()
+                .ToList();
+
             // Count exam schedules (one-time events with specific dates in current week)
             int examScheduleCount = await context.Schedules
                 .Include(s => s.ScheduleType)
-                .Where(s => lecturerSections.Contains(s.Section.SectionId) &&
+                .Where(s => allRelevantSections.Contains(s.Section.SectionId) &&
                            s.ScheduleType.ScheduleTypeId == 3 && // Exam schedules
                            s.Date.HasValue && // Has specific date
                            s.Date >= weekStart && s.Date <= weekEnd) // Within current week

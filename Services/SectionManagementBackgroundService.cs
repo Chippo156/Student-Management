@@ -49,7 +49,7 @@ namespace StudentManagement.Services
             {
                 _logger.LogInformation("Starting section management process");
 
-                var currentDate = DateTime.UtcNow;
+                var currentDate = DateTime.Now;
                 var today = DateOnly.FromDateTime(currentDate);
 
                 // Step 1: Update section statuses
@@ -279,7 +279,7 @@ namespace StudentManagement.Services
             {
                 // Đánh dấu section bị hủy
                 section.IsCancelled = true;
-                section.CancelledAt = DateTime.UtcNow;
+                section.CancelledAt = DateTime.Now;
                 section.CancellationReason = reason;
                 section.Status = SectionStatus.IsClosed;
 
