@@ -71,7 +71,11 @@ const ScheduleFilterBar = ({
         <Button onClick={handleToday} type="default">
           <CalendarOutlined /> Hiện tại
         </Button>
-        <Button icon={<PrinterOutlined />} onClick={handlePrint} type="primary">
+        <Button
+          icon={<PrinterOutlined />}
+          onClick={handlePrint}
+          type="secondary"
+        >
           In lịch
         </Button>
         <Button icon={<LeftOutlined />} onClick={goPrevWeek} />

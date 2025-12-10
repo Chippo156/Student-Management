@@ -143,6 +143,7 @@ const DataTable = ({
                   {size}
                 </MenuItem>
               ))}
+              <MenuItem value={totalCount}>Tất cả</MenuItem>
             </Select>
           </FormControl>
           <Typography variant="body2" color="text.secondary">

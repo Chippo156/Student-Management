@@ -25,8 +25,8 @@ const SectionsTable = forwardRef((props, ref) => {
   const columns = [
     {
       title: 'Mã lớp',
-      dataIndex: 'courseCode',
-      key: 'courseCode',
+      dataIndex: 'sectionCode',
+      key: 'sectionCode',
       align: 'center',
       width: 120,
       render: (text) => <span style={{ fontWeight: 600 }}>{text}</span>,

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
   Paper,
   Typography,
   Box,
@@ -103,7 +102,8 @@ const NotificationHistory = () => {
 
   const handleNotificationClick = async (announcementId) => {
     try {
-      const detail = await announcementService.getAnnouncementById(announcementId);
+      const detail =
+        await announcementService.getAnnouncementById(announcementId);
       if (detail) {
         setSelectedAnnouncement(detail);
         setDetailDialogOpen(true);
@@ -149,9 +149,19 @@ const NotificationHistory = () => {
   };
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
-      <Container maxWidth="lg">
-        {/* Header */}
+    <Box
+      sx={{
+        bgcolor: 'background.default',
+        minHeight: '100vh',
+        width: '100%',
+        p: {
+          xs: 2,
+          sm: 2,
+          md: 3,
+        },
+      }}
+    >
+      {/* Header */}
         <Paper
           elevation={2}
           sx={{
@@ -270,15 +280,22 @@ const NotificationHistory = () => {
             {/* Announcement Cards */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
               {announcements.map((announcement) => (
-                <Grid item xs={12} sm={6} md={4} key={announcement.announcementId}>
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                  md={4}
+                  key={announcement.announcementId}
+                >
                   <Card
                     elevation={2}
                     sx={{
                       height: '100%',
                       transition: 'all 0.3s',
-                      border: announcement.viewCount === 0
-                        ? `2px solid ${theme.palette.primary.main}`
-                        : '2px solid transparent',
+                      border:
+                        announcement.viewCount === 0
+                          ? `2px solid ${theme.palette.primary.main}`
+                          : '2px solid transparent',
                       '&:hover': {
                         transform: 'translateY(-4px)',
                         boxShadow: theme.shadows[8],
@@ -286,15 +303,30 @@ const NotificationHistory = () => {
                     }}
                   >
                     <CardActionArea
-                      onClick={() => handleNotificationClick(announcement.announcementId)}
+                      onClick={() =>
+                        handleNotificationClick(announcement.announcementId)
+                      }
                       sx={{ height: '100%' }}
                     >
-                      <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                      <CardContent
+                        sx={{
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                        }}
+                      >
                         {/* Header */}
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            mb: 2,
+                          }}
+                        >
                           <Avatar
                             sx={{
-                              bgcolor: getPriorityColor(announcement.priority) + '20',
+                              bgcolor:
+                                getPriorityColor(announcement.priority) + '20',
                               color: getPriorityColor(announcement.priority),
                               mr: 1.5,
                               width: 48,
@@ -304,10 +336,18 @@ const NotificationHistory = () => {
                             {getTypeIcon(announcement.type)}
                           </Avatar>
                           <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: 1,
+                              }}
+                            >
                               <Typography
                                 variant="subtitle1"
-                                fontWeight={announcement.viewCount === 0 ? 700 : 600}
+                                fontWeight={
+                                  announcement.viewCount === 0 ? 700 : 600
+                                }
                                 sx={{
                                   flex: 1,
                                   overflow: 'hidden',
@@ -329,15 +369,23 @@ const NotificationHistory = () => {
                                 />
                               )}
                             </Box>
-                            <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
+                            <Stack
+                              direction="row"
+                              spacing={0.5}
+                              sx={{ mt: 0.5 }}
+                            >
                               <Chip
                                 label={announcement.typeText}
                                 size="small"
                                 sx={{
                                   height: 20,
                                   fontSize: 10,
-                                  bgcolor: getPriorityColor(announcement.priority) + '20',
-                                  color: getPriorityColor(announcement.priority),
+                                  bgcolor:
+                                    getPriorityColor(announcement.priority) +
+                                    '20',
+                                  color: getPriorityColor(
+                                    announcement.priority
+                                  ),
                                 }}
                               />
                               <Chip
@@ -410,13 +458,12 @@ const NotificationHistory = () => {
           </>
         )}
 
-        {/* Detail Dialog */}
-        <NotificationDetailDialog
-          open={detailDialogOpen}
-          onClose={handleCloseDetailDialog}
-          announcement={selectedAnnouncement}
-        />
-      </Container>
+      {/* Detail Dialog */}
+      <NotificationDetailDialog
+        open={detailDialogOpen}
+        onClose={handleCloseDetailDialog}
+        announcement={selectedAnnouncement}
+      />
     </Box>
   );
 };

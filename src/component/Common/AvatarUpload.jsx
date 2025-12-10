@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, message, Avatar, Spin } from 'antd';
 import { CameraOutlined, UserOutlined } from '@ant-design/icons';
 import { Box, IconButton, Tooltip } from '@mui/material';
@@ -18,6 +18,16 @@ const AvatarUpload = ({
   const [avatarUrl, setAvatarUrl] = useState(currentAvatarUrl);
   const dispatch = useDispatch();
   const account = useSelector((state) => state.user.account);
+
+  console.log('AvatarUpload - currentAvatarUrl prop:', currentAvatarUrl);
+  console.log('AvatarUpload - avatarUrl state:', avatarUrl);
+  console.log('AvatarUpload - account from Redux:', account);
+
+  // Update avatarUrl when currentAvatarUrl prop changes (e.g., after reload when user info loads)
+  useEffect(() => {
+    console.log('AvatarUpload - useEffect triggered, updating avatarUrl to:', currentAvatarUrl);
+    setAvatarUrl(currentAvatarUrl);
+  }, [currentAvatarUrl]);
 
   const beforeUpload = (file) => {
     const isImage = file.type.startsWith('image/');
@@ -134,6 +144,7 @@ const AvatarUpload = ({
     handleUpload(file);
     onSuccess('ok');
   };
+  console.log(avatarUrl);
   return (
     <Box sx={{ position: 'relative', display: 'inline-block' }}>
       <Spin spinning={loading}>

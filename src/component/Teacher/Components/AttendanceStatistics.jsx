@@ -162,9 +162,10 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
     0
   );
 
-  // Pie chart data - simplified to remove Đi muộn and Về sớm
+  // Pie chart data - including all attendance statuses
   const pieData = [
     { name: 'Có mặt', value: totalPresentCount, color: colors.success },
+    { name: 'Đi muộn', value: totalLateCount, color: colors.warning },
     { name: 'Không phép', value: totalAbsentCount, color: colors.error },
     { name: 'Có phép', value: totalExcusedCount, color: colors.info },
   ].filter((item) => item.value > 0);
@@ -250,6 +251,21 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
           </Card>
         </Grid>
         <Grid item xs={12} md={4}>
+          <Card sx={{ backgroundColor: alpha(colors.warning, 0.1) }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <Schedule sx={{ color: colors.warning, mr: 1 }} />
+                <Typography variant="subtitle2" color="text.secondary">
+                  Tổng đi muộn
+                </Typography>
+              </Box>
+              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                {totalLateCount}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
           <Card sx={{ backgroundColor: alpha(colors.info, 0.1) }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -264,7 +280,7 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
             </CardContent>
           </Card>
         </Grid>
-              </Grid>
+      </Grid>
 
       {/* Charts */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
@@ -341,6 +357,9 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
                     Có mặt
                   </TableCell>
                   <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>
+                    Đi muộn
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>
                     Không phép
                   </TableCell>
                   <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>
@@ -372,6 +391,14 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
                           label={student.presentCount || 0}
                           size="small"
                           color="success"
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell sx={{ textAlign: 'center' }}>
+                        <Chip
+                          label={student.lateCount || 0}
+                          size="small"
+                          color="warning"
                           variant="outlined"
                         />
                       </TableCell>

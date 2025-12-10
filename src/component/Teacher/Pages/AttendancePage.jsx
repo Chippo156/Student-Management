@@ -358,11 +358,14 @@ const AttendancePage = () => {
             case 1: // Present
               status = 'present';
               break;
-            case 2: // Absent
-              status = 'late'; // Map to "Không phép" button
+            case 2: // Absent (Không phép)
+              status = 'absent_no_excuse';
               break;
-            case 4: // Excused
-              status = 'absent'; // Map to "Có phép" button
+            case 3: // Late (Đi muộn)
+              status = 'late';
+              break;
+            case 4: // Excused (Có phép)
+              status = 'excused';
               break;
             default:
               status = null;
@@ -435,11 +438,14 @@ const AttendancePage = () => {
           case 'present':
             apiStatus = 1; // Present
             break;
-          case 'absent': // UI "Có phép" button
-            apiStatus = 4; // Excused
+          case 'absent_no_excuse':
+            apiStatus = 2; // Absent (Không phép)
             break;
-          case 'late': // UI "Không phép" button
-            apiStatus = 2; // Absent
+          case 'late':
+            apiStatus = 3; // Late (Đi muộn)
+            break;
+          case 'excused':
+            apiStatus = 4; // Excused (Có phép)
             break;
           default:
             apiStatus = 0; // Unknown
@@ -719,18 +725,25 @@ const AttendancePage = () => {
       ),
     },
     {
+      title: 'Đi muộn',
+      dataIndex: 'lateCount',
+      key: 'lateCount',
+      width: 60,
+      render: (count) => <span style={{ color: colors.warning }}>{count}</span>,
+    },
+    {
       title: 'Không phép',
       dataIndex: 'absentCount',
       key: 'absentCount',
       width: 60,
-      render: (count) => <span style={{ color: colors.warning }}>{count}</span>,
+      render: (count) => <span style={{ color: colors.error }}>{count}</span>,
     },
     {
       title: 'Có phép',
       dataIndex: 'excusedCount',
       key: 'excusedCount',
       width: 80,
-      render: (count) => <span style={{ color: colors.error }}>{count}</span>,
+      render: (count) => <span style={{ color: colors.info }}>{count}</span>,
     },
     {
       title: 'Mã điểm danh',
@@ -816,7 +829,7 @@ const AttendancePage = () => {
     {
       title: 'Trạng thái điểm danh',
       key: 'attendance',
-      width: 350,
+      width: 450,
       render: (_, record) => {
         const status = getAttendanceStatus(record.studentId);
         return (
@@ -837,13 +850,21 @@ const AttendancePage = () => {
               size="small"
               onClick={() => handleAttendanceChange(record.studentId, 'late')}
             >
+              Đi muộn
+            </Button>
+            <Button
+              variant={status === 'absent_no_excuse' ? 'contained' : 'outlined'}
+              color="error"
+              size="small"
+              onClick={() => handleAttendanceChange(record.studentId, 'absent_no_excuse')}
+            >
               Không phép
             </Button>
             <Button
-              variant={status === 'absent' ? 'contained' : 'outlined'}
-              color="error"
+              variant={status === 'excused' ? 'contained' : 'outlined'}
+              color="info"
               size="small"
-              onClick={() => handleAttendanceChange(record.studentId, 'absent')}
+              onClick={() => handleAttendanceChange(record.studentId, 'excused')}
             >
               Có phép
             </Button>
@@ -854,15 +875,16 @@ const AttendancePage = () => {
     {
       title: 'Ghi chú',
       key: 'status',
-      width: 100,
+      width: 120,
       render: (_, record) => {
         const status = getAttendanceStatus(record.studentId);
         if (!status) return <Tag>Chưa điểm danh</Tag>;
 
         const statusConfig = {
           present: { label: 'Có mặt', color: 'success' },
-          late: { label: 'Không phép', color: 'warning' },
-          absent: { label: 'Có phép', color: 'error' },
+          late: { label: 'Đi muộn', color: 'warning' },
+          absent_no_excuse: { label: 'Không phép', color: 'error' },
+          excused: { label: 'Có phép', color: 'blue' },
         };
         const config = statusConfig[status];
         return <Tag color={config.color}>{config.label}</Tag>;
@@ -874,11 +896,14 @@ const AttendancePage = () => {
   const presentCount = Object.values(attendance).filter(
     (s) => s === 'present'
   ).length;
-  const excusedCount = Object.values(attendance).filter(
-    (s) => s === 'absent' // UI "Có phép" button maps to API Excused (4)
+  const lateCount = Object.values(attendance).filter(
+    (s) => s === 'late'
   ).length;
   const absentCount = Object.values(attendance).filter(
-    (s) => s === 'late' // UI "Không phép" button maps to API Absent (2)
+    (s) => s === 'absent_no_excuse'
+  ).length;
+  const excusedCount = Object.values(attendance).filter(
+    (s) => s === 'excused'
   ).length;
   const attendanceRate = students.length
     ? ((presentCount / students.length) * 100).toFixed(1)
@@ -1388,10 +1413,13 @@ const AttendancePage = () => {
               - Có mặt: {presentCount} sinh viên
             </Typography>
             <Typography variant="body2">
-              - Có phép: {excusedCount} sinh viên
+              - Đi muộn: {lateCount} sinh viên
             </Typography>
             <Typography variant="body2">
               - Không phép: {absentCount} sinh viên
+            </Typography>
+            <Typography variant="body2">
+              - Có phép: {excusedCount} sinh viên
             </Typography>
           </Box>
         </DialogContent>

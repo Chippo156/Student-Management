@@ -46,8 +46,8 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
     row1.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
     row1.height = 25;
 
-    // Merge row 1 (6 base columns + sessions + 4 summary columns)
-    const totalCols = 6 + sessions.length + 4;
+    // Merge row 1 (6 base columns + sessions + 5 summary columns)
+    const totalCols = 6 + sessions.length + 5;
     worksheet.mergeCells(1, 1, 1, totalCols);
 
     // === ROW 2-6: Info ===
@@ -174,9 +174,9 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
         right: { style: 'thin' },
       };
 
-      // Row 3: (C/P/K)
+      // Row 3: (C/M/P/K)
       const cell3 = headerRow3.getCell(colIndex);
-      cell3.value = '(C/P/K)';
+      cell3.value = '(C/M/P/K)';
       cell3.font = { bold: true, color: { argb: 'FFFFFFFF' } };
       cell3.fill = {
         type: 'pattern',
@@ -194,9 +194,9 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
       colIndex++;
     });
 
-    // Summary headers - simplified to match requirements
+    // Summary headers - including all attendance statuses
     const summaryStartCol = 7 + sessions.length;
-    const summaryHeaders = ['Có mặt', 'Có phép', 'Không phép', 'Tổng buổi'];
+    const summaryHeaders = ['Có mặt', 'Đi muộn', 'Có phép', 'Không phép', 'Tổng buổi'];
 
     summaryHeaders.forEach((header, index) => {
       const col = summaryStartCol + index;
@@ -208,9 +208,10 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
       // Use different colors for different summary types
       let fillColor = 'FF4472C4'; // Default blue
       if (header === 'Có mặt') fillColor = 'FF70AD47'; // Green
-      else if (header === 'Có phép') fillColor = 'FFFFC000'; // Yellow
-      else if (header === 'Không phép') fillColor = 'FFED7D31'; // Orange
-      else if (header === 'Tổng buổi') fillColor = 'FF5B9BD5'; // Light blue
+      else if (header === 'Đi muộn') fillColor = 'FFFFC000'; // Orange/Yellow
+      else if (header === 'Có phép') fillColor = 'FF5B9BD5'; // Blue
+      else if (header === 'Không phép') fillColor = 'FFED7D31'; // Orange/Red
+      else if (header === 'Tổng buổi') fillColor = 'FF4472C4'; // Dark blue
 
       cell.fill = {
         type: 'pattern',
@@ -252,11 +253,14 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
         // Lấy trạng thái điểm danh từ attendanceMatrix bằng attendanceSessionId
         const attendanceData = student.attendanceMatrix?.[session.attendanceSessionId];
         if (attendanceData && attendanceData.status) {
-          // Map to Vietnamese text: Có mặt, Có phép, Không phép
+          // Map to Vietnamese text: Có mặt, Đi muộn, Có phép, Không phép
           let statusText = '';
           switch (attendanceData.status) {
             case 'Present':
               statusText = 'Có mặt';
+              break;
+            case 'Late':
+              statusText = 'Đi muộn';
               break;
             case 'Absent':
               statusText = 'Không phép';
@@ -284,11 +288,12 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
         sessionCol++;
       });
 
-      // Summary columns - simplified to match requirements
+      // Summary columns - including all attendance statuses
       dataRow.getCell(summaryStartCol).value = student.totalPresent || 0;           // Có mặt
-      dataRow.getCell(summaryStartCol + 1).value = student.totalExcused || 0;        // Có phép
-      dataRow.getCell(summaryStartCol + 2).value = student.totalAbsent || 0;        // Không phép
-      dataRow.getCell(summaryStartCol + 3).value = (student.totalPresent || 0) + (student.totalAbsent || 0) + (student.totalExcused || 0); // Tổng buổi
+      dataRow.getCell(summaryStartCol + 1).value = student.totalLate || 0;          // Đi muộn
+      dataRow.getCell(summaryStartCol + 2).value = student.totalExcused || 0;       // Có phép
+      dataRow.getCell(summaryStartCol + 3).value = student.totalAbsent || 0;        // Không phép
+      dataRow.getCell(summaryStartCol + 4).value = (student.totalPresent || 0) + (student.totalLate || 0) + (student.totalAbsent || 0) + (student.totalExcused || 0); // Tổng buổi
 
       // Apply borders and alignment cho TẤT CẢ các cells
       for (let c = 1; c <= totalCols; c++) {
@@ -348,7 +353,7 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
     }
 
     // Summary columns
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       worksheet.getColumn(summaryStartCol + i).width = 12;
     }
 

@@ -88,11 +88,23 @@ const DebtPage = () => {
     switch (status) {
       case 0:
       case 1:
-        return { color: 'warning', icon: <ClockCircleOutlined />, text: statusName || 'Chưa đóng' };
+        return {
+          color: 'warning',
+          icon: <ClockCircleOutlined />,
+          text: statusName || 'Chưa đóng',
+        };
       case 2:
-        return { color: 'success', icon: <CheckCircleOutlined />, text: statusName || 'Đã đóng' };
+        return {
+          color: 'success',
+          icon: <CheckCircleOutlined />,
+          text: statusName || 'Đã đóng',
+        };
       case 3:
-        return { color: 'processing', icon: <ClockCircleOutlined />, text: statusName || 'Đóng 1 phần' };
+        return {
+          color: 'processing',
+          icon: <ClockCircleOutlined />,
+          text: statusName || 'Đóng 1 phần',
+        };
       default:
         return { color: 'default', icon: null, text: statusName || status };
     }
@@ -101,17 +113,26 @@ const DebtPage = () => {
   const statistics = useMemo(() => {
     if (!debtData || !debtData.semesterDebts) return null;
     const totalPaid = debtData.semesterDebts.reduce(
-      (sum, s) => sum + (s.paidAmount || 0), 0
+      (sum, s) => sum + (s.paidAmount || 0),
+      0
     );
     const totalAmount = debtData.semesterDebts.reduce(
-      (sum, s) => sum + (s.totalAmount || 0), 0
+      (sum, s) => sum + (s.totalAmount || 0),
+      0
     );
     return { totalPaid, totalAmount };
   }, [debtData]);
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+        }}
+      >
         <Spin size="large" tip="Đang tải thông tin công nợ..." />
       </Box>
     );
@@ -120,13 +141,21 @@ const DebtPage = () => {
   if (!debtData) {
     return (
       <Box sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
-        <Card><Empty description="Không có dữ liệu công nợ" /></Card>
+        <Card>
+          <Empty description="Không có dữ liệu công nợ" />
+        </Card>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 2, md: 3 }, bgcolor: theme.palette.background.default, minHeight: '100vh' }}>
+    <Box
+      sx={{
+        p: { xs: 2, sm: 2, md: 3 },
+        bgcolor: theme.palette.background.default,
+        minHeight: '100vh',
+      }}
+    >
       <style>
         {`
           .debt-page .ant-card {
@@ -198,10 +227,24 @@ const DebtPage = () => {
       <div className="debt-page">
         {/* Header */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 0.5, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 600,
+              color: theme.palette.text.primary,
+              mb: 0.5,
+              fontSize: { xs: '1.25rem', sm: '1.5rem' },
+            }}
+          >
             Tra cứu công nợ học phí
           </Typography>
-          <Typography variant="body2" sx={{ color: theme.palette.text.secondary, fontSize: { xs: '0.875rem', sm: '0.875rem' } }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: theme.palette.text.secondary,
+              fontSize: { xs: '0.875rem', sm: '0.875rem' },
+            }}
+          >
             Theo dõi chi tiết học phí và công nợ của bạn
           </Typography>
         </Box>
@@ -209,7 +252,13 @@ const DebtPage = () => {
         {/* Filter */}
         <Card size="small" style={{ marginBottom: 24 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 500, fontSize: { xs: '0.875rem', sm: '0.875rem' } }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 500,
+                fontSize: { xs: '0.875rem', sm: '0.875rem' },
+              }}
+            >
               Học kỳ:
             </Typography>
             <Select
@@ -230,54 +279,70 @@ const DebtPage = () => {
         </Card>
 
         {/* Statistics */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <div className="stat-card">
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          <Col xs={24} sm={12} md={6}>
+            <Card size="small" style={{ height: '100%' }}>
               <Statistic
                 title="Tổng công nợ"
                 value={debtData.totalDebt || 0}
                 precision={0}
-                valueStyle={{ color: theme.palette.error.main, fontSize: 24, fontWeight: 600 }}
+                valueStyle={{
+                  color: theme.palette.error.main,
+                  fontSize: 20,
+                  fontWeight: 600,
+                }}
                 prefix={<DollarOutlined />}
                 suffix="đ"
               />
-            </div>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <div className="stat-card">
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card size="small" style={{ height: '100%' }}>
               <Statistic
                 title="Đã thanh toán"
                 value={statistics?.totalPaid || 0}
                 precision={0}
-                valueStyle={{ color: theme.palette.success.main, fontSize: 24, fontWeight: 600 }}
+                valueStyle={{
+                  color: theme.palette.success.main,
+                  fontSize: 20,
+                  fontWeight: 600,
+                }}
                 prefix={<CheckCircleOutlined />}
                 suffix="đ"
               />
-            </div>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <div className="stat-card">
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card size="small" style={{ height: '100%' }}>
               <Statistic
                 title="Phí trễ hạn"
                 value={debtData.totalLateFee || 0}
                 precision={0}
-                valueStyle={{ color: theme.palette.warning.main, fontSize: 24, fontWeight: 600 }}
+                valueStyle={{
+                  color: theme.palette.warning.main,
+                  fontSize: 20,
+                  fontWeight: 600,
+                }}
                 prefix={<WarningOutlined />}
                 suffix="đ"
               />
-            </div>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <div className="stat-card">
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card size="small" style={{ height: '100%' }}>
               <Statistic
                 title="Học kỳ có nợ"
                 value={debtData.totalSemesters || 0}
-                valueStyle={{ color: theme.palette.info.main, fontSize: 24, fontWeight: 600 }}
+                valueStyle={{
+                  color: theme.palette.info.main,
+                  fontSize: 20,
+                  fontWeight: 600,
+                }}
                 prefix={<CalendarOutlined />}
               />
-            </div>
-          </Grid>
-        </Grid>
+            </Card>
+          </Col>
+        </Row>
 
         {/* Alert */}
         {debtData.totalLateFee > 0 && (
@@ -292,32 +357,75 @@ const DebtPage = () => {
 
         {/* Student Info */}
         <Card
-          title={<><FileTextOutlined /> Thông tin sinh viên</>}
+          title={
+            <>
+              <FileTextOutlined /> Thông tin sinh viên
+            </>
+          }
           size="small"
           style={{ marginBottom: 24 }}
         >
           <Row gutter={[16, 12]}>
             <Col xs={24} sm={8}>
-              <Typography variant="body2" sx={{ color: theme.palette.text.secondary, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                MSSV
+              <Typography
+                variant="body2"
+                sx={{
+                  color: theme.palette.text.secondary,
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                }}
+              >
+                MSSV:
               </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: { xs: '0.875rem', sm: '0.875rem' } }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: { xs: '0.875rem', sm: '0.875rem' },
+                  paddingLeft: 5,
+                }}
+              >
                 {debtData.mssv}
               </Typography>
             </Col>
             <Col xs={24} sm={8}>
-              <Typography variant="body2" sx={{ color: theme.palette.text.secondary, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                Họ và tên
+              <Typography
+                variant="body2"
+                sx={{
+                  color: theme.palette.text.secondary,
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                }}
+              >
+                Họ và tên:
               </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: { xs: '0.875rem', sm: '0.875rem' } }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: { xs: '0.875rem', sm: '0.875rem' },
+                  paddingLeft: 5,
+                }}
+              >
                 {debtData.studentName}
               </Typography>
             </Col>
             <Col xs={24} sm={8}>
-              <Typography variant="body2" sx={{ color: theme.palette.text.secondary, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                Lớp
+              <Typography
+                variant="body2"
+                sx={{
+                  color: theme.palette.text.secondary,
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                }}
+              >
+                Lớp:
               </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: { xs: '0.875rem', sm: '0.875rem' } }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  paddingLeft: 5,
+                  fontSize: { xs: '0.875rem', sm: '0.875rem' },
+                }}
+              >
                 {debtData.className}
               </Typography>
             </Col>
@@ -330,7 +438,10 @@ const DebtPage = () => {
             <Space>
               <CalendarOutlined />
               Chi tiết công nợ theo học kỳ
-              <Badge count={debtData.semesterDebts?.length || 0} style={{ backgroundColor: theme.palette.primary.main }} />
+              <Badge
+                count={debtData.semesterDebts?.length || 0}
+                style={{ backgroundColor: theme.palette.primary.main }}
+              />
             </Space>
           }
         >
@@ -354,27 +465,64 @@ const DebtPage = () => {
                     borderLeftColor: semester.isOverdue
                       ? theme.palette.error.main
                       : isPaid
-                      ? theme.palette.success.main
-                      : theme.palette.warning.main,
+                        ? theme.palette.success.main
+                        : theme.palette.warning.main,
                   }}
                 >
                   {/* Semester Header */}
                   <Box sx={{ mb: 2 }}>
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 1 }}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 0, fontSize: { xs: '1rem', sm: '1.25rem' }, whiteSpace: 'nowrap' }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        justifyContent: 'space-between',
+                        alignItems: { xs: 'flex-start', sm: 'center' },
+                        gap: 1,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 1,
+                        }}
+                      >
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 600,
+                            mb: 0,
+                            fontSize: { xs: '1rem', sm: '1.25rem' },
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           {semester.semesterName}
                         </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          <Tag icon={statusConfig.icon} color={statusConfig.color}>
+                        <Box
+                          sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}
+                        >
+                          <Tag
+                            icon={statusConfig.icon}
+                            color={statusConfig.color}
+                          >
                             {statusConfig.text}
                           </Tag>
                           {semester.isOverdue && (
-                            <Tag color="error">Quá hạn {semester.daysOverdue} ngày</Tag>
+                            <Tag color="error">
+                              Quá hạn {semester.daysOverdue} ngày
+                            </Tag>
                           )}
                         </Box>
                       </Box>
-                      <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' }, whiteSpace: 'nowrap' }}>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          color: theme.palette.primary.main,
+                          fontWeight: 600,
+                          fontSize: { xs: '1rem', sm: '1.25rem' },
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
                         {formatCurrency(semester.totalAmount || 0)}
                       </Typography>
                     </Box>
@@ -383,32 +531,72 @@ const DebtPage = () => {
                   {/* Fee Details */}
                   <Row gutter={[16, 12]} style={{ marginBottom: 16 }}>
                     <Col xs={12} md={6}>
-                      <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block', fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
-                        Mã học phí
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: theme.palette.text.secondary,
+                          display: 'block',
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        }}
+                      >
+                        Mã học phí:
                       </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 500, fontSize: { xs: '0.8rem', sm: '0.875rem' }, wordBreak: 'break-word' }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 500,
+                          paddingLeft: 5,
+                          fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                          wordBreak: 'break-word',
+                        }}
+                      >
                         {semester.tuitionFeeCode || 'N/A'}
                       </Typography>
                     </Col>
                     <Col xs={12} md={6}>
-                      <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block', fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
-                        Đã thanh toán
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.success.main, fontSize: { xs: '0.8rem', sm: '0.875rem' }, wordBreak: 'break-word' }}>
-                        {formatCurrency(semester.paidAmount)}
-                      </Typography>
-                    </Col>
-                    <Col xs={12} md={6}>
-                      <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block', fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
-                        Còn lại
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: theme.palette.text.secondary,
+                          display: 'block',
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        }}
+                      >
+                        Đã thanh toán:
                       </Typography>
                       <Typography
                         variant="body2"
                         sx={{
                           fontWeight: 600,
-                          color: semester.remainingAmount > 0
-                            ? theme.palette.error.main
-                            : theme.palette.success.main,
+                          color: theme.palette.success.main,
+                          fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                          paddingLeft: 5,
+                          wordBreak: 'break-word',
+                        }}
+                      >
+                        {formatCurrency(semester.paidAmount)}
+                      </Typography>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: theme.palette.text.secondary,
+                          display: 'block',
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        }}
+                      >
+                        Còn lại:
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 600,
+                          color:
+                            semester.remainingAmount > 0
+                              ? theme.palette.error.main
+                              : theme.palette.success.main,
+                          paddingLeft: 5,
                           fontSize: { xs: '0.8rem', sm: '0.875rem' },
                           wordBreak: 'break-word',
                         }}
@@ -417,29 +605,75 @@ const DebtPage = () => {
                       </Typography>
                     </Col>
                     <Col xs={12} md={6}>
-                      <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block', fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
-                        Hạn thanh toán
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: theme.palette.text.secondary,
+                          display: 'block',
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        }}
+                      >
+                        Hạn thanh toán:
                       </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 500, fontSize: { xs: '0.8rem', sm: '0.875rem' }, wordBreak: 'break-word' }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 500,
+                          paddingLeft: 5,
+                          fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                          wordBreak: 'break-word',
+                        }}
+                      >
                         {formatDate(semester.dueDate)}
                       </Typography>
                     </Col>
                     {semester.lateFee > 0 && (
                       <Col xs={12} md={6}>
-                        <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block', fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
-                          Phí trễ hạn
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: theme.palette.text.secondary,
+                            display: 'block',
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                          }}
+                        >
+                          Phí trễ hạn:
                         </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.warning.main, fontSize: { xs: '0.8rem', sm: '0.875rem' }, wordBreak: 'break-word' }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            color: theme.palette.warning.main,
+                            fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                            paddingLeft: 5,
+                            wordBreak: 'break-word',
+                          }}
+                        >
                           {formatCurrency(semester.lateFee)}
                         </Typography>
                       </Col>
                     )}
                     {semester.paidAt && (
                       <Col xs={12} md={6}>
-                        <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block', fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
-                          Ngày thanh toán
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: theme.palette.text.secondary,
+                            display: 'block',
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                          }}
+                        >
+                          Ngày thanh toán:
                         </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 500, fontSize: { xs: '0.8rem', sm: '0.875rem' }, wordBreak: 'break-word' }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 500,
+                            fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                            paddingLeft: 5,
+                            wordBreak: 'break-word',
+                          }}
+                        >
                           {formatDate(semester.paidAt)}
                         </Typography>
                       </Col>
@@ -449,109 +683,137 @@ const DebtPage = () => {
                   <Divider style={{ margin: '16px 0' }} />
 
                   {/* Course Table */}
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, fontSize: { xs: '0.875rem', sm: '0.875rem' } }}>
-                    <BookOutlined /> Danh sách môn học ({semester.courseDetails?.length || 0})
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      mb: 1,
+                      fontSize: { xs: '0.875rem', sm: '0.875rem' },
+                    }}
+                  >
+                    <BookOutlined /> Danh sách môn học (
+                    {semester.courseDetails?.length || 0})
                   </Typography>
+                  <Table
+                    dataSource={semester.courseDetails || []}
+                    columns={[
+                      {
+                        title: 'Mã lớp HP',
+                        dataIndex: 'sectionCode',
+                        key: 'sectionCode',
+                        width: 120,
+                      },
+                      {
+                        title: 'Tên môn học',
+                        dataIndex: 'courseName',
+                        key: 'courseName',
+                        ellipsis: true,
+                      },
+                      {
+                        title: 'Tín chỉ',
+                        dataIndex: 'credits',
+                        key: 'credits',
+                        width: 80,
+                        align: 'center',
+                      },
+                      {
+                        title: 'Học phí',
+                        dataIndex: 'amount',
+                        key: 'amount',
+                        width: 140,
+                        align: 'right',
+                        render: (amount) => (
+                          <span style={{ fontWeight: 500 }}>
+                            {formatCurrency(amount)}
+                          </span>
+                        ),
+                      },
+                    ]}
+                    rowKey={(record) => record.sectionCode}
+                    pagination={false}
+                    size="small"
+                    scroll={{ x: 'max-content' }}
+                    summary={(pageData) => {
+                      const total = pageData.reduce(
+                        (sum, r) => sum + (r.amount || 0),
+                        0
+                      );
+                      const credits = pageData.reduce(
+                        (sum, r) => sum + (r.credits || 0),
+                        0
+                      );
+                      return (
+                        <Table.Summary>
+                          <Table.Summary.Row>
+                            <Table.Summary.Cell index={0} colSpan={2}>
+                              <strong>Tổng cộng</strong>
+                            </Table.Summary.Cell>
+                            <Table.Summary.Cell index={1} align="center">
+                              <strong>{credits}</strong>
+                            </Table.Summary.Cell>
+                            <Table.Summary.Cell index={2} align="right">
+                              <strong>{formatCurrency(total)}</strong>
+                            </Table.Summary.Cell>
+                          </Table.Summary.Row>
+                        </Table.Summary>
+                      );
+                    }}
+                  />
+
+                  {/* Payment History */}
+                  {semester.payments && semester.payments.length > 0 && (
+                    <>
+                      <Divider style={{ margin: '16px 0' }} />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 600,
+                          mb: 1,
+                          fontSize: { xs: '0.875rem', sm: '0.875rem' },
+                        }}
+                      >
+                        <CreditCardOutlined /> Lịch sử thanh toán
+                      </Typography>
                       <Table
-                        dataSource={semester.courseDetails || []}
+                        dataSource={semester.payments}
                         columns={[
                           {
-                            title: 'Mã lớp HP',
-                            dataIndex: 'sectionCode',
-                            key: 'sectionCode',
-                            width: 120,
+                            title: 'Ngày thanh toán',
+                            dataIndex: 'paymentDate',
+                            render: (date) => formatDate(date),
                           },
                           {
-                            title: 'Tên môn học',
-                            dataIndex: 'courseName',
-                            key: 'courseName',
-                            ellipsis: true,
-                          },
-                          {
-                            title: 'Tín chỉ',
-                            dataIndex: 'credits',
-                            key: 'credits',
-                            width: 80,
-                            align: 'center',
-                          },
-                          {
-                            title: 'Học phí',
+                            title: 'Số tiền',
                             dataIndex: 'amount',
-                            key: 'amount',
-                            width: 140,
                             align: 'right',
-                            render: (amount) => (
-                              <span style={{ fontWeight: 500 }}>{formatCurrency(amount)}</span>
+                            render: (amt) => (
+                              <span
+                                style={{
+                                  fontWeight: 600,
+                                  color: theme.palette.success.main,
+                                }}
+                              >
+                                {formatCurrency(amt)}
+                              </span>
                             ),
                           },
+                          {
+                            title: 'Phương thức',
+                            dataIndex: 'paymentMethod',
+                          },
+                          {
+                            title: 'Ghi chú',
+                            dataIndex: 'note',
+                            ellipsis: true,
+                          },
                         ]}
-                        rowKey={(record) => record.sectionCode}
+                        rowKey={(r, i) => i}
                         pagination={false}
                         size="small"
                         scroll={{ x: 'max-content' }}
-                        summary={(pageData) => {
-                          const total = pageData.reduce((sum, r) => sum + (r.amount || 0), 0);
-                          const credits = pageData.reduce((sum, r) => sum + (r.credits || 0), 0);
-                          return (
-                            <Table.Summary>
-                              <Table.Summary.Row>
-                                <Table.Summary.Cell index={0} colSpan={2}>
-                                  <strong>Tổng cộng</strong>
-                                </Table.Summary.Cell>
-                                <Table.Summary.Cell index={1} align="center">
-                                  <strong>{credits}</strong>
-                                </Table.Summary.Cell>
-                                <Table.Summary.Cell index={2} align="right">
-                                  <strong>{formatCurrency(total)}</strong>
-                                </Table.Summary.Cell>
-                              </Table.Summary.Row>
-                            </Table.Summary>
-                          );
-                        }}
                       />
-
-                      {/* Payment History */}
-                      {semester.payments && semester.payments.length > 0 && (
-                        <>
-                          <Divider style={{ margin: '16px 0' }} />
-                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, fontSize: { xs: '0.875rem', sm: '0.875rem' } }}>
-                            <CreditCardOutlined /> Lịch sử thanh toán
-                          </Typography>
-                          <Table
-                            dataSource={semester.payments}
-                            columns={[
-                              {
-                                title: 'Ngày thanh toán',
-                                dataIndex: 'paymentDate',
-                                render: (date) => formatDate(date),
-                              },
-                              {
-                                title: 'Số tiền',
-                                dataIndex: 'amount',
-                                align: 'right',
-                                render: (amt) => (
-                                  <span style={{ fontWeight: 600, color: theme.palette.success.main }}>
-                                    {formatCurrency(amt)}
-                                  </span>
-                                ),
-                              },
-                              {
-                                title: 'Phương thức',
-                                dataIndex: 'paymentMethod',
-                              },
-                              {
-                                title: 'Ghi chú',
-                                dataIndex: 'note',
-                                ellipsis: true,
-                              },
-                            ]}
-                            rowKey={(r, i) => i}
-                            pagination={false}
-                            size="small"
-                            scroll={{ x: 'max-content' }}
-                          />
-                        </>
-                      )}
+                    </>
+                  )}
                 </div>
               );
             })

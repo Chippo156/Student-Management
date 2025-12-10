@@ -275,11 +275,18 @@ const BankInfo = () => {
   ];
 
   return (
-    <div style={{
-      padding: window.innerWidth < 600 ? '16px' : window.innerWidth < 960 ? '16px' : '24px',
-      minHeight: '100vh',
-      background: theme.palette.background.default,
-    }}>
+    <div
+      style={{
+        padding:
+          window.innerWidth < 600
+            ? '16px'
+            : window.innerWidth < 960
+              ? '16px'
+              : '24px',
+        minHeight: '100vh',
+        background: theme.palette.background.default,
+      }}
+    >
       <div
         style={{
           display: 'flex',
@@ -288,12 +295,22 @@ const BankInfo = () => {
           marginBottom: 24,
         }}
       >
-        <Title level={2} style={{
-          margin: 0,
-          color: theme.palette.text.primary,
-          fontSize: window.innerWidth < 600 ? '1.5rem' : window.innerWidth < 960 ? '1.75rem' : '2rem'
-        }}>
-          <BankOutlined style={{ marginRight: 8, color: theme.palette.primary.main }} />
+        <Title
+          level={2}
+          style={{
+            margin: 0,
+            color: theme.palette.text.primary,
+            fontSize:
+              window.innerWidth < 600
+                ? '1.5rem'
+                : window.innerWidth < 960
+                  ? '1.75rem'
+                  : '2rem',
+          }}
+        >
+          <BankOutlined
+            style={{ marginRight: 8, color: theme.palette.primary.main }}
+          />
           Thông tin ngân hàng
         </Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
@@ -302,49 +319,89 @@ const BankInfo = () => {
       </div>
 
       {/* Quick Stats */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      {/* <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <Card
+            bordered={false}
+            style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+          >
             <Statistic
-              title={<span style={{ color: theme.palette.text.secondary }}>Tổng tài khoản</span>}
+              title={
+                <span style={{ color: theme.palette.text.secondary }}>
+                  Tổng tài khoản
+                </span>
+              }
               value={bankAccounts.length || 0}
-              prefix={<BankOutlined style={{ color: theme.palette.primary.main }} />}
+              prefix={
+                <BankOutlined style={{ color: theme.palette.primary.main }} />
+              }
               valueStyle={{ color: theme.palette.primary.main }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <Card
+            bordered={false}
+            style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+          >
             <Statistic
-              title={<span style={{ color: theme.palette.text.secondary }}>Tài khoản đã xác thực</span>}
-              value={bankAccounts.filter(acc => acc.isDefault).length || 0}
-              prefix={<CheckCircleOutlined style={{ color: theme.palette.success.main }} />}
+              title={
+                <span style={{ color: theme.palette.text.secondary }}>
+                  Tài khoản đã xác thực
+                </span>
+              }
+              value={bankAccounts.filter((acc) => acc.isDefault).length || 0}
+              prefix={
+                <CheckCircleOutlined
+                  style={{ color: theme.palette.success.main }}
+                />
+              }
               valueStyle={{ color: theme.palette.success.main }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <Card
+            bordered={false}
+            style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+          >
             <Statistic
-              title={<span style={{ color: theme.palette.text.secondary }}>Giao dịch tháng này</span>}
+              title={
+                <span style={{ color: theme.palette.text.secondary }}>
+                  Giao dịch tháng này
+                </span>
+              }
               value={mockTransactions.length}
-              prefix={<HistoryOutlined style={{ color: theme.palette.secondary.main }} />}
+              prefix={
+                <HistoryOutlined
+                  style={{ color: theme.palette.secondary.main }}
+                />
+              }
               valueStyle={{ color: theme.palette.secondary.main }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <Card
+            bordered={false}
+            style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+          >
             <Statistic
-              title={<span style={{ color: theme.palette.text.secondary }}>Tổng chi phí</span>}
+              title={
+                <span style={{ color: theme.palette.text.secondary }}>
+                  Tổng chi phí
+                </span>
+              }
               value={5700}
               suffix="K VNĐ"
-              prefix={<DollarOutlined style={{ color: theme.palette.warning.main }} />}
+              prefix={
+                <DollarOutlined style={{ color: theme.palette.warning.main }} />
+              }
               valueStyle={{ color: theme.palette.warning.main }}
             />
           </Card>
         </Col>
-      </Row>
+      </Row> */}
 
       <Alert
         message="Bảo mật thông tin"
@@ -362,18 +419,23 @@ const BankInfo = () => {
           <BankAccountDefaultCard defaultAccount={defaultAccount} />
 
           <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-            <Col xs={24} lg={16}>
+            <Col xs={24} lg={24}>
               <Card
                 bordered={false}
                 title={
                   <Space>
-                    <BankOutlined style={{ color: theme.palette.primary.main }} />
+                    <BankOutlined
+                      style={{ color: theme.palette.primary.main }}
+                    />
                     <Text strong style={{ color: theme.palette.text.primary }}>
                       Danh sách tài khoản ({bankAccounts.length})
                     </Text>
                   </Space>
                 }
-                style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+                style={{
+                  borderRadius: 8,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                }}
               >
                 <BankAccountList
                   bankAccounts={bankAccounts}
@@ -381,85 +443,6 @@ const BankInfo = () => {
                   onSetDefault={handleSetDefault}
                   onDelete={handleDelete}
                 />
-              </Card>
-            </Col>
-
-            <Col xs={24} lg={8}>
-              {/* Transaction History */}
-              <Card
-                bordered={false}
-                title={
-                  <Space>
-                    <HistoryOutlined style={{ color: theme.palette.primary.main }} />
-                    <Text strong style={{ color: theme.palette.text.primary }}>Lịch sử giao dịch</Text>
-                  </Space>
-                }
-                style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 16 }}
-              >
-                <Timeline
-                  items={mockTransactions.map(transaction => ({
-                    color: transaction.type === 'payment' ? theme.palette.error.main : theme.palette.success.main,
-                    children: (
-                      <div>
-                        <Text strong style={{ color: theme.palette.text.primary, display: 'block' }}>
-                          {transaction.type === 'payment' ? '- ' : '+ '}
-                          {transaction.amount.toLocaleString('vi-VN')} VNĐ
-                        </Text>
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
-                          {transaction.description}
-                        </Text>
-                        <Text type="secondary" style={{ fontSize: 11 }}>
-                          <ClockCircleOutlined /> {transaction.date.format('DD/MM/YYYY')}
-                        </Text>
-                      </div>
-                    ),
-                  }))}
-                />
-              </Card>
-
-              {/* Payment Reminders */}
-              <Card
-                bordered={false}
-                title={
-                  <Space>
-                    <ClockCircleOutlined style={{ color: theme.palette.warning.main }} />
-                    <Text strong style={{ color: theme.palette.text.primary }}>Nhắc nhở thanh toán</Text>
-                  </Space>
-                }
-                style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
-              >
-                <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                  <div style={{
-                    padding: 12,
-                    background: alpha(theme.palette.warning.main, 0.1),
-                    borderLeft: `4px solid ${theme.palette.warning.main}`,
-                    borderRadius: 4,
-                  }}>
-                    <Text strong style={{ color: theme.palette.text.primary, display: 'block' }}>
-                      Học phí học kỳ 2
-                    </Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      Hạn: {dayjs().add(30, 'day').format('DD/MM/YYYY')}
-                    </Text>
-                    <br />
-                    <Tag color="warning" style={{ marginTop: 8 }}>Còn 30 ngày</Tag>
-                  </div>
-                  <div style={{
-                    padding: 12,
-                    background: alpha(theme.palette.info.main, 0.1),
-                    borderLeft: `4px solid ${theme.palette.info.main}`,
-                    borderRadius: 4,
-                  }}>
-                    <Text strong style={{ color: theme.palette.text.primary, display: 'block' }}>
-                      Lệ phí thi cuối kỳ
-                    </Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      Hạn: {dayjs().add(45, 'day').format('DD/MM/YYYY')}
-                    </Text>
-                    <br />
-                    <Tag color="blue" style={{ marginTop: 8 }}>Còn 45 ngày</Tag>
-                  </div>
-                </Space>
               </Card>
             </Col>
           </Row>

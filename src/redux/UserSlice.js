@@ -47,19 +47,29 @@ export const userSlice = createSlice({
       };
       localStorage.setItem('access_token', token.accessToken);
       localStorage.setItem('refresh_token', token.refreshToken);
+      // Save user info to localStorage for reload
+      localStorage.setItem('user_info', JSON.stringify(state.account));
       // localStorage.setItem('role', user.role?.roleId ?? user.role ?? '1');
     },
     doGetAccountAction: (state, action) => {
       if (state.account) {
-        state.account.username = action.payload.username;
-        state.account.avatarUrl = action.payload.avatarUrl;
-        state.account.userId = action.payload.userId;
+        // Merge all payload data into account, keeping tokens
+        state.account = {
+          ...state.account, // Keep existing data (tokens, etc.)
+          ...action.payload, // Merge new data
+          // Ensure tokens are preserved
+          accessToken: state.account.accessToken,
+          refreshToken: state.account.refreshToken,
+        };
+        // Update localStorage when user info changes
+        localStorage.setItem('user_info', JSON.stringify(state.account));
       }
     },
     doLogoutAction: (state) => {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('role');
+      localStorage.removeItem('user_info');
       state.isAuthenticated = false;
       state.account = null;
       state.error = null;
@@ -67,12 +77,35 @@ export const userSlice = createSlice({
     doLoadUserFromToken: (state) => {
       const token = localStorage.getItem('access_token');
       const refreshToken = localStorage.getItem('refresh_token');
+      const userInfoStr = localStorage.getItem('user_info');
+
       if (token && refreshToken) {
         state.isAuthenticated = true;
-        state.account = {
-          accessToken: token,
-          refreshToken: refreshToken,
-        };
+
+        // Try to restore full user info from localStorage
+        if (userInfoStr) {
+          try {
+            const userInfo = JSON.parse(userInfoStr);
+            state.account = {
+              ...userInfo,
+              accessToken: token,
+              refreshToken: refreshToken,
+            };
+          } catch (error) {
+            console.error('Failed to parse user_info:', error);
+            // Fallback to just tokens
+            state.account = {
+              accessToken: token,
+              refreshToken: refreshToken,
+            };
+          }
+        } else {
+          // Fallback to just tokens
+          state.account = {
+            accessToken: token,
+            refreshToken: refreshToken,
+          };
+        }
       } else {
         state.isAuthenticated = false;
         state.account = null;
@@ -112,6 +145,8 @@ export const userSlice = createSlice({
         localStorage.setItem('access_token', token.accessToken);
         localStorage.setItem('refresh_token', token.refreshToken);
         localStorage.setItem('role', user.role?.roleId ?? user.role ?? '1');
+        // Save user info to localStorage for reload
+        localStorage.setItem('user_info', JSON.stringify(state.account));
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -123,6 +158,7 @@ export const userSlice = createSlice({
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('role');
+        localStorage.removeItem('user_info');
         state.isAuthenticated = false;
         state.account = null;
         state.error = null;
