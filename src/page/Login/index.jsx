@@ -39,6 +39,10 @@ const Login = () => {
   const [openForgotPassword, setOpenForgotPassword] = useState(false);
   const [mssv, setMssv] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [emailMasked, setEmailMasked] = useState('');
+  const [studentName, setStudentName] = useState('');
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -117,15 +121,48 @@ const Login = () => {
     setIsSubmitting(true);
     try {
       const result = await authService.forgotPasswordByMSSV(mssv);
-      if (result) {
-        setOpenForgotPassword(false);
-        setMssv('');
+      if (result && result.success) {
+        setOtpSent(true);
+        setEmailMasked(result.data?.email || '');
+        setStudentName(result.data?.studentName || '');
       }
     } catch (error) {
       console.error('Forgot password error:', error);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpCode.trim()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await authService.verifyOtp(mssv, otpCode);
+      if (result && result.success) {
+        setOpenForgotPassword(false);
+        setMssv('');
+        setOtpCode('');
+        setOtpSent(false);
+        setEmailMasked('');
+        setStudentName('');
+      }
+    } catch (error) {
+      console.error('Verify OTP error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCloseForgotPassword = () => {
+    setOpenForgotPassword(false);
+    setMssv('');
+    setOtpCode('');
+    setOtpSent(false);
+    setEmailMasked('');
+    setStudentName('');
   };
 
   return (
@@ -283,41 +320,79 @@ const Login = () => {
       {/* Forgot Password Modal */}
       <Dialog
         open={openForgotPassword}
-        onClose={() => !isSubmitting && setOpenForgotPassword(false)}
+        onClose={() => !isSubmitting && handleCloseForgotPassword()}
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Quên mật khẩu</DialogTitle>
+        <DialogTitle>
+          {otpSent ? 'Xác thực OTP' : 'Quên mật khẩu'}
+        </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ mb: 3, mt: 1 }}>
-            Nhập mã số sinh viên của bạn. Mật khẩu mới sẽ được gửi đến email đã
-            đăng ký.
-          </Typography>
-          <TextField
-            fullWidth
-            label="Mã số sinh viên (MSSV)"
-            value={mssv}
-            onChange={(e) => setMssv(e.target.value)}
-            required
-            disabled={isSubmitting}
-            placeholder="Nhập MSSV"
-            autoFocus
-          />
+          {!otpSent ? (
+            <>
+              <Typography variant="body2" sx={{ mb: 3, mt: 1 }}>
+                Nhập mã số sinh viên của bạn. Mã OTP sẽ được gửi đến email đã
+                đăng ký.
+              </Typography>
+              <TextField
+                fullWidth
+                label="Mã số sinh viên (MSSV)"
+                value={mssv}
+                onChange={(e) => setMssv(e.target.value)}
+                required
+                disabled={isSubmitting}
+                placeholder="Nhập MSSV"
+                autoFocus
+              />
+            </>
+          ) : (
+            <>
+              <Alert severity="success" sx={{ mb: 2, mt: 1 }}>
+                Mã OTP đã được gửi đến email của bạn
+              </Alert>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                <strong>Sinh viên:</strong> {studentName}
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 3 }}>
+                <strong>Email:</strong> {emailMasked}
+              </Typography>
+              <TextField
+                fullWidth
+                label="Mã OTP"
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value)}
+                required
+                disabled={isSubmitting}
+                placeholder="Nhập mã OTP từ email"
+                autoFocus
+              />
+            </>
+          )}
         </DialogContent>
         <DialogActions>
           <Button
-            onClick={() => setOpenForgotPassword(false)}
+            onClick={handleCloseForgotPassword}
             disabled={isSubmitting}
           >
             Hủy
           </Button>
-          <Button
-            onClick={handleForgotPassword}
-            variant="contained"
-            disabled={isSubmitting || !mssv.trim()}
-          >
-            {isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu'}
-          </Button>
+          {!otpSent ? (
+            <Button
+              onClick={handleForgotPassword}
+              variant="contained"
+              disabled={isSubmitting || !mssv.trim()}
+            >
+              {isSubmitting ? 'Đang gửi...' : 'Gửi OTP'}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleVerifyOtp}
+              variant="contained"
+              disabled={isSubmitting || !otpCode.trim()}
+            >
+              {isSubmitting ? 'Đang xác thực...' : 'Xác thực OTP'}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </Box>

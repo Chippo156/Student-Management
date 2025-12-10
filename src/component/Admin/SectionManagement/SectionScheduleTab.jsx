@@ -609,7 +609,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
                 <FormControl fullWidth error={!!errors.dayOfWeek}>
                   <InputLabel>Thứ *</InputLabel>
                   <Select
-                    value={formData.dayOfWeek || ''}
+                    value={formData.dayOfWeek !== null && formData.dayOfWeek !== undefined ? formData.dayOfWeek : ''}
                     label="Thứ *"
                     onChange={(e) => {
                       setFormData({

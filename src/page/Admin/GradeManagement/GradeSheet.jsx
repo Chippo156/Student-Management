@@ -380,8 +380,8 @@ const GradeSheet = () => {
                   </Box>
                 </Box>
 
-                <TableContainer>
-                  <Table>
+                <TableContainer sx={{ overflowX: 'auto' }}>
+                  <Table sx={{ minWidth: 650 }}>
                     <TableHead>
                       <TableRow
                         sx={{

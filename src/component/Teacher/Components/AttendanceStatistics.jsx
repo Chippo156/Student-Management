@@ -329,8 +329,8 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
             Chi tiết điểm danh sinh viên ({totalStudents} sinh viên)
           </Typography>
-          <TableContainer component={Paper} sx={{ maxHeight: 600 }}>
-            <Table stickyHeader size="small">
+          <TableContainer component={Paper} sx={{ maxHeight: 600, overflowX: 'auto' }}>
+            <Table stickyHeader size="small" sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>STT</TableCell>

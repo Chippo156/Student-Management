@@ -35,8 +35,10 @@ import {
 import { useTheme, alpha } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { message } from 'antd';
 import sectionService from '../../../service/sectionService';
 import CourseDetailModal from '../Components/CourseDetailModal';
+import { exportTeacherCoursesExcel } from '../../../until/exportTeacherCoursesExcel';
 
 const CoursesPage = () => {
   const theme = useTheme();
@@ -131,41 +133,21 @@ const CoursesPage = () => {
     setFilteredCourses(filtered);
   };
 
-  const handleExportExcel = () => {
-    const dataToExport = filteredCourses.map((section, index) => ({
-      STT: index + 1,
-      'Mã lớp HP': section.sectionCode,
-      'Mã môn học': section.courseCode,
-      'Tên môn học': section.courseName,
-      'Số SV': `${section.enrolledCount}/${section.capacity}`,
-      'Học kỳ': section.semesterName,
-      'Trạng thái': getStatusText(section.status),
-      'Ngày bắt đầu': section.startDate,
-      'Ngày kết thúc': section.endDate,
-    }));
+  const handleExportExcel = async () => {
+    try {
+      const result = await exportTeacherCoursesExcel(filteredCourses, {
+        lecturerName: user?.user?.fullName || user?.fullName || 'Giảng viên',
+      });
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Lớp học phần');
-
-    // Set column widths
-    const colWidths = [
-      { wch: 5 }, // STT
-      { wch: 15 }, // Mã lớp HP
-      { wch: 12 }, // Mã môn học
-      { wch: 35 }, // Tên môn học
-      { wch: 10 }, // Số SV
-      { wch: 20 }, // Học kỳ
-      { wch: 15 }, // Trạng thái
-      { wch: 15 }, // Ngày bắt đầu
-      { wch: 15 }, // Ngày kết thúc
-    ];
-    worksheet['!cols'] = colWidths;
-
-    XLSX.writeFile(
-      workbook,
-      `Danh_sach_lop_hoc_phan_${new Date().getTime()}.xlsx`
-    );
+      if (result.success) {
+        message.success('Xuất Excel thành công');
+      } else {
+        message.error(result.error || 'Có lỗi xảy ra khi xuất Excel');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      message.error('Có lỗi xảy ra khi xuất Excel');
+    }
   };
 
   const handleResetFilters = () => {
@@ -442,35 +424,34 @@ const CoursesPage = () => {
 
       {/* Courses Table */}
       <Paper sx={{ boxShadow: 2, borderRadius: 2, overflow: 'hidden' }}>
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ overflowX: 'auto' }}>
+          <Table sx={{ minWidth: 800 }}>
             <TableHead>
-              <TableRow sx={{ bgcolor: colors.primary }}>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold' }}>
                   STT
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+                <TableCell sx={{ fontWeight: 'bold' }}>
                   Mã lớp HP
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+                <TableCell sx={{ fontWeight: 'bold' }}>
                   Mã môn học
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+                <TableCell sx={{ fontWeight: 'bold' }}>
                   Tên môn học
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+                <TableCell sx={{ fontWeight: 'bold' }}>
                   Số sinh viên
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+                <TableCell sx={{ fontWeight: 'bold' }}>
                   Học kỳ
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: colors.bgCard }}>
+                <TableCell sx={{ fontWeight: 'bold' }}>
                   Trạng thái
                 </TableCell>
                 <TableCell
                   sx={{
                     fontWeight: 'bold',
-                    color: colors.bgCard,
                     textAlign: 'center',
                   }}
                 >

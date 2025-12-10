@@ -257,4 +257,24 @@ export const studentServices = {
       return null;
     }
   },
+
+  // Lấy lịch sử điểm danh
+  getCheckInHistory: async () => {
+    try {
+      const response = await customizeAxios.get(
+        '/api/student/attendance/GetAllCheckIn'
+      );
+      if (response?.success === false) {
+        message.error(
+          response?.message || 'Lấy lịch sử điểm danh thất bại'
+        );
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching check-in history:', error);
+      message.error('Lấy lịch sử điểm danh thất bại');
+      return null;
+    }
+  },
 };

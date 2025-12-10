@@ -351,8 +351,8 @@ const GradeEntry = () => {
                       </Box>
                     </Box>
 
-                    <TableContainer>
-                      <Table size="small">
+                    <TableContainer sx={{ overflowX: 'auto' }}>
+                      <Table size="small" sx={{ minWidth: 650 }}>
                         <TableHead>
                           <TableRow>
                             <TableCell>Loại điểm</TableCell>

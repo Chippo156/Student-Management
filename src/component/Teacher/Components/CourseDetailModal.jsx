@@ -497,8 +497,8 @@ const CourseDetailModal = ({ open, onClose, section }) => {
               : 'Chưa có sinh viên đăng ký lớp này'}
           </Alert>
         ) : (
-          <TableContainer component={Paper} variant="outlined">
-            <Table size="small">
+          <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+            <Table size="small" sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow
                   sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}

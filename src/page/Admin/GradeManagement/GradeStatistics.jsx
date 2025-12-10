@@ -720,8 +720,8 @@ const GradeStatistics = () => {
                       Thống kê theo học kỳ
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
-                    <TableContainer>
-                      <Table>
+                    <TableContainer sx={{ overflowX: 'auto' }}>
+                      <Table sx={{ minWidth: 650 }}>
                         <TableHead>
                           <TableRow>
                             <TableCell>Học kỳ</TableCell>
@@ -818,8 +818,8 @@ const GradeStatistics = () => {
                       Thống kê theo loại môn học
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
-                    <TableContainer>
-                      <Table>
+                    <TableContainer sx={{ overflowX: 'auto' }}>
+                      <Table sx={{ minWidth: 650 }}>
                         <TableHead>
                           <TableRow>
                             <TableCell>Loại môn học</TableCell>
@@ -1232,8 +1232,8 @@ const GradeStatistics = () => {
                       Thống kê theo khoa
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
-                    <TableContainer>
-                      <Table>
+                    <TableContainer sx={{ overflowX: 'auto' }}>
+                      <Table sx={{ minWidth: 650 }}>
                         <TableHead>
                           <TableRow>
                             <TableCell>Khoa</TableCell>
@@ -1285,8 +1285,8 @@ const GradeStatistics = () => {
                       Thống kê theo chương trình đào tạo
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
-                    <TableContainer>
-                      <Table>
+                    <TableContainer sx={{ overflowX: 'auto' }}>
+                      <Table sx={{ minWidth: 650 }}>
                         <TableHead>
                           <TableRow>
                             <TableCell>Chương trình</TableCell>
@@ -1336,8 +1336,8 @@ const GradeStatistics = () => {
                       Thống kê theo học kỳ
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
-                    <TableContainer>
-                      <Table>
+                    <TableContainer sx={{ overflowX: 'auto' }}>
+                      <Table sx={{ minWidth: 650 }}>
                         <TableHead>
                           <TableRow>
                             <TableCell>Học kỳ</TableCell>

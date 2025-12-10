@@ -88,8 +88,7 @@ export const authService = {
         }
         return null;
       }
-      message.success('Mật khẩu mới đã được gửi đến email của bạn!');
-      return response.data;
+      return response;
     } catch (error) {
       if (error.response && error.response.data) {
         const errData = error.response.data.data;
@@ -102,6 +101,40 @@ export const authService = {
         }
       } else {
         message.error(error.message || 'Gửi yêu cầu quên mật khẩu thất bại');
+      }
+      return null;
+    }
+  },
+
+  verifyOtp: async (mssv, otpCode) => {
+    try {
+      const response = await axios.post('/api/v1/Auth/VerifyOtp', {
+        mssv,
+        otpCode,
+      });
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(response?.message || 'Xác thực OTP thất bại');
+        }
+        return null;
+      }
+      message.success(response?.message || 'Xác thực OTP thành công! Mật khẩu mới đã được gửi đến email của bạn.');
+      return response;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message || 'Xác thực OTP thất bại'
+          );
+        }
+      } else {
+        message.error(error.message || 'Xác thực OTP thất bại');
       }
       return null;
     }

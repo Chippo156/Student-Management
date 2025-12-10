@@ -306,8 +306,8 @@ const StudentInfo = () => {
 
       {/* Student Info Table */}
       <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-        <TableContainer sx={{ maxHeight: 'calc(100vh - 400px)' }}>
-          <Table stickyHeader>
+        <TableContainer sx={{ maxHeight: 'calc(100vh - 400px)', overflowX: 'auto' }}>
+          <Table stickyHeader sx={{ minWidth: 650 }}>
             <TableHead>
               <TableRow>
                 <TableCell>Sinh viên</TableCell>

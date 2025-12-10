@@ -17,6 +17,13 @@ import {
   Divider,
   IconButton,
   Tooltip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
@@ -46,9 +53,13 @@ const SelfCheckIn = () => {
   const [checkInCode, setCheckInCode] = useState('');
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [checkInHistory, setCheckInHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
     fetchAvailableSessions();
+    fetchCheckInHistory();
   }, []);
 
   const fetchAvailableSessions = async () => {
@@ -65,7 +76,29 @@ const SelfCheckIn = () => {
     }
   };
 
+  const fetchCheckInHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const data = await studentServices.getCheckInHistory();
+      if (data) {
+        // Sắp xếp theo thời gian mới nhất trước (giảm dần)
+        const sortedData = [...data].sort((a, b) =>
+          new Date(b.checkInTime) - new Date(a.checkInTime)
+        );
+        setCheckInHistory(sortedData);
+      }
+    } catch (error) {
+      console.error('Error fetching check-in history:', error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   const handleOpenCheckInDialog = (session) => {
+    // Validate: Chỉ cho điểm danh khi phiên đang mở
+    if (!session.isCheckInActive) {
+      return;
+    }
     setSelectedSession(session);
     setCheckInCode('');
     setNote('');
@@ -92,8 +125,9 @@ const SelfCheckIn = () => {
 
       if (result) {
         handleCloseDialog();
-        // Refresh the list
+        // Refresh the lists
         await fetchAvailableSessions();
+        await fetchCheckInHistory();
       }
     } catch (error) {
       console.error('Check-in error:', error);
@@ -191,10 +225,21 @@ const SelfCheckIn = () => {
           <CheckCircleOutlineIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
           Điểm danh
         </Typography>
-        <Tooltip title="Làm mới">
-          <IconButton
-            onClick={fetchAvailableSessions}
-            disabled={loading}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant={showHistory ? 'outlined' : 'contained'}
+            onClick={() => setShowHistory(!showHistory)}
+            size="small"
+          >
+            {showHistory ? 'Phiên điểm danh' : 'Lịch sử'}
+          </Button>
+          <Tooltip title="Làm mới">
+            <IconButton
+              onClick={() => {
+                fetchAvailableSessions();
+                fetchCheckInHistory();
+              }}
+              disabled={loading}
             sx={{
               bgcolor: 'background.paper',
               '&:hover': { bgcolor: 'action.hover' },
@@ -204,18 +249,21 @@ const SelfCheckIn = () => {
             <RefreshIcon />
           </IconButton>
         </Tooltip>
+        </Box>
       </Box>
 
-      {/* Info Alert */}
-      <Alert severity="info" sx={{ mb: 3 }}>
-        <Typography variant="body2">
-          Bạn chỉ có thể điểm danh trong khung thời gian quy định. Hãy đảm bảo
-          điểm danh đúng giờ để tránh bị ghi nhận là đi muộn hoặc vắng mặt.
-        </Typography>
-      </Alert>
+      {!showHistory ? (
+        <>
+          {/* Info Alert */}
+          <Alert severity="info" sx={{ mb: 3 }}>
+            <Typography variant="body2">
+              Bạn chỉ có thể điểm danh trong khung thời gian quy định. Hãy đảm bảo
+              điểm danh đúng giờ để tránh bị ghi nhận là đi muộn hoặc vắng mặt.
+            </Typography>
+          </Alert>
 
-      {/* Sessions List */}
-      {sessions.length === 0 ? (
+          {/* Sessions List */}
+          {sessions.length === 0 ? (
         <Card sx={{ textAlign: 'center', py: 6 }}>
           <CardContent>
             <ScheduleIcon
@@ -374,6 +422,8 @@ const SelfCheckIn = () => {
           ))}
         </Grid>
       )}
+      </>
+      ) : null}
 
       {/* Check-in Dialog */}
       <Dialog
@@ -382,10 +432,8 @@ const SelfCheckIn = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Xác nhận điểm danh
-          </Typography>
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          Xác nhận điểm danh
         </DialogTitle>
         <DialogContent>
           {selectedSession && (
@@ -440,6 +488,86 @@ const SelfCheckIn = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Check-in History Section */}
+      {showHistory && (
+        <Box>
+          <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
+            Lịch sử điểm danh
+          </Typography>
+          {loadingHistory ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : checkInHistory.length === 0 ? (
+            <Card sx={{ textAlign: 'center', py: 6 }}>
+              <CardContent>
+                <ScheduleIcon
+                  sx={{ fontSize: 80, color: 'text.disabled', mb: 2 }}
+                />
+                <Typography variant="h6" color="text.secondary">
+                  Chưa có lịch sử điểm danh
+                </Typography>
+              </CardContent>
+            </Card>
+          ) : (
+            <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.08) }}>
+                    <TableCell sx={{ fontWeight: 600 }}>STT</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Môn học</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Phiên</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Thời gian</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {checkInHistory.map((history, index) => (
+                    <TableRow
+                      key={index}
+                      hover
+                      sx={{
+                        '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.04) },
+                      }}
+                    >
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {history.courseName}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {history.sessionName}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {formatDateTime(history.checkInTime)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={history.attendanceStatus}
+                          size="small"
+                          color={
+                            history.attendanceStatus === 'Có mặt'
+                              ? 'success'
+                              : history.attendanceStatus === 'Đi muộn'
+                              ? 'warning'
+                              : 'default'
+                          }
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Box>
+      )}
     </Box>
   );
 };
