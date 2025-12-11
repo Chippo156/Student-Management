@@ -193,7 +193,7 @@ namespace StudentManagement.Services
             // Lấy các nhóm thực hành mà sinh viên đã đăng ký
             var studentPracticeGroups = await context.PracticeGroupEnrollments
                 .Include(pge => pge.PracticeGroup)
-                .Where(pge => pge.StudentId == student.Id && 
+                .Where(pge => pge.StudentId == student.Id &&
                              pge.IsActive &&
                              studentSections.Contains(pge.PracticeGroup.SectionId))
                 .Select(pge => pge.PracticeGroupId)
@@ -287,7 +287,7 @@ namespace StudentManagement.Services
                 await context.SaveChangesAsync();
 
                 // Kiểm tra xem đây có phải là lịch lý thuyết (main schedule) không
-                bool isMainSchedule = 
+                bool isMainSchedule =
                                      request.ScheduleTypeId != 3; // Không phải lịch thi và không phải lịch thực hành
 
                 if (isMainSchedule)
@@ -576,7 +576,7 @@ namespace StudentManagement.Services
                 .Where(s => s.Section.SectionId == sectionId)
                 .AsQueryable();
 
-           
+
             // Get total count
             var totalCount = await query.CountAsync();
 
@@ -1187,7 +1187,7 @@ namespace StudentManagement.Services
             }
 
             // Check for conflicts only if time/room has changed
-            if (schedule.DayOfWeek != request.DayOfWeek || 
+            if (schedule.DayOfWeek != request.DayOfWeek ||
                 schedule.StartTime != request.StartTime ||
                 schedule.EndTime != request.EndTime ||
                 schedule.Room != request.Room)
@@ -1210,9 +1210,9 @@ namespace StudentManagement.Services
                 var practiceGroup = await context.PracticeGroups
                     .Include(pg => pg.Section)
                     .FirstOrDefaultAsync(pg => pg.PracticeGroupId == request.PracticeGroupId);
-                
+
                 if (practiceGroup is null)
-                    { throw new Exception("Không tìm thấy nhóm thực hành"); }
+                { throw new Exception("Không tìm thấy nhóm thực hành"); }
                 var lecturer = await context.Lecturers.FindAsync(request.LecturerId);
 
                 practiceGroup.LecturerId = request.LecturerId;

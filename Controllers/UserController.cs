@@ -41,7 +41,6 @@ namespace StudentManagement.Controllers
         {
             try
             {
-                // Kiểm tra quyền: chỉ admin hoặc chính user đó mới có thể cập nhật
                 var currentUserId = GetAuthenticatedUserId();
                 var role = User.FindFirstValue(ClaimTypes.Role);
 

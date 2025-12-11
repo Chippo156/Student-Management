@@ -359,7 +359,7 @@ namespace StudentManagement.Services
                 AttendanceStatus.Late => "Đi muộn",
                 AttendanceStatus.Excused => "Vắng có phép",
                 AttendanceStatus.Left => "Về sớm",
-                _ => "Unknown"
+                _ => "Chưa điểm danh"
             };
         }
 
@@ -574,7 +574,7 @@ namespace StudentManagement.Services
                         AttendanceSessionId = session.AttendanceSessionId,
                         SessionDate = session.SessionDate,
                         SessionName = session.SessionName,
-                        Status = attendance?.Status.ToString() ?? "Unknown",
+                        Status = attendance?.Status.ToString() ?? "Chưa điểm danh",
                         StatusVietnamese = attendance != null ? GetAttendanceStatusInVietnamese(attendance.Status) : "Chưa điểm danh",
                         Note = attendance?.Note
                     });

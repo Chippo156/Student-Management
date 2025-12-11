@@ -108,6 +108,7 @@ namespace StudentManagement.Controllers
         }
 
         [HttpGet("GetSectionScheduleWithRegistration/{sectionId}")]
+        [HttpGet("GetSectionScheduleWithRegistration/{sectionId}")]
         [Authorize]
         public async Task<IActionResult> GetSectionScheduleWithRegistration(int sectionId)
         {

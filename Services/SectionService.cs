@@ -341,7 +341,7 @@ namespace StudentManagement.Services
                 StatusName = GetSectionStatusInVietnamese(section.Status),
                 LecturerEmail = section.Lecturer.User.Email,
                 IsActive = section.Status != SectionStatus.IsClosed,
-                ClassName =  section.Class.ClassName,
+                ClassName = section.Class.ClassName,
                 SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
                 DepartmentId = section.CurriculumCourse.Program.Department.DepartmentId,
                 DepartmentName = section.CurriculumCourse.Program.Department.DepartmentName,
@@ -386,8 +386,8 @@ namespace StudentManagement.Services
             var registrationPeriod = await context.RegistrationPeriods
                 .Include(rp => rp.Semester)
                 .Include(rp => rp.Department)
-                .FirstOrDefaultAsync(rp => 
-                    rp.Semester.SemesterId == semesterId && 
+                .FirstOrDefaultAsync(rp =>
+                    rp.Semester.SemesterId == semesterId &&
                     rp.Department.DepartmentId == student.Class.Program.Department.DepartmentId);
 
             bool isRegistrationOpen = registrationPeriod?.IsActive ?? false;
@@ -400,37 +400,37 @@ namespace StudentManagement.Services
                     .ThenInclude(l => l.User)
                 .Include(s => s.Semester)
                 .Include(s => s.Class)
-                .Where(s => s.CurriculumCourse.Id == curriculumCourseId && 
+                .Where(s => s.CurriculumCourse.Id == curriculumCourseId &&
                         s.Semester.SemesterId == semesterId)
                 .ToListAsync();
 
             var response = sections.Select(s => new SectionDetailWithRegistrationResponse
             {
-                
+
                 SectionId = s.SectionId,
                 SectionCode = s.SectionCode,
                 MaxCapacity = s.Capacity,
                 CurrentEnrollment = s.EnrolledCount,
                 StartDate = s.StartDate,
                 EndDate = s.EndDate,
-                
+
                 // Course information
                 CourseCode = s.CurriculumCourse.Course.CourseCode,
                 CourseName = s.CurriculumCourse.Course.CourseName,
                 CreditsTheory = s.CurriculumCourse.Course.CreditsTheory,
                 CreditsLab = s.CurriculumCourse.Course.CreditsLab,
                 TotalCredits = s.CurriculumCourse.Course.CreditsTheory + s.CurriculumCourse.Course.CreditsLab,
-                
+
                 // Lecturer information
                 LecturerName = s.Lecturer?.User?.FullName ?? "Not Assigned",
                 LecturerEmail = s.Lecturer?.User?.Email ?? "",
-                
+
                 // Semester information
                 SemesterId = s.Semester.SemesterId,
                 SemesterName = $"{s.Semester.Year} - {s.Semester.Term}",
                 Year = s.Semester.Year,
                 Term = s.Semester.Term,
-                
+
                 // Registration status
                 IsRegistrationOpen = isRegistrationOpen,
                 RegistrationStartDate = registrationPeriod?.StartDate,
@@ -439,7 +439,7 @@ namespace StudentManagement.Services
 
                 ClassName = s.Class.ClassName,
                 ClassCode = s.Class.ClassCode
-                
+
             })
             .OrderBy(s => s.SectionName)
             .ToList();
@@ -449,7 +449,6 @@ namespace StudentManagement.Services
 
         public async Task<SectionScheduleWithRegistrationResponse?> GetSectionScheduleWithRegistrationAsync(int sectionId, string studentMSSV)
         {
-            // Get student to determine their department
             var student = await context.Students
                 .Include(s => s.Class)
                     .ThenInclude(c => c.Program)
@@ -469,7 +468,6 @@ namespace StudentManagement.Services
             if (section == null)
                 return null;
 
-            // Check if registration period is active for the student's department and semester
             var registrationPeriod = await context.RegistrationPeriods
                 .Include(rp => rp.Semester)
                 .Include(rp => rp.Department)
@@ -479,7 +477,6 @@ namespace StudentManagement.Services
 
             bool isRegistrationOpen = registrationPeriod?.IsActive ?? false;
 
-            // Get main schedules for this section (không bao gồm lịch thực hành của nhóm)
             var mainSchedules = await context.Schedules
                 .Include(sch => sch.ScheduleType)
                 .Where(sch => sch.Section.SectionId == sectionId && !sch.PracticeGroupId.HasValue && sch.ScheduleType.ScheduleTypeId != 3)
@@ -488,7 +485,6 @@ namespace StudentManagement.Services
                 .ThenBy(sch => sch.Date)
                 .ToListAsync();
 
-            // Get practice groups for this section
             var practiceGroups = await context.PracticeGroups
                 .Include(pg => pg.Schedules)
                     .ThenInclude(s => s.ScheduleType)
@@ -497,7 +493,6 @@ namespace StudentManagement.Services
                 .Where(pg => pg.SectionId == sectionId && pg.IsActive)
                 .ToListAsync();
 
-            // Check if student is enrolled in any practice group
             var studentPracticeGroup = practiceGroups
                 .FirstOrDefault(pg => pg.PracticeGroupEnrollments
                     .Any(pge => pge.StudentId == student.Id && pge.IsActive));
@@ -516,7 +511,6 @@ namespace StudentManagement.Services
                 PracticeGroupName = null // Main schedules don't belong to practice groups
             }).ToList();
 
-            // Add practice group schedules if student is enrolled in a practice group
             if (studentPracticeGroup != null)
             {
                 var practiceSchedules = studentPracticeGroup.Schedules.Select(sch => new ScheduleDetailInfo
@@ -716,42 +710,36 @@ namespace StudentManagement.Services
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var searchTerm = search.Trim().ToLower();
-                query = query.Where(s => 
+                query = query.Where(s =>
                     (s.SectionCode != null && s.SectionCode.ToLower().Contains(searchTerm)) ||
                     s.CurriculumCourse.Course.CourseName.ToLower().Contains(searchTerm) ||
                     s.CurriculumCourse.Course.CourseCode.ToLower().Contains(searchTerm) ||
                     (s.Lecturer != null && s.Lecturer.User.FullName.ToLower().Contains(searchTerm)));
             }
 
-            // Apply status filter
             if (status.HasValue)
             {
                 query = query.Where(s => s.Status == status.Value);
             }
 
-            // Apply semester filter
             if (semesterId.HasValue)
             {
                 query = query.Where(s => s.Semester.SemesterId == semesterId.Value);
             }
 
-            // Get total count
             var totalCount = await query.CountAsync();
 
-            // Apply sorting (default sort by semester, then course name)
             query = query
                 .OrderByDescending(s => s.CreatedAt)
                 .ThenByDescending(s => s.Semester.Term)
                 .ThenBy(s => s.CurriculumCourse.Course.CourseName)
                 .ThenBy(s => s.SectionCode ?? "");
 
-            // Apply pagination
             var sections = await query
                 .Skip((pagination.PageNumber - 1) * pagination.PageSize)
                 .Take(pagination.PageSize)
                 .ToListAsync();
 
-            // Map to response DTOs
             var responses = await MapToSectionListResponsesAsync(sections);
 
             return new PagedResult<SectionListResponse>
@@ -791,7 +779,7 @@ namespace StudentManagement.Services
                     .CountAsync(pg => pg.SectionId == section.SectionId && pg.IsActive);
 
                 var availableSlots = Math.Max(0, section.Capacity - section.EnrolledCount);
-                var enrollmentPercentage = section.Capacity > 0 ? 
+                var enrollmentPercentage = section.Capacity > 0 ?
                     Math.Round((decimal)section.EnrolledCount / section.Capacity * 100, 2) : 0;
 
                 responses.Add(new SectionListResponse
@@ -800,53 +788,44 @@ namespace StudentManagement.Services
                     SectionCode = section.SectionCode ?? $"LHP{section.SectionId}",
                     Status = section.Status,
                     StatusName = GetSectionStatusInVietnamese(section.Status),
-                    
-                    // Course information
+
                     CourseId = section.CurriculumCourse.Course.CourseId,
                     CourseCode = section.CurriculumCourse.Course.CourseCode,
                     CourseName = section.CurriculumCourse.Course.CourseName,
                     CreditsTheory = section.CurriculumCourse.Course.CreditsTheory,
                     CreditsLab = section.CurriculumCourse.Course.CreditsLab,
                     TotalCredits = section.CurriculumCourse.Course.CreditsTheory + section.CurriculumCourse.Course.CreditsLab,
-                    
-                    // Lecturer information
+
                     LecturerId = section.Lecturer?.Id,
                     LecturerName = section.Lecturer?.User?.FullName ?? "Chưa phân công",
                     LecturerEmail = section.Lecturer?.User?.Email ?? "",
-                    
-                    // Class information
+
                     ClassId = section.Class.ClassId,
                     ClassName = section.Class.ClassName,
                     ClassCode = section.Class.ClassCode,
-                    
-                    // Semester information
+
                     SemesterId = section.Semester.SemesterId,
                     SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
                     Year = section.Semester.Year,
                     Term = section.Semester.Term,
-                    
-                    // Section details
+
                     StartDate = section.StartDate,
                     EndDate = section.EndDate,
                     Capacity = section.Capacity,
                     EnrolledCount = section.EnrolledCount,
                     AvailableSlots = availableSlots,
                     EnrollmentPercentage = enrollmentPercentage,
-                    
-                    // Department information
+
                     DepartmentId = section.CurriculumCourse.Program.Department.DepartmentId,
                     DepartmentName = section.CurriculumCourse.Program.Department.DepartmentName,
                     FacultyName = section.CurriculumCourse.Program.Department.Faculty.FacultyName,
-                    
-                    // Schedule summary
+
                     ScheduleSummary = scheduleSummary,
                     RoomSummary = roomSummary,
-                    
-                    // Practice groups info
+
                     PracticeGroupCount = practiceGroupCount,
                     HasPracticeGroups = section.CurriculumCourse.Course.CreditsLab > 0 && practiceGroupCount > 0,
-                    
-                    // Additional info
+
                     CreatedAt = section.CreatedAt,
                     UpdatedAt = section.UpdatedAt,
 
@@ -986,7 +965,7 @@ namespace StudentManagement.Services
                            s.Lecturer.User.Username == lecturerCode &&
                            s.StartDate <= today &&
                            s.EndDate >= today) // Section đang trong thời gian học
-                           //s.Status == SectionStatus.IsOpening) // Chỉ lấy sections đang mở
+                                               //s.Status == SectionStatus.IsOpening) // Chỉ lấy sections đang mở
                 .AsQueryable();
             var sections = query
                 .Select(s => new SectionSimpleResponse
@@ -1018,7 +997,7 @@ namespace StudentManagement.Services
             return status switch
             {
                 SectionStatus.IsOpening => "Đang mở",
-                SectionStatus.IsPreparing => "Đang chuẩn bị", 
+                SectionStatus.IsPreparing => "Đang chuẩn bị",
                 SectionStatus.IsClosed => "Đã đóng",
                 SectionStatus.IsCancelled => "Đã hủy",
                 SectionStatus.IsCompleted => "Đã hoàn thành",
@@ -1026,7 +1005,6 @@ namespace StudentManagement.Services
             };
         }
 
-        // Helper method để convert DayOfWeek sang tiếng Việt
         private static string GetDayOfWeekInVietnamese(DayOfWeek? dayOfWeek)
         {
             if (!dayOfWeek.HasValue) return "";
@@ -1280,7 +1258,7 @@ namespace StudentManagement.Services
         public async Task<Section?> UpdateSectionAsync(int sectionId, UpdateSectionRequest request)
         {
             using var transaction = await context.Database.BeginTransactionAsync();
-            
+
             try
             {
                 // Get the existing section with all related data
@@ -1307,23 +1285,23 @@ namespace StudentManagement.Services
                 }
 
                 // Update CurriculumCourse if changed
-                if (request.CurriculumCourseId.HasValue && 
+                if (request.CurriculumCourseId.HasValue &&
                     section.CurriculumCourse.Id != request.CurriculumCourseId.Value)
                 {
                     var newCurriculumCourse = await context.CurriculumCourses
                         .Include(cc => cc.Course)
                         .FirstOrDefaultAsync(cc => cc.Id == request.CurriculumCourseId.Value);
-                    
+
                     if (newCurriculumCourse == null)
                     {
                         throw new Exception("CurriculumCourse not found");
                     }
-                    
+
                     section.CurriculumCourse = newCurriculumCourse;
                 }
 
                 // Update Lecturer if changed
-                if (request.LecturerId.HasValue && 
+                if (request.LecturerId.HasValue &&
                     section.Lecturer?.Id != request.LecturerId.Value)
                 {
                     var newLecturer = await context.Lecturers.FindAsync(request.LecturerId.Value);
@@ -1335,7 +1313,7 @@ namespace StudentManagement.Services
                 }
 
                 // Update Semester if changed
-                if (request.SemesterId.HasValue && 
+                if (request.SemesterId.HasValue &&
                     section.Semester.SemesterId != request.SemesterId.Value)
                 {
                     var newSemester = await context.Semesters.FindAsync(request.SemesterId.Value);
@@ -1347,7 +1325,7 @@ namespace StudentManagement.Services
                 }
 
                 // Update Class if changed
-                if (request.ClassId.HasValue && 
+                if (request.ClassId.HasValue &&
                     section.Class.ClassId != request.ClassId.Value)
                 {
                     var newClass = await context.Classes.FindAsync(request.ClassId.Value);
@@ -1484,8 +1462,8 @@ namespace StudentManagement.Services
             {
                 // Check if section has schedules
                 var hasMainSchedules = await context.Schedules
-                    .AnyAsync(s => s.Section.SectionId == section.SectionId && 
-                                  !s.PracticeGroupId.HasValue && 
+                    .AnyAsync(s => s.Section.SectionId == section.SectionId &&
+                                  !s.PracticeGroupId.HasValue &&
                                   s.ScheduleType.ScheduleTypeId != 3);
 
                 if (!hasMainSchedules)
@@ -1497,7 +1475,7 @@ namespace StudentManagement.Services
                 var registrationPeriod = await context.RegistrationPeriods
                     .Include(rp => rp.Semester)
                     .Include(rp => rp.Department)
-                    .FirstOrDefaultAsync(rp => 
+                    .FirstOrDefaultAsync(rp =>
                         rp.Semester.SemesterId == section.Semester.SemesterId &&
                         rp.Department.DepartmentId == section.CurriculumCourse.Program.Department.DepartmentId);
 
@@ -1602,7 +1580,7 @@ namespace StudentManagement.Services
                 ?? throw new Exception($"Section with ID {sectionId} not found");
 
             // Lấy lịch thi (schedule type = 3)
-            var examSchedule = await  context.Schedules
+            var examSchedule = await context.Schedules
                 .Include(s => s.ScheduleType)
                 .Where(s => s.Section.SectionId == sectionId && s.ScheduleType.ScheduleTypeId == 3) // Lịch thi
                 .FirstOrDefaultAsync();
@@ -1798,7 +1776,7 @@ namespace StudentManagement.Services
 
             var grades = await context.Grades
                 .Include(g => g.Assessment)
-                  .ThenInclude(g=> g.AssessmentType)
+                  .ThenInclude(g => g.AssessmentType)
                 .Where(g => studentIds.Contains(g.Student.Id) &&
                        g.Assessment.Section.SectionId == sectionId)
                 .ToListAsync();
