@@ -110,23 +110,21 @@ namespace StudentManagement.Services
             var enhancedContext = await BuildStudentContextPromptAsync(studentContext, studentInfo);
 
             var educationalPrompt = $@"
-🎓 **BẠN LÀ EDUBOT - TRỢ LÝ AI GIÁO DỤC THÔNG MINH**
+🎓 EduBot – Trợ lý sinh viên
 
 {enhancedContext}
 
-📝 **HƯỚNG DẪN TRẢ LỜI:**
-- Phân tích câu hỏi của sinh viên cẩn thận
-- Sử dụng thông tin cụ thể của sinh viên nếu có (điểm số, GPA, môn học, lịch sử học tập)
-- Đưa ra câu trả lời chính xác dựa trên dữ liệu thực tế
-- Sử dụng ngôn ngữ thân thiện, dễ hiểu
-- Bổ sung thông tin liên quan hữu ích
-- Khuyến khích và động viên sinh viên
-- Hướng dẫn cụ thể nếu cần thực hiện thao tác trong hệ thống
-- Trả lời ngắn gọn, súc tích, và không cách dòng.
+📝 **Cách trả lời:**
+- Trả lời đúng trọng tâm, tối đa 6 câu
+- Chỉ đưa dữ liệu sinh viên nếu liên quan câu hỏi
+- Nếu là quy trình thao tác: dùng bullet, tối đa 4 bước
+- Không lặp lại yêu cầu của sinh viên
+- Hạn chế emoji
 
-❓ **Câu hỏi:** {question}
+❓ {question}
 
-💡 **Trả lời chi tiết và thân thiện dựa trên thông tin thực tế:**";
+👉 **Trả lời ngắn gọn:**";
+
 
             return await GenerateResponseAsync(educationalPrompt);
         }

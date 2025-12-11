@@ -525,7 +525,7 @@ namespace StudentManagement.Services
 
             if (!enrolledStudents.Any())
             {
-                throw new Exception("No students enrolled in this section");
+                throw new Exception("Chưa có sinh viên đăng ký");
             }
 
             // Lấy tất cả attendance sessions của section
@@ -711,7 +711,7 @@ namespace StudentManagement.Services
 
             if (!enrolledStudents.Any())
             {
-                throw new Exception("No students enrolled in this section");
+                throw new Exception("Chưa có sinh viên đăng ký");
             }
 
             // Lấy tất cả attendance sessions của section (đã có điểm danh)

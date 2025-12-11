@@ -272,10 +272,7 @@ namespace StudentManagement.Services
         // Helper method to validate no schedule conflicts for lecturer
         private async Task ValidateNoScheduleConflictsAsync(SectionRequest request, int lecturerId)
         {
-            // This is a placeholder for schedule conflict validation
-            // You would implement this based on your scheduling requirements
 
-            // Example: Check if lecturer has conflicting schedules in the same semester
             var existingLecturerSections = await context.Sections
                 .Where(s => s.Lecturer.Id == lecturerId &&
                            s.Semester.SemesterId == request.SemesterId &&
@@ -283,10 +280,9 @@ namespace StudentManagement.Services
                            s.Status != SectionStatus.IsClosed)
                 .CountAsync();
 
-            // Example business rule: Lecturer can't have more than 10 sections per semester
-            if (existingLecturerSections >= 10)
+            if (existingLecturerSections >= 8)
             {
-                throw new Exception("Giảng viên không thể được giao hơn 10 phần mỗi học kỳ");
+                throw new Exception("Giảng viên không thể được giao hơn 8 phần mỗi học kỳ");
             }
         }
 

@@ -12,48 +12,95 @@ namespace StudentManagement.Services
     {
         public async Task<bool> CheckScheduleConflictsAsync(int sectionId, DateOnly? dateEvent, DayOfWeek? dayOfWeek, TimeOnly startTime, TimeOnly endTime, string room)
         {
-            // BƯỚC 1: Lấy SemesterId của section hiện tại
+            // BƯỚC 1: Lấy SemesterId và LecturerId của section hiện tại
             var currentSection = await context.Sections
                 .Include(s => s.Semester)
+                .Include(s => s.Lecturer)
                 .Where(s => s.SectionId == sectionId)
-                .Select(s => new { s.Semester.SemesterId }) // Chỉ lấy trường cần thiết
+                .Select(s => new { s.Semester.SemesterId, s.Lecturer.Id }) // Lấy cả LecturerId
                 .FirstOrDefaultAsync();
 
             if (currentSection == null)
             {
-                // Xử lý trường hợp không tìm thấy section
                 return false;
             }
-            var query = context.Schedules
-    .Include(s => s.Section)
- .Where(s =>
-  s.Section.SectionId == sectionId &&
-  s.DayOfWeek == dayOfWeek &&
-  s.Room == room &&
- ((s.StartTime <= startTime && s.EndTime > startTime) ||
-                 (s.StartTime < endTime && s.EndTime >= endTime) ||
-                 (s.StartTime >= startTime && s.EndTime <= endTime))
- );
 
-            bool hasConflict = await query.AnyAsync();
+            // BƯỚC 1.1: Kiểm tra xung đột trong cùng section (phòng + thời gian)
+            var sameSectionConflict = await context.Schedules
+                .Include(s => s.Section)
+                .Where(s =>
+                    s.Section.SectionId == sectionId &&
+                    s.DayOfWeek == dayOfWeek &&
+                    s.Room == room &&
+                    ((s.StartTime <= startTime && s.EndTime > startTime) ||
+                     (s.StartTime < endTime && s.EndTime >= endTime) ||
+                     (s.StartTime >= startTime && s.EndTime <= endTime)))
+                .AnyAsync();
 
-            if (hasConflict)
+            if (sameSectionConflict)
             {
                 return true;
             }
-            var targetSemesterId = currentSection.SemesterId;
 
-            // BƯỚC 2: Check for conflicts với main schedules (theory schedules)
+            var targetSemesterId = currentSection.SemesterId;
+            var lecturerId = currentSection.Id;
+
+            // BƯỚC 2: **MỚI** - Kiểm tra xung đột lịch giảng viên (bất kể phòng học)
+            var lecturerScheduleConflicts = await context.Schedules
+                .Include(s => s.Section)
+                    .ThenInclude(sec => sec.Semester)
+                .Include(s => s.Section)
+                    .ThenInclude(sec => sec.Lecturer)
+                .Where(s => s.Section.Semester.SemesterId == targetSemesterId && // Cùng semester
+                           s.Section.Lecturer.Id == lecturerId && // Cùng giảng viên
+                           s.Section.SectionId != sectionId && // Khác section hiện tại
+                           s.DayOfWeek == dayOfWeek &&
+                           s.Date == dateEvent &&
+                           // Kiểm tra xung đột thời gian (bất kể phòng)
+                           ((s.StartTime <= startTime && s.EndTime > startTime) ||
+                            (s.StartTime < endTime && s.EndTime >= endTime) ||
+                            (s.StartTime >= startTime && s.EndTime <= endTime)))
+                .AnyAsync();
+
+            if (lecturerScheduleConflicts)
+            {
+                return true; // Giảng viên bị xung đột lịch
+            }
+
+            // BƯỚC 3: **MỚI** - Kiểm tra xung đột với lịch thực hành mà giảng viên phụ trách
+            var lecturerPracticeConflicts = await context.Schedules
+                .Include(s => s.Section)
+                    .ThenInclude(sec => sec.Semester)
+                .Include(s => s.PracticeGroup)
+                    .ThenInclude(pg => pg.Lecturer)
+                .Where(s => s.Section.Semester.SemesterId == targetSemesterId && // Cùng semester
+                           s.PracticeGroup != null &&
+                           s.PracticeGroup.LecturerId == lecturerId && // Cùng giảng viên phụ trách thực hành
+                           s.DayOfWeek == dayOfWeek &&
+                           s.Date == dateEvent &&
+                           s.ScheduleType.ScheduleTypeId != 3 && // Không phải lịch thi
+                                                                 // Kiểm tra xung đột thời gian
+                           ((s.StartTime <= startTime && s.EndTime > startTime) ||
+                            (s.StartTime < endTime && s.EndTime >= endTime) ||
+                            (s.StartTime >= startTime && s.EndTime <= endTime)))
+                .AnyAsync();
+
+            if (lecturerPracticeConflicts)
+            {
+                return true; // Giảng viên bị xung đột với lịch thực hành
+            }
+
+            // BƯỚC 4: Check for conflicts với main schedules (theory schedules) - cùng phòng
             var mainScheduleConflicts = await context.Schedules
-                .Include(s => s.Section) // Cần Include bảng Section để truy cập SemesterId
+                .Include(s => s.Section)
                   .ThenInclude(s => s.Semester)
-                .Where(s => s.Section.Semester.SemesterId == targetSemesterId && // <--- CHỈ CHECK TRONG CÙNG SEMESTER
+                .Where(s => s.Section.Semester.SemesterId == targetSemesterId &&
                             s.DayOfWeek == dayOfWeek &&
                             s.Date == dateEvent &&
-                            s.Room == room &&
+                            s.Room == room && // Cùng phòng
                             s.Section.SectionId != sectionId &&
                             !s.PracticeGroupId.HasValue &&
-                            s.ScheduleType.ScheduleTypeId != 3 && // Không phải lịch thi
+                            s.ScheduleType.ScheduleTypeId != 3 &&
                             ((s.StartTime <= startTime && s.EndTime > startTime) ||
                              (s.StartTime < endTime && s.EndTime >= endTime) ||
                              (s.StartTime >= startTime && s.EndTime <= endTime)))
@@ -64,16 +111,16 @@ namespace StudentManagement.Services
                 return true;
             }
 
-            // BƯỚC 3: Check for conflicts với practice group schedules
+            // BƯỚC 5: Check for conflicts với practice group schedules - cùng phòng
             var practiceScheduleConflicts = await context.Schedules
-                .Include(s => s.Section) // Cần Include bảng Section để truy cập SemesterId
+                .Include(s => s.Section)
                   .ThenInclude(s => s.Semester)
-                .Where(s => s.Section.Semester.SemesterId == targetSemesterId && // <--- CHỈ CHECK TRONG CÙNG SEMESTER
+                .Where(s => s.Section.Semester.SemesterId == targetSemesterId &&
                             s.DayOfWeek == dayOfWeek &&
                             s.Date == dateEvent &&
-                            s.Room == room &&
+                            s.Room == room && // Cùng phòng
                             s.PracticeGroupId.HasValue &&
-                            s.ScheduleType.ScheduleTypeId != 3 && // Không phải lịch thi
+                            s.ScheduleType.ScheduleTypeId != 3 &&
                             ((s.StartTime <= startTime && s.EndTime > startTime) ||
                              (s.StartTime < endTime && s.EndTime >= endTime) ||
                              (s.StartTime >= startTime && s.EndTime <= endTime)))
@@ -84,7 +131,7 @@ namespace StudentManagement.Services
                 return true;
             }
 
-            // BƯỚC 4: Check for conflicts với exam schedules (nếu có date cụ thể)
+            // BƯỚC 6: Check for conflicts với exam schedules - cùng phòng
             if (dateEvent.HasValue)
             {
                 var examScheduleConflicts = await context.Schedules
@@ -92,8 +139,8 @@ namespace StudentManagement.Services
                       .ThenInclude(s => s.Semester)
                     .Where(s => s.Section.Semester.SemesterId == targetSemesterId &&
                                 s.Date == dateEvent &&
-                                s.Room == room &&
-                                s.ScheduleType.ScheduleTypeId == 3 && // Lịch thi
+                                s.Room == room && // Cùng phòng
+                                s.ScheduleType.ScheduleTypeId == 3 &&
                                 ((s.StartTime <= startTime && s.EndTime > startTime) ||
                                  (s.StartTime < endTime && s.EndTime >= endTime) ||
                                  (s.StartTime >= startTime && s.EndTime <= endTime)))
