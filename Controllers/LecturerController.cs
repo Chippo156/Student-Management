@@ -7,6 +7,7 @@ using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
 using StudentManagement.Services.Interface;
+using System.Security.Claims;
 
 namespace StudentManagement.Controllers
 {
@@ -78,6 +79,66 @@ namespace StudentManagement.Controllers
         {
             var lecturers = await lecturerService.GetLecturerDropdownsByDepartmentIdAsync(departmentId);
             return Ok(ApiResponse.SuccessResponse(lecturers, "Lecturers retrieved successfully"));
+        }
+
+        [HttpPut("UpdateLecturer")]
+        [Authorize(Roles = "Lecturer")]
+        public async Task<IActionResult> UpdateProfile(LecturerUpdateRequest request)
+        {
+            try
+            {
+                // Lấy lecturer code từ JWT token
+                var lecturerCode = User.FindFirst(ClaimTypes.Name)?.Value;
+
+                if (string.IsNullOrEmpty(lecturerCode))
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(
+                        ErrorCodes.BadRequest,
+                        "Không thể xác định thông tin giảng viên từ token"
+                    ));
+                }
+
+                // Validate model
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+
+                    return BadRequest(ApiResponse.ErrorResponse(
+                        ErrorCodes.ValidationError,
+                        "Dữ liệu không hợp lệ",
+                        errors
+                    ));
+                }
+
+                // Cập nhật thông tin
+                var updatedLecturer = await lecturerService.UpdateLecturerProfileAsync(lecturerCode, request);
+
+                if (updatedLecturer == null)
+                {
+                    return NotFound(ApiResponse.ErrorResponse(
+                        ErrorCodes.NotFound,
+                        "Không tìm thấy thông tin giảng viên"
+                    ));
+                }
+
+                // Trả về thông tin chi tiết đã cập nhật
+                var lecturerDetail = await lecturerService.GetLecturerDetailByCodeAsync(lecturerCode);
+
+                return Ok(ApiResponse.SuccessResponse(
+                    lecturerDetail,
+                    "Cập nhật thông tin thành công"
+                ));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(
+                    ErrorCodes.BadRequest,
+                    ex.Message
+                ));
+            }
         }
     }
 }

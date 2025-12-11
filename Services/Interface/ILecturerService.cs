@@ -20,6 +20,8 @@ namespace StudentManagement.Services.Interface
         Task<bool> DeleteLecturerAsync(int lecturerId);
         Task<LecturerDetailResponse?> GetLecturerDetailByCodeAsync(string lecturerCode);
         Task<IEnumerable<LecturerDropdownResponse>> GetLecturerDropdownsByDepartmentIdAsync(int departmentId);
+        Task<Lecturer?> UpdateLecturerProfileAsync(string lecturerCode, LecturerUpdateRequest request);
+
 
     }
 }

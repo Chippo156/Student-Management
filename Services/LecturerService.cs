@@ -250,124 +250,102 @@ namespace StudentManagement.Services
             }
         }
 
-        private async Task<Semester?> GetCurrentSemesterAsync()
+        
+        public async Task<Lecturer?> UpdateLecturerProfileAsync(string lecturerCode, LecturerUpdateRequest request)
         {
-            var currentDate = DateTime.Now;
-            return await context.Semesters
-                .Where(s => s.StartDate <= DateOnly.FromDateTime(currentDate) &&
-                           s.EndDate >= DateOnly.FromDateTime(currentDate))
-                .FirstOrDefaultAsync();
-        }
+            using var transaction = await context.Database.BeginTransactionAsync();
 
-        private async Task<List<CurrentSectionInfo>> GetCurrentSectionsAsync(int lecturerId, int? currentSemesterId)
-        {
-            if (currentSemesterId == null)
-                return new List<CurrentSectionInfo>();
-
-            var sections = await context.Sections
-                .Include(s => s.CurriculumCourse)
-                    .ThenInclude(cc => cc.Course)
-                .Include(s => s.Semester)
-                .Include(s => s.Schedules)
-                    .ThenInclude(sch => sch.ScheduleType)
-                .Where(s => s.Lecturer.Id == lecturerId && s.Semester.SemesterId == currentSemesterId)
-                .ToListAsync();
-
-            var result = new List<CurrentSectionInfo>();
-
-            foreach (var section in sections)
+            try
             {
-                var schedules = section.Schedules.Select(sch => new ScheduleInfo
-                {
-                    DayOfWeek = GetDayOfWeekInVietnamese(sch.DayOfWeek),
-                    TimeSlot = $"{sch.StartTime:HH:mm} - {sch.EndTime:HH:mm}",
-                    Room = sch.Room,
-                    ScheduleType = sch.ScheduleType?.Name ?? "Unknown"
-                }).ToList();
+                // Lấy thông tin giảng viên hiện tại
+                var lecturer = await context.Lecturers
+                    .Include(l => l.User)
+                    .FirstOrDefaultAsync(l => l.User.Username == lecturerCode);
 
-                result.Add(new CurrentSectionInfo
+                if (lecturer == null)
                 {
-                    SectionId = section.SectionId,
-                    SectionCode = section.SectionCode ?? $"SEC{section.SectionId}",
-                    CourseCode = section.CurriculumCourse.Course.CourseCode,
-                    CourseName = section.CurriculumCourse.Course.CourseName,
-                    Credits = section.CurriculumCourse.Course.CreditsTheory + section.CurriculumCourse.Course.CreditsLab,
-                    EnrolledCount = section.EnrolledCount,
-                    Capacity = section.Capacity,
-                    SemesterName = $"{section.Semester.Year} - {section.Semester.Term}",
-                    Schedules = schedules
-                });
+                    throw new Exception("Không tìm thấy thông tin giảng viên");
+                }
+
+                // Kiểm tra trạng thái tài khoản
+                if (lecturer.User.AccountStatus != AccountStatus.Active)
+                {
+                    throw new Exception("Tài khoản không hoạt động, không thể cập nhật thông tin");
+                }
+
+                // Cập nhật thông tin User
+                var user = lecturer.User;
+                user.FullName = request.FullName;
+                user.Gender = request.Gender;
+                user.DateOfBirth = request.DateOfBirth;
+                user.Ethnicity = request.Ethnicity;
+                user.Nationality = request.Nationality;
+                user.CitizenIdCard = request.CitizenIdCard;
+                user.IssuedDate = request.IssuedDate;
+                user.IssuedPlace = request.IssuedPlace;
+                user.HealthInsuranceNumber = request.HealthInsuranceNumber;
+                user.HealthInsuranceRegistrationPlace = request.HealthInsuranceRegistrationPlace;
+                user.Email = request.Email;
+                user.Phone = request.Phone;
+                user.Address = request.Address;
+                user.TemporaryAddress = request.TemporaryAddress;
+                user.PlaceOfBirth = request.PlaceOfBirth;
+                user.Religion = request.Religion;
+                user.Object = request.Object;
+                user.PolicyArea = request.PolicyArea;
+                user.DateOfJoinUnion = request.DateOfJoinUnion;
+                user.DateOfJoinParty = request.DateOfJoinParty;
+
+               
+                // Kiểm tra trùng lặp email và phone với người dùng khác
+                if (!string.IsNullOrEmpty(request.Email))
+                {
+                    var existingUserWithEmail = await context.Users
+                        .FirstOrDefaultAsync(u => u.Email == request.Email && u.UserId != user.UserId);
+
+                    if (existingUserWithEmail != null)
+                    {
+                        throw new Exception("Email này đã được sử dụng bởi người dùng khác");
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(request.Phone))
+                {
+                    var existingUserWithPhone = await context.Users
+                        .FirstOrDefaultAsync(u => u.Phone == request.Phone && u.UserId != user.UserId);
+
+                    if (existingUserWithPhone != null)
+                    {
+                        throw new Exception("Số điện thoại này đã được sử dụng bởi người dùng khác");
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(request.CitizenIdCard))
+                {
+                    var existingUserWithCitizenId = await context.Users
+                        .FirstOrDefaultAsync(u => u.CitizenIdCard == request.CitizenIdCard && u.UserId != user.UserId);
+
+                    if (existingUserWithCitizenId != null)
+                    {
+                        throw new Exception("Số CMND/CCCD này đã được sử dụng bởi người dùng khác");
+                    }
+                }
+
+                // Lưu thay đổi
+                context.Users.Update(user);
+                context.Lecturers.Update(lecturer);
+
+                await context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return lecturer;
             }
-
-            return result;
-        }
-
-        private async Task<TeachingStatistics> GetTeachingStatisticsAsync(int lecturerId)
-        {
-            // Get current semester
-            var currentSemester = await GetCurrentSemesterAsync();
-
-            // Get all sections taught by this lecturer
-            var allSections = await context.Sections
-                .Include(s => s.Semester)
-                .Where(s => s.Lecturer.Id == lecturerId)
-                .ToListAsync();
-
-            // Current semester statistics
-            var currentSemesterSections = currentSemester != null
-                ? allSections.Where(s => s.Semester.SemesterId == currentSemester.SemesterId).ToList()
-                : new List<Section>();
-
-            var totalStudentsCurrentSemester = currentSemesterSections.Sum(s => s.EnrolledCount);
-            var totalSectionsCurrentSemester = currentSemesterSections.Count;
-
-            // All time statistics
-            var totalSectionsAllTime = allSections.Count;
-            var averageClassSize = totalSectionsAllTime > 0
-                ? Math.Round((double)allSections.Sum(s => s.EnrolledCount) / totalSectionsAllTime, 2)
-                : 0;
-
-            // Semester history
-            var semesterHistory = allSections
-                .GroupBy(s => s.Semester)
-                .Select(g => new SemesterTeachingInfo
-                {
-                    SemesterId = g.Key.SemesterId,
-                    SemesterName = $"{g.Key.Year} - {g.Key.Term}",
-                    SectionsCount = g.Count(),
-                    StudentsCount = g.Sum(s => s.EnrolledCount),
-                    AverageClassSize = g.Count() > 0 ? Math.Round((double)g.Sum(s => s.EnrolledCount) / g.Count(), 2) : 0
-                })
-                .OrderByDescending(s => s.SemesterId)
-                .ToList();
-
-            return new TeachingStatistics
+            catch (Exception)
             {
-                TotalSectionsCurrentSemester = totalSectionsCurrentSemester,
-                TotalStudentsCurrentSemester = totalStudentsCurrentSemester,
-                TotalSectionsAllTime = totalSectionsAllTime,
-                AverageClassSize = averageClassSize,
-                SemesterHistory = semesterHistory
-            };
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
-
-        private string GetDayOfWeekInVietnamese(DayOfWeek? dayOfWeek)
-        {
-            if (!dayOfWeek.HasValue) return "";
-
-            return dayOfWeek.Value switch
-            {
-                DayOfWeek.Monday => "Thứ 2",
-                DayOfWeek.Tuesday => "Thứ 3",
-                DayOfWeek.Wednesday => "Thứ 4",
-                DayOfWeek.Thursday => "Thứ 5",
-                DayOfWeek.Friday => "Thứ 6",
-                DayOfWeek.Saturday => "Thứ 7",
-                DayOfWeek.Sunday => "Chủ nhật",
-                _ => ""
-            };
-        }
-
         public Task<IEnumerable<LecturerDropdownResponse>> GetLecturerDropdownsByDepartmentIdAsync(int departmentId)
         {
             var lecturers = context.Lecturers
