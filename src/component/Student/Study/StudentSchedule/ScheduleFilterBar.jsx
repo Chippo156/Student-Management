@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Radio, DatePicker, Button, Space } from 'antd';
+import { Card, Radio, DatePicker, Button, Space, Row, Col } from 'antd';
 import {
   CalendarOutlined,
   BookOutlined,
@@ -21,51 +21,58 @@ const ScheduleFilterBar = ({
   goPrevWeek,
   goNextWeek,
   theme,
-}) => (
-  <Card
-    id="student-schedule-filter-bar"
-    bordered={false}
-    style={{
-      marginBottom: 20,
-      borderRadius: 8,
-      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-      background: theme.palette.background.paper,
-    }}
-  >
-    <div
+}) => {
+  const isMobile = window.innerWidth < 600;
+  const isTablet = window.innerWidth >= 600 && window.innerWidth < 960;
+
+  return (
+    <Card
+      id="student-schedule-filter-bar"
+      bordered={false}
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        flexWrap: 'wrap',
+        marginBottom: 20,
+        borderRadius: 12,
+        boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+        background: theme.palette.background.paper,
       }}
     >
-      <Radio.Group
-        value={filterType}
-        onChange={(e) => handleFilterChange(e.target.value)}
-        buttonStyle="solid"
-      >
-        <Radio.Button value="all">
-          <CalendarOutlined /> Tất cả
-        </Radio.Button>
-        <Radio.Button value="class">
-          <BookOutlined /> Lý thuyết
-        </Radio.Button>
-        <Radio.Button value="assignment">
-          <FileTextOutlined /> Thực hành
-        </Radio.Button>
-        <Radio.Button value="exam">
-          <TrophyOutlined /> Thi
-        </Radio.Button>
-      </Radio.Group>
+      <Row gutter={[16, 16]} align="middle">
+        {/* Filter Type */}
+        <Col xs={24} sm={24} md={14} lg={12}>
+          <Radio.Group
+            value={filterType}
+            onChange={(e) => handleFilterChange(e.target.value)}
+            buttonStyle="solid"
+          >
+            <Radio.Button value="all">
+              <CalendarOutlined /> Tất cả
+            </Radio.Button>
+            <Radio.Button value="class">
+              <BookOutlined /> Lý thuyết
+            </Radio.Button>
+            <Radio.Button value="assignment">
+              <FileTextOutlined /> Thực hành
+            </Radio.Button>
+            <Radio.Button value="exam">
+              <TrophyOutlined /> Thi
+            </Radio.Button>
+          </Radio.Group>
+        </Col>
 
-      <DatePicker
-        value={baseDate}
-        onChange={(d) => d && setBaseDate(dayjs(d))}
-        format="DD/MM/YYYY"
-        style={{ minWidth: 140 }}
-        allowClear={false}
-      />
+        {/* Date Navigation */}
+        <Col xs={24} sm={24} md={10} lg={12}>
+          <Space wrap style={{ width: '100%', justifyContent: isMobile ? 'flex-start' : 'flex-end' }}>
+            <Button.Group>
+              <Button icon={<LeftOutlined />} onClick={goPrevWeek} />
+              <DatePicker
+                value={baseDate}
+                onChange={(d) => d && setBaseDate(dayjs(d))}
+                format="DD/MM/YYYY"
+                style={{ width: isMobile ? 140 : 150 }}
+                allowClear={false}
+              />
+              <Button icon={<RightOutlined />} onClick={goNextWeek} />
+            </Button.Group>
 
       <Space size={8} style={{ marginLeft: 'auto', flexWrap: 'wrap' }}>
         <Button onClick={handleToday} type="default">

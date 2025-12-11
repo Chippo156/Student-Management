@@ -25,6 +25,8 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import LoginIcon from '@mui/icons-material/Login';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import MenuIcon from '@mui/icons-material/Menu';
+import { useMediaQuery } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleMode } from '../../redux/ThemeSlice';
 import { useNavigate } from 'react-router-dom';
@@ -45,6 +47,8 @@ const HeaderPage = () => {
   const [notifyEl, setNotifyEl] = React.useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [mobileMenuEl, setMobileMenuEl] = React.useState(null);
+  const isMobileOrTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
     if (account) {
@@ -142,6 +146,10 @@ const HeaderPage = () => {
     message.success('Đổi mật khẩu thành công!');
     setShowPasswordModal(false);
   };
+
+  const handleMobileMenuOpen = (event) => setMobileMenuEl(event.currentTarget);
+  const handleMobileMenuClose = () => setMobileMenuEl(null);
+
   console.log(account);
   const isAdmin = localStorage.getItem('role') == 1;
   return (
@@ -225,81 +233,238 @@ const HeaderPage = () => {
               gap: { xs: 1, sm: 2 },
             }}
           >
-            <Tooltip title="Trang chủ">
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <IconButton color="primary" onClick={() => navigate('/')}>
-                  <HomeIcon />
-                </IconButton>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    ml: 0.5,
-                    mr: 1,
-                    cursor: 'pointer',
-                    display: { xs: 'none', sm: 'block' },
-                    color: theme.palette.text.primary,
-                  }}
-                  onClick={() => navigate('/')}
-                >
-                  Trang chủ
-                </Typography>
-              </Box>
-            </Tooltip>
-            <Tooltip title="Tin tức">
-              <Box
-                sx={{ display: 'flex', alignItems: 'center' }}
-                onMouseEnter={handleNotifyOpen}
-              >
-                <IconButton color="primary" onClick={handleNotifyOpen}>
-                  <Badge badgeContent={unreadCount} color="error">
-                    <NotificationsIcon />
-                  </Badge>
-                </IconButton>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    ml: 0.5,
-                    mr: 1,
-                    cursor: 'pointer',
-                    display: { xs: 'none', sm: 'block' },
-                    color: theme.palette.text.primary,
-                  }}
-                  onClick={handleNotifyOpen}
-                >
-                  Tin tức
-                </Typography>
-              </Box>
-            </Tooltip>
-            <Tooltip
-              title={
-                mode === 'light'
-                  ? 'Chuyển sang dark mode'
-                  : 'Chuyển sang light mode'
-              }
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {/* Mobile/Tablet: Single Menu Button */}
+            {isMobileOrTablet ? (
+              <>
                 <IconButton
                   color="primary"
-                  onClick={() => dispatch(toggleMode())}
-                >
-                  {mode === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
-                </IconButton>
-                <Typography
-                  variant="body2"
+                  onClick={handleMobileMenuOpen}
                   sx={{
-                    ml: 0.5,
-                    mr: 1,
-                    cursor: 'pointer',
-                    display: { xs: 'none', sm: 'block' },
-                    color: theme.palette.text.primary,
+                    bgcolor: 'background.paper',
+                    boxShadow: 1,
+                    '&:hover': {
+                      bgcolor: 'action.hover',
+                    },
                   }}
-                  onClick={() => dispatch(toggleMode())}
                 >
-                  {mode === 'light' ? 'Dark mode' : 'Light mode'}
-                </Typography>
-              </Box>
-            </Tooltip>
-            {isAuthenticated && account ? (
+                  {isAuthenticated && account ? (
+                    <Avatar
+                      src={account?.user?.avatarUrl || account?.avatarUrl || ''}
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        bgcolor: theme.palette.primary.main,
+                      }}
+                    >
+                      {!account?.user?.avatarUrl &&
+                        !account?.avatarUrl &&
+                        (account?.user?.fullName || account?.fullName ? (
+                          (account?.user?.fullName || account?.fullName)
+                            .charAt(0)
+                            .toUpperCase()
+                        ) : (
+                          <AccountCircleIcon />
+                        ))}
+                    </Avatar>
+                  ) : (
+                    <MenuIcon />
+                  )}
+                </IconButton>
+                <Menu
+                  anchorEl={mobileMenuEl}
+                  open={Boolean(mobileMenuEl)}
+                  onClose={handleMobileMenuClose}
+                  PaperProps={{
+                    sx: {
+                      mt: 1,
+                      minWidth: 250,
+                      borderRadius: 2,
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                    },
+                  }}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      navigate('/');
+                      handleMobileMenuClose();
+                    }}
+                  >
+                    <HomeIcon sx={{ mr: 1 }} /> Trang chủ
+                  </MenuItem>
+                  <MenuItem onClick={handleNotifyOpen}>
+                    <Badge badgeContent={unreadCount} color="error">
+                      <NotificationsIcon sx={{ mr: 1 }} />
+                    </Badge>
+                    <Typography sx={{ ml: 1 }}>Tin tức</Typography>
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      dispatch(toggleMode());
+                      handleMobileMenuClose();
+                    }}
+                  >
+                    {mode === 'light' ? (
+                      <Brightness4Icon sx={{ mr: 1 }} />
+                    ) : (
+                      <Brightness7Icon sx={{ mr: 1 }} />
+                    )}
+                    {mode === 'light' ? 'Dark mode' : 'Light mode'}
+                  </MenuItem>
+                  {isAuthenticated && account ? (
+                    <>
+                      <Divider />
+                      <Box
+                        sx={{
+                          px: 2,
+                          py: 1,
+                          borderBottom: 1,
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                          {account?.user?.fullName || account?.user?.username}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {account?.user?.email}
+                        </Typography>
+                        <br />
+                        <Typography variant="caption" color="primary">
+                          {getRoleDisplayName()}
+                        </Typography>
+                      </Box>
+                      <MenuItem
+                        onClick={() => {
+                          navigate(getDashboardByRole());
+                          handleMobileMenuClose();
+                        }}
+                      >
+                        <DashboardIcon sx={{ mr: 1 }} /> Dashboard
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          if (account.role.roleId === 3) {
+                            navigate('/student/info');
+                          } else {
+                            navigate('/profile');
+                          }
+                          handleMobileMenuClose();
+                        }}
+                      >
+                        <InfoIcon sx={{ mr: 1 }} /> Thông tin cá nhân
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          setShowPasswordModal(true);
+                          handleMobileMenuClose();
+                        }}
+                      >
+                        <LockIcon sx={{ mr: 1 }} /> Đổi mật khẩu
+                      </MenuItem>
+                      <Divider />
+                      <MenuItem
+                        onClick={() => {
+                          handleLogout();
+                          handleMobileMenuClose();
+                        }}
+                        sx={{
+                          color: theme.palette.error.main,
+                        }}
+                      >
+                        <LogoutIcon sx={{ mr: 1 }} /> Đăng xuất
+                      </MenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <Divider />
+                      <MenuItem
+                        onClick={() => {
+                          handleLogin();
+                          handleMobileMenuClose();
+                        }}
+                      >
+                        <LoginIcon sx={{ mr: 1 }} /> Đăng nhập
+                      </MenuItem>
+                    </>
+                  )}
+                </Menu>
+              </>
+            ) : (
+              <>
+                {/* Desktop: Original Menu Items */}
+                <Tooltip title="Trang chủ">
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <IconButton color="primary" onClick={() => navigate('/')}>
+                      <HomeIcon />
+                    </IconButton>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        ml: 0.5,
+                        mr: 1,
+                        cursor: 'pointer',
+                        color: theme.palette.text.primary,
+                      }}
+                      onClick={() => navigate('/')}
+                    >
+                      Trang chủ
+                    </Typography>
+                  </Box>
+                </Tooltip>
+                <Tooltip title="Tin tức">
+                  <Box
+                    sx={{ display: 'flex', alignItems: 'center' }}
+                    onMouseEnter={handleNotifyOpen}
+                  >
+                    <IconButton color="primary" onClick={handleNotifyOpen}>
+                      <Badge badgeContent={unreadCount} color="error">
+                        <NotificationsIcon />
+                      </Badge>
+                    </IconButton>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        ml: 0.5,
+                        mr: 1,
+                        cursor: 'pointer',
+                        color: theme.palette.text.primary,
+                      }}
+                      onClick={handleNotifyOpen}
+                    >
+                      Tin tức
+                    </Typography>
+                  </Box>
+                </Tooltip>
+                <Tooltip
+                  title={
+                    mode === 'light'
+                      ? 'Chuyển sang dark mode'
+                      : 'Chuyển sang light mode'
+                  }
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <IconButton
+                      color="primary"
+                      onClick={() => dispatch(toggleMode())}
+                    >
+                      {mode === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
+                    </IconButton>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        ml: 0.5,
+                        mr: 1,
+                        cursor: 'pointer',
+                        color: theme.palette.text.primary,
+                      }}
+                      onClick={() => dispatch(toggleMode())}
+                    >
+                      {mode === 'light' ? 'Dark mode' : 'Light mode'}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              </>
+            )}
+            {!isMobileOrTablet && isAuthenticated && account ? (
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Box
                   sx={{
@@ -437,7 +602,7 @@ const HeaderPage = () => {
                   </MenuItem>
                 </Menu>
               </Box>
-            ) : (
+            ) : !isMobileOrTablet ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Tooltip title="Đăng nhập">
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -450,7 +615,6 @@ const HeaderPage = () => {
                         ml: 0.5,
                         mr: 1,
                         cursor: 'pointer',
-                        display: { xs: 'none', sm: 'block' },
                         color: theme.palette.text.primary,
                       }}
                       onClick={handleLogin}
@@ -460,7 +624,7 @@ const HeaderPage = () => {
                   </Box>
                 </Tooltip>
               </Box>
-            )}
+            ) : null}
           </Box>
         </Toolbar>
       </AppBar>
