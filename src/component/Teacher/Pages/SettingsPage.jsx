@@ -158,9 +158,43 @@ const SettingsPage = () => {
   const handleSaveProfile = async () => {
     try {
       setLoading(true);
-      await teacherService.updateTeacherInfo({
-        lecturerId: lecturerId,
-        ...profileData,
+      await teacherService.updateLecturerInfo({
+        fullName: profileData.fullName,
+        email: profileData.email,
+        phone: profileData.phone,
+        // Các trường khác có thể thêm sau nếu cần
+        gender: null,
+        dateOfBirth: null,
+        placeOfBirth: null,
+        ethnicity: null,
+        nationality: null,
+        religion: null,
+        avatarUrl: null,
+        citizenIdCard: null,
+        issuedDate: null,
+        issuedPlace: null,
+        healthInsuranceNumber: null,
+        healthInsuranceRegistrationPlace: null,
+        registeredHospital: null,
+        hometownProvince: null,
+        hometownDistrict: null,
+        hometownWard: null,
+        birthProvince: null,
+        birthDistrict: null,
+        birthWard: null,
+        birthCertProvince: null,
+        birthCertDistrict: null,
+        birthCertWard: null,
+        permanentProvince: null,
+        permanentDistrict: null,
+        permanentWard: null,
+        temporaryAddress: null,
+        contactAddress: null,
+        address: null,
+        object: null,
+        policyArea: null,
+        dateOfJoinUnion: null,
+        dateOfJoinParty: null,
       });
 
       setSnackbar({
@@ -192,8 +226,11 @@ const SettingsPage = () => {
 
     try {
       setLoading(true);
-      // Call API to change password
-      // await authService.changePassword(passwordData);
+      await teacherService.resetPassword({
+        oldPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+        confirmPassword: passwordData.confirmPassword,
+      });
 
       setSnackbar({
         open: true,
@@ -210,7 +247,7 @@ const SettingsPage = () => {
       console.error('Error changing password:', error);
       setSnackbar({
         open: true,
-        message: 'Lỗi khi đổi mật khẩu',
+        message: error.message || 'Lỗi khi đổi mật khẩu',
         severity: 'error',
       });
     } finally {
@@ -305,7 +342,7 @@ const SettingsPage = () => {
                 >
                   <Tab icon={<Person />} label="Thông tin cá nhân" />
                   <Tab icon={<Lock />} label="Đổi mật khẩu" />
-                  <Tab icon={<Notifications />} label="Thông báo" />
+                  {/* <Tab icon={<Notifications />} label="Thông báo" /> */}
                 </Tabs>
               </Box>
 

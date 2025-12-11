@@ -101,7 +101,7 @@ const HeaderPage = () => {
     if (!userRoleId) {
       return '/login';
     }
-    switch (!!userRoleId) {
+    switch (userRoleId) {
       case 1:
         return '/admin';
       case 2:
@@ -322,10 +322,10 @@ const HeaderPage = () => {
                         }}
                       >
                         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                          {account?.user?.fullName || account?.user?.username}
+                      {account?.user?.fullName || account?.user?.username || account?.username}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {account?.user?.email}
+                      {account?.user?.email || account?.email}
                         </Typography>
                         <br />
                         <Typography variant="caption" color="primary">
@@ -340,18 +340,16 @@ const HeaderPage = () => {
                       >
                         <DashboardIcon sx={{ mr: 1 }} /> Dashboard
                       </MenuItem>
-                      <MenuItem
-                        onClick={() => {
-                          if (account.role.roleId === 3) {
+                      {account?.role?.roleId === 2 && (
+                        <MenuItem
+                          onClick={() => {
                             navigate('/student/info');
-                          } else {
-                            navigate('/profile');
-                          }
-                          handleMobileMenuClose();
-                        }}
-                      >
-                        <InfoIcon sx={{ mr: 1 }} /> Thông tin cá nhân
-                      </MenuItem>
+                            handleMobileMenuClose();
+                          }}
+                        >
+                          <InfoIcon sx={{ mr: 1 }} /> Thông tin cá nhân
+                        </MenuItem>
+                      )}
                       <MenuItem
                         onClick={() => {
                           setShowPasswordModal(true);
@@ -511,7 +509,7 @@ const HeaderPage = () => {
                         lineHeight: 1.2,
                       }}
                     >
-                      {account?.user?.fullName || account?.user?.username}
+                      {account?.user?.fullName || account?.user?.username|| account?.username}
                     </Typography>
                     <Typography
                       variant="caption"
@@ -547,10 +545,10 @@ const HeaderPage = () => {
                     }}
                   >
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                      {account?.user?.fullName || account?.user?.username}
+                      {account?.user?.fullName || account?.user?.username || account?.username}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {account?.user?.email}
+                      {account?.user?.email || account?.email}
                     </Typography>
                     <br />
                     <Typography variant="caption" color="primary">
@@ -566,19 +564,17 @@ const HeaderPage = () => {
                   >
                     <DashboardIcon sx={{ mr: 1 }} /> Dashboard
                   </MenuItem>
-                  <MenuItem
-                    onClick={() => {
-                      if (account.role.roleId === 3) {
+                  {account?.role?.roleId === 2 && (
+                    <MenuItem
+                      onClick={() => {
                         navigate('/student/info');
-                      } else {
-                        navigate('/profile');
-                      }
-                      handleUserClose();
-                    }}
-                    sx={{ color: theme.palette.text.primary }}
-                  >
-                    <InfoIcon sx={{ mr: 1 }} /> Thông tin cá nhân
-                  </MenuItem>
+                        handleUserClose();
+                      }}
+                      sx={{ color: theme.palette.text.primary }}
+                    >
+                      <InfoIcon sx={{ mr: 1 }} /> Thông tin cá nhân
+                    </MenuItem>
+                  )}
                   <MenuItem
                     onClick={() => {
                       setShowPasswordModal(true);

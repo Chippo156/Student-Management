@@ -74,22 +74,21 @@ const ScheduleFilterBar = ({
               <Button icon={<RightOutlined />} onClick={goNextWeek} />
             </Button.Group>
 
-      <Space size={8} style={{ marginLeft: 'auto', flexWrap: 'wrap' }}>
-        <Button onClick={handleToday} type="default">
-          <CalendarOutlined /> Hiện tại
-        </Button>
-        <Button
-          icon={<PrinterOutlined />}
-          onClick={handlePrint}
-          type="secondary"
-        >
-          In lịch
-        </Button>
-        <Button icon={<LeftOutlined />} onClick={goPrevWeek} />
-        <Button icon={<RightOutlined />} onClick={goNextWeek} />
-      </Space>
-    </div>
-  </Card>
-);
+            <Button onClick={handleToday} type="default">
+              <CalendarOutlined /> Hiện tại
+            </Button>
+            <Button
+              icon={<PrinterOutlined />}
+              onClick={handlePrint}
+              type="secondary"
+            >
+              In lịch
+            </Button>
+          </Space>
+        </Col>
+      </Row>
+    </Card>
+  );
+};
 
 export default ScheduleFilterBar;

@@ -193,7 +193,7 @@ const RegistrationPeriodCreateModal = ({ open, onClose, onSuccess }) => {
                   (d) => d.departmentId === formData.departmentId
                 ) || null
               }
-              onChange={(newValue) => {
+              onChange={(event, newValue) => {
                 handleChange('departmentId', newValue?.departmentId || '');
               }}
               renderInput={(params) => (
@@ -217,7 +217,7 @@ const RegistrationPeriodCreateModal = ({ open, onClose, onSuccess }) => {
               value={
                 semesters.find((s) => s.id === formData.semesterId) || null
               }
-              onChange={(newValue) => {
+              onChange={(event, newValue) => {
                 handleChange('semesterId', newValue?.id || '');
               }}
               renderInput={(params) => (

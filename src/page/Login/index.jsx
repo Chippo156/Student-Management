@@ -19,6 +19,7 @@ import {
   DialogActions,
   Grid,
   InputAdornment,
+  Snackbar,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -43,6 +44,7 @@ const Login = () => {
   const [otpCode, setOtpCode] = useState('');
   const [emailMasked, setEmailMasked] = useState('');
   const [studentName, setStudentName] = useState('');
+  const [otpError, setOtpError] = useState(false);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -139,6 +141,9 @@ const Login = () => {
     }
 
     setIsSubmitting(true);
+    // Reset error state trước khi verify
+    setOtpError(false);
+
     try {
       const result = await authService.verifyOtp(mssv, otpCode);
       if (result && result.success) {
@@ -148,9 +153,14 @@ const Login = () => {
         setOtpSent(false);
         setEmailMasked('');
         setStudentName('');
+        setOtpError(false);
+      } else {
+        // Show error if OTP is incorrect
+        setTimeout(() => setOtpError(true), 100);
       }
     } catch (error) {
       console.error('Verify OTP error:', error);
+      setTimeout(() => setOtpError(true), 100);
     } finally {
       setIsSubmitting(false);
     }
@@ -395,6 +405,22 @@ const Login = () => {
           )}
         </DialogActions>
       </Dialog>
+
+      {/* OTP Error Snackbar */}
+      <Snackbar
+        open={otpError}
+        autoHideDuration={4000}
+        onClose={() => setOtpError(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setOtpError(false)}
+          severity="error"
+          sx={{ width: '100%' }}
+        >
+          Mã OTP không chính xác. Vui lòng kiểm tra lại!
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
