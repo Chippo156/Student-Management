@@ -35,6 +35,18 @@ export const studentServices = {
     }
   },
 
+  // Đổi mật khẩu
+  resetPassword: async (passwordData) => {
+    try {
+      const response = await customizeAxios.put('/api/User/ResetPassword', passwordData);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || 'Reset password failed'
+      );
+    }
+  },
+
   getAllStudents: async (pageNumber, pageSize, search = '', filters = {}) => {
     try {
       const params = {

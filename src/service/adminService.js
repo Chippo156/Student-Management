@@ -3,6 +3,18 @@ import axios from '../until/customize-axios';
 // Đã loại bỏ toàn bộ interface/type của TypeScript, chỉ giữ lại JS thuần
 
 export const adminService = {
+  // Đổi mật khẩu
+  resetPassword: async (passwordData) => {
+    try {
+      const response = await axios.put('/api/User/ResetPassword', passwordData);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || 'Reset password failed'
+      );
+    }
+  },
+
   // Dashboard and Statistics
   getDashboardStats: async () => {
     try {
