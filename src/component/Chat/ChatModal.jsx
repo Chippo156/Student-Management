@@ -75,7 +75,7 @@ const ChatModal = ({ open, onClose }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-
+  const role = localStorage.getItem('role') || 0;
   // Auto scroll to bottom khi:
   // 1. Có tin nhắn mới
   // 2. Có người đang typing (typingUsers thay đổi)
@@ -431,49 +431,51 @@ const ChatModal = ({ open, onClose }) => {
               </Box>
 
               {/* Quick actions */}
-              <Box
-                sx={{
-                  px: 2,
-                  pb: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 1,
-                  flexShrink: 0,
-                }}
-              >
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<PersonIcon />}
-                  onClick={handleOpenTeacherChat}
-                  disabled={!isConnected || isLoading}
-                  size="small"
+              {role && role == 2 && (
+                <Box
+                  sx={{
+                    px: 2,
+                    pb: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    flexShrink: 0,
+                  }}
                 >
-                  Chat với giảng viên chủ nhiệm
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<SmartToyIcon />}
-                  onClick={handleOpenAIChat}
-                  disabled={!isConnected || isLoading}
-                  size="small"
-                  color="secondary"
-                >
-                  Chat với AI
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<SchoolIcon />}
-                  onClick={handleOpenAcademicStaffChat}
-                  disabled={!isConnected || isLoading}
-                  size="small"
-                  color="info"
-                >
-                  Chat với Học vụ
-                </Button>
-              </Box>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<PersonIcon />}
+                    onClick={handleOpenTeacherChat}
+                    disabled={!isConnected || isLoading}
+                    size="small"
+                  >
+                    Chat với giảng viên chủ nhiệm
+                  </Button>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<SmartToyIcon />}
+                    onClick={handleOpenAIChat}
+                    disabled={!isConnected || isLoading}
+                    size="small"
+                    color="secondary"
+                  >
+                    Chat với AI
+                  </Button>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<SchoolIcon />}
+                    onClick={handleOpenAcademicStaffChat}
+                    disabled={!isConnected || isLoading}
+                    size="small"
+                    color="info"
+                  >
+                    Chat với Học vụ
+                  </Button>
+                </Box>
+              )}
 
               {/* Rooms List - KHÔNG CÓ SCROLLBAR Ở ĐÂY NỮA */}
               <List sx={{ p: 0, flexShrink: 0 }}>

@@ -382,12 +382,33 @@ export const ChatProvider = ({ children }) => {
   }, [currentRoom, fetchChatRooms]); // Phụ thuộc vào currentRoom
 
   /**
-   * Auto connect khi mount
+   * Auto connect khi mount và khi user thay đổi (login/logout)
    */
   useEffect(() => {
+    const token = localStorage.getItem('access_token');
+
+    // Nếu không có token, disconnect và clear data
+    if (!token) {
+      disconnectChat();
+      setChatRooms([]);
+      setUnreadCount(0);
+      return;
+    }
+
     const initializeChat = async () => {
+      // Disconnect connection cũ nếu có
+      await disconnectChat();
+
+      // Clear old data
+      setChatRooms([]);
+      setUnreadCount(0);
+      setMessages([]);
+      setCurrentRoom(null);
+
+      // Connect với token mới
       await connectChat();
-      // Chỉ fetch chat rooms nếu kết nối thành công
+
+      // Fetch chat rooms sau khi kết nối thành công
       if (chatService.isConnected) {
         await fetchChatRooms();
       }
@@ -395,10 +416,11 @@ export const ChatProvider = ({ children }) => {
 
     initializeChat();
 
+    // Cleanup khi unmount
     return () => {
       disconnectChat();
     };
-  }, []);
+  }, [localStorage.getItem('access_token')]); // ⚠️ Track token changes
 
   const value = {
     isConnected,

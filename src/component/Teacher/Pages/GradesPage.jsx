@@ -11,6 +11,7 @@ import {
   Snackbar,
   Alert,
   TextField,
+  Tooltip,
 } from '@mui/material';
 import { Table, Tag } from 'antd';
 import {
@@ -21,6 +22,7 @@ import {
   FileDownload,
   FileUpload,
   Save,
+  Lock,
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
@@ -52,6 +54,8 @@ const GradesPage = () => {
     [theme]
   );
 
+  const [semesters, setSemesters] = useState([]);
+  const [selectedSemester, setSelectedSemester] = useState(null);
   const [sections, setSections] = useState([]);
   const [selectedSection, setSelectedSection] = useState('');
   const [students, setStudents] = useState([]);
@@ -76,17 +80,65 @@ const GradesPage = () => {
     return section?.status === 'Đang mở';
   }, [selectedSection, sections]);
 
+  // Fetch semesters on mount
+  useEffect(() => {
+    const fetchSemesters = async () => {
+      try {
+        const data = await sectionService.getSemesterDropdown();
+        const transformedSemesters = (data || []).map((semester) => ({
+          id: semester.id,
+          name:
+            semester.name ||
+            `${semester.year || ''} - ${semester.term || ''}`.trim() ||
+            `Học kỳ ${semester.id}`,
+          year: semester.year,
+          term: semester.term,
+        }));
+        setSemesters(transformedSemesters);
+
+        // Auto-select first semester if available
+        if (transformedSemesters.length > 0) {
+          setSelectedSemester(transformedSemesters[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching semesters:', error);
+        setSemesters([]);
+      }
+    };
+
+    fetchSemesters();
+  }, []);
+
+  // Fetch sections when semester changes
   useEffect(() => {
     const fetchSections = async () => {
+      if (!selectedSemester) {
+        setSections([]);
+        setSelectedSection('');
+        return;
+      }
+
       try {
         setLoading(true);
-        const response = await sectionService.getSectionDropdownForLecturer();
+        const response = await sectionService.getSectionDropdownForLecturer(
+          selectedSemester.id
+        );
         if (response) {
           setSections(response || []);
 
+          // Handle navigation from other pages
           if (location.state?.selectedSection) {
             const navSection = location.state.selectedSection;
-            setSelectedSection(navSection.sectionId);
+            const sectionExists = response.find(
+              (s) => s.sectionId === navSection.sectionId
+            );
+            if (sectionExists) {
+              setSelectedSection(navSection.sectionId);
+            } else {
+              setSelectedSection('');
+            }
+          } else {
+            setSelectedSection('');
           }
         }
       } catch (error) {
@@ -104,7 +156,7 @@ const GradesPage = () => {
     if (lecturerId) {
       fetchSections();
     }
-  }, [lecturerId, location.state]);
+  }, [lecturerId, selectedSemester, location.state]);
 
   useEffect(() => {
     const fetchStudentsAndGrades = async () => {
@@ -490,6 +542,7 @@ const GradesPage = () => {
         }
 
         // Validate canEdit trước khi cập nhật
+        const lockedCells = [];
         for (const row of validDataRows) {
           const studentCode = row[1]?.toString().trim();
           const student = students.find((s) => s.studentCode === studentCode);
@@ -505,15 +558,29 @@ const GradesPage = () => {
                 (g) => g.assessmentId === assessmentId
               );
               if (!existingGrade?.canEdit) {
-                setSnackbar({
-                  open: true,
-                  message: `Không thể cập nhật điểm cho ${colInfo.name} của sinh viên ${studentCode} vì ô này bị khóa. Vui lòng kiểm tra file Excel.`,
-                  severity: 'error',
+                lockedCells.push({
+                  studentCode,
+                  assessmentName: colInfo.name,
                 });
-                return;
               }
             }
           }
+        }
+
+        if (lockedCells.length > 0) {
+          const errorDetails = lockedCells
+            .slice(0, 3)
+            .map((cell) => `${cell.studentCode} - ${cell.assessmentName}`)
+            .join(', ');
+          const remaining =
+            lockedCells.length > 3 ? ` và ${lockedCells.length - 3} ô khác` : '';
+
+          setSnackbar({
+            open: true,
+            message: `⚠️ Không thể import! Phát hiện ${lockedCells.length} ô điểm đã bị khóa (${errorDetails}${remaining}). Các ô này đã được xác nhận hoặc quá hạn chỉnh sửa. Vui lòng xóa các điểm này khỏi file Excel trước khi import.`,
+            severity: 'error',
+          });
+          return;
         }
 
         const newEditedGrades = new Map(editedGrades);
@@ -597,6 +664,19 @@ const GradesPage = () => {
       ).toFixed(0)
     : 0;
 
+  // Tính số lượng ô điểm bị khóa
+  const lockedGradesCount = useMemo(() => {
+    let count = 0;
+    students.forEach((student) => {
+      student.assessmentGrades?.forEach((grade) => {
+        if (!grade.canEdit && grade.score !== null && grade.score !== undefined) {
+          count++;
+        }
+      });
+    });
+    return count;
+  }, [students]);
+
   const renderScoreCell = (record, assessmentId) => {
     const assessment = record.assessmentGrades?.find(
       (a) => a.assessmentId === assessmentId
@@ -611,29 +691,46 @@ const GradesPage = () => {
     const hasChanged = editedValue !== undefined && editedValue !== '';
 
     if (!assessment?.canEdit) {
-      // Không cho phép chỉnh sửa, chỉ hiển thị điểm với style nổi bật, sáng rõ, border rõ nét
+      // Không cho phép chỉnh sửa - Hiển thị với icon khóa và tooltip
       return (
-        <span
-          style={{
-            fontWeight: 600,
-            color: '#495057',
-            background: '#f1f3f9',
-            borderRadius: 8,
-            padding: '5px 14px',
-            display: 'inline-block',
-            minWidth: 40,
-            textAlign: 'center',
-            fontSize: 15,
-            border: '1.5px solid #bfc5ce',
-            boxShadow: '0 1px 2px 0 rgba(0,0,0,0.03)',
-          }}
+        <Tooltip
+          title="Ô điểm này đã bị khóa. Không thể chỉnh sửa vì điểm đã được xác nhận hoặc đã quá hạn nhập điểm."
+          arrow
+          placement="top"
         >
-          {displayValue !== null &&
-          displayValue !== undefined &&
-          displayValue !== ''
-            ? displayValue
-            : '-'}
-        </span>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
+              fontWeight: 600,
+              color: '#5c6570',
+              background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+              borderRadius: '8px',
+              padding: '6px 12px',
+              minWidth: 60,
+              justifyContent: 'center',
+              fontSize: '14px',
+              border: '1.5px solid #cbd5e0',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+              cursor: 'not-allowed',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)',
+                boxShadow: '0 3px 6px rgba(0,0,0,0.1)',
+              },
+            }}
+          >
+            <Lock sx={{ fontSize: 14, color: '#8b95a1' }} />
+            <span>
+              {displayValue !== null &&
+              displayValue !== undefined &&
+              displayValue !== ''
+                ? displayValue
+                : '-'}
+            </span>
+          </Box>
+        </Tooltip>
       );
     }
 
@@ -1061,13 +1158,30 @@ const GradesPage = () => {
 
       <Fade in={true} timeout={1000}>
         <Card sx={{ mb: 3, p: 2 }}>
-          <Grid
-            container
-            className="equal-height-cards"
-            spacing={2}
-            alignItems="center"
-          >
-            <Grid item xs={12} md={6}>
+          <Grid container spacing={2} alignItems="flex-start">
+            {/* Phần chọn học kỳ */}
+            <Grid item xs={12} sm={6} lg={2.5}>
+              <SearchableAutocomplete
+                options={semesters}
+                value={selectedSemester}
+                onChange={(newValue) => {
+                  setSelectedSemester(newValue);
+                  setSelectedSection('');
+                  setStudents([]);
+                  setAssessmentHeaders([]);
+                  setEditedGrades(new Map());
+                }}
+                getOptionLabel={(option) => option.name}
+                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                label="Chọn học kỳ"
+                placeholder="Tìm kiếm học kỳ..."
+                disabled={loading}
+                showSearchIcon={false}
+              />
+            </Grid>
+
+            {/* Phần chọn lớp học phần */}
+            <Grid item xs={12} sm={6} lg={3.5}>
               <SearchableAutocomplete
                 options={sections}
                 value={
@@ -1084,21 +1198,23 @@ const GradesPage = () => {
                 }
                 label="Chọn lớp học phần"
                 placeholder="Tìm kiếm lớp học phần..."
-                disabled={loading}
+                disabled={loading || !selectedSemester}
                 showSearchIcon={false}
               />
-              {selectedSection && !isSectionOpen && (
-                <Alert severity="warning" sx={{ mt: 2 }}>
-                  Lớp học phần này không ở trạng thái "Đang mở". Không thể cập
-                  nhật hoặc import điểm.
-                </Alert>
-              )}
             </Grid>
+
+            {/* Phần buttons */}
             <Grid
               item
               xs={12}
-              md={6}
-              sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}
+              lg={6}
+              sx={{
+                display: 'flex',
+                gap: 1.5,
+                flexWrap: 'wrap',
+                alignItems: 'flex-start',
+                justifyContent: { xs: 'flex-start', lg: 'flex-end' },
+              }}
             >
               <Button
                 variant="contained"
@@ -1111,6 +1227,10 @@ const GradesPage = () => {
                   editedGrades.size === 0 ||
                   !isSectionOpen
                 }
+                sx={{
+                  minWidth: { xs: 'calc(50% - 6px)', sm: 'auto' },
+                  flex: { xs: '1 1 calc(50% - 6px)', sm: '0 1 auto' },
+                }}
               >
                 Lưu Điểm ({editedGrades.size})
               </Button>
@@ -1119,6 +1239,10 @@ const GradesPage = () => {
                 startIcon={<FileDownload />}
                 onClick={handleExportTemplate}
                 disabled={!selectedSection || students.length === 0}
+                sx={{
+                  minWidth: { xs: 'calc(50% - 6px)', sm: 'auto' },
+                  flex: { xs: '1 1 calc(50% - 6px)', sm: '0 1 auto' },
+                }}
               >
                 Xuất Template
               </Button>
@@ -1129,6 +1253,10 @@ const GradesPage = () => {
                 disabled={
                   !selectedSection || students.length === 0 || !isSectionOpen
                 }
+                sx={{
+                  minWidth: { xs: '100%', sm: 'auto' },
+                  flex: { xs: '1 1 100%', sm: '0 1 auto' },
+                }}
               >
                 Import Excel
               </Button>
@@ -1140,6 +1268,46 @@ const GradesPage = () => {
                 style={{ display: 'none' }}
               />
             </Grid>
+
+            {/* Alerts - Full width */}
+            {(selectedSection && !isSectionOpen) ||
+            (selectedSection && lockedGradesCount > 0) ? (
+              <Grid item xs={12}>
+                {selectedSection && !isSectionOpen && (
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    Lớp học phần này không ở trạng thái "Đang mở". Không thể cập
+                    nhật hoặc import điểm.
+                  </Alert>
+                )}
+                {selectedSection && lockedGradesCount > 0 && (
+                  <Alert
+                    severity="info"
+                    icon={<Lock />}
+                    sx={{
+                      background:
+                        'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+                      border: '1px solid #90caf9',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        Có {lockedGradesCount} ô điểm đã bị khóa
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        (các ô điểm này đã được xác nhận hoặc quá hạn chỉnh sửa)
+                      </Typography>
+                    </Box>
+                  </Alert>
+                )}
+              </Grid>
+            ) : null}
           </Grid>
         </Card>
       </Fade>
