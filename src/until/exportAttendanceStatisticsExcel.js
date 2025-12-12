@@ -25,7 +25,7 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
     courseCode: data.courseCode,
     className: '', // Will be derived from student data
     semester: data.semesterName,
-    lecturerName: data.lecturerName
+    lecturerName: data.lecturerName,
   };
   const sessions = data.sessionHeaders || [];
   const students = data.studentRows || [];
@@ -36,7 +36,10 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
     const courseName = sectionData?.courseName || 'Tên môn học';
     const sectionCode = sectionData?.sectionCode || 'Mã lớp';
     // Extract className from first student or use default
-    const className = students.length > 0 ? students[0].className : (sectionData?.className || 'Lớp');
+    const className =
+      students.length > 0
+        ? students[0].className
+        : sectionData?.className || 'Lớp';
     const semester = sectionData?.semester || 'HK1';
 
     // === ROW 1: Title ===
@@ -46,43 +49,55 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
     row1.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
     row1.height = 25;
 
-    // Merge row 1 (6 base columns + sessions + 5 summary columns)
-    const totalCols = 6 + sessions.length + 5;
+    // Merge row 1 (5 base columns + sessions + 5 summary columns)
+    const totalCols = 5 + sessions.length + 5;
     worksheet.mergeCells(1, 1, 1, totalCols);
 
     // === ROW 2-6: Info ===
     const row2 = worksheet.getRow(2);
-    row2.getCell(1).value = { richText: [{ font: { bold: true }, text: 'Đợt:' }] };
+    row2.getCell(1).value = {
+      richText: [{ font: { bold: true }, text: 'Đợt:' }],
+    };
     row2.getCell(2).value = `${semester} (2025 - 2026)`;
     worksheet.mergeCells(2, 2, 2, totalCols);
     row2.height = 20;
 
     const row3 = worksheet.getRow(3);
-    row3.getCell(1).value = { richText: [{ font: { bold: true }, text: 'Cơ sở:' }] };
+    row3.getCell(1).value = {
+      richText: [{ font: { bold: true }, text: 'Cơ sở:' }],
+    };
     row3.getCell(2).value = 'Cơ sở 1 (Thành phố Hồ Chí Minh)';
     worksheet.mergeCells(3, 2, 3, totalCols);
     row3.height = 20;
 
     const row4 = worksheet.getRow(4);
-    row4.getCell(1).value = { richText: [{ font: { bold: true }, text: 'Mã lớp học phần:' }] };
+    row4.getCell(1).value = {
+      richText: [{ font: { bold: true }, text: 'Mã lớp học phần:' }],
+    };
     row4.getCell(2).value = sectionCode;
     worksheet.mergeCells(4, 2, 4, totalCols);
     row4.height = 20;
 
     const row5 = worksheet.getRow(5);
-    row5.getCell(1).value = { richText: [{ font: { bold: true }, text: 'Tên môn học:' }] };
+    row5.getCell(1).value = {
+      richText: [{ font: { bold: true }, text: 'Tên môn học:' }],
+    };
     row5.getCell(2).value = `${courseName} (${sectionCode} - ${className})`;
     worksheet.mergeCells(5, 2, 5, totalCols);
     row5.height = 20;
 
     const row6 = worksheet.getRow(6);
-    row6.getCell(1).value = { richText: [{ font: { bold: true }, text: 'Lớp học:' }] };
+    row6.getCell(1).value = {
+      richText: [{ font: { bold: true }, text: 'Lớp học:' }],
+    };
     row6.getCell(2).value = className;
-    row6.getCell(3).value = { richText: [{ font: { bold: true }, text: 'Nhóm' }] };
+    row6.getCell(3).value = {
+      richText: [{ font: { bold: true }, text: 'Nhóm' }],
+    };
     row6.height = 20;
 
     // Set alignment và font cho tất cả rows info
-    [row2, row3, row4, row5, row6].forEach(row => {
+    [row2, row3, row4, row5, row6].forEach((row) => {
       for (let c = 1; c <= totalCols; c++) {
         const cell = row.getCell(c);
         if (!cell.value) cell.value = '';
@@ -114,7 +129,6 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
       { text: 'Họ và tên', col: 3 },
       { text: 'Lớp', col: 4 },
       { text: 'Tỷ lệ điểm danh (%)', col: 5 },
-      { text: 'Đánh giá', col: 6 },
     ];
 
     baseHeaders.forEach((header) => {
@@ -137,11 +151,12 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
     });
 
     // Session headers
-    let colIndex = 7;
+    let colIndex = 6;
     sessions.forEach((session, index) => {
       // Row 1: Session name
       const cell1 = headerRow1.getCell(colIndex);
-      cell1.value = session.sessionInfo || session.sessionName || `Buổi ${index + 1}`;
+      cell1.value =
+        session.sessionInfo || session.sessionName || `Buổi ${index + 1}`;
       cell1.font = { bold: true, color: { argb: 'FFFFFFFF' } };
       cell1.fill = {
         type: 'pattern',
@@ -195,8 +210,14 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
     });
 
     // Summary headers - including all attendance statuses
-    const summaryStartCol = 7 + sessions.length;
-    const summaryHeaders = ['Có mặt', 'Đi muộn', 'Có phép', 'Không phép', 'Tổng buổi'];
+    const summaryStartCol = 6 + sessions.length;
+    const summaryHeaders = [
+      'Có mặt',
+      'Đi muộn',
+      'Có phép',
+      'Không phép',
+      'Tổng buổi',
+    ];
 
     summaryHeaders.forEach((header, index) => {
       const col = summaryStartCol + index;
@@ -207,10 +228,14 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
       cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
       // Use different colors for different summary types
       let fillColor = 'FF4472C4'; // Default blue
-      if (header === 'Có mặt') fillColor = 'FF70AD47'; // Green
-      else if (header === 'Đi muộn') fillColor = 'FFFFC000'; // Orange/Yellow
-      else if (header === 'Có phép') fillColor = 'FF5B9BD5'; // Blue
-      else if (header === 'Không phép') fillColor = 'FFED7D31'; // Orange/Red
+      if (header === 'Có mặt')
+        fillColor = 'FF70AD47'; // Green
+      else if (header === 'Đi muộn')
+        fillColor = 'FFFFC000'; // Orange/Yellow
+      else if (header === 'Có phép')
+        fillColor = 'FF5B9BD5'; // Blue
+      else if (header === 'Không phép')
+        fillColor = 'FFED7D31'; // Orange/Red
       else if (header === 'Tổng buổi') fillColor = 'FF4472C4'; // Dark blue
 
       cell.fill = {
@@ -241,17 +266,17 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
       dataRow.getCell(3).value = student.studentName || '';
       dataRow.getCell(4).value = student.className || '';
       dataRow.getCell(5).value = student.attendanceRate || 0;
-      dataRow.getCell(6).value = student.attendanceLevel || '';
 
       // Session columns - điền giá trị từ attendanceMatrix
-      let sessionCol = 7;
-      const sessionStartCol = 7;
-      const sessionEndCol = 6 + sessions.length;
+      let sessionCol = 6;
+      const sessionStartCol = 6;
+      const sessionEndCol = 5 + sessions.length;
 
       sessions.forEach((session) => {
         const cell = dataRow.getCell(sessionCol);
         // Lấy trạng thái điểm danh từ attendanceMatrix bằng attendanceSessionId
-        const attendanceData = student.attendanceMatrix?.[session.attendanceSessionId];
+        const attendanceData =
+          student.attendanceMatrix?.[session.attendanceSessionId];
         if (attendanceData && attendanceData.status) {
           // Map to Vietnamese text: Có mặt, Đi muộn, Có phép, Không phép
           let statusText = '';
@@ -289,11 +314,15 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
       });
 
       // Summary columns - including all attendance statuses
-      dataRow.getCell(summaryStartCol).value = student.totalPresent || 0;           // Có mặt
-      dataRow.getCell(summaryStartCol + 1).value = student.totalLate || 0;          // Đi muộn
-      dataRow.getCell(summaryStartCol + 2).value = student.totalExcused || 0;       // Có phép
-      dataRow.getCell(summaryStartCol + 3).value = student.totalAbsent || 0;        // Không phép
-      dataRow.getCell(summaryStartCol + 4).value = (student.totalPresent || 0) + (student.totalLate || 0) + (student.totalAbsent || 0) + (student.totalExcused || 0); // Tổng buổi
+      dataRow.getCell(summaryStartCol).value = student.totalPresent || 0; // Có mặt
+      dataRow.getCell(summaryStartCol + 1).value = student.totalLate || 0; // Đi muộn
+      dataRow.getCell(summaryStartCol + 2).value = student.totalExcused || 0; // Có phép
+      dataRow.getCell(summaryStartCol + 3).value = student.totalAbsent || 0; // Không phép
+      dataRow.getCell(summaryStartCol + 4).value =
+        (student.totalPresent || 0) +
+        (student.totalLate || 0) +
+        (student.totalAbsent || 0) +
+        (student.totalExcused || 0); // Tổng buổi
 
       // Apply borders and alignment cho TẤT CẢ các cells
       for (let c = 1; c <= totalCols; c++) {
@@ -317,18 +346,23 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
     const summaryRow = worksheet.getRow(rowNum + 2);
     summaryRow.getCell(1).value = 'Tổng kết:';
     summaryRow.getCell(1).font = { bold: true };
-    summaryRow.getCell(2).value = `Tổng số sinh viên: ${data.totalStudents || students.length}`;
-    summaryRow.getCell(4).value = `Tổng số buổi: ${data.totalSessions || sessions.length}`;
-    summaryRow.getCell(5).value = `Tỷ lệ điểm danh trung bình: ${data.overallAttendanceRate || 0}%`;
+    summaryRow.getCell(2).value =
+      `Tổng số sinh viên: ${data.totalStudents || students.length}`;
+    summaryRow.getCell(4).value =
+      `Tổng số buổi: ${data.totalSessions || sessions.length}`;
+    summaryRow.getCell(5).value =
+      `Tỷ lệ điểm danh trung bình: ${data.overallAttendanceRate || 0}%`;
 
     // Add export info
     const exportInfoRow = worksheet.getRow(rowNum + 3);
-    exportInfoRow.getCell(1).value = `Người xuất: ${sectionData.lecturerName || 'N/A'}`;
-    exportInfoRow.getCell(3).value = `Ngày xuất: ${data.exportedAt ? dayjs(data.exportedAt).format('DD/MM/YYYY HH:mm') : new Date().toLocaleString('vi-VN')}`;
+    exportInfoRow.getCell(1).value =
+      `Người xuất: ${sectionData.lecturerName || 'N/A'}`;
+    exportInfoRow.getCell(3).value =
+      `Ngày xuất: ${data.exportedAt ? dayjs(data.exportedAt).format('DD/MM/YYYY HH:mm') : new Date().toLocaleString('vi-VN')}`;
 
     // Apply styling to summary rows
-    [summaryRow, exportInfoRow].forEach(row => {
-      for (let c = 1; c <= 6; c++) {
+    [summaryRow, exportInfoRow].forEach((row) => {
+      for (let c = 1; c <= 5; c++) {
         const cell = row.getCell(c);
         cell.font = { bold: true, size: 11 };
         cell.fill = {
@@ -340,12 +374,12 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
     });
 
     // Set column widths - updated for new structure
-    worksheet.getColumn(1).width = 5;    // STT
-    worksheet.getColumn(2).width = 12;   // MSSV
-    worksheet.getColumn(3).width = 25;   // Họ và tên
-    worksheet.getColumn(4).width = 15;   // Lớp
-    worksheet.getColumn(5).width = 15;   // Tỷ lệ điểm danh
-    worksheet.getColumn(6).width = 12;   // Đánh giá
+    worksheet.getColumn(1).width = 5; // STT
+    worksheet.getColumn(2).width = 12; // MSSV
+    worksheet.getColumn(3).width = 25; // Họ và tên
+    worksheet.getColumn(4).width = 15; // Lớp
+    worksheet.getColumn(5).width = 15; // Tỷ lệ điểm danh
+    worksheet.getColumn(6).width = 12; // Đánh giá
 
     // Session columns
     for (let i = 0; i < sessions.length; i++) {

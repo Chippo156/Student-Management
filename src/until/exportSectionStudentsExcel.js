@@ -16,7 +16,7 @@ export const exportSectionStudentsExcel = async (
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(`Danh sách ${scheduleType}`);
 
-    const totalCols = 6;
+    const totalCols = 4;
 
     // === ROW 1-4: Header truyền thống ===
     const row1 = worksheet.getRow(1);
@@ -123,7 +123,7 @@ export const exportSectionStudentsExcel = async (
 
     // === Table Header ===
     const tableHeaderRow = worksheet.getRow(currentRow);
-    const headers = ['STT', 'MSSV', 'Họ và tên', 'Lớp', 'Email', 'Trạng thái'];
+    const headers = ['STT', 'MSSV', 'Họ và tên', 'Trạng thái'];
 
     headers.forEach((header, index) => {
       const cell = tableHeaderRow.getCell(index + 1);
@@ -152,8 +152,6 @@ export const exportSectionStudentsExcel = async (
         index + 1,
         student.mssv || student.studentId,
         student.fullName || student.studentName,
-        student.className || student.class,
-        student.email,
         student.enrollmentStatus || student.status || 'Đang học',
       ];
 
@@ -161,7 +159,7 @@ export const exportSectionStudentsExcel = async (
         const cell = row.getCell(colIndex + 1);
         cell.value = data;
         cell.alignment = {
-          horizontal: colIndex === 0 || colIndex === 5 ? 'center' : 'left',
+          horizontal: colIndex === 0 || colIndex === 3 ? 'center' : 'left',
           vertical: 'middle',
         };
         cell.border = {
@@ -188,18 +186,16 @@ export const exportSectionStudentsExcel = async (
     // Add signature row
     const signatureRowNum = footerRowNum + 2;
     const signatureRow = worksheet.getRow(signatureRowNum);
-    signatureRow.getCell(5).value = 'Giảng viên';
-    signatureRow.getCell(5).font = { bold: true, italic: true };
-    signatureRow.getCell(5).alignment = { horizontal: 'center' };
+    signatureRow.getCell(3).value = 'Giảng viên';
+    signatureRow.getCell(3).font = { bold: true, italic: true };
+    signatureRow.getCell(3).alignment = { horizontal: 'center' };
     signatureRow.height = 20;
 
     // === Set Column Widths ===
     worksheet.getColumn(1).width = 8; // STT
     worksheet.getColumn(2).width = 15; // MSSV
     worksheet.getColumn(3).width = 30; // Họ và tên
-    worksheet.getColumn(4).width = 15; // Lớp
-    worksheet.getColumn(5).width = 30; // Email
-    worksheet.getColumn(6).width = 15; // Trạng thái
+    worksheet.getColumn(4).width = 15; // Trạng thái
 
     // Generate file name
     const fileName = `Danh_sach_${sectionData?.sectionCode || 'lop'}_${scheduleType}_${new Date().getTime()}.xlsx`;

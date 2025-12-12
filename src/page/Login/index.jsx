@@ -37,12 +37,12 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [openForgotPassword, setOpenForgotPassword] = useState(false);
-  const [mssv, setMssv] = useState('');
+  const [usernameOrMssv, setUsernameOrMssv] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [emailMasked, setEmailMasked] = useState('');
-  const [studentName, setStudentName] = useState('');
+  const [userName, setUserName] = useState('');
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -114,17 +114,17 @@ const Login = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!mssv.trim()) {
+    if (!usernameOrMssv.trim()) {
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const result = await authService.forgotPasswordByMSSV(mssv);
+      const result = await authService.forgotPasswordByMSSV(usernameOrMssv);
       if (result && result.success) {
         setOtpSent(true);
         setEmailMasked(result.data?.email || '');
-        setStudentName(result.data?.studentName || '');
+        setUserName(result.data?.studentName || result.data?.userName || '');
       }
     } catch (error) {
       console.error('Forgot password error:', error);
@@ -140,14 +140,14 @@ const Login = () => {
 
     setIsSubmitting(true);
     try {
-      const result = await authService.verifyOtp(mssv, otpCode);
+      const result = await authService.verifyOtp(usernameOrMssv, otpCode);
       if (result && result.success) {
         setOpenForgotPassword(false);
-        setMssv('');
+        setUsernameOrMssv('');
         setOtpCode('');
         setOtpSent(false);
         setEmailMasked('');
-        setStudentName('');
+        setUserName('');
       }
     } catch (error) {
       console.error('Verify OTP error:', error);
@@ -158,11 +158,11 @@ const Login = () => {
 
   const handleCloseForgotPassword = () => {
     setOpenForgotPassword(false);
-    setMssv('');
+    setUsernameOrMssv('');
     setOtpCode('');
     setOtpSent(false);
     setEmailMasked('');
-    setStudentName('');
+    setUserName('');
   };
 
   return (
@@ -313,9 +313,12 @@ const Login = () => {
             item
             xs={12}
             md={7}
-            sx={{ display: { xs: 'none', md: 'flex' } }}
+            sx={{
+              display: 'flex',
+              maxHeight: '600px',
+            }}
           >
-            <Box sx={{ width: '100%', height: '100%' }}>
+            <Box sx={{ width: '100%', height: '100%', overflow: 'hidden' }}>
               <PublicAnnouncementPanel />
             </Box>
           </Grid>
@@ -334,17 +337,17 @@ const Login = () => {
           {!otpSent ? (
             <>
               <Typography variant="body2" sx={{ mb: 3, mt: 1 }}>
-                Nhập mã số sinh viên của bạn. Mã OTP sẽ được gửi đến email đã
-                đăng ký.
+                Nhập tên đăng nhập của bạn. Mã OTP sẽ được gửi đến email đã đăng
+                ký.
               </Typography>
               <TextField
                 fullWidth
-                label="Mã số sinh viên (MSSV)"
-                value={mssv}
-                onChange={(e) => setMssv(e.target.value)}
+                label="Tên đăng nhập"
+                value={usernameOrMssv}
+                onChange={(e) => setUsernameOrMssv(e.target.value)}
                 required
                 disabled={isSubmitting}
-                placeholder="Nhập MSSV"
+                placeholder="Nhập tên đăng nhập"
                 autoFocus
               />
             </>
@@ -354,7 +357,7 @@ const Login = () => {
                 Mã OTP đã được gửi đến email của bạn
               </Alert>
               <Typography variant="body2" sx={{ mb: 2 }}>
-                <strong>Sinh viên:</strong> {studentName}
+                <strong>Người dùng:</strong> {userName}
               </Typography>
               <Typography variant="body2" sx={{ mb: 3 }}>
                 <strong>Email:</strong> {emailMasked}
@@ -380,7 +383,7 @@ const Login = () => {
             <Button
               onClick={handleForgotPassword}
               variant="contained"
-              disabled={isSubmitting || !mssv.trim()}
+              disabled={isSubmitting || !usernameOrMssv.trim()}
             >
               {isSubmitting ? 'Đang gửi...' : 'Gửi OTP'}
             </Button>

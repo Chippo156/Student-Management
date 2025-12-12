@@ -135,7 +135,6 @@ const CourseDetailModal = ({ open, onClose, section }) => {
       : tabValue === 1 && hasPractice
         ? practiceStudents
         : examListData?.students || [];
-
   return (
     <Dialog
       open={open}
@@ -266,7 +265,7 @@ const CourseDetailModal = ({ open, onClose, section }) => {
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(3, 1fr)',
               gap: 2,
             }}
           >
@@ -280,19 +279,6 @@ const CourseDetailModal = ({ open, onClose, section }) => {
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {section.courseCode}
-              </Typography>
-            </Box>
-
-            <Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', mb: 0.5 }}
-              >
-                Số tín chỉ
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {section.credits || 'N/A'}
               </Typography>
             </Box>
 
@@ -497,7 +483,11 @@ const CourseDetailModal = ({ open, onClose, section }) => {
               : 'Chưa có sinh viên đăng ký lớp này'}
           </Alert>
         ) : (
-          <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+          <TableContainer
+            component={Paper}
+            variant="outlined"
+            sx={{ overflowX: 'auto' }}
+          >
             <Table size="small" sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow
