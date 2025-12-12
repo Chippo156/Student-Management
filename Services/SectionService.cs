@@ -78,7 +78,7 @@ namespace StudentManagement.Services
                     throw new Exception("Sức chứa của phần phải lớn hơn 0");
                 }
 
-                if (request.Capacity > 40) // Max capacity validation
+                if (request.Capacity > 100) // Max capacity validation
                 {
                     throw new Exception("Sức chứa của một khu vực không được vượt quá 40 sinh viên");
                 }

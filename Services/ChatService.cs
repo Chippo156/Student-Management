@@ -111,7 +111,7 @@ namespace StudentManagement.Services
                 ChatType = ChatType.AcademicStaff,
                 DepartmentId = student.Class.Program.Department.DepartmentId,
                 Department = student.Class.Program.Department,
-                RoomName = $"Học vụ - {student.Class.Program.Department.DepartmentName}",
+                RoomName = $"{student.MSSV}-{student.User.FullName} - {student.Class.Program.Department.DepartmentName}",
                 Description = $"Chat với giáo viên học vụ khoa {student.Class.Program.Department.DepartmentName}"
             };
 

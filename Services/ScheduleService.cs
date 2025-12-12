@@ -45,7 +45,7 @@ namespace StudentManagement.Services
             var targetSemesterId = currentSection.SemesterId;
             var lecturerId = currentSection.Id;
 
-            // BƯỚC 2: **MỚI** - Kiểm tra xung đột lịch giảng viên (bất kể phòng học)
+            // BƯỚC 2:- Kiểm tra xung đột lịch giảng viên (bất kể phòng học)
             var lecturerScheduleConflicts = await context.Schedules
                 .Include(s => s.Section)
                     .ThenInclude(sec => sec.Semester)

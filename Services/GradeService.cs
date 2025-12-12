@@ -741,22 +741,18 @@ namespace StudentManagement.Services
 
             response.AssessmentHeaders = assessmentHeaders;
 
-            // Tạo dữ liệu cho từng sinh viên
             var studentGrades = new List<StudentGradesInSection>();
 
             foreach (var enrollment in enrolledStudents)
             {
                 var student = enrollment.Student;
 
-                // Lấy grades của sinh viên này
                 var studentGradesList = allGrades
                     .Where(g => g.Student.Id == student.Id)
                     .ToList();
 
-                // Lấy final result của sinh viên này
                 finalResults.TryGetValue(student.Id, out var finalResult);
 
-                // **MỚI: Kiểm tra student này đã có điểm CK chưa**
                 var studentHasFinalExam = studentGradesList.Any(g => g.Assessment.AssessmentType.AssessmentTypeId == 4);
                 var studentHasFinalResult = finalResult != null;
 
@@ -770,16 +766,13 @@ namespace StudentManagement.Services
                     EnrollmentStatus = GetEnrollmentStatusInVietnamese(enrollment.enrollmentStatus)
                 };
 
-                // Tạo dictionary để lưu điểm theo assessment
                 var gradesByAssessment = studentGradesList.ToDictionary(g => g.Assessment.AssessmentId, g => g);
 
-                // Điền điểm cho từng assessment
                 var assessmentGrades = new List<AssessmentGradeData>();
                 foreach (var assessmentHeader in assessmentHeaders)
                 {
                     if (gradesByAssessment.TryGetValue(assessmentHeader.AssessmentId, out var grade))
                     {
-                        // **CẬP NHẬT: Quy tắc CanEdit mới**
                         bool canEdit = DetermineCanEditGrade(assessmentHeader, studentHasFinalResult, studentHasFinalExam);
 
                         assessmentGrades.Add(new AssessmentGradeData
@@ -793,7 +786,6 @@ namespace StudentManagement.Services
                     }
                     else
                     {
-                        // **CẬP NHẬT: Quy tắc CanEdit mới cho grade chưa có**
                         bool canEdit = DetermineCanEditGrade(assessmentHeader, studentHasFinalResult, studentHasFinalExam);
 
                         assessmentGrades.Add(new AssessmentGradeData
@@ -809,7 +801,6 @@ namespace StudentManagement.Services
 
                 studentGradeData.AssessmentGrades = assessmentGrades;
 
-                // Tính toán thống kê cho sinh viên này
                 var completedAssessments = assessmentGrades.Count(ag => ag.HasGrade);
                 studentGradeData.CompletedAssessments = completedAssessments;
                 studentGradeData.PendingAssessments = allAssessments.Count - completedAssessments;
@@ -821,7 +812,6 @@ namespace StudentManagement.Services
 
             response.StudentGrades = studentGrades;
 
-            // Tính toán thống kê tổng quan của section
             var totalCompletedGrades = studentGrades.Sum(sg => sg.CompletedAssessments);
             var totalPossibleGrades = response.TotalStudents * response.TotalAssessments;
 
