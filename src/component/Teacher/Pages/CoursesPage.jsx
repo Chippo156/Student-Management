@@ -7,19 +7,13 @@ import {
   Grid,
   Chip,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   TextField,
   IconButton,
   Tooltip,
   InputAdornment,
 } from '@mui/material';
 import SearchableAutocomplete from '../../Common/SearchableAutocomplete';
+import DataTable from '../../Common/DataTable';
 import {
   School,
   People,
@@ -59,7 +53,6 @@ const CoursesPage = () => {
     [theme]
   );
   const [courses, setCourses] = useState([]);
-  const [filteredCourses, setFilteredCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -67,6 +60,8 @@ const CoursesPage = () => {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [semesters, setSemesters] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
@@ -86,7 +81,7 @@ const CoursesPage = () => {
     fetchSemesters();
   }, []);
 
-  // Debounce search và fetch courses
+  // Debounce search và fetch courses (chỉ khi search/semester thay đổi)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (lecturerId) {
@@ -95,7 +90,7 @@ const CoursesPage = () => {
     }, 500); // Debounce 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [lecturerId, searchText, semesterFilter, statusFilter]);
+  }, [lecturerId, searchText, semesterFilter]);
 
   const fetchCourses = async () => {
     if (!lecturerId) return;
@@ -123,21 +118,23 @@ const CoursesPage = () => {
       const response = await sectionService.getSectionsByLecturer(params);
       const sectionsData = response?.items || [];
       setCourses(sectionsData);
-
-      // Apply local status filter ngay sau khi fetch
-      let filtered = [...sectionsData];
-      if (statusFilter !== 'all') {
-        filtered = filtered.filter(
-          (section) => section.status === parseInt(statusFilter)
-        );
-      }
-      setFilteredCourses(filtered);
     } catch (error) {
       console.error('Error fetching courses:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  // Apply local status filter using useMemo (không trigger API call)
+  const filteredCourses = useMemo(() => {
+    let filtered = [...courses];
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(
+        (section) => section.status === parseInt(statusFilter)
+      );
+    }
+    return filtered;
+  }, [courses, statusFilter]);
 
   const handleExportExcel = async () => {
     try {
@@ -192,6 +189,133 @@ const CoursesPage = () => {
     const config = statusConfig[status] || statusConfig[1];
     return <Chip label={config.label} color={config.color} size="small" />;
   };
+
+  // Define table columns
+  const columns = [
+    {
+      field: 'stt',
+      headerName: 'STT',
+      width: '60px',
+      align: 'left',
+      renderCell: (row, index) => page * rowsPerPage + index + 1,
+    },
+    {
+      field: 'sectionCode',
+      headerName: 'Mã lớp HP',
+      width: '120px',
+      renderCell: (row) => (
+        <Typography sx={{ fontWeight: 600, color: colors.primary }}>
+          {row.sectionCode}
+        </Typography>
+      ),
+    },
+    {
+      field: 'courseCode',
+      headerName: 'Mã môn học',
+      width: '120px',
+      renderCell: (row) => (
+        <Chip
+          label={row.courseCode}
+          size="small"
+          color="primary"
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      field: 'courseName',
+      headerName: 'Tên môn học',
+      width: '240px',
+      renderCell: (row) => (
+        <Typography sx={{ fontWeight: 500 }}>{row.courseName}</Typography>
+      ),
+    },
+    {
+      field: 'enrolledCount',
+      headerName: 'Số sinh viên',
+      width: '130px',
+      renderCell: (row) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography sx={{ fontWeight: 600, color: colors.success }}>
+            {row.enrolledCount}
+          </Typography>
+          <Typography color="text.secondary">/</Typography>
+          <Typography color="text.secondary">{row.capacity}</Typography>
+        </Box>
+      ),
+    },
+    {
+      field: 'semesterName',
+      headerName: 'Học kỳ',
+      width: '150px',
+      renderCell: (row) => (
+        <Chip
+          label={row.semesterName}
+          size="small"
+          sx={{
+            bgcolor: colors.bgPrimarySoft,
+            color: colors.primary,
+          }}
+        />
+      ),
+    },
+    {
+      field: 'status',
+      headerName: 'Trạng thái',
+      width: '130px',
+      renderCell: (row) => getStatusChip(row.status),
+    },
+    {
+      field: 'actions',
+      headerName: 'Thao tác',
+      width: '200px',
+      align: 'center',
+      headerStyle: { textAlign: 'center' },
+      renderCell: (row) => (
+        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+          <Button
+            variant="outlined"
+            size="small"
+            sx={{
+              textTransform: 'none',
+              minWidth: '90px',
+            }}
+            onClick={() => handleViewDetail(row)}
+          >
+            Chi tiết
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            size="small"
+            sx={{
+              textTransform: 'none',
+              minWidth: '90px',
+            }}
+            onClick={() => handleGradeEntry(row)}
+          >
+            Chấm điểm
+          </Button>
+        </Box>
+      ),
+    },
+  ];
+
+  // Pagination handlers
+  const handlePageChange = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleRowsPerPageChange = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Get paginated data
+  const paginatedCourses = filteredCourses.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   if (loading) {
     return (
@@ -457,118 +581,16 @@ const CoursesPage = () => {
       </Card>
 
       {/* Courses Table */}
-      <Paper sx={{ boxShadow: 2, borderRadius: 2, overflow: 'hidden' }}>
-        <TableContainer sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 800 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>STT</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Mã lớp HP</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Mã môn học</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Tên môn học</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Số sinh viên</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Học kỳ</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Trạng thái</TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 'bold',
-                    textAlign: 'center',
-                  }}
-                >
-                  Thao tác
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredCourses.map((section, index) => (
-                <TableRow
-                  key={section.sectionId}
-                  hover
-                  sx={{
-                    '&:hover': { bgcolor: alpha(colors.primary, 0.04) },
-                    transition: 'background-color 0.2s',
-                  }}
-                >
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 600, color: colors.primary }}>
-                      {section.sectionCode}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={section.courseCode}
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 500 }}>
-                      {section.courseName}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography
-                        sx={{ fontWeight: 600, color: colors.success }}
-                      >
-                        {section.enrolledCount}
-                      </Typography>
-                      <Typography color="text.secondary">/</Typography>
-                      <Typography color="text.secondary">
-                        {section.capacity}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={section.semesterName}
-                      size="small"
-                      sx={{
-                        bgcolor: colors.bgPrimarySoft,
-                        color: colors.primary,
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>{getStatusChip(section.status)}</TableCell>
-                  <TableCell>
-                    <Box
-                      sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}
-                    >
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        sx={{
-                          textTransform: 'none',
-                          minWidth: '90px',
-                        }}
-                        onClick={() => handleViewDetail(section)}
-                      >
-                        Chi tiết
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="success"
-                        size="small"
-                        sx={{
-                          textTransform: 'none',
-                          minWidth: '90px',
-                        }}
-                        onClick={() => handleGradeEntry(section)}
-                      >
-                        Chấm điểm
-                      </Button>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {filteredCourses.length === 0 && (
-          <Box sx={{ p: 6, textAlign: 'center' }}>
+      <DataTable
+        columns={columns}
+        rows={paginatedCourses}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        totalCount={filteredCourses.length}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        emptyState={
+          <>
             <School
               sx={{ fontSize: 80, color: alpha(colors.text, 0.2), mb: 2 }}
             />
@@ -580,9 +602,9 @@ const CoursesPage = () => {
                 ? 'Thử thay đổi bộ lọc để tìm kiếm'
                 : 'Bạn chưa có lớp học phần nào được phân công'}
             </Typography>
-          </Box>
-        )}
-      </Paper>
+          </>
+        }
+      />
 
       {/* Course Detail Modal */}
       <CourseDetailModal
