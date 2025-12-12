@@ -379,11 +379,10 @@ export const exportAttendanceAllStatisticsExcel = async (apiResponse) => {
     worksheet.getColumn(3).width = 25; // Họ và tên
     worksheet.getColumn(4).width = 15; // Lớp
     worksheet.getColumn(5).width = 15; // Tỷ lệ điểm danh
-    worksheet.getColumn(6).width = 12; // Đánh giá
 
     // Session columns
     for (let i = 0; i < sessions.length; i++) {
-      worksheet.getColumn(7 + i).width = 12;
+      worksheet.getColumn(6 + i).width = 12;
     }
 
     // Summary columns
