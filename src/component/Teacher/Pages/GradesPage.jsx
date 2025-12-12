@@ -6,10 +6,6 @@ import {
   CardContent,
   Grid,
   Button,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   Fade,
   Grow,
   Snackbar,
@@ -32,6 +28,7 @@ import { useLocation } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { sectionService, gradeService } from '../../../service';
 import { exportGradesExcel } from '../../../until/exportGradesExcel';
+import SearchableAutocomplete from '../../Common/SearchableAutocomplete';
 
 const GradesPage = () => {
   const theme = useTheme();
@@ -1010,22 +1007,25 @@ const GradesPage = () => {
             alignItems="center"
           >
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Chọn lớp học phần</InputLabel>
-                <Select
-                  value={selectedSection}
-                  label="Chọn lớp học phần"
-                  onChange={(e) => setSelectedSection(e.target.value)}
-                  disabled={loading}
-                >
-                  {sections.map((section) => (
-                    <MenuItem key={section.sectionId} value={section.sectionId}>
-                      {section.displayName} - {section.className} (
-                      {section.status})
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <SearchableAutocomplete
+                options={sections}
+                value={
+                  sections.find((s) => s.sectionId === selectedSection) || null
+                }
+                onChange={(newValue) => {
+                  setSelectedSection(newValue?.sectionId || '');
+                }}
+                getOptionLabel={(option) =>
+                  `${option.displayName} - ${option.className} (${option.status})`
+                }
+                isOptionEqualToValue={(option, value) =>
+                  option.sectionId === value?.sectionId
+                }
+                label="Chọn lớp học phần"
+                placeholder="Tìm kiếm lớp học phần..."
+                disabled={loading}
+                showSearchIcon={false}
+              />
               {selectedSection && !isSectionOpen && (
                 <Alert severity="warning" sx={{ mt: 2 }}>
                   Lớp học phần này không ở trạng thái "Đang mở". Không thể cập
@@ -1094,7 +1094,12 @@ const GradesPage = () => {
               pagination={{
                 pageSize: 20,
                 showSizeChanger: true,
-                showTotal: (total) => `Tổng số ${total} sinh viên`,
+                pageSizeOptions: ['10', '20', '50', '100'],
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} của ${total} sinh viên`,
+                locale: {
+                  items_per_page: '/ trang',
+                },
               }}
               scroll={{ x: 'max-content' }}
               size="middle"

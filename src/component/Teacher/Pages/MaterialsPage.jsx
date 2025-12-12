@@ -6,10 +6,6 @@ import {
   CardContent,
   Grid,
   Button,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -21,6 +17,7 @@ import {
   Alert,
   IconButton,
 } from '@mui/material';
+import SearchableAutocomplete from '../../Common/SearchableAutocomplete';
 import { useTheme, alpha } from '@mui/material/styles';
 import { Table, Tag, Space, Upload } from 'antd';
 import {
@@ -486,20 +483,18 @@ const MaterialsPage = () => {
             alignItems="center"
           >
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Chọn môn học</InputLabel>
-                <Select
-                  value={selectedCourse}
-                  label="Chọn môn học"
-                  onChange={(e) => setSelectedCourse(e.target.value)}
-                >
-                  {courses.map((course) => (
-                    <MenuItem key={course.id} value={course.id}>
-                      {course.name} ({course.code})
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <SearchableAutocomplete
+                options={courses}
+                value={courses.find((c) => c.id === selectedCourse) || null}
+                onChange={(newValue) => {
+                  setSelectedCourse(newValue?.id || '');
+                }}
+                getOptionLabel={(option) => `${option.name} (${option.code})`}
+                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                label="Chọn môn học"
+                placeholder="Tìm kiếm môn học..."
+                showSearchIcon={false}
+              />
             </Grid>
             <Grid item xs={12} md={6} sx={{ textAlign: 'right' }}>
               <Button
@@ -575,20 +570,37 @@ const MaterialsPage = () => {
               />
             </Grid>
             <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Loại tài liệu</InputLabel>
-                <Select
-                  value={formData.type}
-                  label="Loại tài liệu"
-                  onChange={(e) => handleFormChange('type', e.target.value)}
-                >
-                  <MenuItem value="slide">Bài giảng (Slide)</MenuItem>
-                  <MenuItem value="document">Tài liệu tham khảo</MenuItem>
-                  <MenuItem value="code">Source code</MenuItem>
-                  <MenuItem value="video">Video bài giảng</MenuItem>
-                  <MenuItem value="other">Khác</MenuItem>
-                </Select>
-              </FormControl>
+              <SearchableAutocomplete
+                options={[
+                  { value: 'slide', label: 'Bài giảng (Slide)' },
+                  { value: 'document', label: 'Tài liệu tham khảo' },
+                  { value: 'code', label: 'Source code' },
+                  { value: 'video', label: 'Video bài giảng' },
+                  { value: 'other', label: 'Khác' },
+                ]}
+                value={
+                  formData.type
+                    ? {
+                        value: formData.type,
+                        label: {
+                          slide: 'Bài giảng (Slide)',
+                          document: 'Tài liệu tham khảo',
+                          code: 'Source code',
+                          video: 'Video bài giảng',
+                          other: 'Khác',
+                        }[formData.type],
+                      }
+                    : null
+                }
+                onChange={(newValue) => {
+                  handleFormChange('type', newValue?.value || '');
+                }}
+                getOptionLabel={(option) => option.label}
+                isOptionEqualToValue={(option, value) => option.value === value?.value}
+                label="Loại tài liệu"
+                placeholder="Chọn loại tài liệu..."
+                showSearchIcon={false}
+              />
             </Grid>
             <Grid item xs={12}>
               <Upload

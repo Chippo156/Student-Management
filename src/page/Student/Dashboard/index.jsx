@@ -561,7 +561,7 @@ const Dashboard = () => {
 
       {/* Row 3: Kết quả học tập + Tiến độ + Lớp học phần (3 cột) */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }} align="stretch">
-        <Col xs={24} lg={12}>
+        <Col xs={24} md={24} lg={12}>
           <StudentAcademicChart
             academicData={academicData}
             semesters={semesters}
@@ -571,7 +571,7 @@ const Dashboard = () => {
             sectionTitleStyle={sectionTitleStyle}
           />
         </Col>
-        <Col xs={24} lg={6}>
+        <Col xs={24} md={12} lg={6}>
           <StudentProgressChart
             outerCredits={outerCredits}
             innerProgress={innerProgress}
@@ -585,7 +585,7 @@ const Dashboard = () => {
             account={account}
           />
         </Col>
-        <Col xs={24} lg={6}>
+        <Col xs={24} md={12} lg={6}>
           <StudentClassList
             enrollmentList={enrollmentList}
             semesters={semesters}

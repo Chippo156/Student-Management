@@ -6,10 +6,6 @@ import {
   CardContent,
   Grid,
   Button,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -21,6 +17,7 @@ import {
   Alert,
   Chip,
 } from '@mui/material';
+import SearchableAutocomplete from '../../Common/SearchableAutocomplete';
 import { useTheme, alpha } from '@mui/material/styles';
 import { Table, Tag, Space, Progress } from 'antd';
 import {
@@ -500,20 +497,18 @@ const AssignmentsPage = () => {
             alignItems="center"
           >
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Chọn môn học</InputLabel>
-                <Select
-                  value={selectedCourse}
-                  label="Chọn môn học"
-                  onChange={(e) => setSelectedCourse(e.target.value)}
-                >
-                  {courses.map((course) => (
-                    <MenuItem key={course.id} value={course.id}>
-                      {course.name} ({course.code})
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <SearchableAutocomplete
+                options={courses}
+                value={courses.find((c) => c.id === selectedCourse) || null}
+                onChange={(newValue) => {
+                  setSelectedCourse(newValue?.id || '');
+                }}
+                getOptionLabel={(option) => `${option.name} (${option.code})`}
+                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                label="Chọn môn học"
+                placeholder="Tìm kiếm môn học..."
+                showSearchIcon={false}
+              />
             </Grid>
             <Grid item xs={12} md={6} sx={{ textAlign: 'right' }}>
               <Button

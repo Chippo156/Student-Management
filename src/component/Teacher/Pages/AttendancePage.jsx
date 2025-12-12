@@ -6,10 +6,6 @@ import {
   CardContent,
   Grid,
   Button,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   Chip,
   Dialog,
   DialogTitle,
@@ -23,6 +19,10 @@ import {
   TextField,
   FormControlLabel,
   Switch,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
 } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { Table, Tag, Space, DatePicker } from 'antd';
@@ -45,6 +45,7 @@ import {
 import dayjs from 'dayjs';
 import { exportAttendanceExcel } from '../../../until/exportAttendanceExcel';
 import AttendanceStatistics from '../Components/AttendanceStatistics';
+import SearchableAutocomplete from '../../Common/SearchableAutocomplete';
 const AttendancePage = () => {
   const theme = useTheme();
   const [courses, setCourses] = useState([]);
@@ -1008,35 +1009,68 @@ const AttendancePage = () => {
             <Grid container className="equal-height-cards" spacing={2}>
               {/* Row 1: Filters */}
               <Grid item xs={12} md={4}>
-                <FormControl fullWidth>
-                  <InputLabel>Chọn lớp học phần</InputLabel>
-                  <Select
-                    value={selectedCourse}
-                    label="Chọn lớp học phần"
-                    onChange={(e) => setSelectedCourse(e.target.value)}
-                  >
-                    <MenuItem value="">Tất cả lớp học phần</MenuItem>
-                    {courses.map((course) => (
-                      <MenuItem key={course.sectionId} value={course.sectionId}>
-                        {course.courseName} - {course.sectionCode}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <SearchableAutocomplete
+                  options={[
+                    {
+                      sectionId: '',
+                      courseName: 'Tất cả lớp học phần',
+                      sectionCode: '',
+                    },
+                    ...courses,
+                  ]}
+                  value={
+                    selectedCourse === ''
+                      ? {
+                          sectionId: '',
+                          courseName: 'Tất cả lớp học phần',
+                          sectionCode: '',
+                        }
+                      : courses.find((c) => c.sectionId === selectedCourse) ||
+                        null
+                  }
+                  onChange={(newValue) => {
+                    setSelectedCourse(newValue?.sectionId || '');
+                  }}
+                  getOptionLabel={(option) =>
+                    option.sectionId === ''
+                      ? option.courseName
+                      : `${option.courseName} - ${option.sectionCode}`
+                  }
+                  isOptionEqualToValue={(option, value) =>
+                    option.sectionId === value?.sectionId
+                  }
+                  label="Chọn lớp học phần"
+                  placeholder="Tìm kiếm lớp học phần..."
+                  showSearchIcon={false}
+                />
               </Grid>
               <Grid item xs={12} md={4}>
-                <FormControl fullWidth>
-                  <InputLabel>Loại lớp</InputLabel>
-                  <Select
-                    value={classType}
-                    label="Loại lớp"
-                    onChange={(e) => setClassType(e.target.value)}
-                  >
-                    <MenuItem value="">Tất cả</MenuItem>
-                    <MenuItem value="theory">Lý thuyết</MenuItem>
-                    <MenuItem value="practice">Thực hành</MenuItem>
-                  </Select>
-                </FormControl>
+                <SearchableAutocomplete
+                  options={[
+                    { value: '', label: 'Tất cả' },
+                    { value: 'theory', label: 'Lý thuyết' },
+                    { value: 'practice', label: 'Thực hành' },
+                  ]}
+                  value={
+                    classType === ''
+                      ? { value: '', label: 'Tất cả' }
+                      : {
+                          value: classType,
+                          label:
+                            classType === 'theory' ? 'Lý thuyết' : 'Thực hành',
+                        }
+                  }
+                  onChange={(newValue) => {
+                    setClassType(newValue?.value || '');
+                  }}
+                  getOptionLabel={(option) => option.label}
+                  isOptionEqualToValue={(option, value) =>
+                    option.value === value?.value
+                  }
+                  label="Loại lớp"
+                  placeholder="Chọn loại lớp..."
+                  showSearchIcon={false}
+                />
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth>
@@ -1050,7 +1084,7 @@ const AttendancePage = () => {
                     value={selectedDate}
                     onChange={(date) => setSelectedDate(date)}
                     format="DD/MM/YYYY"
-                    style={{ width: '100%', height: 56 }}
+                    style={{ width: '100%', height: 40 }}
                     placeholder="Chọn ngày điểm danh"
                     disabledDate={(current) =>
                       current && current > dayjs().endOf('day')
@@ -1297,26 +1331,37 @@ const AttendancePage = () => {
             </Grid>
             {classType === 'practice' && (
               <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Nhóm thực hành</InputLabel>
-                  <Select
-                    value={sessionData.practiceGroupId || ''}
-                    label="Nhóm thực hành"
-                    onChange={(e) =>
-                      setSessionData({
-                        ...sessionData,
-                        practiceGroupId: e.target.value || null,
-                      })
-                    }
-                  >
-                    <MenuItem value="">Chọn nhóm thực hành</MenuItem>
-                    {practiceGroups.map((group) => (
-                      <MenuItem key={group.id} value={group.id}>
-                        Nhóm {group.groupNumber}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <SearchableAutocomplete
+                  options={[
+                    { id: '', groupNumber: 'Chọn nhóm thực hành' },
+                    ...practiceGroups,
+                  ]}
+                  value={
+                    sessionData.practiceGroupId === '' ||
+                    !sessionData.practiceGroupId
+                      ? { id: '', groupNumber: 'Chọn nhóm thực hành' }
+                      : practiceGroups.find(
+                          (g) => g.id === sessionData.practiceGroupId
+                        ) || null
+                  }
+                  onChange={(newValue) => {
+                    setSessionData({
+                      ...sessionData,
+                      practiceGroupId: newValue?.id || null,
+                    });
+                  }}
+                  getOptionLabel={(option) =>
+                    option.id === ''
+                      ? option.groupNumber
+                      : `Nhóm ${option.groupNumber}`
+                  }
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value?.id
+                  }
+                  label="Nhóm thực hành"
+                  placeholder="Chọn nhóm thực hành..."
+                  showSearchIcon={false}
+                />
               </Grid>
             )}
             <Grid item xs={12}>

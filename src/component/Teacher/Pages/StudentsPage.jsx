@@ -8,10 +8,6 @@ import {
   Chip,
   Button,
   TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   Avatar,
   Dialog,
   DialogTitle,
@@ -24,7 +20,6 @@ import {
   InputAdornment,
 } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
-import { Table, Space, Tag, Input } from 'antd';
 import {
   People,
   School,
@@ -33,11 +28,14 @@ import {
   FileDownload,
   FilterList,
   Refresh,
+  Visibility,
 } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import sectionService from '../../../service/sectionService';
 import { studentServices } from '../../../service/studentServices';
 import { exportSectionStudentsExcel } from '../../../until/exportSectionStudentsExcel';
+import DataTable from '../../Common/DataTable';
+import SearchableAutocomplete from '../../Common/SearchableAutocomplete';
 const StudentsPage = () => {
   const theme = useTheme();
   const [students, setStudents] = useState([]);
@@ -223,86 +221,89 @@ const StudentsPage = () => {
   const uniqueStudents = new Set(students.map((s) => s.studentId)).size;
   const activeSections = sections.filter((s) => s.status === 1).length;
 
-  // Ant Design Table columns
+  // DataTable columns
   const columns = [
     {
-      title: 'MSSV',
-      dataIndex: 'mssv',
-      key: 'mssv',
+      field: 'mssv',
+      headerName: 'MSSV',
       width: 120,
-      // removed fixed: 'left' to avoid sticky stacking issues
-      render: (text) => <span style={{ fontWeight: 600 }}>{text}</span>,
-      // removed onHeaderCell/onCell zIndex tweaks
+      align: 'center',
+      renderCell: (row) => <span style={{ fontWeight: 600 }}>{row.mssv}</span>,
     },
     {
-      title: 'Họ và tên',
-      dataIndex: 'fullName',
-      key: 'fullName',
+      field: 'fullName',
+      headerName: 'Họ và tên',
       width: 200,
-      render: (text, record) => (
-        <Space>
+      renderCell: (row) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Avatar sx={{ width: 32, height: 32 }}>
-            {text?.charAt(0).toUpperCase()}
+            {row.fullName?.charAt(0).toUpperCase()}
           </Avatar>
-          <span>{text}</span>
-        </Space>
+          <span>{row.fullName}</span>
+        </Box>
       ),
     },
     {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
+      field: 'email',
+      headerName: 'Email',
       width: 220,
     },
     {
-      title: 'Lớp',
-      dataIndex: 'className',
-      key: 'className',
+      field: 'className',
+      headerName: 'Lớp',
       width: 120,
     },
     {
-      title: 'Môn học',
-      key: 'course',
+      field: 'course',
+      headerName: 'Môn học',
       width: 250,
-      render: (_, record) => (
-        <div>
-          <div style={{ fontWeight: 500 }}>{record.courseName}</div>
-          <Tag color="blue">{record.courseCode}</Tag>
-          <Tag color="green">{record.sectionCode}</Tag>
-        </div>
+      renderCell: (row) => (
+        <Box>
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            {row.courseName}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
+            <Chip label={row.courseCode} size="small" color="primary" />
+            <Chip label={row.sectionCode} size="small" color="success" />
+          </Box>
+        </Box>
       ),
     },
     {
-      title: 'Nhóm thực hành',
-      dataIndex: 'practiceGroupName',
-      key: 'practiceGroupName',
+      field: 'practiceGroupName',
+      headerName: 'Nhóm thực hành',
       width: 150,
     },
     {
-      title: 'Trạng thái ĐK',
-      dataIndex: 'enrollmentStatus',
-      key: 'enrollmentStatus',
+      field: 'enrollmentStatus',
+      headerName: 'Trạng thái ĐK',
       width: 120,
-      render: (status) => {
-        const isRegistered = status === 'Đã đăng ký';
-        return <Tag color={isRegistered ? 'success' : 'default'}>{status}</Tag>;
+      align: 'center',
+      renderCell: (row) => {
+        const isRegistered = row.enrollmentStatus === 'Đã đăng ký';
+        return (
+          <Chip
+            label={row.enrollmentStatus}
+            size="small"
+            color={isRegistered ? 'success' : 'default'}
+          />
+        );
       },
     },
     {
-      title: 'Thao tác',
-      key: 'action',
-      // removed fixed: 'right'
+      field: 'action',
+      headerName: 'Thao tác',
       width: 150,
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => handleViewDetails(record)}
-          >
-            Xem chi tiết
-          </Button>
-        </Space>
+      align: 'center',
+      renderCell: (row) => (
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<Visibility />}
+          onClick={() => handleViewDetails(row)}
+        >
+          Chi tiết
+        </Button>
       ),
     },
   ];
@@ -499,27 +500,33 @@ const StudentsPage = () => {
                 />
               </Grid>
               <Grid item xs={12} md={4}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Lớp học phần</InputLabel>
-                  <Select
-                    value={selectedSection}
-                    label="Lớp học phần"
-                    onChange={(e) => {
-                      setSelectedSection(e.target.value);
-                      setPagination((prev) => ({ ...prev, current: 1 }));
-                    }}
-                  >
-                    <MenuItem value="all">Tất cả lớp học phần</MenuItem>
-                    {sections.map((section) => (
-                      <MenuItem
-                        key={section.sectionId}
-                        value={section.sectionId}
-                      >
-                        {section.courseName} ({section.sectionCode})
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <SearchableAutocomplete
+                  options={[
+                    { sectionId: 'all', courseName: 'Tất cả lớp học phần', sectionCode: '' },
+                    ...sections,
+                  ]}
+                  value={
+                    selectedSection === 'all'
+                      ? { sectionId: 'all', courseName: 'Tất cả lớp học phần', sectionCode: '' }
+                      : sections.find((s) => s.sectionId === selectedSection) || null
+                  }
+                  onChange={(newValue) => {
+                    setSelectedSection(newValue?.sectionId || 'all');
+                    setPagination((prev) => ({ ...prev, current: 1 }));
+                  }}
+                  getOptionLabel={(option) =>
+                    option.sectionId === 'all'
+                      ? option.courseName
+                      : `${option.courseName} (${option.sectionCode})`
+                  }
+                  isOptionEqualToValue={(option, value) =>
+                    option.sectionId === value?.sectionId
+                  }
+                  label="Lớp học phần"
+                  placeholder="Chọn lớp học phần"
+                  size="small"
+                  showSearchIcon={false}
+                />
               </Grid>
               <Grid item xs={12} md={2}>
                 <Button
@@ -546,37 +553,44 @@ const StudentsPage = () => {
 
       {/* Students Table */}
       <Fade in={true} timeout={1200}>
-        <Card>
-          <div style={{ overflowX: 'auto', width: '100%' }}>
-            <Table
+        <Box>
+          {loading ? (
+            <Card sx={{ p: 6, textAlign: 'center' }}>
+              <Typography>Đang tải dữ liệu...</Typography>
+            </Card>
+          ) : (
+            <DataTable
               columns={columns}
-              dataSource={students}
-              loading={loading}
-              rowKey={(record) => `${record.studentId}-${record.sectionId}`}
-              pagination={{
-                current: pagination.current,
-                pageSize: pagination.pageSize,
-                total: pagination.total,
-                showSizeChanger: true,
-                showTotal: (total) => `Tổng số ${total} sinh viên`,
-                onChange: (page, pageSize) => {
-                  setPagination((prev) => ({
-                    ...prev,
-                    current: page,
-                    pageSize,
-                  }));
-                },
+              rows={students}
+              page={pagination.current - 1}
+              rowsPerPage={pagination.pageSize}
+              totalCount={pagination.total}
+              onPageChange={(_, newPage) => {
+                setPagination((prev) => ({
+                  ...prev,
+                  current: newPage + 1,
+                }));
               }}
-              scroll={{ x: 'max-content' }}
-              // ensure rows render below header/controls
-              onRow={(record) => ({
-                style: { position: 'relative', zIndex: 1 },
-              })}
-              style={{ borderCollapse: 'separate' }}
-              size="middle"
+              onRowsPerPageChange={(e) => {
+                setPagination((prev) => ({
+                  ...prev,
+                  pageSize: parseInt(e.target.value, 10),
+                  current: 1,
+                }));
+              }}
+              emptyState={
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h6" color="text.secondary">
+                    Không tìm thấy sinh viên
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Vui lòng thử lại với bộ lọc khác
+                  </Typography>
+                </Box>
+              }
             />
-          </div>
-        </Card>
+          )}
+        </Box>
       </Fade>
 
       {/* Student Detail Dialog */}

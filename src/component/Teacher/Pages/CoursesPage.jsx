@@ -15,14 +15,11 @@ import {
   TableRow,
   Paper,
   TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   IconButton,
   Tooltip,
   InputAdornment,
 } from '@mui/material';
+import SearchableAutocomplete from '../../Common/SearchableAutocomplete';
 import {
   School,
   People,
@@ -88,7 +85,7 @@ const CoursesPage = () => {
     try {
       const response = await sectionService.getSectionsByLecturer({
         pageNumber: 1,
-        pageSize: 100, // Get all sections
+        pageSize: 999, // Get all sections to show all semesters
       });
       const sectionsData = response?.items || [];
       setCourses(sectionsData);
@@ -175,9 +172,16 @@ const CoursesPage = () => {
     return statusMap[status] || 'Không xác định';
   };
 
-  const semesters = [...new Set(courses.map((c) => c.semesterName))].filter(
-    Boolean
-  );
+  // Generate semesters from 2019-2025, each year has 3 semesters (HK1, HK2, HK3)
+  const semesters = useMemo(() => {
+    const semesterList = [];
+    for (let year = 2019; year <= 2025; year++) {
+      semesterList.push(`HK1 (${year}-${year + 1})`);
+      semesterList.push(`HK2 (${year}-${year + 1})`);
+      semesterList.push(`HK3 (${year}-${year + 1})`);
+    }
+    return semesterList;
+  }, []);
 
   const getStatusChip = (status) => {
     const statusConfig = {
@@ -371,37 +375,63 @@ const CoursesPage = () => {
               />
             </Grid>
             <Grid item xs={12} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Trạng thái</InputLabel>
-                <Select
-                  value={statusFilter}
-                  label="Trạng thái"
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <MenuItem value="all">Tất cả trạng thái</MenuItem>
-                  <MenuItem value="0">Chưa bắt đầu</MenuItem>
-                  <MenuItem value="1">Đang diễn ra</MenuItem>
-                  <MenuItem value="2">Đã kết thúc</MenuItem>
-                  <MenuItem value="3">Đã hủy</MenuItem>
-                </Select>
-              </FormControl>
+              <SearchableAutocomplete
+                options={[
+                  { value: 'all', label: 'Tất cả trạng thái' },
+                  { value: '0', label: 'Chưa bắt đầu' },
+                  { value: '1', label: 'Đang diễn ra' },
+                  { value: '2', label: 'Đã kết thúc' },
+                  { value: '3', label: 'Đã hủy' },
+                ]}
+                value={
+                  statusFilter
+                    ? {
+                        value: statusFilter,
+                        label: {
+                          all: 'Tất cả trạng thái',
+                          '0': 'Chưa bắt đầu',
+                          '1': 'Đang diễn ra',
+                          '2': 'Đã kết thúc',
+                          '3': 'Đã hủy',
+                        }[statusFilter],
+                      }
+                    : null
+                }
+                onChange={(newValue) => {
+                  setStatusFilter(newValue?.value || 'all');
+                }}
+                getOptionLabel={(option) => option.label}
+                isOptionEqualToValue={(option, value) => option.value === value?.value}
+                label="Trạng thái"
+                placeholder="Chọn trạng thái..."
+                size="small"
+                showSearchIcon={false}
+              />
             </Grid>
             <Grid item xs={12} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Học kỳ</InputLabel>
-                <Select
-                  value={semesterFilter}
-                  label="Học kỳ"
-                  onChange={(e) => setSemesterFilter(e.target.value)}
-                >
-                  <MenuItem value="all">Tất cả học kỳ</MenuItem>
-                  {semesters.map((semester) => (
-                    <MenuItem key={semester} value={semester}>
-                      {semester}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <SearchableAutocomplete
+                options={[
+                  { value: 'all', label: 'Tất cả học kỳ' },
+                  ...semesters.map((semester) => ({
+                    value: semester,
+                    label: semester,
+                  })),
+                ]}
+                value={
+                  semesterFilter === 'all'
+                    ? { value: 'all', label: 'Tất cả học kỳ' }
+                    : { value: semesterFilter, label: semesterFilter }
+                }
+                onChange={(newValue) => {
+                  setSemesterFilter(newValue?.value || 'all');
+                }}
+                getOptionLabel={(option) => option.label}
+                isOptionEqualToValue={(option, value) => option.value === value?.value}
+                label="Học kỳ"
+                placeholder="Chọn học kỳ..."
+                size="small"
+                showSearchIcon={false}
+              />
             </Grid>
             <Grid item xs={12} md={2}>
               <Button
