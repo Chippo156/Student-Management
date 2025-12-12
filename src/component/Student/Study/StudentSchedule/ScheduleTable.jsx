@@ -23,12 +23,28 @@ const ScheduleTable = ({
       }
 
       .schedule-table .ant-table-cell-fix-left {
-        z-index: 2 !important;
-        background: inherit !important;
+        z-index: 100 !important;
+        background: ${theme.palette.background.paper} !important;
+        position: sticky !important;
+        left: 0 !important;
       }
 
       .schedule-table .ant-table-thead .ant-table-cell-fix-left {
-        z-index: 3 !important;
+        z-index: 101 !important;
+        background: ${
+          theme.palette.mode === 'dark'
+            ? theme.palette.background.paper
+            : theme.palette.background.secondary
+        } !important;
+        position: sticky !important;
+        left: 0 !important;
+      }
+
+      .schedule-table .ant-table-tbody .ant-table-cell-fix-left {
+        z-index: 100 !important;
+        background: ${theme.palette.background.paper} !important;
+        position: sticky !important;
+        left: 0 !important;
       }
 
       /* Mobile responsive */
@@ -203,8 +219,15 @@ const ScheduleTable = ({
             border-color: ${theme.palette.divider} !important;
             color: ${theme.palette.text.primary} !important;
           }
-          .schedule-table .ant-table-row:hover > td {
+          .schedule-table .ant-table-row:hover > td:not(.ant-table-cell-fix-left) {
             background: ${theme.palette.action.hover} !important;
+          }
+          .schedule-table .ant-table-row:hover > td.ant-table-cell-fix-left {
+            background: ${
+              theme.palette.mode === 'dark'
+                ? theme.palette.background.paper
+                : theme.palette.background.secondary
+            } !important;
           }
         `}
       </style>

@@ -25,6 +25,8 @@ import {
   DialogActions,
   Autocomplete,
   CircularProgress,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -51,6 +53,7 @@ const GradeEntry = () => {
   const [editScore, setEditScore] = useState('');
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+  const [gradeError, setGradeError] = useState('');
   const debouncedSearchInput = useDebounce(searchInput, 500);
 
   // Fetch students on mount
@@ -117,7 +120,7 @@ const GradeEntry = () => {
     const score = parseFloat(editScore);
 
     if (isNaN(score) || score < 0 || score > 10) {
-      alert('Điểm phải từ 0 đến 10');
+      setGradeError('Điểm phải từ 0 đến 10');
       return;
     }
     console.log('Student Data:', studentData);
@@ -505,6 +508,22 @@ const GradeEntry = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Grade Error Snackbar */}
+      <Snackbar
+        open={!!gradeError}
+        autoHideDuration={4000}
+        onClose={() => setGradeError('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setGradeError('')}
+          severity="error"
+          sx={{ width: '100%' }}
+        >
+          {gradeError}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

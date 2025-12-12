@@ -25,6 +25,30 @@ export const teacherService = {
     }
   },
 
+  // Cập nhật thông tin giảng viên (API mới)
+  updateLecturerInfo: async (data) => {
+    try {
+      const response = await axios.put('/api/Lecturer/UpdateLecturer', data);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || 'Update lecturer info failed'
+      );
+    }
+  },
+
+  // Đổi mật khẩu
+  resetPassword: async (passwordData) => {
+    try {
+      const response = await axios.put('/api/User/ResetPassword', passwordData);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || 'Reset password failed'
+      );
+    }
+  },
+
   // Lấy danh sách môn học của giảng viên
   getTeacherCourses: async (semester, academicYear) => {
     try {

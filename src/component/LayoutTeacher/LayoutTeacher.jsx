@@ -83,12 +83,12 @@ const menuData = [
   //   key: 'materials',
   //   path: '/teacher/materials',
   // },
-  // {
-  //   label: 'Cài đặt',
-  //   icon: <SettingsIcon />,
-  //   key: 'settings',
-  //   path: '/teacher/settings',
-  // },
+  {
+    label: 'Cài đặt',
+    icon: <SettingsIcon />,
+    key: 'settings',
+    path: '/teacher/settings',
+  },
 ];
 
 const LayoutTeacher = () => {

@@ -18,10 +18,12 @@ import sectionService from '../../../service/sectionService';
 import SearchableAutocomplete from '../../Common/SearchableAutocomplete';
 
 const statusOptions = [
-  { value: 1, label: 'Chưa bắt đầu' },
-  { value: 2, label: 'Đang diễn ra' },
-  { value: 3, label: 'Đã kết thúc' },
-  { value: 4, label: 'Đã hủy' },
+  { value: 0, label: 'Đang chuẩn bị' },
+  { value: 1, label: 'Đang mở' },
+  { value: 2, label: 'Đã đóng' },
+  { value: 3, label: 'Đã hủy' },
+  { value: 4, label: 'Đã hoàn thành' },
+  { value: 5, label: 'Đang học' },
 ];
 
 const SectionEditModal = ({ open, onCancel, onSave, section }) => {

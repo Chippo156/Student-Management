@@ -69,7 +69,14 @@ const TeacherScheduleToday = ({ lecturerId }) => {
         {todaySchedule.length > 0 ? (
           <>
             <List>
-              {todaySchedule.map((item, index) => (
+              {todaySchedule
+                .sort((a, b) => {
+                  // Sort by startTime in ascending order
+                  const timeA = a.startTime || '00:00:00';
+                  const timeB = b.startTime || '00:00:00';
+                  return timeA.localeCompare(timeB);
+                })
+                .map((item, index) => (
                 <ListItem
                   key={index}
                   sx={{
