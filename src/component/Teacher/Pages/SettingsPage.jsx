@@ -138,6 +138,15 @@ const SettingsPage = () => {
     permanentDistrictId: '',
     permanentWardId: '',
   });
+
+  // Loading states for address dropdowns
+  const [addressLoading, setAddressLoading] = useState({
+    hometownDistricts: false,
+    hometownWards: false,
+    permanentDistricts: false,
+    permanentWards: false,
+  });
+
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
     assignmentReminders: true,
@@ -323,10 +332,11 @@ const SettingsPage = () => {
       loadAddressData();
     };
 
-    if (user) {
+    // Only run when both user and provinces are ready
+    if (user && provinces.length > 0) {
       initData();
     }
-  }, [user]);
+  }, [user, provinces]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -342,6 +352,7 @@ const SettingsPage = () => {
     const selectedProvince = provinces.find((p) => p.id === selectedId);
     const provinceName = selectedProvince?.name || '';
 
+    // Update state immediately to prevent race conditions
     setSelectedIds((prev) => ({
       ...prev,
       hometownProvinceId: selectedId,
@@ -352,11 +363,24 @@ const SettingsPage = () => {
     handleProfileChange('hometownDistrict', '');
     handleProfileChange('hometownWard', '');
     setHometownWards([]);
+    setHometownDistricts([]);
+
     if (selectedId) {
-      const data = await externalBankService.getDistrictsByProvince(selectedId);
-      setHometownDistricts(data?.data || data || []);
-    } else {
-      setHometownDistricts([]);
+      setAddressLoading(prev => ({ ...prev, hometownDistricts: true }));
+      try {
+        const data = await externalBankService.getDistrictsByProvince(selectedId);
+        // Only update if this is still the current selection
+        setSelectedIds(current => {
+          if (current.hometownProvinceId === selectedId) {
+            setHometownDistricts(data?.data || data || []);
+          }
+          return current;
+        });
+      } catch (error) {
+        console.error('Error loading districts:', error);
+      } finally {
+        setAddressLoading(prev => ({ ...prev, hometownDistricts: false }));
+      }
     }
   };
 
@@ -372,11 +396,23 @@ const SettingsPage = () => {
     }));
     handleProfileChange('hometownDistrict', districtName);
     handleProfileChange('hometownWard', '');
+    setHometownWards([]);
+
     if (selectedId) {
-      const data = await externalBankService.getWardsByDistrict(selectedId);
-      setHometownWards(data?.data || data || []);
-    } else {
-      setHometownWards([]);
+      setAddressLoading(prev => ({ ...prev, hometownWards: true }));
+      try {
+        const data = await externalBankService.getWardsByDistrict(selectedId);
+        setSelectedIds(current => {
+          if (current.hometownDistrictId === selectedId) {
+            setHometownWards(data?.data || data || []);
+          }
+          return current;
+        });
+      } catch (error) {
+        console.error('Error loading wards:', error);
+      } finally {
+        setAddressLoading(prev => ({ ...prev, hometownWards: false }));
+      }
     }
   };
 
@@ -395,11 +431,23 @@ const SettingsPage = () => {
     handleProfileChange('permanentDistrict', '');
     handleProfileChange('permanentWard', '');
     setPermanentWards([]);
+    setPermanentDistricts([]);
+
     if (selectedId) {
-      const data = await externalBankService.getDistrictsByProvince(selectedId);
-      setPermanentDistricts(data?.data || data || []);
-    } else {
-      setPermanentDistricts([]);
+      setAddressLoading(prev => ({ ...prev, permanentDistricts: true }));
+      try {
+        const data = await externalBankService.getDistrictsByProvince(selectedId);
+        setSelectedIds(current => {
+          if (current.permanentProvinceId === selectedId) {
+            setPermanentDistricts(data?.data || data || []);
+          }
+          return current;
+        });
+      } catch (error) {
+        console.error('Error loading districts:', error);
+      } finally {
+        setAddressLoading(prev => ({ ...prev, permanentDistricts: false }));
+      }
     }
   };
 
@@ -417,11 +465,23 @@ const SettingsPage = () => {
     }));
     handleProfileChange('permanentDistrict', districtName);
     handleProfileChange('permanentWard', '');
+    setPermanentWards([]);
+
     if (selectedId) {
-      const data = await externalBankService.getWardsByDistrict(selectedId);
-      setPermanentWards(data?.data || data || []);
-    } else {
-      setPermanentWards([]);
+      setAddressLoading(prev => ({ ...prev, permanentWards: true }));
+      try {
+        const data = await externalBankService.getWardsByDistrict(selectedId);
+        setSelectedIds(current => {
+          if (current.permanentDistrictId === selectedId) {
+            setPermanentWards(data?.data || data || []);
+          }
+          return current;
+        });
+      } catch (error) {
+        console.error('Error loading wards:', error);
+      } finally {
+        setAddressLoading(prev => ({ ...prev, permanentWards: false }));
+      }
     }
   };
 
@@ -1051,7 +1111,7 @@ const SettingsPage = () => {
                     <Grid item xs={12} sm={4}>
                       <FormControl
                         fullWidth
-                        disabled={!selectedIds.hometownProvinceId}
+                        disabled={!selectedIds.hometownProvinceId || addressLoading.hometownDistricts}
                       >
                         <InputLabel>Quận/Huyện</InputLabel>
                         <Select
@@ -1060,7 +1120,7 @@ const SettingsPage = () => {
                           onChange={handleHometownDistrictChange}
                         >
                           <MenuItem value="">
-                            <em>Chọn quận/huyện</em>
+                            <em>{addressLoading.hometownDistricts ? 'Đang tải...' : 'Chọn quận/huyện'}</em>
                           </MenuItem>
                           {hometownDistricts.map((d) => (
                             <MenuItem key={d.id} value={d.id}>
@@ -1073,7 +1133,7 @@ const SettingsPage = () => {
                     <Grid item xs={12} sm={4}>
                       <FormControl
                         fullWidth
-                        disabled={!selectedIds.hometownDistrictId}
+                        disabled={!selectedIds.hometownDistrictId || addressLoading.hometownWards}
                       >
                         <InputLabel>Phường/Xã</InputLabel>
                         <Select
@@ -1082,7 +1142,7 @@ const SettingsPage = () => {
                           onChange={handleHometownWardChange}
                         >
                           <MenuItem value="">
-                            <em>Chọn phường/xã</em>
+                            <em>{addressLoading.hometownWards ? 'Đang tải...' : 'Chọn phường/xã'}</em>
                           </MenuItem>
                           {hometownWards.map((w) => (
                             <MenuItem key={w.id} value={w.id}>
@@ -1125,7 +1185,7 @@ const SettingsPage = () => {
                     <Grid item xs={12} sm={4}>
                       <FormControl
                         fullWidth
-                        disabled={!selectedIds.permanentProvinceId}
+                        disabled={!selectedIds.permanentProvinceId || addressLoading.permanentDistricts}
                       >
                         <InputLabel>Quận/Huyện</InputLabel>
                         <Select
@@ -1134,7 +1194,7 @@ const SettingsPage = () => {
                           onChange={handlePermanentDistrictChange}
                         >
                           <MenuItem value="">
-                            <em>Chọn quận/huyện</em>
+                            <em>{addressLoading.permanentDistricts ? 'Đang tải...' : 'Chọn quận/huyện'}</em>
                           </MenuItem>
                           {permanentDistricts.map((d) => (
                             <MenuItem key={d.id} value={d.id}>
@@ -1147,7 +1207,7 @@ const SettingsPage = () => {
                     <Grid item xs={12} sm={4}>
                       <FormControl
                         fullWidth
-                        disabled={!selectedIds.permanentDistrictId}
+                        disabled={!selectedIds.permanentDistrictId || addressLoading.permanentWards}
                       >
                         <InputLabel>Phường/Xã</InputLabel>
                         <Select
@@ -1156,7 +1216,7 @@ const SettingsPage = () => {
                           onChange={handlePermanentWardChange}
                         >
                           <MenuItem value="">
-                            <em>Chọn phường/xã</em>
+                            <em>{addressLoading.permanentWards ? 'Đang tải...' : 'Chọn phường/xã'}</em>
                           </MenuItem>
                           {permanentWards.map((w) => (
                             <MenuItem key={w.id} value={w.id}>

@@ -168,6 +168,19 @@ const GradesPage = () => {
         const gradesResponse =
           await gradeService.getAllStudentGradesBySection(selectedSection);
 
+        // Debug: Log raw response to check for duplicates from backend
+        if (gradesResponse?.studentGrades) {
+          const studentIds = gradesResponse.studentGrades.map(s => s.studentId);
+          const uniqueIds = [...new Set(studentIds)];
+          if (studentIds.length !== uniqueIds.length) {
+            console.error('⚠️ BACKEND BUG: API trả về duplicate students!');
+            console.error('Tổng số students từ API:', studentIds.length);
+            console.error('Số students unique:', uniqueIds.length);
+            console.error('Số students bị duplicate:', studentIds.length - uniqueIds.length);
+            console.error('API endpoint:', `/api/Grade/GetAllStudentGradesBySection/${selectedSection}`);
+          }
+        }
+
         if (!gradesResponse || !gradesResponse.studentGrades) {
           setStudents([]);
           setAssessmentHeaders([]);
@@ -213,7 +226,22 @@ const GradesPage = () => {
           }
         );
 
-        setStudents(studentsWithGrades);
+        // Remove duplicates based on studentId
+        const uniqueStudents = studentsWithGrades.reduce((acc, current) => {
+          const exists = acc.find(item => item.studentId === current.studentId);
+          if (!exists) {
+            acc.push(current);
+          } else {
+            console.warn('Duplicate student found:', current.studentId, current.fullName);
+          }
+          return acc;
+        }, []);
+
+        if (uniqueStudents.length !== studentsWithGrades.length) {
+          console.warn(`Removed ${studentsWithGrades.length - uniqueStudents.length} duplicate students`);
+        }
+
+        setStudents(uniqueStudents);
       } catch (error) {
         console.error('Error fetching data:', error);
         setSnackbar({
@@ -326,7 +354,16 @@ const GradesPage = () => {
           }
         );
 
-        setStudents(studentsWithGrades);
+        // Remove duplicates based on studentId
+        const uniqueStudents = studentsWithGrades.reduce((acc, current) => {
+          const exists = acc.find(item => item.studentId === current.studentId);
+          if (!exists) {
+            acc.push(current);
+          }
+          return acc;
+        }, []);
+
+        setStudents(uniqueStudents);
         setAssessmentHeaders(gradesResponse.assessmentHeaders || []);
       }
     } else {
@@ -889,8 +926,8 @@ const GradesPage = () => {
           key: 'thuongky_lt_group',
           align: 'center',
           children: ltAssessments.map((assessment, index) => ({
-            title: `${index + 1}`,
-            key: `lt_${assessment.assessmentId}`,
+            title: `LT ${index + 1}`,
+            key: `lt_${assessment.assessmentId}_${index}`,
             width: 100,
             align: 'center',
             render: (_, record) =>
@@ -905,8 +942,8 @@ const GradesPage = () => {
           key: 'thuongky_th_group',
           align: 'center',
           children: thAssessments.map((assessment, index) => ({
-            title: `${index + 1}`,
-            key: `th_${assessment.assessmentId}`,
+            title: `TH ${index + 1}`,
+            key: `th_${assessment.assessmentId}_${index}`,
             width: 100,
             align: 'center',
             render: (_, record) =>
@@ -1320,16 +1357,7 @@ const GradesPage = () => {
               dataSource={students}
               loading={loading || loadingGrades}
               rowKey="studentId"
-              pagination={{
-                pageSize: 20,
-                showSizeChanger: true,
-                pageSizeOptions: ['10', '20', '50', '100'],
-                showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} của ${total} sinh viên`,
-                locale: {
-                  items_per_page: '/ trang',
-                },
-              }}
+              pagination={false}
               scroll={{ x: 'max-content' }}
               size="middle"
             />
