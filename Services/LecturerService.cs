@@ -275,28 +275,66 @@ namespace StudentManagement.Services
 
                 // Cập nhật thông tin User
                 var user = lecturer.User;
+                //user.FullName = request.FullName;
+                //user.Gender = request.Gender;
+                //user.DateOfBirth = request.DateOfBirth;
+                //user.Ethnicity = request.Ethnicity;
+                //user.Nationality = request.Nationality;
+                //user.CitizenIdCard = request.CitizenIdCard;
+                //user.IssuedDate = request.IssuedDate;
+                //user.IssuedPlace = request.IssuedPlace;
+                //user.HealthInsuranceNumber = request.HealthInsuranceNumber;
+                //user.HealthInsuranceRegistrationPlace = request.HealthInsuranceRegistrationPlace;
+                //user.Email = request.Email;
+                //user.Phone = request.Phone;
+                //user.Address = request.Address;
+                //user.TemporaryAddress = request.TemporaryAddress;
+                //user.PlaceOfBirth = request.PlaceOfBirth;
+                //user.Religion = request.Religion;
+                //user.Object = request.Object;
+                //user.PolicyArea = request.PolicyArea;
+                //user.DateOfJoinUnion = request.DateOfJoinUnion;
+                //user.DateOfJoinParty = request.DateOfJoinParty;
+
                 user.FullName = request.FullName;
+                user.Email = request.Email;
+                user.Phone = request.Phone;
                 user.Gender = request.Gender;
-                user.DateOfBirth = request.DateOfBirth;
+                    user.Address = request.Address;
+
+                user.BirthProvince = request.BirthProvince;
+                user.BirthWard = request.BirthWard;
+                user.BirthDistrict = request.BirthDistrict;
+
+                user.BirthCertProvince = request.BirthCertProvince;
+                user.BirthCertDistrict = request.BirthCertDistrict;
+                user.BirthCertWard = request.BirthCertWard;
+
+                user.HometownProvince = request.HometownProvince;
+                user.HometownDistrict = request.HometownDistrict;
+                user.HometownWard = request.HometownWard;
+
+                user.PermanentProvince = request.PermanentProvince;
+                user.PermanentDistrict = request.PermanentDistrict;
+                user.PermanentWard = request.PermanentWard;
+
+                user.TemporaryAddress = request.TemporaryAddress;
                 user.Ethnicity = request.Ethnicity;
                 user.Nationality = request.Nationality;
+                user.HealthInsuranceNumber = request.HealthInsuranceNumber;
+                user.HealthInsuranceRegistrationPlace = request.RegisteredHospital;
+
+                user.Religion = request.Religion;
+                user.DateOfBirth = request.DateOfBirth;
                 user.CitizenIdCard = request.CitizenIdCard;
                 user.IssuedDate = request.IssuedDate;
                 user.IssuedPlace = request.IssuedPlace;
-                user.HealthInsuranceNumber = request.HealthInsuranceNumber;
-                user.HealthInsuranceRegistrationPlace = request.HealthInsuranceRegistrationPlace;
-                user.Email = request.Email;
-                user.Phone = request.Phone;
-                user.Address = request.Address;
-                user.TemporaryAddress = request.TemporaryAddress;
-                user.PlaceOfBirth = request.PlaceOfBirth;
-                user.Religion = request.Religion;
                 user.Object = request.Object;
                 user.PolicyArea = request.PolicyArea;
                 user.DateOfJoinUnion = request.DateOfJoinUnion;
                 user.DateOfJoinParty = request.DateOfJoinParty;
 
-               
+
                 // Kiểm tra trùng lặp email và phone với người dùng khác
                 if (!string.IsNullOrEmpty(request.Email))
                 {
