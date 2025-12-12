@@ -578,7 +578,96 @@ const GradesPage = () => {
           }
         }
 
-        // Validate canEdit trước khi cập nhật
+        // Validate prerequisites: Check nếu import GK thì phải có đủ LT, TH
+        // Check nếu import CK thì phải có đủ LT, TH, GK
+        for (let i = 0; i < validDataRows.length; i++) {
+          const row = validDataRows[i];
+          const studentCode = row[1]?.toString().trim();
+          const student = students.find((s) => s.studentCode === studentCode);
+          if (!student) continue;
+
+          // Build map of grades being imported for this student
+          const importedGrades = new Map();
+          for (const colInfo of columnMapping) {
+            const value = row[colInfo.col];
+            if (value !== undefined && value !== '' && value !== null) {
+              importedGrades.set(colInfo.assessmentId, parseFloat(value));
+            }
+          }
+
+          // Check each imported grade for prerequisites
+          for (const colInfo of columnMapping) {
+            const value = row[colInfo.col];
+            if (value === undefined || value === '' || value === null) continue;
+
+            const assessment = assessmentHeaders.find(a => a.assessmentId === colInfo.assessmentId);
+            if (!assessment) continue;
+
+            const assessmentTypeId = assessment.assessmentTypeId;
+
+            // Giữa kỳ: cần đủ LT và TH
+            if (assessmentTypeId === 3) {
+              const allLTFilled = ltAssessments.every(ltAss => {
+                const existingGrade = student.assessmentGrades?.find(g => g.assessmentId === ltAss.assessmentId);
+                const hasExisting = existingGrade?.score !== null && existingGrade?.score !== undefined;
+                const hasImported = importedGrades.has(ltAss.assessmentId);
+                return hasExisting || hasImported;
+              });
+
+              const allTHFilled = thAssessments.every(thAss => {
+                const existingGrade = student.assessmentGrades?.find(g => g.assessmentId === thAss.assessmentId);
+                const hasExisting = existingGrade?.score !== null && existingGrade?.score !== undefined;
+                const hasImported = importedGrades.has(thAss.assessmentId);
+                return hasExisting || hasImported;
+              });
+
+              if (!allLTFilled || !allTHFilled) {
+                setSnackbar({
+                  open: true,
+                  message: `Lỗi tại dòng ${i + 13} (${studentCode}): Không thể import điểm Giữa kỳ vì chưa có đủ điểm Lý thuyết và Thực hành`,
+                  severity: 'error',
+                });
+                return;
+              }
+            }
+
+            // Cuối kỳ: cần đủ LT, TH và GK
+            if (assessmentTypeId === 4) {
+              const allLTFilled = ltAssessments.every(ltAss => {
+                const existingGrade = student.assessmentGrades?.find(g => g.assessmentId === ltAss.assessmentId);
+                const hasExisting = existingGrade?.score !== null && existingGrade?.score !== undefined;
+                const hasImported = importedGrades.has(ltAss.assessmentId);
+                return hasExisting || hasImported;
+              });
+
+              const allTHFilled = thAssessments.every(thAss => {
+                const existingGrade = student.assessmentGrades?.find(g => g.assessmentId === thAss.assessmentId);
+                const hasExisting = existingGrade?.score !== null && existingGrade?.score !== undefined;
+                const hasImported = importedGrades.has(thAss.assessmentId);
+                return hasExisting || hasImported;
+              });
+
+              let hasGKScore = true;
+              if (giuaKyAssessment) {
+                const existingGK = student.assessmentGrades?.find(g => g.assessmentId === giuaKyAssessment.assessmentId);
+                const hasExistingGK = existingGK?.score !== null && existingGK?.score !== undefined;
+                const hasImportedGK = importedGrades.has(giuaKyAssessment.assessmentId);
+                hasGKScore = hasExistingGK || hasImportedGK;
+              }
+
+              if (!allLTFilled || !allTHFilled || !hasGKScore) {
+                setSnackbar({
+                  open: true,
+                  message: `Lỗi tại dòng ${i + 13} (${studentCode}): Không thể import điểm Cuối kỳ vì chưa có đủ điểm Lý thuyết, Thực hành và Giữa kỳ`,
+                  severity: 'error',
+                });
+                return;
+              }
+            }
+          }
+        }
+
+        // Track locked cells for warning (không chặn import, chỉ cảnh báo)
         const lockedCells = [];
         for (const row of validDataRows) {
           const studentCode = row[1]?.toString().trim();
@@ -604,24 +693,9 @@ const GradesPage = () => {
           }
         }
 
-        if (lockedCells.length > 0) {
-          const errorDetails = lockedCells
-            .slice(0, 3)
-            .map((cell) => `${cell.studentCode} - ${cell.assessmentName}`)
-            .join(', ');
-          const remaining =
-            lockedCells.length > 3 ? ` và ${lockedCells.length - 3} ô khác` : '';
-
-          setSnackbar({
-            open: true,
-            message: `⚠️ Không thể import! Phát hiện ${lockedCells.length} ô điểm đã bị khóa (${errorDetails}${remaining}). Các ô này đã được xác nhận hoặc quá hạn chỉnh sửa. Vui lòng xóa các điểm này khỏi file Excel trước khi import.`,
-            severity: 'error',
-          });
-          return;
-        }
-
         const newEditedGrades = new Map(editedGrades);
         let importedGradeCount = 0;
+        let skippedGradeCount = 0;
 
         validDataRows.forEach((row) => {
           const studentCode = row[1]?.toString().trim();
@@ -637,6 +711,13 @@ const GradesPage = () => {
               const existingGrade = studentGradeData.find(
                 (g) => g.assessmentId === assessmentId
               );
+
+              // Skip nếu canEdit = false (điểm đã bị khóa)
+              if (!existingGrade?.canEdit) {
+                skippedGradeCount++;
+                continue;
+              }
+
               const newScore = parseFloat(value);
               const currentScore = existingGrade?.score;
 
@@ -660,10 +741,17 @@ const GradesPage = () => {
 
         setEditedGrades(newEditedGrades);
 
+        // Hiển thị message với thông tin về số điểm bị skip
+        let message = `Import thành công ${importedGradeCount} điểm từ file Excel.`;
+        if (skippedGradeCount > 0) {
+          message += ` Đã bỏ qua ${skippedGradeCount} điểm không thể chỉnh sửa (đã khóa hoặc quá hạn).`;
+        }
+        message += ' Vui lòng nhấn "Lưu Điểm" để lưu vào hệ thống.';
+
         setSnackbar({
           open: true,
-          message: `Import thành công ${importedGradeCount} điểm từ file Excel. Vui lòng nhấn "Lưu Điểm" để lưu vào hệ thống.`,
-          severity: 'success',
+          message: message,
+          severity: skippedGradeCount > 0 ? 'warning' : 'success',
         });
       } catch (error) {
         console.error('Error importing Excel:', error);
@@ -714,6 +802,78 @@ const GradesPage = () => {
     return count;
   }, [students]);
 
+  // Helper function to check if prerequisites are met for entering grades
+  const checkPrerequisites = (record, assessmentId) => {
+    const assessment = assessmentHeaders.find(a => a.assessmentId === assessmentId);
+    if (!assessment) return { canEnter: true, reason: '' };
+
+    const assessmentTypeId = assessment.assessmentTypeId;
+
+    // Lấy tất cả assessments theo loại
+    const ltAssessments = assessmentHeaders.filter(a => a.assessmentTypeId === 1);
+    const thAssessments = assessmentHeaders.filter(a => a.assessmentTypeId === 2);
+    const giuaKyAssessment = assessmentHeaders.find(a => a.assessmentTypeId === 3);
+
+    // Nếu là Giữa kỳ (typeId = 3): cần có đủ điểm LT và TH (nếu có)
+    if (assessmentTypeId === 3) {
+      // Chỉ check nếu có assessments LT hoặc TH
+      const allLTScores = ltAssessments.length === 0 || ltAssessments.every(ltAss => {
+        const grade = record.assessmentGrades?.find(g => g.assessmentId === ltAss.assessmentId);
+        const editedScore = editedGrades.get(ltAss.assessmentId)?.get(record.studentId)?.score;
+        return (editedScore !== undefined && editedScore !== '') ||
+               (grade?.score !== null && grade?.score !== undefined);
+      });
+
+      const allTHScores = thAssessments.length === 0 || thAssessments.every(thAss => {
+        const grade = record.assessmentGrades?.find(g => g.assessmentId === thAss.assessmentId);
+        const editedScore = editedGrades.get(thAss.assessmentId)?.get(record.studentId)?.score;
+        return (editedScore !== undefined && editedScore !== '') ||
+               (grade?.score !== null && grade?.score !== undefined);
+      });
+
+      if (!allLTScores || !allTHScores) {
+        return {
+          canEnter: false,
+          reason: 'Cần nhập đủ điểm Lý thuyết và Thực hành trước khi nhập điểm Giữa kỳ'
+        };
+      }
+    }
+
+    // Nếu là Cuối kỳ (typeId = 4): cần có đủ điểm LT, TH VÀ Giữa kỳ (nếu có)
+    if (assessmentTypeId === 4) {
+      const allLTScores = ltAssessments.length === 0 || ltAssessments.every(ltAss => {
+        const grade = record.assessmentGrades?.find(g => g.assessmentId === ltAss.assessmentId);
+        const editedScore = editedGrades.get(ltAss.assessmentId)?.get(record.studentId)?.score;
+        return (editedScore !== undefined && editedScore !== '') ||
+               (grade?.score !== null && grade?.score !== undefined);
+      });
+
+      const allTHScores = thAssessments.length === 0 || thAssessments.every(thAss => {
+        const grade = record.assessmentGrades?.find(g => g.assessmentId === thAss.assessmentId);
+        const editedScore = editedGrades.get(thAss.assessmentId)?.get(record.studentId)?.score;
+        return (editedScore !== undefined && editedScore !== '') ||
+               (grade?.score !== null && grade?.score !== undefined);
+      });
+
+      let hasGiuaKyScore = true;
+      if (giuaKyAssessment) {
+        const gkGrade = record.assessmentGrades?.find(g => g.assessmentId === giuaKyAssessment.assessmentId);
+        const gkEditedScore = editedGrades.get(giuaKyAssessment.assessmentId)?.get(record.studentId)?.score;
+        hasGiuaKyScore = (gkEditedScore !== undefined && gkEditedScore !== '') ||
+                        (gkGrade?.score !== null && gkGrade?.score !== undefined);
+      }
+
+      if (!allLTScores || !allTHScores || !hasGiuaKyScore) {
+        return {
+          canEnter: false,
+          reason: 'Cần nhập đủ điểm Lý thuyết, Thực hành và Giữa kỳ trước khi nhập điểm Cuối kỳ'
+        };
+      }
+    }
+
+    return { canEnter: true, reason: '' };
+  };
+
   const renderScoreCell = (record, assessmentId) => {
     const assessment = record.assessmentGrades?.find(
       (a) => a.assessmentId === assessmentId
@@ -727,8 +887,11 @@ const GradesPage = () => {
     const displayValue = editedValue !== undefined ? editedValue : currentScore;
     const hasChanged = editedValue !== undefined && editedValue !== '';
 
+    // Check prerequisites first
+    const prerequisiteCheck = checkPrerequisites(record, assessmentId);
+
     if (!assessment?.canEdit) {
-      // Không cho phép chỉnh sửa - Hiển thị với icon khóa và tooltip
+      // Không cho phép chỉnh sửa - Hiển thị với icon khóa (màu xám)
       return (
         <Tooltip
           title="Ô điểm này đã bị khóa. Không thể chỉnh sửa vì điểm đã được xác nhận hoặc đã quá hạn nhập điểm."
@@ -759,6 +922,50 @@ const GradesPage = () => {
             }}
           >
             <Lock sx={{ fontSize: 14, color: '#8b95a1' }} />
+            <span>
+              {displayValue !== null &&
+              displayValue !== undefined &&
+              displayValue !== ''
+                ? displayValue
+                : '-'}
+            </span>
+          </Box>
+        </Tooltip>
+      );
+    }
+
+    // Kiểm tra điều kiện tiên quyết - chưa đủ điều kiện (màu xám nhẹ minimalist)
+    if (!prerequisiteCheck.canEnter) {
+      return (
+        <Tooltip
+          title={prerequisiteCheck.reason}
+          arrow
+          placement="top"
+        >
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
+              fontWeight: 600,
+              color: '#64748b',
+              background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+              borderRadius: '8px',
+              padding: '6px 12px',
+              minWidth: 60,
+              justifyContent: 'center',
+              fontSize: '14px',
+              border: '1.5px dashed #cbd5e1',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+              cursor: 'not-allowed',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            <Warning sx={{ fontSize: 14, color: '#94a3b8' }} />
             <span>
               {displayValue !== null &&
               displayValue !== undefined &&
