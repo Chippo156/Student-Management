@@ -69,6 +69,7 @@ const sectionService = {
   getSectionsByLecturer: async (params = {}) => {
     try {
       const {
+        search = '',
         sectionCode = '',
         courseName = '',
         lecturerName = '',
@@ -84,6 +85,7 @@ const sectionService = {
 
       const response = await axios.get('/api/Section/GetSectionsByLecturer', {
         params: {
+          Search: search,
           SectionCode: sectionCode,
           CourseName: courseName,
           LecturerName: lecturerName,

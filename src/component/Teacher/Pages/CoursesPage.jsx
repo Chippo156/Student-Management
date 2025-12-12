@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -66,68 +66,77 @@ const CoursesPage = () => {
   const [semesterFilter, setSemesterFilter] = useState('all');
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [semesters, setSemesters] = useState([]);
 
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
 
+  // Fetch semesters on mount
   useEffect(() => {
-    fetchCourses();
-  }, [lecturerId]);
+    const fetchSemesters = async () => {
+      try {
+        const response = await sectionService.getSemesterDropdown();
+        if (response) {
+          setSemesters(response);
+        }
+      } catch (error) {
+        console.error('Error fetching semesters:', error);
+      }
+    };
+    fetchSemesters();
+  }, []);
 
+  // Debounce search và fetch courses
   useEffect(() => {
-    applyFilters();
-  }, [courses, searchText, statusFilter, semesterFilter]);
+    const timeoutId = setTimeout(() => {
+      if (lecturerId) {
+        fetchCourses();
+      }
+    }, 500); // Debounce 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [lecturerId, searchText, semesterFilter, statusFilter]);
 
   const fetchCourses = async () => {
     if (!lecturerId) return;
 
     setLoading(true);
     try {
-      const response = await sectionService.getSectionsByLecturer({
+      const params = {
         pageNumber: 1,
-        pageSize: 999, // Get all sections to show all semesters
-      });
+        pageSize: 999,
+      };
+
+      // Thêm Search parameter nếu có
+      if (searchText) {
+        params.search = searchText;
+      }
+
+      // Thêm SemesterId parameter nếu có (phải là number, không phải string)
+      if (semesterFilter !== 'all') {
+        const semesterId = typeof semesterFilter === 'number' ? semesterFilter : parseInt(semesterFilter);
+        if (!isNaN(semesterId)) {
+          params.semesterId = semesterId;
+        }
+      }
+
+      const response = await sectionService.getSectionsByLecturer(params);
       const sectionsData = response?.items || [];
       setCourses(sectionsData);
+
+      // Apply local status filter ngay sau khi fetch
+      let filtered = [...sectionsData];
+      if (statusFilter !== 'all') {
+        filtered = filtered.filter(
+          (section) => section.status === parseInt(statusFilter)
+        );
+      }
+      setFilteredCourses(filtered);
     } catch (error) {
       console.error('Error fetching courses:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const applyFilters = () => {
-    let filtered = [...courses];
-
-    // Search filter
-    if (searchText) {
-      filtered = filtered.filter(
-        (section) =>
-          section.sectionCode
-            ?.toLowerCase()
-            .includes(searchText.toLowerCase()) ||
-          section.courseCode
-            ?.toLowerCase()
-            .includes(searchText.toLowerCase()) ||
-          section.courseName?.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
-
-    // Status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(
-        (section) => section.status === parseInt(statusFilter)
-      );
-    }
-
-    // Semester filter
-    if (semesterFilter !== 'all') {
-      filtered = filtered.filter(
-        (section) => section.semesterName === semesterFilter
-      );
-    }
-
-    setFilteredCourses(filtered);
   };
 
   const handleExportExcel = async () => {
@@ -172,17 +181,6 @@ const CoursesPage = () => {
     return statusMap[status] || 'Không xác định';
   };
 
-  // Generate semesters from 2019-2025, each year has 3 semesters (HK1, HK2, HK3)
-  const semesters = useMemo(() => {
-    const semesterList = [];
-    for (let year = 2019; year <= 2025; year++) {
-      semesterList.push(`HK1 (${year}-${year + 1})`);
-      semesterList.push(`HK2 (${year}-${year + 1})`);
-      semesterList.push(`HK3 (${year}-${year + 1})`);
-    }
-    return semesterList;
-  }, []);
-
   const getStatusChip = (status) => {
     const statusConfig = {
       0: { label: 'Chưa bắt đầu', color: 'default' },
@@ -222,7 +220,7 @@ const CoursesPage = () => {
         }}
       >
         <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text }}>
-          Môn học của tôi
+          Lớp học phần của tôi
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Tooltip title="Làm mới">
@@ -415,14 +413,16 @@ const CoursesPage = () => {
                 options={[
                   { value: 'all', label: 'Tất cả học kỳ' },
                   ...semesters.map((semester) => ({
-                    value: semester,
-                    label: semester,
+                    value: semester.id,
+                    label: semester.name,
                   })),
                 ]}
                 value={
                   semesterFilter === 'all'
                     ? { value: 'all', label: 'Tất cả học kỳ' }
-                    : { value: semesterFilter, label: semesterFilter }
+                    : semesters.find(s => s.id === semesterFilter)
+                      ? { value: semesterFilter, label: semesters.find(s => s.id === semesterFilter).name }
+                      : { value: 'all', label: 'Tất cả học kỳ' }
                 }
                 onChange={(newValue) => {
                   setSemesterFilter(newValue?.value || 'all');
