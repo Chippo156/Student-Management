@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CloudinaryDotNet;
+using Microsoft.EntityFrameworkCore;
 using StudentManagement.Data;
 using StudentManagement.Enum;
 using StudentManagement.Models;
@@ -603,41 +604,6 @@ namespace StudentManagement.Services
                 .Include(s => s.Class)
                 .AsQueryable();
 
-            // Apply filters
-            if (!string.IsNullOrWhiteSpace(searchRequest.SectionCode))
-            {
-                query = query.Where(s => s.SectionCode != null && s.SectionCode.Contains(searchRequest.SectionCode.Trim()));
-            }
-
-            if (!string.IsNullOrWhiteSpace(searchRequest.CourseName))
-            {
-                query = query.Where(s => s.CurriculumCourse.Course.CourseName.Contains(searchRequest.CourseName.Trim()));
-            }
-
-            if (!string.IsNullOrWhiteSpace(searchRequest.LecturerName))
-            {
-                query = query.Where(s => s.Lecturer != null && s.Lecturer.User.FullName.Contains(searchRequest.LecturerName.Trim()));
-            }
-
-            if (searchRequest.SemesterId.HasValue)
-            {
-                query = query.Where(s => s.Semester.SemesterId == searchRequest.SemesterId.Value);
-            }
-
-            if (searchRequest.DepartmentId.HasValue)
-            {
-                query = query.Where(s => s.CurriculumCourse.Program.Department.DepartmentId == searchRequest.DepartmentId.Value);
-            }
-
-            if (searchRequest.CourseId.HasValue)
-            {
-                query = query.Where(s => s.CurriculumCourse.Course.CourseId == searchRequest.CourseId.Value);
-            }
-
-            if (searchRequest.Status.HasValue)
-            {
-                query = query.Where(s => s.Status == searchRequest.Status.Value);
-            }
 
             // Get total count
             var totalCount = await query.CountAsync();
@@ -845,25 +811,22 @@ namespace StudentManagement.Services
                 .Where(s => s.Lecturer != null && s.Lecturer.User.Username == lecturerCode)
                 .AsQueryable();
 
-            // Apply filters (same as before)
-            if (!string.IsNullOrWhiteSpace(searchRequest.SectionCode))
-                query = query.Where(s => s.SectionCode != null && s.SectionCode.Contains(searchRequest.SectionCode.Trim()));
-
-            if (!string.IsNullOrWhiteSpace(searchRequest.CourseName))
-                query = query.Where(s => s.CurriculumCourse.Course.CourseName.Contains(searchRequest.CourseName.Trim()));
-
-            if (!string.IsNullOrWhiteSpace(searchRequest.LecturerName))
-                query = query.Where(s => s.Lecturer != null && s.Lecturer.User.FullName.Contains(searchRequest.LecturerName.Trim()));
-
-            if (searchRequest.SemesterId.HasValue)
-                query = query.Where(s => s.Semester.SemesterId == searchRequest.SemesterId.Value);
-
-            if (searchRequest.Status.HasValue)
-                query = query.Where(s => s.Status == searchRequest.Status.Value);
-
-
             var totalCount = await query.CountAsync();
 
+            if (!string.IsNullOrWhiteSpace(searchRequest.Search))
+            {
+                var searchTerm = searchRequest.Search.Trim().ToLower();
+                query = query.Where(s =>
+                    (s.SectionCode != null && s.SectionCode.ToLower().Contains(searchTerm)) ||
+                    s.CurriculumCourse.Course.CourseName.ToLower().Contains(searchTerm) ||
+                    s.CurriculumCourse.Course.CourseCode.ToLower().Contains(searchTerm) ||
+                    (s.Lecturer != null && s.Lecturer.User.FullName.ToLower().Contains(searchTerm)));
+            }
+
+            if (searchRequest.SemesterId.HasValue)
+            {
+                query = query.Where(s => s.Semester.SemesterId == searchRequest.SemesterId.Value);
+            }
             // Apply sorting
             query = searchRequest.SortBy?.ToLower() switch
             {

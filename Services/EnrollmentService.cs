@@ -156,7 +156,6 @@ namespace StudentManagement.Services
                     };
                 }
 
-                // Validation checks
                 var validationResult = await ValidateEnrollmentAsync(student, section);
                 if (!validationResult.IsValid)
                 {
