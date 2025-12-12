@@ -4,6 +4,8 @@ import sectionService from '../../../../service/sectionService';
 import enrollmentService from '../../../../service/enrollmentService';
 import { semesterService } from '../../../../service/semesterService';
 import curriculumCourseService from '../../../../service/curriculumCourseService';
+import academicProgramService from '../../../../service/academicProgramService';
+import { userService } from '../../../../service/userService';
 import { FILTER_TYPE_MAP } from './constants';
 
 export const useRegistration = () => {
@@ -19,6 +21,62 @@ export const useRegistration = () => {
   const [enrolledSections, setEnrolledSections] = useState([]);
   const [practiceGroups, setPracticeGroups] = useState([]);
   const [selectedPracticeGroup, setSelectedPracticeGroup] = useState(null);
+  const [curriculumData, setCurriculumData] = useState(null);
+  const [currentSemesterNumber, setCurrentSemesterNumber] = useState(1);
+  const [yearOfAdmission, setYearOfAdmission] = useState(null);
+
+  // Load student info to get year of admission
+  useEffect(() => {
+    const fetchStudentInfo = async () => {
+      try {
+        const data = await userService.getUserInfo();
+        if (data && data.yearOfAdmission) {
+          setYearOfAdmission(data.yearOfAdmission);
+          console.log('👨‍🎓 Student year of admission:', data.yearOfAdmission);
+        }
+      } catch (error) {
+        console.error('Error fetching student info:', error);
+      }
+    };
+    fetchStudentInfo();
+  }, []);
+
+  // Load curriculum data
+  useEffect(() => {
+    const fetchCurriculum = async () => {
+      try {
+        const data = await academicProgramService.getMyProgramCurriculum();
+        if (data && data.semesterCourses) {
+          setCurriculumData(data);
+
+          // 🔍 LOG for debugging - Check curriculum data
+          console.log('=== CURRICULUM DATA DEBUG ===');
+          console.log('📚 Full curriculum data:', data);
+          console.log('📝 Semester courses:', data.semesterCourses);
+
+          // Log courses by semester with completion status
+          data.semesterCourses.forEach((sem) => {
+            console.log(`\n🎓 Học kỳ ${sem.semesterNumber} (${sem.semesterName}):`);
+            console.log(`   - Total credits: ${sem.totalCredits}`);
+            console.log(`   - Student completed: ${sem.studentCompletedCredits}/${sem.totalCredits} credits`);
+            console.log(`   - Courses:`);
+            sem.courses.forEach((course) => {
+              const status = course.studentProgress?.isCompleted ? '✅ Completed' : '❌ Not completed';
+              const required = course.isRequired ? '(Bắt buộc)' : '(Tự chọn)';
+              console.log(`      ${course.courseCode} - ${course.courseName} ${required}: ${status}`);
+              if (course.studentProgress) {
+                console.log(`         Score: ${course.studentProgress.finalScore} | Grade: ${course.studentProgress.gradeLetter}`);
+              }
+            });
+          });
+          console.log('\n=== END CURRICULUM DEBUG ===\n');
+        }
+      } catch (error) {
+        console.error('Error fetching curriculum:', error);
+      }
+    };
+    fetchCurriculum();
+  }, []);
 
   // Load semesters
   useEffect(() => {
@@ -31,9 +89,22 @@ export const useRegistration = () => {
           const mapped = res.map((s) => ({
             label: `${s.term} (${s.year})`,
             value: s.semesterId,
+            term: s.term, // Keep term for parsing
+            year: s.year,
           }));
           setSemesters(mapped);
           setSemester(mapped[0]?.value || null);
+
+          // Parse semester number from first semester - wait for yearOfAdmission
+          if (mapped[0] && yearOfAdmission) {
+            const parsedSemesterNumber = parseSemesterNumber(
+              mapped[0].term,
+              mapped[0].year,
+              yearOfAdmission
+            );
+            setCurrentSemesterNumber(parsedSemesterNumber);
+            console.log('📊 Initial semester selected:', mapped[0].term, mapped[0].year, '→ Semester number:', parsedSemesterNumber);
+          }
         }
       } catch {
         message.error('Không thể tải danh sách học kỳ!');
@@ -42,7 +113,43 @@ export const useRegistration = () => {
       }
     };
     fetchSemesters();
-  }, []);
+  }, [yearOfAdmission]);
+
+  // Update currentSemesterNumber when semester changes
+  useEffect(() => {
+    if (semester && semesters.length > 0 && yearOfAdmission) {
+      const selectedSemester = semesters.find(s => s.value === semester);
+      if (selectedSemester) {
+        const parsedSemesterNumber = parseSemesterNumber(
+          selectedSemester.term,
+          selectedSemester.year,
+          yearOfAdmission
+        );
+        setCurrentSemesterNumber(parsedSemesterNumber);
+        console.log('📊 Semester changed to:', selectedSemester.term, selectedSemester.year, '→ Semester number:', parsedSemesterNumber);
+      }
+    }
+  }, [semester, semesters, yearOfAdmission]);
+
+  // Helper function to calculate actual semester number in student's education journey
+  // Example: Student admitted 2023, registering for HK2 2025 → Semester 6
+  // Formula: (currentYear - yearOfAdmission) * 2 + (1 for HK1 or 2 for HK2)
+  const parseSemesterNumber = (term, year, admissionYear) => {
+    if (!term || !year || !admissionYear) return 1;
+
+    // Parse "HK1", "HK2", etc.
+    const match = term.match(/HK\s*(\d+)/i);
+    if (!match) return 1;
+
+    const semesterInYear = parseInt(match[1], 10); // 1 for HK1, 2 for HK2
+    const yearsPassed = year - admissionYear;
+    const calculatedSemester = yearsPassed * 2 + semesterInYear;
+
+    console.log(`🧮 Calculation: Year ${year} - Admission ${admissionYear} = ${yearsPassed} years`);
+    console.log(`   → ${yearsPassed} * 2 + ${semesterInYear} = Semester ${calculatedSemester}`);
+
+    return calculatedSemester;
+  };
 
   // Fetch courses
   const fetchCourses = useCallback(
@@ -231,5 +338,7 @@ export const useRegistration = () => {
     handleSectionSelect,
     handleEnroll,
     handleDropEnrollment,
+    curriculumData,
+    currentSemesterNumber,
   };
 };

@@ -19,7 +19,13 @@ import { tableRowClassName, parseModalSchedule } from './helpers';
 import ScheduleModal from './ScheduleModal';
 
 const EnrolledTable = forwardRef((props, ref) => {
-  const { theme, enrolledSections, handleDropEnrollment, loading } = props;
+  const {
+    theme,
+    enrolledSections,
+    handleDropEnrollment,
+    loading,
+    actionColumnRef,
+  } = props;
 
   const [showScheduleModal, setShowScheduleModal] = React.useState(false);
   const [modalSchedule, setModalSchedule] = React.useState([]);
@@ -30,7 +36,7 @@ const EnrolledTable = forwardRef((props, ref) => {
       dataIndex: 'action',
       align: 'center',
       width: 90,
-      render: (_, record) => (
+      render: (_, record, index) => (
         <Dropdown
           trigger={['click']}
           overlay={
@@ -59,7 +65,11 @@ const EnrolledTable = forwardRef((props, ref) => {
             </Menu>
           }
         >
-          <Button icon={<UnorderedListOutlined />} size="small">
+          <Button
+            ref={index === 0 ? actionColumnRef : null}
+            icon={<UnorderedListOutlined />}
+            size="small"
+          >
             Thao tác
           </Button>
         </Dropdown>

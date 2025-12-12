@@ -16,6 +16,8 @@ const ScheduleDetail = forwardRef((props, ref) => {
     selectedPracticeGroup,
     setSelectedPracticeGroup,
     handleEnroll,
+    enrollButtonRef,
+    practiceGroupSelectRef,
   } = props;
   if (!selectedSection) return null;
 
@@ -81,19 +83,21 @@ const ScheduleDetail = forwardRef((props, ref) => {
       }}
       extra={
         practiceGroups.length > 0 && (
-          <Select
-            style={{ minWidth: 220 }}
-            value={selectedPracticeGroup}
-            onChange={setSelectedPracticeGroup}
-            placeholder="Chọn nhóm thực hành"
-            suffixIcon={<DownOutlined />}
-            options={practiceGroups.map((g) => ({
-              value: g.practiceGroupId,
-              label: `${g.groupName} (${g.currentCount}/${g.maxCapacity})`,
-              disabled: !g.isAvailable,
-            }))}
-            allowClear
-          />
+          <div ref={practiceGroupSelectRef}>
+            <Select
+              style={{ minWidth: 220 }}
+              value={selectedPracticeGroup}
+              onChange={setSelectedPracticeGroup}
+              placeholder="Chọn nhóm thực hành"
+              suffixIcon={<DownOutlined />}
+              options={practiceGroups.map((g) => ({
+                value: g.practiceGroupId,
+                label: `${g.groupName} (${g.currentCount}/${g.maxCapacity})`,
+                disabled: !g.isAvailable,
+              }))}
+              allowClear
+            />
+          </div>
         )
       }
     >
@@ -110,6 +114,7 @@ const ScheduleDetail = forwardRef((props, ref) => {
       />
       <div style={{ textAlign: 'right', marginTop: 16 }}>
         <Button
+          ref={enrollButtonRef}
           type="primary"
           icon={<CheckSquareOutlined />}
           onClick={handleEnroll}

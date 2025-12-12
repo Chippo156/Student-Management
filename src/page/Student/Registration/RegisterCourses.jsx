@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Card, Typography, Tour, Button } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { Box } from '@mui/material';
@@ -25,10 +25,17 @@ const RegisterCourses = () => {
 
   // Refs for tour targets
   const semesterFilterRef = useRef(null);
+  const semesterSelectRef = useRef(null);
+  const registerTypeRef = useRef(null);
   const coursesTableRef = useRef(null);
+  const suggestedCourseBadgeRef = useRef(null);
+  const prerequisiteColumnRef = useRef(null);
   const sectionsTableRef = useRef(null);
   const scheduleDetailRef = useRef(null);
+  const practiceGroupSelectRef = useRef(null);
+  const enrollButtonRef = useRef(null);
   const enrolledTableRef = useRef(null);
+  const actionColumnRef = useRef(null);
 
   const {
     semesters,
@@ -50,6 +57,8 @@ const RegisterCourses = () => {
     handleSectionSelect,
     handleEnroll,
     handleDropEnrollment,
+    curriculumData,
+    currentSemesterNumber,
   } = useRegistration();
 
   // Theo dõi khi nào data đã load xong
@@ -69,16 +78,24 @@ const RegisterCourses = () => {
       if (!isDataLoaded) return false;
 
       switch (componentType) {
-        case 'semesterFilter':
+        case 'semesterSelect':
+        case 'registerType':
           return semesters.length > 0; // Luôn hiển thị khi có data
         case 'coursesTable':
+          return courses.length > 0; // Hiển thị khi có môn học
+        case 'suggestedCourseBadge':
+        case 'prerequisiteColumn':
           return courses.length > 0; // Hiển thị khi có môn học
         case 'sectionsTable':
           return selectedCourse !== null && sections.length > 0; // Hiển thị khi đã chọn môn học
         case 'scheduleDetail':
+        case 'practiceGroupSelect':
+        case 'enrollButton':
           return selectedSection !== null; // Hiển thị khi đã chọn lớp học phần
         case 'enrolledTable':
           return true; // Luôn hiển thị vì component luôn được mount
+        case 'actionColumn':
+          return enrolledSections.length > 0; // Chỉ hiển thị khi có môn đã đăng ký
         default:
           return false;
       }
@@ -114,44 +131,160 @@ const RegisterCourses = () => {
       return element;
     };
   };
-  // Tạo các steps động nhưng chỉ update khi cần thiết
-  const allSteps = [
+  // Helper to check if there are any suggested courses
+  const hasSuggestedCourses = useCallback(() => {
+    if (!curriculumData || !curriculumData.semesterCourses || courses.length === 0) {
+      console.log('🔍 hasSuggestedCourses: No data available', {
+        hasCurriculum: !!curriculumData,
+        coursesCount: courses.length,
+        currentSemesterNumber
+      });
+      return false;
+    }
+
+    const suggestedCourses = [];
+    courses.forEach(course => {
+      for (const semesterData of curriculumData.semesterCourses) {
+        const foundCourse = semesterData.courses.find(c => c.courseCode === course.courseCode);
+        if (foundCourse &&
+            foundCourse.isRequired &&
+            foundCourse.semesterSuggested === currentSemesterNumber &&
+            !foundCourse.studentProgress?.isCompleted) {
+          suggestedCourses.push({
+            code: course.courseCode,
+            name: course.courseName,
+            semesterSuggested: foundCourse.semesterSuggested,
+            completed: foundCourse.studentProgress?.isCompleted
+          });
+        }
+      }
+    });
+
+    console.log(`🎯 Suggested courses for HK${currentSemesterNumber}:`, suggestedCourses);
+    console.log(`   Total courses: ${courses.length} | Suggested: ${suggestedCourses.length}`);
+
+    return suggestedCourses.length > 0;
+  }, [curriculumData, courses, currentSemesterNumber]);
+
+  // Helper to check if there are any courses with prerequisites
+  const hasCoursesWithPrerequisites = useCallback(() => {
+    const hasPrereqs = courses.some(course => course.prerequisites && course.prerequisites.length > 0);
+    console.log('🔍 hasCoursesWithPrerequisites:', hasPrereqs);
+    return hasPrereqs;
+  }, [courses]);
+
+  // Tạo các steps động - sử dụng useMemo để regenerate khi dependencies thay đổi
+  const allSteps = useMemo(() => {
+    console.log('🔄 Regenerating Tour steps...', {
+      currentSemesterNumber,
+      coursesCount: courses.length,
+      hasCurriculum: !!curriculumData
+    });
+
+    const baseSteps = [
     {
-      title: '1️⃣ Chọn học kỳ',
+      title: '1️⃣ Chọn Đợt đăng ký',
       description:
-        'Đầu tiên, hãy chọn học kỳ và loại đăng ký (Đăng ký mới hoặc Đăng ký bổ sung) để xem danh sách môn học có thể đăng ký.',
-      target: getTargetElement(semesterFilterRef, 'semesterFilter'),
+        'Click dropdown để chọn học kỳ (VD: HK1 (2026), HK2 (2026)...).\n\n💡 Hệ thống sẽ tự động gợi ý các môn bắt buộc của học kỳ đó!',
+      target: getTargetElement(semesterSelectRef, 'semesterSelect'),
       placement: 'bottom',
     },
     {
-      title: '2️⃣ Chọn môn học',
+      title: '2️⃣ Chọn Loại đăng ký',
       description:
-        'Click vào môn học bạn muốn đăng ký. Hệ thống sẽ hiển thị danh sách các lớp học phần của môn đó.',
+        'Chọn 1 trong 3 loại:\n\n🔘 HỌC MỚI - Học lần đầu\n🔘 HỌC LẠI - Điểm F, cần học lại\n🔘 HỌC CẢI THIỆN - Đã qua môn, muốn cải thiện điểm',
+      target: getTargetElement(registerTypeRef, 'registerType'),
+      placement: 'bottom',
+    },
+    {
+      title: '3️⃣ Bảng môn học',
+      description:
+        'Danh sách môn học có thể đăng ký.\n\n📌 Chú ý:\n• ✅/❌ = Bắt buộc/Tự chọn\n• Học phần tiên quyết = Môn phải học trước\n• Ghi chú màu đỏ = Điều kiện đặc biệt',
       target: getTargetElement(coursesTableRef, 'coursesTable'),
       placement: 'top',
     },
-    {
-      title: '3️⃣ Chọn lớp học phần',
+  ];
+
+  // Conditionally add step 3a if there are suggested courses
+  if (hasSuggestedCourses()) {
+    baseSteps.push({
+      title: '3a. Môn ĐỀ XUẤT ⭐',
       description:
-        'Chọn lớp học phần phù hợp. Bạn có thể bật "Chỉ hiển thị lớp không trùng lịch" để lọc các lớp không bị xung đột với lịch hiện tại.',
+        '⭐ Các môn có nhãn "★ Đề xuất HK' + currentSemesterNumber + '" và viền trái xanh lá:\n\n• Là môn BẮT BUỘC của HK' + currentSemesterNumber + '\n• Bạn CHƯA hoàn thành\n• NÊN ƯU TIÊN đăng ký trước!',
+      target: getTargetElement(suggestedCourseBadgeRef, 'suggestedCourseBadge'),
+      placement: 'bottom',
+    });
+  }
+
+  // Conditionally add step 3b if there are courses with prerequisites
+  if (hasCoursesWithPrerequisites()) {
+    baseSteps.push({
+      title: '3b. Học phần TIÊN QUYẾT',
+      description:
+        '📋 Cột "Học phần tiên quyết" hiển thị môn phải ĐẠT trước.\n\n⚠️ Nếu cột TRỐNG → Đăng ký tự do\n⚠️ Nếu có môn → PHẢI đạt TẤT CẢ mới được đăng ký',
+      target: getTargetElement(prerequisiteColumnRef, 'prerequisiteColumn'),
+      placement: 'bottom',
+    });
+  }
+
+  // Add step 3c (always show)
+  baseSteps.push({
+      title: '3c. Chọn môn học',
+      description:
+        '🎯 Click vào dòng để chọn môn:\n\n1. Ưu tiên môn có "★ Đề xuất"\n2. Kiểm tra tiên quyết\n3. Click radio hoặc dòng → Nền vàng = đã chọn',
+      target: getTargetElement(coursesTableRef, 'coursesTable'),
+      placement: 'top',
+    });
+
+  // Add remaining steps
+  baseSteps.push(
+    {
+      title: '4️⃣ Danh sách Lớp học phần',
+      description:
+        'Sau khi chọn môn → Bảng lớp học phần hiện ra.\n\n📋 Xem:\n• Mã lớp, Giảng viên, Sĩ số\n• Trạng thái: ✅ Còn chỗ | ❌ Đầy | ⚠️ Trùng lịch\n\n👉 Click dòng để xem lịch chi tiết',
       target: getTargetElement(sectionsTableRef, 'sectionsTable'),
       placement: 'top',
     },
     {
-      title: '4️⃣ Xem lịch học và đăng ký',
+      title: '5️⃣ Chi tiết Lịch học',
       description:
-        'Kiểm tra lịch học chi tiết của lớp. Nếu môn có thực hành, hãy chọn nhóm thực hành. Sau đó click nút "Đăng ký" để hoàn tất.',
+        'Xem lịch học chi tiết:\n\n🔵 Nền XANH = Lý thuyết\n🟡 Nền VÀNG = Thực hành\n\n⚠️ Kiểm tra không trùng lịch!',
       target: getTargetElement(scheduleDetailRef, 'scheduleDetail'),
       placement: 'top',
     },
     {
-      title: '5️⃣ Quản lý môn đã đăng ký',
+      title: '6️⃣ Chọn Nhóm thực hành',
       description:
-        'Xem danh sách các môn đã đăng ký thành công. Bạn có thể hủy đăng ký nếu cần thiết trong thời gian cho phép.',
+        '⚠️ Nếu có thực hành → BẮT BUỘC chọn nhóm!\n\nClick dropdown góc phải → Chọn nhóm còn chỗ và phù hợp lịch.\n\n⚠️ Không chọn → Nút đăng ký bị vô hiệu hóa!',
+      target: getTargetElement(practiceGroupSelectRef, 'practiceGroupSelect'),
+      placement: 'bottom',
+    },
+    {
+      title: '7️⃣ Hoàn tất Đăng ký',
+      description:
+        '✅ Sau khi:\n• Xem kỹ lịch học\n• Chọn nhóm TH (nếu có)\n• Kiểm tra không trùng lịch\n\n👉 Click nút "Đăng ký môn học" xanh',
+      target: getTargetElement(enrollButtonRef, 'enrollButton'),
+      placement: 'top',
+    },
+    {
+      title: '8️⃣ Môn đã đăng ký',
+      description:
+        'Xem danh sách tất cả môn đã đăng ký thành công.\n\n📌 Bao gồm:\n• Mã lớp, Tên môn, Tín chỉ\n• Nhóm TH, Học phí, Hạn nộp\n• Trạng thái đăng ký',
       target: getTargetElement(enrolledTableRef, 'enrolledTable'),
       placement: 'top',
     },
-  ];
+    {
+      title: '9️⃣ Xem chi tiết / Hủy đăng ký',
+      description:
+        'Click nút "Thao tác" 📋 để:\n\n• 📋 Xem chi tiết lịch học\n• 🗑️ Hủy đăng ký (màu đỏ)\n\n⚠️ Chỉ được hủy trong thời gian quy định!',
+      target: getTargetElement(actionColumnRef, 'actionColumn'),
+      placement: 'right',
+    }
+  );
+
+    // Return the final steps array
+    return baseSteps;
+  }, [curriculumData, courses, currentSemesterNumber, hasSuggestedCourses, hasCoursesWithPrerequisites, getTargetElement, semesterSelectRef, registerTypeRef, coursesTableRef, suggestedCourseBadgeRef, prerequisiteColumnRef, sectionsTableRef, scheduleDetailRef, practiceGroupSelectRef, enrollButtonRef, enrolledTableRef, actionColumnRef]);
 
   return (
     <Box
@@ -346,6 +479,8 @@ const RegisterCourses = () => {
 
         <SemesterFilter
           ref={semesterFilterRef}
+          semesterSelectRef={semesterSelectRef}
+          registerTypeRef={registerTypeRef}
           theme={theme}
           semesters={semesters}
           semester={semester}
@@ -361,6 +496,10 @@ const RegisterCourses = () => {
           selectedCourse={selectedCourse}
           handleCourseSelect={handleCourseSelect}
           loading={loading}
+          currentSemesterNumber={currentSemesterNumber}
+          curriculumData={curriculumData}
+          suggestedCourseBadgeRef={suggestedCourseBadgeRef}
+          prerequisiteColumnRef={prerequisiteColumnRef}
         />
 
         <SectionsTable
@@ -377,6 +516,8 @@ const RegisterCourses = () => {
 
         <ScheduleDetail
           ref={scheduleDetailRef}
+          enrollButtonRef={enrollButtonRef}
+          practiceGroupSelectRef={practiceGroupSelectRef}
           theme={theme}
           selectedSection={selectedSection}
           schedule={schedule}
@@ -388,6 +529,7 @@ const RegisterCourses = () => {
 
         <EnrolledTable
           ref={enrolledTableRef}
+          actionColumnRef={actionColumnRef}
           theme={theme}
           enrolledSections={enrolledSections}
           handleDropEnrollment={handleDropEnrollment}

@@ -4,7 +4,48 @@ import { CheckSquareOutlined, DeleteOutlined } from '@ant-design/icons';
 import { tableRowClassName } from './helpers';
 
 const CoursesTable = forwardRef(
-  ({ theme, courses, selectedCourse, handleCourseSelect, loading }, ref) => {
+  (
+    {
+      theme,
+      courses,
+      selectedCourse,
+      handleCourseSelect,
+      loading,
+      currentSemesterNumber,
+      curriculumData,
+      suggestedCourseBadgeRef,
+      prerequisiteColumnRef,
+    },
+    ref
+  ) => {
+    // Helper function to check if course is recommended for selected semester
+    const isSuggestedCourse = (course) => {
+      if (!curriculumData || !curriculumData.semesterCourses) return false;
+
+      // Find the course in curriculum data
+      for (const semesterData of curriculumData.semesterCourses) {
+        const foundCourse = semesterData.courses.find(
+          (c) => c.courseCode === course.courseCode
+        );
+
+        if (foundCourse) {
+          // ONLY highlight required courses of the SELECTED semester that are not completed
+          return (
+            foundCourse.isRequired &&
+            foundCourse.semesterSuggested === currentSemesterNumber &&
+            !foundCourse.studentProgress?.isCompleted
+          );
+        }
+      }
+
+      return false;
+    };
+
+    // Find index of first suggested course for ref targeting
+    const firstSuggestedIndex = courses.findIndex((course) =>
+      isSuggestedCourse(course)
+    );
+
     const courseColumns = [
       {
         title: 'STT',
@@ -14,7 +55,44 @@ const CoursesTable = forwardRef(
         render: (_, __, i) => i + 1,
       },
       { title: 'Mã HP', dataIndex: 'courseCode', align: 'center', width: 110 },
-      { title: 'Tên môn học', dataIndex: 'courseName', width: 250 },
+      {
+        title: 'Tên môn học',
+        dataIndex: 'courseName',
+        width: 250,
+        render: (text, record, index) => {
+          const isSuggested = isSuggestedCourse(record);
+          return (
+            <span
+              style={{
+                fontWeight: isSuggested ? 600 : 400,
+                color: isSuggested
+                  ? theme.palette.primary.main
+                  : theme.palette.text.primary,
+              }}
+            >
+              {text}
+              {isSuggested && (
+                <span
+                  ref={index === 0 ? suggestedCourseBadgeRef : null}
+                  style={{
+                    marginLeft: 8,
+                    fontSize: 11,
+                    color: theme.palette.success.main,
+                    fontWeight: 600,
+                    backgroundColor: theme.palette.mode === 'dark'
+                      ? 'rgba(76, 175, 80, 0.15)'
+                      : 'rgba(76, 175, 80, 0.1)',
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                  }}
+                >
+                  ★ Đề xuất HK{currentSemesterNumber}
+                </span>
+              )}
+            </span>
+          );
+        },
+      },
       { title: 'TC', dataIndex: 'totalCredits', align: 'center', width: 60 },
       {
         title: 'Bắt buộc',
@@ -33,7 +111,9 @@ const CoursesTable = forwardRef(
           ),
       },
       {
-        title: 'Học phần tiên quyết',
+        title: (
+          <span ref={prerequisiteColumnRef}>Học phần tiên quyết</span>
+        ),
         dataIndex: 'prerequisites',
         width: 200,
         render: (arr) =>
@@ -84,6 +164,9 @@ const CoursesTable = forwardRef(
             rowClassName={(r, i) =>
               tableRowClassName(r, i, selectedCourse, null)
             }
+            onRow={(record, index) => ({
+              ref: index === firstSuggestedIndex ? suggestedCourseBadgeRef : undefined,
+            })}
             locale={{ emptyText: 'Không có môn học' }}
             scroll={{ x: 'max-content' }}
             size="middle"
