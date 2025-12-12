@@ -19,13 +19,8 @@ const AvatarUpload = ({
   const dispatch = useDispatch();
   const account = useSelector((state) => state.user.account);
 
-  console.log('AvatarUpload - currentAvatarUrl prop:', currentAvatarUrl);
-  console.log('AvatarUpload - avatarUrl state:', avatarUrl);
-  console.log('AvatarUpload - account from Redux:', account);
-
   // Update avatarUrl when currentAvatarUrl prop changes (e.g., after reload when user info loads)
   useEffect(() => {
-    console.log('AvatarUpload - useEffect triggered, updating avatarUrl to:', currentAvatarUrl);
     setAvatarUrl(currentAvatarUrl);
   }, [currentAvatarUrl]);
 
@@ -144,7 +139,6 @@ const AvatarUpload = ({
     handleUpload(file);
     onSuccess('ok');
   };
-  console.log(avatarUrl);
   return (
     <Box sx={{ position: 'relative', display: 'inline-block' }}>
       <Spin spinning={loading}>

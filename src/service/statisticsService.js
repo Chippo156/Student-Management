@@ -7,9 +7,7 @@ const statisticsService = {
    */
   getOverview: async () => {
     try {
-      console.log('🔍 Calling API: /api/v1/Statistics/overview');
       const response = await axios.get('/api/v1/Statistics/overview');
-      console.log('✅ Overview API response:', response);
 
       if (response?.success === false) {
         const errData = response?.data;
@@ -45,13 +43,9 @@ const statisticsService = {
    */
   getStudentStatus: async () => {
     try {
-      console.log(
-        '🔍 Calling API: /api/v1/Statistics/statistics/student-status'
-      );
       const response = await axios.get(
         '/api/v1/Statistics/statistics/student-status'
       );
-      console.log('✅ Student status API response:', response);
 
       if (response?.success === false) {
         const errData = response?.data;
@@ -93,13 +87,9 @@ const statisticsService = {
    */
   getYearlyGrowth: async (years = 7) => {
     try {
-      console.log(
-        `🔍 Calling API: /api/v1/Statistics/Yearly-growth?years=${years}`
-      );
       const response = await axios.get('/api/v1/Statistics/Yearly-growth', {
         params: { years },
       });
-      console.log('✅ Yearly growth API response:', response);
 
       if (response?.success === false) {
         const errData = response?.data;
@@ -137,9 +127,7 @@ const statisticsService = {
    */
   getGraduationYearly: async () => {
     try {
-      console.log('🔍 Calling API: /api/v1/Statistics/graduation-yearly');
       const response = await axios.get('/api/v1/Statistics/graduation-yearly');
-      console.log('✅ Graduation API response:', response);
 
       if (response?.success === false) {
         const errData = response?.data;
@@ -178,9 +166,7 @@ const statisticsService = {
    */
   getStudentsByYear: async () => {
     try {
-      console.log('🔍 Calling API: /api/v1/Statistics/students-by-year');
       const response = await axios.get('/api/v1/Statistics/students-by-year');
-      console.log('✅ Students by year API response:', response);
 
       if (response?.success === false) {
         const errData = response?.data;
@@ -222,11 +208,9 @@ const statisticsService = {
    */
   getStudentsByDepartment: async () => {
     try {
-      console.log('🔍 Calling API: /api/v1/Statistics/students-by-department');
       const response = await axios.get(
         '/api/v1/Statistics/students-by-department'
       );
-      console.log('✅ Students by department API response:', response);
 
       if (response?.success === false) {
         const errData = response?.data;

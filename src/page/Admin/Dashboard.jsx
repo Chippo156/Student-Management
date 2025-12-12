@@ -95,8 +95,6 @@ const AdminDashboard = () => {
   // Fetch tất cả dữ liệu
   const fetchAllData = async () => {
     try {
-      console.log('🔄 Fetching dashboard data...');
-
       const [
         overview,
         studentStatus,
@@ -114,14 +112,6 @@ const AdminDashboard = () => {
         statisticsService.getStudentsByYear(), // ✅ API mới 1
         statisticsService.getStudentsByDepartment(), // ✅ API mới 2
       ]);
-
-      console.log('📊 Overview data:', overview);
-      console.log('👥 Student status data:', studentStatus);
-      console.log('📈 Yearly growth data:', yearlyGrowth);
-      console.log('🎓 Graduation data:', graduation);
-      console.log('👤 User data:', userData);
-      console.log('📅 Students by year data:', byYear);
-      console.log('🏢 Students by department data:', byDepartment);
 
       setOverviewData(overview);
       setStudentStatusData(studentStatus);

@@ -12,7 +12,6 @@ const ScheduleTable = ({
   endOfWeek,
 }) => {
   const columns = getScheduleColumns(weekDays, today, theme, isDark);
-  console.log(isDark);
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `

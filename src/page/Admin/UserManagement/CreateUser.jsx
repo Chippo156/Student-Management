@@ -84,7 +84,6 @@ const CreateUser = () => {
           await departmentService.getDepartmentsDropdownByFaculty(
             selectedFaculty
           );
-        console.log(res);
 
         if (res && Array.isArray(res)) {
           setDepartments(res);

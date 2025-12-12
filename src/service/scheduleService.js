@@ -130,8 +130,6 @@ const scheduleService = {
         maxCapacity: null,
       };
 
-      console.log('📤 Creating theory/exam schedule with payload:', payload);
-
       const response = await axios.post(
         '/api/Schedule/CreateScheduleTheory',
         payload
@@ -185,8 +183,6 @@ const scheduleService = {
         lecturerId: scheduleData.lecturerId,
         maxCapacity: scheduleData.maxCapacity,
       };
-
-      console.log('📤 Updating schedule with payload:', payload);
 
       const response = await axios.put(`/api/Schedule/${scheduleId}`, payload);
 

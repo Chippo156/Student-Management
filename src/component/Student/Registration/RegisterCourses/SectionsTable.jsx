@@ -16,7 +16,6 @@ const SectionsTable = forwardRef((props, ref) => {
     showOnlyNonConflict,
     setShowOnlyNonConflict,
   } = props;
-  console.log(selectedCourse);
   // ✅ Luôn render Card (nhưng ẩn nếu chưa chọn môn)
   const displaySections = showOnlyNonConflict
     ? sections.filter((s) => !s.hasConflict)

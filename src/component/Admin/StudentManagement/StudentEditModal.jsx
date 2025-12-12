@@ -173,12 +173,6 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
         yearOfAdmission: student.yearOfAdmission,
         studentStatus: student.studentStatus,
       });
-
-      // ✅ Debug log để kiểm tra
-      console.log('🔍 Student data:', student);
-      console.log('🔍 Faculty ID:', facultyId);
-      console.log('🔍 Department ID:', departmentId);
-      console.log('🔍 Class ID:', student.class?.classId);
     }
   }, [student, open, form]);
 
@@ -232,8 +226,6 @@ const StudentEditModal = ({ open, onCancel, onSave, student, loading }) => {
         // ✅ Lecturer-specific data (null cho sinh viên)
         lecturerSpecificData: null,
       };
-
-      console.log('📤 Updating student with payload:', payload);
 
       const result = await userService.updateUserWithRole(
         student.user?.userId,

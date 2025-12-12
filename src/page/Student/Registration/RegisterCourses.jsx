@@ -101,14 +101,6 @@ const RegisterCourses = () => {
       const element = ref.current;
       const isVisible = isComponentVisible(componentType);
 
-      console.log(`getTargetElement for ${componentType}:`, {
-        element,
-        isVisible,
-        isScrolling,
-        'element.getBoundingClientRect()': element?.getBoundingClientRect(),
-        'window.scrollY': window.scrollY,
-      });
-
       // Nếu đang scroll, trả về null để Tour không hiển thị
       if (isScrolling) {
         return null;
@@ -303,7 +295,8 @@ const RegisterCourses = () => {
               : '0 2px 12px rgba(0,0,0,0.08)',
         }}
         bodyStyle={{
-          padding: window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 24 : 32
+          padding:
+            window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 24 : 32,
         }}
       >
         <Box
@@ -411,32 +404,22 @@ const RegisterCourses = () => {
         steps={allSteps}
         current={currentStep}
         onChange={(current) => {
-          console.log(`Tour onChange: step ${current}`);
           setCurrentStep(current); // Cập nhật current step ngay lập tức
 
           const step = allSteps[current];
           const target = step?.target?.();
 
           if (!target) {
-            console.log('No target found for step', current);
             return;
           }
 
           const beforeRect = target.getBoundingClientRect();
           const beforeAbsoluteY = beforeRect.top + window.scrollY;
 
-          console.log(`Step ${current + 1} - BEFORE scroll:`, {
-            'window.scrollY': window.scrollY,
-            'target.top (viewport)': beforeRect.top,
-            'target absolute Y': beforeAbsoluteY,
-            'target.height': beforeRect.height,
-          });
-
           // Scroll nếu target không ở trong khoảng 80-150px từ đầu viewport
           const idealTop = 100; // Vị trí lý tưởng
 
           if (beforeRect.top < 80 || beforeRect.top > 150) {
-            console.log('Scrolling to adjust target position');
             // Ẩn Tour trong khi scroll
             setIsScrolling(true);
 
@@ -453,14 +436,6 @@ const RegisterCourses = () => {
               setTimeout(() => {
                 const afterRect = target.getBoundingClientRect();
                 const afterAbsoluteY = afterRect.top + window.scrollY;
-
-                console.log(`Step ${current + 1} - AFTER scroll:`, {
-                  'window.scrollY': window.scrollY,
-                  'target.top (viewport)': afterRect.top,
-                  'target absolute Y': afterAbsoluteY,
-                  'chênh lệch viewport top': afterRect.top - beforeRect.top,
-                  'chênh lệch absolute Y': afterAbsoluteY - beforeAbsoluteY,
-                });
 
                 setIsScrolling(false);
               }, 800);

@@ -260,7 +260,6 @@ const SectionDetailModal = ({ open, onCancel, section }) => {
     };
 
     const statColor = getStatColor();
-    console.log(activeTab);
     return (
       <Box
         sx={{

@@ -123,9 +123,6 @@ const GradeEntry = () => {
       setGradeError('Điểm phải từ 0 đến 10');
       return;
     }
-    console.log('Student Data:', studentData);
-    console.log('Selected Student:', selectedStudent);
-    console.log('Assessment:', assessment);
 
     try {
       const gradeData = {
@@ -133,8 +130,6 @@ const GradeEntry = () => {
         assessmentId: assessment.assessmentId,
         score,
       };
-
-      console.log('Grade Data before update:', gradeData);
 
       const result = await gradeService.updateGrade(
         assessment.gradeId,

@@ -150,8 +150,6 @@ const CourseEditModal = ({ open, onCancel, onSave, course, loading }) => {
         prerequisites: values.prerequisites || [],
       };
 
-      console.log('📦 Update payload:', payload);
-
       const result =
         await curriculumCourseService.updateCurriculumCourse(payload);
       if (result) {

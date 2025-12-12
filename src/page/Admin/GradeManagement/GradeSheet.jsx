@@ -130,7 +130,6 @@ const GradeSheet = () => {
     }
 
     const result = await exportStudentGradesExcel(studentData);
-    console.log('sdasda', result);
     if (result.success) {
       message.success('Xuất file Excel thành công');
     } else {

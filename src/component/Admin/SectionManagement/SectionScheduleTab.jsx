@@ -84,10 +84,6 @@ const SectionScheduleTab = ({ sectionId, section }) => {
       section.departmentId !== null &&
       section.departmentId !== undefined
     ) {
-      console.log(
-        'Initial fetch of lecturers for section department:',
-        section.departmentId
-      );
       fetchLecturers(section.departmentId);
     }
   }, [section]);
@@ -109,11 +105,8 @@ const SectionScheduleTab = ({ sectionId, section }) => {
 
   const fetchLecturers = async (departmentId) => {
     try {
-      console.log('Calling API with departmentId:', departmentId);
       const response =
         await lecturerService.getLecturersByDepartment(departmentId);
-      console.log('API response:', response);
-      console.log('Lecturers data:', response?.data);
       if (response && response.data) {
         setLecturers(response.data);
       }
@@ -219,7 +212,6 @@ const SectionScheduleTab = ({ sectionId, section }) => {
         lecturerId: schedule.lecturerId || null,
       };
 
-      console.log('Setting formData:', newFormData);
       setEditingSchedule(schedule);
       setFormData(newFormData);
 
@@ -258,10 +250,6 @@ const SectionScheduleTab = ({ sectionId, section }) => {
         section.departmentId !== null &&
         section.departmentId !== undefined
       ) {
-        console.log(
-          'Fetching lecturers for new schedule, departmentId:',
-          section.departmentId
-        );
         fetchLecturers(section.departmentId);
       }
     }

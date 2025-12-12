@@ -150,7 +150,6 @@ const HeaderPage = () => {
   const handleMobileMenuOpen = (event) => setMobileMenuEl(event.currentTarget);
   const handleMobileMenuClose = () => setMobileMenuEl(null);
 
-  console.log(account);
   const isAdmin = localStorage.getItem('role') == 1;
   return (
     <>
@@ -321,11 +320,16 @@ const HeaderPage = () => {
                           borderColor: 'divider',
                         }}
                       >
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                      {account?.user?.fullName || account?.user?.username || account?.username}
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ fontWeight: 600 }}
+                        >
+                          {account?.user?.fullName ||
+                            account?.user?.username ||
+                            account?.username}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                      {account?.user?.email || account?.email}
+                          {account?.user?.email || account?.email}
                         </Typography>
                         <br />
                         <Typography variant="caption" color="primary">
@@ -444,7 +448,11 @@ const HeaderPage = () => {
                       color="primary"
                       onClick={() => dispatch(toggleMode())}
                     >
-                      {mode === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
+                      {mode === 'light' ? (
+                        <Brightness4Icon />
+                      ) : (
+                        <Brightness7Icon />
+                      )}
                     </IconButton>
                     <Typography
                       variant="body2"
@@ -509,7 +517,9 @@ const HeaderPage = () => {
                         lineHeight: 1.2,
                       }}
                     >
-                      {account?.user?.fullName || account?.user?.username|| account?.username}
+                      {account?.user?.fullName ||
+                        account?.user?.username ||
+                        account?.username}
                     </Typography>
                     <Typography
                       variant="caption"
@@ -545,7 +555,9 @@ const HeaderPage = () => {
                     }}
                   >
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                      {account?.user?.fullName || account?.user?.username || account?.username}
+                      {account?.user?.fullName ||
+                        account?.user?.username ||
+                        account?.username}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       {account?.user?.email || account?.email}

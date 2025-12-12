@@ -59,8 +59,6 @@ const practiceService = {
         lecturerId: practiceData.lecturerId,
       };
 
-      console.log('📤 Creating practice schedule with payload:', payload);
-
       const response = await axios.post(
         '/api/PracticeGroup/CreateSchedulePractice',
         payload

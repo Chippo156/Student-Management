@@ -193,7 +193,6 @@ const Sections = () => {
     try {
       const detailData = await sectionService.getSectionById(section.sectionId);
       if (detailData) {
-        console.log('aaa', detailData);
         setSelectedSection(detailData);
         setDetailModalOpen(true);
       }

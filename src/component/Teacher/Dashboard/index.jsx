@@ -152,9 +152,7 @@ const TeacherDashboard = () => {
           const scheduleCount =
             await scheduleService.countSchedulesOfLecturer();
           upcomingClasses = scheduleCount?.countScheduleOfWeek || 0;
-        } catch (error) {
-          console.log('Error fetching schedule count:', error);
-        }
+        } catch (error) {}
 
         setDashboardData({
           totalCourses: sections.length,

@@ -292,31 +292,19 @@ const AttendancePage = () => {
 
   // Click vào một phiên để load danh sách sinh viên và điểm danh
   const handleSelectSession = async (session) => {
-    console.log('=== SELECTING SESSION ===');
-    console.log('Session data:', session);
-    console.log('Session sectionId:', session.sectionId);
-    console.log('Session practiceGroupId:', session.practiceGroupId);
-
     setSelectedSession(session);
 
     // Auto-fill selectedCourse và classType từ session
     if (session.sectionId) {
-      console.log('Setting selectedCourse to:', session.sectionId);
       setSelectedCourse(session.sectionId);
     }
 
     // Map practiceGroupId to classType
     // nếu là null practiceGroupId thì là lý thuyết còn kia là thực hành
     if (session.practiceGroupId === null) {
-      console.log('Setting classType to: theory (practiceGroupId is null)');
       setClassType('theory');
       setSelectedPracticeGroupId(null);
     } else {
-      console.log(
-        'Setting classType to: practice (practiceGroupId:',
-        session.practiceGroupId,
-        ')'
-      );
       setClassType('practice');
       setSelectedPracticeGroupId(session.practiceGroupId);
     }
@@ -324,7 +312,6 @@ const AttendancePage = () => {
     // Set selectedDate từ session date nếu có
     if (session.sessionDate) {
       const sessionDate = dayjs(session.sessionDate);
-      console.log('Setting selectedDate to:', sessionDate.format('YYYY-MM-DD'));
       setSelectedDate(sessionDate);
     }
 
@@ -537,12 +524,6 @@ const AttendancePage = () => {
     }
   };
   const handleExportExcel = async () => {
-    console.log('=== EXPORT EXCEL CLICKED ===');
-    console.log('selectedCourse:', selectedCourse);
-    console.log('classType:', classType);
-    console.log('selectedDate:', selectedDate?.format('YYYY-MM-DD'));
-    console.log('practiceGroups:', practiceGroups);
-
     if (!selectedCourse) {
       setSnackbar({
         open: true,
@@ -566,8 +547,6 @@ const AttendancePage = () => {
         const practiceGroupId =
           selectedPracticeGroupId ||
           (practiceGroups.length > 0 ? practiceGroups[0].id : null);
-
-        console.log('Using practiceGroupId for export:', practiceGroupId);
 
         sectionData = await sectionService.getSectionPracticeDetail(
           selectedCourse,
@@ -1152,11 +1131,6 @@ const AttendancePage = () => {
                   )}
                   {(() => {
                     const isDisabled = loading || !selectedCourse || !classType;
-                    console.log('Excel button disabled?', isDisabled, {
-                      loading,
-                      selectedCourse,
-                      classType,
-                    });
                     return null;
                   })()}
                   <Button
