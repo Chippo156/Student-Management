@@ -54,10 +54,13 @@ const SchedulePage = () => {
         date,
         scheduleTypeId
       );
-      const startOfWeek = baseDate.startOf('week').add(1, 'day');
+      const startOfWeek = baseDate.startOf('week');
       const mapped = data.map((item) => {
         let eventDate = item.date;
         if (!eventDate) {
+          if (item.dayOfWeek == 0) {
+            item.dayOfWeek = 7;
+          }
           eventDate = startOfWeek
             .add(item.dayOfWeek - 1, 'day')
             .format('YYYY-MM-DD');
@@ -95,7 +98,7 @@ const SchedulePage = () => {
   const weekDays = useMemo(() => {
     const start = baseDate.startOf('week');
     const days = [];
-    for (let i = 0; i <= 6; i++) {
+    for (let i = 0; i < 7; i++) {
       days.push(start.add(i, 'day'));
     }
     return days;

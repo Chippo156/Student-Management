@@ -142,6 +142,7 @@ const GradesPage = () => {
                   assessmentType: assessmentInfo?.assessmentType || '',
                   assessmentTypeId: assessmentInfo?.assessmentTypeId || null,
                   weight: assessmentInfo?.weight || 0,
+                  canEdit: grade.canEdit ?? true,
                 };
               }) || [];
 
@@ -254,6 +255,7 @@ const GradesPage = () => {
                   assessmentType: assessmentInfo?.assessmentType || '',
                   assessmentTypeId: assessmentInfo?.assessmentTypeId || null,
                   weight: assessmentInfo?.weight || 0,
+                  canEdit: grade.canEdit ?? true,
                 };
               }) || [];
 
@@ -278,7 +280,12 @@ const GradesPage = () => {
     } else {
       setSnackbar({
         open: true,
-        message: `Lưu hoàn tất: ${successCount} thành công, ${failCount} thất bại`,
+        message:
+          'Lưu hoàn tất: ' +
+          successCount +
+          ' thành công, ' +
+          failCount +
+          ' thất bại',
         severity: 'warning',
       });
     }
@@ -482,6 +489,33 @@ const GradesPage = () => {
           }
         }
 
+        // Validate canEdit trước khi cập nhật
+        for (const row of validDataRows) {
+          const studentCode = row[1]?.toString().trim();
+          const student = students.find((s) => s.studentCode === studentCode);
+          if (!student) continue;
+
+          const studentGradeData = student.assessmentGrades || [];
+
+          for (const colInfo of columnMapping) {
+            const value = row[colInfo.col];
+            if (value !== undefined && value !== '' && value !== null) {
+              const assessmentId = colInfo.assessmentId;
+              const existingGrade = studentGradeData.find(
+                (g) => g.assessmentId === assessmentId
+              );
+              if (!existingGrade?.canEdit) {
+                setSnackbar({
+                  open: true,
+                  message: `Không thể cập nhật điểm cho ${colInfo.name} của sinh viên ${studentCode} vì ô này bị khóa. Vui lòng kiểm tra file Excel.`,
+                  severity: 'error',
+                });
+                return;
+              }
+            }
+          }
+        }
+
         const newEditedGrades = new Map(editedGrades);
         let importedGradeCount = 0;
 
@@ -575,6 +609,33 @@ const GradesPage = () => {
 
     const displayValue = editedValue !== undefined ? editedValue : currentScore;
     const hasChanged = editedValue !== undefined && editedValue !== '';
+
+    if (!assessment?.canEdit) {
+      // Không cho phép chỉnh sửa, chỉ hiển thị điểm với style nổi bật, sáng rõ, border rõ nét
+      return (
+        <span
+          style={{
+            fontWeight: 600,
+            color: '#495057',
+            background: '#f1f3f9',
+            borderRadius: 8,
+            padding: '5px 14px',
+            display: 'inline-block',
+            minWidth: 40,
+            textAlign: 'center',
+            fontSize: 15,
+            border: '1.5px solid #bfc5ce',
+            boxShadow: '0 1px 2px 0 rgba(0,0,0,0.03)',
+          }}
+        >
+          {displayValue !== null &&
+          displayValue !== undefined &&
+          displayValue !== ''
+            ? displayValue
+            : '-'}
+        </span>
+      );
+    }
 
     const handleScoreChange = (e) => {
       const value = e.target.value;

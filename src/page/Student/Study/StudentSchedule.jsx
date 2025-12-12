@@ -30,10 +30,13 @@ const StudentSchedule = () => {
   const fetchSchedule = async (date, scheduleTypeId = 0) => {
     try {
       const data = await scheduleService.getByDate(date, scheduleTypeId);
-      const startOfWeek = baseDate.startOf('week').add(1, 'day');
+      const startOfWeek = baseDate.startOf('week');
       const mapped = data.map((item) => {
         let eventDate = item.date;
         if (!eventDate) {
+          if (item.dayOfWeek == 0) {
+            item.dayOfWeek = 7;
+          }
           eventDate = startOfWeek
             .add(item.dayOfWeek - 1, 'day')
             .format('YYYY-MM-DD');
@@ -99,7 +102,7 @@ const StudentSchedule = () => {
   }, [scheduleItems]);
 
   const startOfWeek = baseDate.startOf('week').add(1, 'day');
-  const endOfWeek = startOfWeek.add(6, 'day');
+  const endOfWeek = startOfWeek.add(5, 'day');
 
   const weekScheduleItems = scheduleItems.filter((item) =>
     dayjs(item.date).isBetween(startOfWeek, endOfWeek, 'day', '[]')
