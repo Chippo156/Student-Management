@@ -292,7 +292,7 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
       </Grid>
 
       {/* Charts */}
-      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
         {/* Pie Chart */}
         <Grid item xs={12} md={6}>
           <Card>

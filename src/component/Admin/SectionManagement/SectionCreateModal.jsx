@@ -192,7 +192,7 @@ const SectionCreateModal = ({ open, onCancel, onSave }) => {
       </DialogTitle>
 
       <DialogContent dividers>
-        <Grid container className="equal-height-cards" spacing={3}>
+        <Grid container spacing={3}>
           {/* Môn học */}
           <Grid item xs={12}>
             <SearchableAutocomplete

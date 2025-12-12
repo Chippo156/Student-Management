@@ -273,7 +273,7 @@ const SelfCheckIn = () => {
               </CardContent>
             </Card>
           ) : (
-            <Grid container className="equal-height-cards" spacing={3}>
+            <Grid container spacing={3}>
               {sessions.map((session) => (
                 <Grid
                   item

@@ -236,7 +236,7 @@ const SendNotifications = () => {
         </Alert>
       )}
 
-      <Grid container className="equal-height-cards" spacing={3}>
+      <Grid container spacing={3}>
         {/* Form */}
         <Grid item xs={12} lg={8}>
           <Paper sx={{ p: { xs: 2, sm: 2, md: 3 } }}>
@@ -244,7 +244,7 @@ const SendNotifications = () => {
               Nội dung thông báo
             </Typography>
 
-            <Grid container className="equal-height-cards" spacing={2}>
+            <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -440,7 +440,7 @@ const SendNotifications = () => {
 
         {/* Recipients & Actions */}
         <Grid item xs={12} lg={4}>
-          <Grid container className="equal-height-cards" spacing={2}>
+          <Grid container spacing={2}>
             {/* Recipients */}
             <Grid item xs={12}>
               <Paper sx={{ p: { xs: 2, sm: 2, md: 3 } }}>

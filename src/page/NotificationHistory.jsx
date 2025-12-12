@@ -193,12 +193,7 @@ const NotificationHistory = () => {
 
       {/* Filters */}
       <Paper elevation={1} sx={{ p: { xs: 2, sm: 2, md: 3 }, mb: 3 }}>
-        <Grid
-          container
-          className="equal-height-cards"
-          spacing={2}
-          alignItems="center"
-        >
+        <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
@@ -283,12 +278,7 @@ const NotificationHistory = () => {
       ) : (
         <>
           {/* Announcement Cards */}
-          <Grid
-            container
-            className="equal-height-cards"
-            spacing={2}
-            sx={{ mb: 3 }}
-          >
+          <Grid container spacing={2} sx={{ mb: 3 }}>
             {announcements.map((announcement) => (
               <Grid
                 item

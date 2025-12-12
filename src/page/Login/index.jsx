@@ -196,12 +196,7 @@ const Login = () => {
           alignItems: 'center',
         }}
       >
-        <Grid
-          container
-          className="equal-height-cards"
-          spacing={3}
-          sx={{ height: 'auto', maxHeight: '100%' }}
-        >
+        <Grid container spacing={3} sx={{ height: 'auto', maxHeight: '100%' }}>
           {/* Login Form */}
           <Grid item xs={12} md={5} sx={{ display: 'flex' }}>
             <Card

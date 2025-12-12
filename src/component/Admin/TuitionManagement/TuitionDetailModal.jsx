@@ -191,7 +191,7 @@ const TuitionDetailModal = ({ open, onClose, tuitionFeeId }) => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {/* Thông tin sinh viên */}
             <InfoCard icon={SchoolIcon} title="Thông tin sinh viên">
-              <Grid container className="equal-height-cards" spacing={2}>
+              <Grid container spacing={2}>
                 <Grid item xs={6}>
                   <Typography variant="caption" color="text.secondary">
                     MSSV
@@ -233,7 +233,7 @@ const TuitionDetailModal = ({ open, onClose, tuitionFeeId }) => {
               title="Thông tin học phí"
               colorType="primary"
             >
-              <Grid container className="equal-height-cards" spacing={2}>
+              <Grid container spacing={2}>
                 <Grid item xs={4}>
                   <Typography variant="caption" color="text.secondary">
                     Tổng học phí

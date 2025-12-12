@@ -482,7 +482,7 @@ const StudentsPage = () => {
                 Bộ lọc tìm kiếm
               </Typography>
             </Box>
-            <Grid container className="equal-height-cards" spacing={2}>
+            <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
@@ -502,13 +502,22 @@ const StudentsPage = () => {
               <Grid item xs={12} md={4}>
                 <SearchableAutocomplete
                   options={[
-                    { sectionId: 'all', courseName: 'Tất cả lớp học phần', sectionCode: '' },
+                    {
+                      sectionId: 'all',
+                      courseName: 'Tất cả lớp học phần',
+                      sectionCode: '',
+                    },
                     ...sections,
                   ]}
                   value={
                     selectedSection === 'all'
-                      ? { sectionId: 'all', courseName: 'Tất cả lớp học phần', sectionCode: '' }
-                      : sections.find((s) => s.sectionId === selectedSection) || null
+                      ? {
+                          sectionId: 'all',
+                          courseName: 'Tất cả lớp học phần',
+                          sectionCode: '',
+                        }
+                      : sections.find((s) => s.sectionId === selectedSection) ||
+                        null
                   }
                   onChange={(newValue) => {
                     setSelectedSection(newValue?.sectionId || 'all');
@@ -608,7 +617,7 @@ const StudentsPage = () => {
         </DialogTitle>
         <DialogContent dividers>
           {selectedStudent && (
-            <Grid container className="equal-height-cards" spacing={3}>
+            <Grid container spacing={3}>
               <Grid item xs={12} sx={{ textAlign: 'center' }}>
                 <Avatar sx={{ width: 80, height: 80, margin: '0 auto', mb: 2 }}>
                   {selectedStudent.fullName?.charAt(0).toUpperCase()}

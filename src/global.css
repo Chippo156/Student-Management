@@ -49,7 +49,6 @@ a,
 .mssv {
   white-space: nowrap;
 }
-/* 
 .text-wrap-content {
   word-wrap: break-word;
   word-break: break-word;
@@ -97,11 +96,6 @@ a,
   align-items: stretch;
 }
 
-.MuiGrid-container.equal-height-cards > .MuiGrid-item {
-  display: flex;
-  flex-direction: column;
-}
-
 .MuiGrid-container.equal-height-cards > .MuiGrid-item > * {
   flex: 1;
   display: flex;
@@ -115,26 +109,3 @@ a,
   flex-direction: column;
   height: 100%;
 }
-.MuiGrid-container.equal-height-cards .MuiCard-root > .MuiCardContent-root {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.MuiBox-root {
-  text-align: center;
-  margin-right: 16px;
-}
-.ant-card-body canvas,
-.ant-card-body svg,
-.MuiCardContent-root canvas,
-.MuiCardContent-root svg {
-  max-width: 100%;
-  height: auto;
-}
-
-.recharts-responsive-container {
-  width: 100%;
-}
- */

@@ -14,12 +14,7 @@ const UserFilters = ({
 }) => (
   <Card sx={{ mb: 3, borderRadius: 2 }}>
     <CardContent sx={{ p: 3 }}>
-      <Grid
-        container
-        className="equal-height-cards"
-        spacing={2}
-        alignItems="center"
-      >
+      <Grid container spacing={2} alignItems="center">
         <Grid item xs={12} md={4}>
           <Input.Search
             allowClear

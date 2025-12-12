@@ -171,7 +171,7 @@ const SystemSettings = () => {
 
         {/* Tab 1 - Cài đặt chung */}
         <TabPanel value={tabValue} index={0}>
-          <Grid container className="equal-height-cards" spacing={3}>
+          <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -229,7 +229,7 @@ const SystemSettings = () => {
 
         {/* Tab 2 - Học vụ */}
         <TabPanel value={tabValue} index={1}>
-          <Grid container className="equal-height-cards" spacing={3}>
+          <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -303,7 +303,7 @@ const SystemSettings = () => {
 
         {/* Tab 3 - Thông báo */}
         <TabPanel value={tabValue} index={2}>
-          <Grid container className="equal-height-cards" spacing={3}>
+          <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
               <Card>
                 <CardContent>
@@ -405,7 +405,7 @@ const SystemSettings = () => {
 
         {/* Tab 4 - Bảo mật */}
         <TabPanel value={tabValue} index={3}>
-          <Grid container className="equal-height-cards" spacing={3}>
+          <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
               <Card>
                 <CardContent>
@@ -513,7 +513,7 @@ const SystemSettings = () => {
         <TabPanel value={tabValue} index={4}>
           <Card>
             <CardContent>
-              <Grid container className="equal-height-cards" spacing={3}>
+              <Grid container spacing={3}>
                 <Grid item xs={12} sm={6}>
                   <Typography
                     variant="subtitle2"

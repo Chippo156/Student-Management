@@ -56,7 +56,7 @@ const TeacherStatisticsCards = ({ dashboardData, loading }) => {
   ];
 
   return (
-    <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 4 }}>
+    <Grid container spacing={3} sx={{ mb: 4 }}>
       {statCards.map((card, index) => (
         <Grid item xs={12} sm={6} md={3} key={index}>
           <Grow in={!loading} timeout={800 + index * 200}>

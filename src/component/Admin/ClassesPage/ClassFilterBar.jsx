@@ -36,7 +36,7 @@ const ClassFilterBar = ({
     <Paper sx={{ p: 3, mb: 3 }}>
       <Grid
         container
-        className="equal-height-cards"
+        // className="equal-height-cards"
         spacing={2}
         alignItems="center"
       >

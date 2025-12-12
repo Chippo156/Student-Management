@@ -451,7 +451,7 @@ function GradeManagement() {
       />
 
       {/* Summary Cards */}
-      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
           <StatsCard
             icon={<TrophyIcon />}
@@ -555,7 +555,7 @@ function GradeManagement() {
         <DialogContent
           sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}
         >
-          <Grid container className="equal-height-cards" spacing={2}>
+          <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth

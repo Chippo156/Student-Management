@@ -504,7 +504,9 @@ const AssignmentsPage = () => {
                   setSelectedCourse(newValue?.id || '');
                 }}
                 getOptionLabel={(option) => `${option.name} (${option.code})`}
-                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                isOptionEqualToValue={(option, value) =>
+                  option.id === value?.id
+                }
                 label="Chọn môn học"
                 placeholder="Tìm kiếm môn học..."
                 showSearchIcon={false}
@@ -563,7 +565,7 @@ const AssignmentsPage = () => {
           {editingAssignment ? 'Chỉnh sửa bài tập' : 'Tạo bài tập mới'}
         </DialogTitle>
         <DialogContent dividers>
-          <Grid container className="equal-height-cards" spacing={2}>
+          <Grid container spacing={2}>
             <Grid item xs={12}>
               <TextField
                 fullWidth

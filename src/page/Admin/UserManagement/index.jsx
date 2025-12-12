@@ -404,7 +404,7 @@ const UserManagement = () => {
       </Box>
 
       {/* Summary Cards */}
-      <Grid container className="equal-height-cards" spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card
             sx={{
@@ -528,7 +528,7 @@ const UserManagement = () => {
               Bộ lọc tìm kiếm
             </Typography>
           </Box>
-          <Grid container className="equal-height-cards" spacing={2}>
+          <Grid container spacing={2}>
             <Grid item xs={12} sm={12} md={6} lg={6}>
               <TextField
                 fullWidth

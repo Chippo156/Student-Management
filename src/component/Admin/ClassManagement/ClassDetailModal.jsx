@@ -197,12 +197,7 @@ const ClassDetailModal = ({ open, onClose, classData }) => {
 
       <DialogContent sx={{ mt: 3, pb: 3 }}>
         {/* Thông tin cơ bản */}
-        <Grid
-          container
-          className="equal-height-cards"
-          spacing={3}
-          sx={{ mb: 3 }}
-        >
+        <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12}>
             <InfoCard
               icon={SchoolIcon}
@@ -234,12 +229,7 @@ const ClassDetailModal = ({ open, onClose, classData }) => {
         </Grid>
 
         {/* Thông tin chương trình đào tạo */}
-        <Grid
-          container
-          className="equal-height-cards"
-          spacing={3}
-          sx={{ mb: 3 }}
-        >
+        <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12} md={6}>
             <InfoCard
               icon={LibraryBooksIcon}
@@ -312,7 +302,7 @@ const ClassDetailModal = ({ open, onClose, classData }) => {
         {/* Thông tin giảng viên và sinh viên */}
         <Divider sx={{ my: 3 }} />
 
-        <Grid container className="equal-height-cards" spacing={3}>
+        <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             <InfoCard
               icon={PersonIcon}

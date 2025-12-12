@@ -357,7 +357,7 @@ const CoursesPage = () => {
               Bộ lọc tìm kiếm
             </Typography>
           </Box>
-          <Grid container className="equal-height-cards" spacing={2}>
+          <Grid container spacing={2}>
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
@@ -389,10 +389,10 @@ const CoursesPage = () => {
                         value: statusFilter,
                         label: {
                           all: 'Tất cả trạng thái',
-                          '0': 'Chưa bắt đầu',
-                          '1': 'Đang diễn ra',
-                          '2': 'Đã kết thúc',
-                          '3': 'Đã hủy',
+                          0: 'Chưa bắt đầu',
+                          1: 'Đang diễn ra',
+                          2: 'Đã kết thúc',
+                          3: 'Đã hủy',
                         }[statusFilter],
                       }
                     : null
@@ -401,7 +401,9 @@ const CoursesPage = () => {
                   setStatusFilter(newValue?.value || 'all');
                 }}
                 getOptionLabel={(option) => option.label}
-                isOptionEqualToValue={(option, value) => option.value === value?.value}
+                isOptionEqualToValue={(option, value) =>
+                  option.value === value?.value
+                }
                 label="Trạng thái"
                 placeholder="Chọn trạng thái..."
                 size="small"
@@ -426,7 +428,9 @@ const CoursesPage = () => {
                   setSemesterFilter(newValue?.value || 'all');
                 }}
                 getOptionLabel={(option) => option.label}
-                isOptionEqualToValue={(option, value) => option.value === value?.value}
+                isOptionEqualToValue={(option, value) =>
+                  option.value === value?.value
+                }
                 label="Học kỳ"
                 placeholder="Chọn học kỳ..."
                 size="small"

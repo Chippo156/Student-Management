@@ -194,7 +194,7 @@ const StudentTuitionSummaryModal = ({ open, onClose, mssv }) => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {/* Thông tin sinh viên */}
             <InfoCard icon={PersonIcon} title="Thông tin sinh viên">
-              <Grid container className="equal-height-cards" spacing={2}>
+              <Grid container spacing={2}>
                 <Grid item xs={6}>
                   <Typography variant="caption" color="text.secondary">
                     MSSV

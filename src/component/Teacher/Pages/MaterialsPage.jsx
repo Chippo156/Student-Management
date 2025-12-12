@@ -476,12 +476,7 @@ const MaterialsPage = () => {
       {/* Filter Section */}
       <Fade in={true} timeout={1000}>
         <Card sx={{ mb: 3, p: 2 }}>
-          <Grid
-            container
-            className="equal-height-cards"
-            spacing={2}
-            alignItems="center"
-          >
+          <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={6}>
               <SearchableAutocomplete
                 options={courses}
@@ -490,7 +485,9 @@ const MaterialsPage = () => {
                   setSelectedCourse(newValue?.id || '');
                 }}
                 getOptionLabel={(option) => `${option.name} (${option.code})`}
-                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                isOptionEqualToValue={(option, value) =>
+                  option.id === value?.id
+                }
                 label="Chọn môn học"
                 placeholder="Tìm kiếm môn học..."
                 showSearchIcon={false}
@@ -596,7 +593,9 @@ const MaterialsPage = () => {
                   handleFormChange('type', newValue?.value || '');
                 }}
                 getOptionLabel={(option) => option.label}
-                isOptionEqualToValue={(option, value) => option.value === value?.value}
+                isOptionEqualToValue={(option, value) =>
+                  option.value === value?.value
+                }
                 label="Loại tài liệu"
                 placeholder="Chọn loại tài liệu..."
                 showSearchIcon={false}

@@ -242,7 +242,7 @@ const SectionEditModal = ({ open, onCancel, onSave, section }) => {
       </DialogTitle>
 
       <DialogContent dividers>
-        <Grid container className="equal-height-cards" spacing={3}>
+        <Grid container spacing={3}>
           <Grid item xs={12}>
             <Alert severity="info" sx={{ mb: 2 }}>
               Chỉ các trường được thay đổi sẽ được cập nhật. Để trống nếu không

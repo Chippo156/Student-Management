@@ -152,7 +152,7 @@ const UserDetailModal = ({ open, onCancel, user }) => {
               </Box>
               Thông tin cá nhân
             </Typography>
-            <Grid container className="equal-height-cards" spacing={3}>
+            <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <InfoRow label="Tên đăng nhập" value={user.username} />
                 <InfoRow label="Họ và tên" value={user.fullName} />
@@ -200,7 +200,7 @@ const UserDetailModal = ({ open, onCancel, user }) => {
               </Box>
               Thông tin địa chỉ
             </Typography>
-            <Grid container className="equal-height-cards" spacing={3}>
+            <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <InfoRow label="Địa chỉ thường trú" value={user.address} />
                 <InfoRow label="Dân tộc" value={user.ethnicity} />
@@ -235,7 +235,7 @@ const UserDetailModal = ({ open, onCancel, user }) => {
               </Box>
               Giấy tờ cá nhân
             </Typography>
-            <Grid container className="equal-height-cards" spacing={3}>
+            <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <InfoRow label="Số CCCD" value={user.citizenIdCard} />
                 <InfoRow

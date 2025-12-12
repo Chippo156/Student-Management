@@ -194,7 +194,8 @@ const SettingsPage = () => {
         issuedDate: userData.issuedDate ? dayjs(userData.issuedDate) : null,
         issuedPlace: userData.issuedPlace || '',
         healthInsuranceNumber: userData.healthInsuranceNumber || '',
-        healthInsuranceRegistrationPlace: userData.healthInsuranceRegistrationPlace || '',
+        healthInsuranceRegistrationPlace:
+          userData.healthInsuranceRegistrationPlace || '',
         registeredHospital: userData.registeredHospital || '',
         hometownProvince: userData.hometownProvince || '',
         hometownDistrict: userData.hometownDistrict || '',
@@ -213,8 +214,12 @@ const SettingsPage = () => {
         address: userData.address || '',
         object: userData.object || '',
         policyArea: userData.policyArea || '',
-        dateOfJoinUnion: userData.dateOfJoinUnion ? dayjs(userData.dateOfJoinUnion) : null,
-        dateOfJoinParty: userData.dateOfJoinParty ? dayjs(userData.dateOfJoinParty) : null,
+        dateOfJoinUnion: userData.dateOfJoinUnion
+          ? dayjs(userData.dateOfJoinUnion)
+          : null,
+        dateOfJoinParty: userData.dateOfJoinParty
+          ? dayjs(userData.dateOfJoinParty)
+          : null,
       });
 
       // Load districts and wards for initial values & find IDs from names
@@ -222,25 +227,44 @@ const SettingsPage = () => {
       const loadAddressData = async () => {
         // Hometown
         if (userData.hometownProvince && provinces.length > 0) {
-          const provinceObj = provinces.find(p => p.name === userData.hometownProvince);
+          const provinceObj = provinces.find(
+            (p) => p.name === userData.hometownProvince
+          );
           if (provinceObj) {
-            setSelectedIds(prev => ({ ...prev, hometownProvinceId: provinceObj.id }));
-            const data = await externalBankService.getDistrictsByProvince(provinceObj.id);
+            setSelectedIds((prev) => ({
+              ...prev,
+              hometownProvinceId: provinceObj.id,
+            }));
+            const data = await externalBankService.getDistrictsByProvince(
+              provinceObj.id
+            );
             const districts = data?.data || data || [];
             setHometownDistricts(districts);
 
             if (userData.hometownDistrict) {
-              const districtObj = districts.find(d => d.name === userData.hometownDistrict);
+              const districtObj = districts.find(
+                (d) => d.name === userData.hometownDistrict
+              );
               if (districtObj) {
-                setSelectedIds(prev => ({ ...prev, hometownDistrictId: districtObj.id }));
-                const wardData = await externalBankService.getWardsByDistrict(districtObj.id);
+                setSelectedIds((prev) => ({
+                  ...prev,
+                  hometownDistrictId: districtObj.id,
+                }));
+                const wardData = await externalBankService.getWardsByDistrict(
+                  districtObj.id
+                );
                 const wards = wardData?.data || wardData || [];
                 setHometownWards(wards);
 
                 if (userData.hometownWard) {
-                  const wardObj = wards.find(w => w.name === userData.hometownWard);
+                  const wardObj = wards.find(
+                    (w) => w.name === userData.hometownWard
+                  );
                   if (wardObj) {
-                    setSelectedIds(prev => ({ ...prev, hometownWardId: wardObj.id }));
+                    setSelectedIds((prev) => ({
+                      ...prev,
+                      hometownWardId: wardObj.id,
+                    }));
                   }
                 }
               }
@@ -250,25 +274,44 @@ const SettingsPage = () => {
 
         // Permanent address
         if (userData.permanentProvince && provinces.length > 0) {
-          const provinceObj = provinces.find(p => p.name === userData.permanentProvince);
+          const provinceObj = provinces.find(
+            (p) => p.name === userData.permanentProvince
+          );
           if (provinceObj) {
-            setSelectedIds(prev => ({ ...prev, permanentProvinceId: provinceObj.id }));
-            const data = await externalBankService.getDistrictsByProvince(provinceObj.id);
+            setSelectedIds((prev) => ({
+              ...prev,
+              permanentProvinceId: provinceObj.id,
+            }));
+            const data = await externalBankService.getDistrictsByProvince(
+              provinceObj.id
+            );
             const districts = data?.data || data || [];
             setPermanentDistricts(districts);
 
             if (userData.permanentDistrict) {
-              const districtObj = districts.find(d => d.name === userData.permanentDistrict);
+              const districtObj = districts.find(
+                (d) => d.name === userData.permanentDistrict
+              );
               if (districtObj) {
-                setSelectedIds(prev => ({ ...prev, permanentDistrictId: districtObj.id }));
-                const wardData = await externalBankService.getWardsByDistrict(districtObj.id);
+                setSelectedIds((prev) => ({
+                  ...prev,
+                  permanentDistrictId: districtObj.id,
+                }));
+                const wardData = await externalBankService.getWardsByDistrict(
+                  districtObj.id
+                );
                 const wards = wardData?.data || wardData || [];
                 setPermanentWards(wards);
 
                 if (userData.permanentWard) {
-                  const wardObj = wards.find(w => w.name === userData.permanentWard);
+                  const wardObj = wards.find(
+                    (w) => w.name === userData.permanentWard
+                  );
                   if (wardObj) {
-                    setSelectedIds(prev => ({ ...prev, permanentWardId: wardObj.id }));
+                    setSelectedIds((prev) => ({
+                      ...prev,
+                      permanentWardId: wardObj.id,
+                    }));
                   }
                 }
               }
@@ -296,10 +339,15 @@ const SettingsPage = () => {
   // Address handlers
   const handleHometownProvinceChange = async (e) => {
     const selectedId = e.target.value;
-    const selectedProvince = provinces.find(p => p.id === selectedId);
+    const selectedProvince = provinces.find((p) => p.id === selectedId);
     const provinceName = selectedProvince?.name || '';
 
-    setSelectedIds(prev => ({ ...prev, hometownProvinceId: selectedId, hometownDistrictId: '', hometownWardId: '' }));
+    setSelectedIds((prev) => ({
+      ...prev,
+      hometownProvinceId: selectedId,
+      hometownDistrictId: '',
+      hometownWardId: '',
+    }));
     handleProfileChange('hometownProvince', provinceName);
     handleProfileChange('hometownDistrict', '');
     handleProfileChange('hometownWard', '');
@@ -314,10 +362,14 @@ const SettingsPage = () => {
 
   const handleHometownDistrictChange = async (e) => {
     const selectedId = e.target.value;
-    const selectedDistrict = hometownDistricts.find(d => d.id === selectedId);
+    const selectedDistrict = hometownDistricts.find((d) => d.id === selectedId);
     const districtName = selectedDistrict?.name || '';
 
-    setSelectedIds(prev => ({ ...prev, hometownDistrictId: selectedId, hometownWardId: '' }));
+    setSelectedIds((prev) => ({
+      ...prev,
+      hometownDistrictId: selectedId,
+      hometownWardId: '',
+    }));
     handleProfileChange('hometownDistrict', districtName);
     handleProfileChange('hometownWard', '');
     if (selectedId) {
@@ -330,10 +382,15 @@ const SettingsPage = () => {
 
   const handlePermanentProvinceChange = async (e) => {
     const selectedId = e.target.value;
-    const selectedProvince = provinces.find(p => p.id === selectedId);
+    const selectedProvince = provinces.find((p) => p.id === selectedId);
     const provinceName = selectedProvince?.name || '';
 
-    setSelectedIds(prev => ({ ...prev, permanentProvinceId: selectedId, permanentDistrictId: '', permanentWardId: '' }));
+    setSelectedIds((prev) => ({
+      ...prev,
+      permanentProvinceId: selectedId,
+      permanentDistrictId: '',
+      permanentWardId: '',
+    }));
     handleProfileChange('permanentProvince', provinceName);
     handleProfileChange('permanentDistrict', '');
     handleProfileChange('permanentWard', '');
@@ -348,10 +405,16 @@ const SettingsPage = () => {
 
   const handlePermanentDistrictChange = async (e) => {
     const selectedId = e.target.value;
-    const selectedDistrict = permanentDistricts.find(d => d.id === selectedId);
+    const selectedDistrict = permanentDistricts.find(
+      (d) => d.id === selectedId
+    );
     const districtName = selectedDistrict?.name || '';
 
-    setSelectedIds(prev => ({ ...prev, permanentDistrictId: selectedId, permanentWardId: '' }));
+    setSelectedIds((prev) => ({
+      ...prev,
+      permanentDistrictId: selectedId,
+      permanentWardId: '',
+    }));
     handleProfileChange('permanentDistrict', districtName);
     handleProfileChange('permanentWard', '');
     if (selectedId) {
@@ -364,17 +427,17 @@ const SettingsPage = () => {
 
   const handleHometownWardChange = (e) => {
     const selectedId = e.target.value;
-    const selectedWard = hometownWards.find(w => w.id === selectedId);
+    const selectedWard = hometownWards.find((w) => w.id === selectedId);
     const wardName = selectedWard?.name || '';
-    setSelectedIds(prev => ({ ...prev, hometownWardId: selectedId }));
+    setSelectedIds((prev) => ({ ...prev, hometownWardId: selectedId }));
     handleProfileChange('hometownWard', wardName);
   };
 
   const handlePermanentWardChange = (e) => {
     const selectedId = e.target.value;
-    const selectedWard = permanentWards.find(w => w.id === selectedId);
+    const selectedWard = permanentWards.find((w) => w.id === selectedId);
     const wardName = selectedWard?.name || '';
-    setSelectedIds(prev => ({ ...prev, permanentWardId: selectedId }));
+    setSelectedIds((prev) => ({ ...prev, permanentWardId: selectedId }));
     handleProfileChange('permanentWard', wardName);
   };
 
@@ -410,13 +473,20 @@ const SettingsPage = () => {
     }
 
     // Validate CMND/CCCD
-    if (profileData.citizenIdCard && !/^[0-9]{9,12}$/.test(profileData.citizenIdCard)) {
+    if (
+      profileData.citizenIdCard &&
+      !/^[0-9]{9,12}$/.test(profileData.citizenIdCard)
+    ) {
       newErrors.citizenIdCard = 'CMND/CCCD phải có 9-12 chữ số';
     }
 
     // Validate health insurance
-    if (profileData.healthInsuranceNumber && !/^[A-Z0-9]{10,15}$/.test(profileData.healthInsuranceNumber)) {
-      newErrors.healthInsuranceNumber = 'Số BHYT phải có 10-15 ký tự (chữ hoa và số)';
+    if (
+      profileData.healthInsuranceNumber &&
+      !/^[A-Z0-9]{10,15}$/.test(profileData.healthInsuranceNumber)
+    ) {
+      newErrors.healthInsuranceNumber =
+        'Số BHYT phải có 10-15 ký tự (chữ hoa và số)';
     }
 
     setErrors(newErrors);
@@ -441,18 +511,28 @@ const SettingsPage = () => {
         fullName: profileData.fullName || null,
         email: profileData.email || null,
         phone: profileData.phone || null,
-        gender: profileData.gender !== '' && profileData.gender !== null && profileData.gender !== undefined ? profileData.gender : null,
-        dateOfBirth: profileData.dateOfBirth ? profileData.dateOfBirth.format('YYYY-MM-DD') : null,
+        gender:
+          profileData.gender !== '' &&
+          profileData.gender !== null &&
+          profileData.gender !== undefined
+            ? profileData.gender
+            : null,
+        dateOfBirth: profileData.dateOfBirth
+          ? profileData.dateOfBirth.format('YYYY-MM-DD')
+          : null,
         placeOfBirth: profileData.placeOfBirth || null,
         ethnicity: profileData.ethnicity || null,
         nationality: profileData.nationality || null,
         religion: profileData.religion || null,
         avatarUrl: null,
         citizenIdCard: profileData.citizenIdCard || null,
-        issuedDate: profileData.issuedDate ? profileData.issuedDate.format('YYYY-MM-DD') : null,
+        issuedDate: profileData.issuedDate
+          ? profileData.issuedDate.format('YYYY-MM-DD')
+          : null,
         issuedPlace: profileData.issuedPlace || null,
         healthInsuranceNumber: profileData.healthInsuranceNumber || null,
-        healthInsuranceRegistrationPlace: profileData.healthInsuranceRegistrationPlace || null,
+        healthInsuranceRegistrationPlace:
+          profileData.healthInsuranceRegistrationPlace || null,
         registeredHospital: profileData.registeredHospital || null,
         hometownProvince: profileData.hometownProvince || null,
         hometownDistrict: profileData.hometownDistrict || null,
@@ -471,8 +551,12 @@ const SettingsPage = () => {
         address: profileData.address || null,
         object: profileData.object || null,
         policyArea: profileData.policyArea || null,
-        dateOfJoinUnion: profileData.dateOfJoinUnion ? profileData.dateOfJoinUnion.format('YYYY-MM-DD') : null,
-        dateOfJoinParty: profileData.dateOfJoinParty ? profileData.dateOfJoinParty.format('YYYY-MM-DD') : null,
+        dateOfJoinUnion: profileData.dateOfJoinUnion
+          ? profileData.dateOfJoinUnion.format('YYYY-MM-DD')
+          : null,
+        dateOfJoinParty: profileData.dateOfJoinParty
+          ? profileData.dateOfJoinParty.format('YYYY-MM-DD')
+          : null,
       };
 
       // Remove gender field if it's null/empty to avoid validation error
@@ -589,7 +673,7 @@ const SettingsPage = () => {
         </Typography>
       </Fade>
 
-      <Grid container className="equal-height-cards" spacing={3}>
+      <Grid container spacing={3}>
         {/* Profile Summary Card */}
         <Grid item xs={12} md={4}>
           <Grow in={true} timeout={800}>
@@ -662,7 +746,14 @@ const SettingsPage = () => {
                   <Grid container spacing={3}>
                     {/* Thông tin cơ bản */}
                     <Grid item xs={12}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          mb: 2,
+                        }}
+                      >
                         <Person color="primary" />
                         <Typography variant="h6">Thông tin cơ bản</Typography>
                       </Box>
@@ -675,7 +766,9 @@ const SettingsPage = () => {
                         required
                         label="Họ và tên"
                         value={profileData.fullName}
-                        onChange={(e) => handleProfileChange('fullName', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange('fullName', e.target.value)
+                        }
                         error={!!errors.fullName}
                         helperText={errors.fullName}
                       />
@@ -687,7 +780,9 @@ const SettingsPage = () => {
                         <Select
                           value={profileData.gender}
                           label="Giới tính"
-                          onChange={(e) => handleProfileChange('gender', e.target.value)}
+                          onChange={(e) =>
+                            handleProfileChange('gender', e.target.value)
+                          }
                         >
                           <MenuItem value={1}>Nam</MenuItem>
                           <MenuItem value={0}>Nữ</MenuItem>
@@ -703,7 +798,9 @@ const SettingsPage = () => {
                         label="Email"
                         type="email"
                         value={profileData.email}
-                        onChange={(e) => handleProfileChange('email', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange('email', e.target.value)
+                        }
                         error={!!errors.email}
                         helperText={errors.email}
                       />
@@ -714,7 +811,9 @@ const SettingsPage = () => {
                         fullWidth
                         label="Số điện thoại"
                         value={profileData.phone}
-                        onChange={(e) => handleProfileChange('phone', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange('phone', e.target.value)
+                        }
                         error={!!errors.phone}
                         helperText={errors.phone}
                       />
@@ -725,8 +824,17 @@ const SettingsPage = () => {
                         fullWidth
                         label="Ngày sinh"
                         type="date"
-                        value={profileData.dateOfBirth ? profileData.dateOfBirth.format('YYYY-MM-DD') : ''}
-                        onChange={(e) => handleProfileChange('dateOfBirth', e.target.value ? dayjs(e.target.value) : null)}
+                        value={
+                          profileData.dateOfBirth
+                            ? profileData.dateOfBirth.format('YYYY-MM-DD')
+                            : ''
+                        }
+                        onChange={(e) =>
+                          handleProfileChange(
+                            'dateOfBirth',
+                            e.target.value ? dayjs(e.target.value) : null
+                          )
+                        }
                         InputLabelProps={{ shrink: true }}
                       />
                     </Grid>
@@ -736,7 +844,9 @@ const SettingsPage = () => {
                         fullWidth
                         label="Nơi sinh"
                         value={profileData.placeOfBirth}
-                        onChange={(e) => handleProfileChange('placeOfBirth', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange('placeOfBirth', e.target.value)
+                        }
                       />
                     </Grid>
 
@@ -745,7 +855,9 @@ const SettingsPage = () => {
                         fullWidth
                         label="Dân tộc"
                         value={profileData.ethnicity}
-                        onChange={(e) => handleProfileChange('ethnicity', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange('ethnicity', e.target.value)
+                        }
                       />
                     </Grid>
 
@@ -754,7 +866,9 @@ const SettingsPage = () => {
                         fullWidth
                         label="Quốc tịch"
                         value={profileData.nationality}
-                        onChange={(e) => handleProfileChange('nationality', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange('nationality', e.target.value)
+                        }
                       />
                     </Grid>
 
@@ -763,13 +877,22 @@ const SettingsPage = () => {
                         fullWidth
                         label="Tôn giáo"
                         value={profileData.religion}
-                        onChange={(e) => handleProfileChange('religion', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange('religion', e.target.value)
+                        }
                       />
                     </Grid>
 
                     {/* CMND/CCCD */}
                     <Grid item xs={12} sx={{ mt: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          mb: 2,
+                        }}
+                      >
                         <Badge color="primary" />
                         <Typography variant="h6">CMND/CCCD</Typography>
                       </Box>
@@ -781,7 +904,9 @@ const SettingsPage = () => {
                         fullWidth
                         label="Số CMND/CCCD"
                         value={profileData.citizenIdCard}
-                        onChange={(e) => handleProfileChange('citizenIdCard', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange('citizenIdCard', e.target.value)
+                        }
                         error={!!errors.citizenIdCard}
                         helperText={errors.citizenIdCard}
                       />
@@ -792,8 +917,17 @@ const SettingsPage = () => {
                         fullWidth
                         label="Ngày cấp"
                         type="date"
-                        value={profileData.issuedDate ? profileData.issuedDate.format('YYYY-MM-DD') : ''}
-                        onChange={(e) => handleProfileChange('issuedDate', e.target.value ? dayjs(e.target.value) : null)}
+                        value={
+                          profileData.issuedDate
+                            ? profileData.issuedDate.format('YYYY-MM-DD')
+                            : ''
+                        }
+                        onChange={(e) =>
+                          handleProfileChange(
+                            'issuedDate',
+                            e.target.value ? dayjs(e.target.value) : null
+                          )
+                        }
                         InputLabelProps={{ shrink: true }}
                       />
                     </Grid>
@@ -803,13 +937,22 @@ const SettingsPage = () => {
                         fullWidth
                         label="Nơi cấp"
                         value={profileData.issuedPlace}
-                        onChange={(e) => handleProfileChange('issuedPlace', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange('issuedPlace', e.target.value)
+                        }
                       />
                     </Grid>
 
                     {/* Bảo hiểm y tế */}
                     <Grid item xs={12} sx={{ mt: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          mb: 2,
+                        }}
+                      >
                         <HealthAndSafety color="primary" />
                         <Typography variant="h6">Bảo hiểm y tế</Typography>
                       </Box>
@@ -821,7 +964,12 @@ const SettingsPage = () => {
                         fullWidth
                         label="Số BHYT"
                         value={profileData.healthInsuranceNumber}
-                        onChange={(e) => handleProfileChange('healthInsuranceNumber', e.target.value.toUpperCase())}
+                        onChange={(e) =>
+                          handleProfileChange(
+                            'healthInsuranceNumber',
+                            e.target.value.toUpperCase()
+                          )
+                        }
                         error={!!errors.healthInsuranceNumber}
                         helperText={errors.healthInsuranceNumber}
                       />
@@ -832,7 +980,12 @@ const SettingsPage = () => {
                         fullWidth
                         label="Nơi đăng ký KCB"
                         value={profileData.healthInsuranceRegistrationPlace}
-                        onChange={(e) => handleProfileChange('healthInsuranceRegistrationPlace', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange(
+                            'healthInsuranceRegistrationPlace',
+                            e.target.value
+                          )
+                        }
                       />
                     </Grid>
 
@@ -841,13 +994,25 @@ const SettingsPage = () => {
                         fullWidth
                         label="Bệnh viện đăng ký"
                         value={profileData.registeredHospital}
-                        onChange={(e) => handleProfileChange('registeredHospital', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange(
+                            'registeredHospital',
+                            e.target.value
+                          )
+                        }
                       />
                     </Grid>
 
                     {/* Địa chỉ */}
                     <Grid item xs={12} sx={{ mt: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          mb: 2,
+                        }}
+                      >
                         <Home color="primary" />
                         <Typography variant="h6">Địa chỉ</Typography>
                       </Box>
@@ -856,7 +1021,11 @@ const SettingsPage = () => {
 
                     {/* Quê quán */}
                     <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                      <Typography
+                        variant="subtitle2"
+                        color="text.secondary"
+                        sx={{ mb: 1 }}
+                      >
                         Quê quán
                       </Typography>
                     </Grid>
@@ -880,7 +1049,10 @@ const SettingsPage = () => {
                       </FormControl>
                     </Grid>
                     <Grid item xs={12} sm={4}>
-                      <FormControl fullWidth disabled={!selectedIds.hometownProvinceId}>
+                      <FormControl
+                        fullWidth
+                        disabled={!selectedIds.hometownProvinceId}
+                      >
                         <InputLabel>Quận/Huyện</InputLabel>
                         <Select
                           value={selectedIds.hometownDistrictId}
@@ -899,7 +1071,10 @@ const SettingsPage = () => {
                       </FormControl>
                     </Grid>
                     <Grid item xs={12} sm={4}>
-                      <FormControl fullWidth disabled={!selectedIds.hometownDistrictId}>
+                      <FormControl
+                        fullWidth
+                        disabled={!selectedIds.hometownDistrictId}
+                      >
                         <InputLabel>Phường/Xã</InputLabel>
                         <Select
                           value={selectedIds.hometownWardId}
@@ -920,7 +1095,11 @@ const SettingsPage = () => {
 
                     {/* Hộ khẩu thường trú */}
                     <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1, mt: 1 }}>
+                      <Typography
+                        variant="subtitle2"
+                        color="text.secondary"
+                        sx={{ mb: 1, mt: 1 }}
+                      >
                         Hộ khẩu thường trú
                       </Typography>
                     </Grid>
@@ -944,7 +1123,10 @@ const SettingsPage = () => {
                       </FormControl>
                     </Grid>
                     <Grid item xs={12} sm={4}>
-                      <FormControl fullWidth disabled={!selectedIds.permanentProvinceId}>
+                      <FormControl
+                        fullWidth
+                        disabled={!selectedIds.permanentProvinceId}
+                      >
                         <InputLabel>Quận/Huyện</InputLabel>
                         <Select
                           value={selectedIds.permanentDistrictId}
@@ -963,7 +1145,10 @@ const SettingsPage = () => {
                       </FormControl>
                     </Grid>
                     <Grid item xs={12} sm={4}>
-                      <FormControl fullWidth disabled={!selectedIds.permanentDistrictId}>
+                      <FormControl
+                        fullWidth
+                        disabled={!selectedIds.permanentDistrictId}
+                      >
                         <InputLabel>Phường/Xã</InputLabel>
                         <Select
                           value={selectedIds.permanentWardId}
@@ -988,7 +1173,12 @@ const SettingsPage = () => {
                         fullWidth
                         label="Địa chỉ tạm trú"
                         value={profileData.temporaryAddress}
-                        onChange={(e) => handleProfileChange('temporaryAddress', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange(
+                            'temporaryAddress',
+                            e.target.value
+                          )
+                        }
                       />
                     </Grid>
                     <Grid item xs={12} sm={4}>
@@ -996,7 +1186,9 @@ const SettingsPage = () => {
                         fullWidth
                         label="Địa chỉ liên hệ"
                         value={profileData.contactAddress}
-                        onChange={(e) => handleProfileChange('contactAddress', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange('contactAddress', e.target.value)
+                        }
                       />
                     </Grid>
                     <Grid item xs={12} sm={4}>
@@ -1004,7 +1196,9 @@ const SettingsPage = () => {
                         fullWidth
                         label="Địa chỉ"
                         value={profileData.address}
-                        onChange={(e) => handleProfileChange('address', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange('address', e.target.value)
+                        }
                       />
                     </Grid>
 
@@ -1021,7 +1215,9 @@ const SettingsPage = () => {
                         fullWidth
                         label="Đối tượng"
                         value={profileData.object}
-                        onChange={(e) => handleProfileChange('object', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange('object', e.target.value)
+                        }
                       />
                     </Grid>
                     <Grid item xs={12} sm={4}>
@@ -1029,7 +1225,9 @@ const SettingsPage = () => {
                         fullWidth
                         label="Khu vực chính sách"
                         value={profileData.policyArea}
-                        onChange={(e) => handleProfileChange('policyArea', e.target.value)}
+                        onChange={(e) =>
+                          handleProfileChange('policyArea', e.target.value)
+                        }
                       />
                     </Grid>
                     <Grid item xs={12} sm={4}>
@@ -1037,8 +1235,17 @@ const SettingsPage = () => {
                         fullWidth
                         label="Ngày vào Đoàn"
                         type="date"
-                        value={profileData.dateOfJoinUnion ? profileData.dateOfJoinUnion.format('YYYY-MM-DD') : ''}
-                        onChange={(e) => handleProfileChange('dateOfJoinUnion', e.target.value ? dayjs(e.target.value) : null)}
+                        value={
+                          profileData.dateOfJoinUnion
+                            ? profileData.dateOfJoinUnion.format('YYYY-MM-DD')
+                            : ''
+                        }
+                        onChange={(e) =>
+                          handleProfileChange(
+                            'dateOfJoinUnion',
+                            e.target.value ? dayjs(e.target.value) : null
+                          )
+                        }
                         InputLabelProps={{ shrink: true }}
                       />
                     </Grid>
@@ -1047,8 +1254,17 @@ const SettingsPage = () => {
                         fullWidth
                         label="Ngày vào Đảng"
                         type="date"
-                        value={profileData.dateOfJoinParty ? profileData.dateOfJoinParty.format('YYYY-MM-DD') : ''}
-                        onChange={(e) => handleProfileChange('dateOfJoinParty', e.target.value ? dayjs(e.target.value) : null)}
+                        value={
+                          profileData.dateOfJoinParty
+                            ? profileData.dateOfJoinParty.format('YYYY-MM-DD')
+                            : ''
+                        }
+                        onChange={(e) =>
+                          handleProfileChange(
+                            'dateOfJoinParty',
+                            e.target.value ? dayjs(e.target.value) : null
+                          )
+                        }
                         InputLabelProps={{ shrink: true }}
                       />
                     </Grid>
@@ -1103,7 +1319,9 @@ const SettingsPage = () => {
                         handlePasswordChange('newPassword', e.target.value)
                       }
                       error={!!errors.newPassword}
-                      helperText={errors.newPassword || 'Mật khẩu phải có ít nhất 6 ký tự'}
+                      helperText={
+                        errors.newPassword || 'Mật khẩu phải có ít nhất 6 ký tự'
+                      }
                     />
                   </Grid>
                   <Grid item xs={12}>
@@ -1137,7 +1355,7 @@ const SettingsPage = () => {
 
               {/* Notifications Tab */}
               <TabPanel value={tabValue} index={2}>
-                <Grid container className="equal-height-cards" spacing={3}>
+                <Grid container spacing={3}>
                   <Grid item xs={12}>
                     <Typography variant="h6" gutterBottom>
                       Cài đặt thông báo

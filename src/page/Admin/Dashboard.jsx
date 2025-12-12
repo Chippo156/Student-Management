@@ -414,12 +414,7 @@ const AdminDashboard = () => {
             }}
           >
             <Box sx={{ position: 'relative', zIndex: 1 }}>
-              <Grid
-                container
-                className="equal-height-cards"
-                spacing={3}
-                alignItems="center"
-              >
+              <Grid container spacing={3} alignItems="center">
                 <Grid item xs={12} md={8}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Avatar

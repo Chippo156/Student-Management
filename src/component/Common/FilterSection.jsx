@@ -28,7 +28,7 @@ const FilterSection = ({
             {title}
           </Typography>
         </Box>
-        <Grid container className="equal-height-cards" spacing={2}>
+        <Grid container spacing={2}>
           {children}
         </Grid>
         {resultCount !== undefined && resultCount !== null && (

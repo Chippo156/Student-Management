@@ -538,12 +538,7 @@ const SectionScheduleTab = ({ sectionId, section }) => {
           {editingSchedule ? 'Chỉnh sửa lịch học' : 'Thêm lịch học mới'}
         </DialogTitle>
         <DialogContent>
-          <Grid
-            container
-            className="equal-height-cards"
-            spacing={2}
-            sx={{ mt: 1 }}
-          >
+          <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth error={!!errors.scheduleTypeId}>
                 <InputLabel>Loại lịch *</InputLabel>
