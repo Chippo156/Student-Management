@@ -31,40 +31,41 @@ namespace StudentManagement.Services
             try
             {
                 var fullPrompt = BuildEducationalPrompt(prompt, conversationContext);
-                
+
                 var requestBody = new
                 {
                     contents = new[]
                     {
-                        new
-                        {
-                            parts = new[]
-                            {
-                                new { text = fullPrompt }
-                            }
-                        }
-                    },
+                new
+                {
+                    parts = new[]
+                    {
+                        new { text = fullPrompt }
+                    }
+                }
+            },
                     generationConfig = new
                     {
-                        temperature = 0.5,
-                        topK = 40,
-                        topP = 0.95,
-                        maxOutputTokens = 1000 
+                        temperature = 0.4,         // Tăng nhẹ để linh hoạt hơn
+                        topK = 30,                 // Tăng nhẹ
+                        topP = 0.85,               // Tăng nhẹ  
+                        maxOutputTokens = 1000,    // **TĂNG** từ 500 lên 1000
+                        stopSequences = new[] { "***END***" } // **SỬA** - chỉ dừng khi thấy marker đặc biệt
                     },
                     safetySettings = new[]
                     {
-                        new { category = "HARM_CATEGORY_HARASSMENT", threshold = "BLOCK_ONLY_HIGH" },
-                        new { category = "HARM_CATEGORY_HATE_SPEECH", threshold = "BLOCK_ONLY_HIGH" },
-                        new { category = "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold = "BLOCK_ONLY_HIGH" },
-                        new { category = "HARM_CATEGORY_DANGEROUS_CONTENT", threshold = "BLOCK_ONLY_HIGH" }
-                    }
+                new { category = "HARM_CATEGORY_HARASSMENT", threshold = "BLOCK_ONLY_HIGH" },
+                new { category = "HARM_CATEGORY_HATE_SPEECH", threshold = "BLOCK_ONLY_HIGH" },
+                new { category = "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold = "BLOCK_ONLY_HIGH" },
+                new { category = "HARM_CATEGORY_DANGEROUS_CONTENT", threshold = "BLOCK_ONLY_HIGH" }
+            }
                 };
 
                 var json = JsonSerializer.Serialize(requestBody);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await _httpClient.PostAsync($"{_baseUrl}?key={_apiKey}", content);
-                
+
                 if (!response.IsSuccessStatusCode)
                 {
                     var statusCode = response.StatusCode;
@@ -76,10 +77,24 @@ namespace StudentManagement.Services
                 var responseJson = await response.Content.ReadAsStringAsync();
                 var responseData = JsonSerializer.Deserialize<JsonElement>(responseJson);
 
-                if (responseData.TryGetProperty("candidates", out var candidates) && 
+                if (responseData.TryGetProperty("candidates", out var candidates) &&
                     candidates.GetArrayLength() > 0)
                 {
                     var firstCandidate = candidates[0];
+
+                    // **THÊM: Kiểm tra lý do dừng**
+                    if (firstCandidate.TryGetProperty("finishReason", out var finishReason))
+                    {
+                        var reason = finishReason.GetString();
+                        Console.WriteLine($"[Gemini] Finish reason: {reason}");
+
+                        // Nếu bị cắt do độ dài, thông báo rõ ràng
+                        if (reason == "MAX_TOKENS" || reason == "LENGTH")
+                        {
+                            Console.WriteLine("[Gemini] Response was truncated due to length limits");
+                        }
+                    }
+
                     if (firstCandidate.TryGetProperty("content", out var content_prop) &&
                         content_prop.TryGetProperty("parts", out var parts) &&
                         parts.GetArrayLength() > 0)
@@ -87,7 +102,12 @@ namespace StudentManagement.Services
                         var firstPart = parts[0];
                         if (firstPart.TryGetProperty("text", out var text))
                         {
-                            return text.GetString() ?? "Không thể tạo phản hồi.";
+                            var result = text.GetString() ?? "Không thể tạo phản hồi.";
+
+                            // **THÊM: Post-process để đảm bảo câu trả lời đầy đủ**
+                            result = EnsureCompleteResponse(result);
+
+                            return result;
                         }
                     }
                 }
@@ -102,32 +122,73 @@ namespace StudentManagement.Services
             }
         }
 
+        // **MỚI: Method để đảm bảo response đầy đủ**
+        private string EnsureCompleteResponse(string response)
+        {
+            // Kiểm tra nếu response bị cắt ngang
+            var trimmedResponse = response.TrimEnd();
+
+            // Nếu kết thúc bằng dấu hai chấm hoặc không có dấu chấm câu
+            if (trimmedResponse.EndsWith(":") || trimmedResponse.EndsWith(",") ||
+                (!trimmedResponse.EndsWith(".") && !trimmedResponse.EndsWith("!") &&
+                 !trimmedResponse.EndsWith("?") && !trimmedResponse.EndsWith("😊") &&
+                 !trimmedResponse.EndsWith("👍") && trimmedResponse.Length > 10))
+            {
+                // Thêm thông tin hướng dẫn cụ thể
+                if (trimmedResponse.ToLower().Contains("đăng ký") && trimmedResponse.EndsWith(":"))
+                {
+                    return trimmedResponse + @"
+
+1. **Vào mục 'Đăng ký học phần'** trên hệ thống
+2. **Chọn học kỳ** muốn đăng ký
+3. **Tìm kiếm môn học** theo mã hoặc tên
+4. **Chọn lớp học phần** phù hợp với lịch học
+5. **Xác nhận đăng ký** và thanh toán học phí
+
+💡 **Lưu ý:** Kiểm tra thời gian đăng ký của khoa và điều kiện tiên quyết trước khi đăng ký!";
+                }
+
+                if (trimmedResponse.ToLower().Contains("truy cập") && trimmedResponse.EndsWith("truy cập"))
+                {
+                    return trimmedResponse + " **trang chủ hệ thống quản lý sinh viên** và đăng nhập bằng MSSV của bạn. Sau đó vào mục 'Đăng ký học phần' để thực hiện đăng ký môn học.";
+                }
+
+                // Trường hợp chung
+                return trimmedResponse + " Bạn có thể tìm hiểu thêm trong hệ thống hoặc liên hệ phòng đào tạo để được hỗ trợ!";
+            }
+
+            return response;
+        }
+
         public async Task<string> GenerateEducationalResponseAsync(string question, string mssv, string studentContext = "")
         {
-            // **NEW: Detect MSSV in question and fetch student data**
+            // **PHÂN TÍCH CÂU HỎI TRƯỚC KHI GỌI AI**
+            var questionAnalysis = await AnalyzeQuestionAsync(question, mssv);
+
+            // Nếu câu hỏi có thể trả lời trực tiếp từ data, trả lời ngay
+            if (questionAnalysis.CanAnswerDirectly)
+            {
+                return questionAnalysis.DirectAnswer;
+            }
+
+            // Nếu cần thông tin sinh viên, lấy data
             var studentInfo = await ExtractAndFetchStudentInfoAsync(question, studentContext, mssv);
-            
-            var enhancedContext = await BuildStudentContextPromptAsync(studentContext, studentInfo);
+            var enhancedContext = await BuildStudentContextPromptAsync(studentContext, studentInfo, questionAnalysis);
 
             var educationalPrompt = $@"
-🎓 EduBot – Trợ lý sinh viên
+🎓 EduBot – Trợ lý sinh viên thông minh
 
 {enhancedContext}
 
-📝 **Cách trả lời:**
-- Trả lời đúng trọng tâm, tối đa 6 câu
-- Chỉ đưa dữ liệu sinh viên nếu liên quan câu hỏi
-- Nếu là quy trình thao tác: dùng bullet, tối đa 4 bước
-- Không lặp lại yêu cầu của sinh viên
-- Hạn chế emoji
+📝 **YÊU CẦU QUAN TRỌNG:**
+- Trả lời TRỰC TIẾP câu hỏi, không lặp lại yêu cầu
+- Tối đa 5 câu, ngắn gọn, súc tích  
+- Dựa vào DỮ LIỆU THỰC TẾ từ database
+- Nếu không có data: nói rõ 'Không có thông tin' ❓ { question} 👉 **Trả lời ngay:**";
 
-❓ {question}
-
-👉 **Trả lời ngắn gọn:**";
-
-
-            return await GenerateResponseAsync(educationalPrompt);
+    return await GenerateResponseAsync(educationalPrompt); 
         }
+
 
         // **NEW METHOD: Extract MSSV and fetch student information**
         private async Task<StudentDatabaseInfo?> ExtractAndFetchStudentInfoAsync(string question, string studentContext, string mssv)
@@ -570,6 +631,459 @@ Bạn là EduBot - trợ lý AI thông minh của Student Management System tạ
             public decimal PaidAmount { get; set; }
             public decimal RemainingAmount { get; set; }
             public string Status { get; set; } = "";
+        }
+        // **MỚI: Phân tích câu hỏi để trả lời trực tiếp**
+        private async Task<QuestionAnalysis> AnalyzeQuestionAsync(string question, string mssv)
+        {
+            var lowerQuestion = question.ToLower().Trim();
+            var analysis = new QuestionAnalysis();
+
+            try
+            {
+                // **1. Câu hỏi về lịch học hôm nay**
+                if (IsAboutTodaySchedule(lowerQuestion))
+                {
+                    var todaySchedule = await GetTodayScheduleAsync(mssv);
+                    analysis.CanAnswerDirectly = true;
+                    analysis.DirectAnswer = todaySchedule;
+                    return analysis;
+                }
+
+                // **2. Câu hỏi về lịch học ngày mai**
+                if (IsAboutTomorrowSchedule(lowerQuestion))
+                {
+                    var tomorrowSchedule = await GetTomorrowScheduleAsync(mssv);
+                    analysis.CanAnswerDirectly = true;
+                    analysis.DirectAnswer = tomorrowSchedule;
+                    return analysis;
+                }
+
+                // **3. Câu hỏi về lịch thi**
+                if (IsAboutExamSchedule(lowerQuestion))
+                {
+                    var examSchedule = await GetUpcomingExamsAsync(mssv);
+                    analysis.CanAnswerDirectly = true;
+                    analysis.DirectAnswer = examSchedule;
+                    return analysis;
+                }
+
+                // **4. Câu hỏi về điểm số**
+                if (IsAboutGrades(lowerQuestion))
+                {
+                    var gradeInfo = await GetRecentGradesAsync(mssv);
+                    analysis.CanAnswerDirectly = true;
+                    analysis.DirectAnswer = gradeInfo;
+                    return analysis;
+                }
+
+                // **5. Câu hỏi về đăng ký môn học**
+                if (IsAboutCourseRegistration(lowerQuestion))
+                {
+                    var registrationInfo = await GetCourseRegistrationInfoAsync(mssv);
+                    analysis.CanAnswerDirectly = true;
+                    analysis.DirectAnswer = registrationInfo;
+                    return analysis;
+                }
+
+                // **6. Câu hỏi về học phí**
+                if (IsAboutTuition(lowerQuestion))
+                {
+                    var tuitionInfo = await GetTuitionInfoAsync(mssv);
+                    analysis.CanAnswerDirectly = true;
+                    analysis.DirectAnswer = tuitionInfo;
+                    return analysis;
+                }
+
+                analysis.QuestionType = GetQuestionType(lowerQuestion);
+                return analysis;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error analyzing question: {ex.Message}");
+                return analysis;
+            }
+        }
+
+        // **Kiểm tra loại câu hỏi**
+        private bool IsAboutTodaySchedule(string question) =>
+            question.Contains("hôm nay") && (question.Contains("lịch") || question.Contains("học"));
+
+        private bool IsAboutTomorrowSchedule(string question) =>
+            question.Contains("ngày mai") && (question.Contains("lịch") || question.Contains("học"));
+
+        private bool IsAboutExamSchedule(string question) =>
+            question.Contains("thi") || question.Contains("kiểm tra");
+
+        private bool IsAboutGrades(string question) =>
+            question.Contains("điểm") || question.Contains("kết quả") || question.Contains("gpa");
+
+        private bool IsAboutCourseRegistration(string question) =>
+            question.Contains("đăng ký") && (question.Contains("môn") || question.Contains("học phần"));
+
+        private bool IsAboutTuition(string question) =>
+            question.Contains("học phí") || question.Contains("tiền học");
+
+        private string GetQuestionType(string question)
+        {
+            if (question.Contains("lịch")) return "SCHEDULE";
+            if (question.Contains("điểm")) return "GRADE";
+            if (question.Contains("đăng ký")) return "REGISTRATION";
+            if (question.Contains("học phí")) return "TUITION";
+            return "GENERAL";
+        }
+
+        // **Lấy lịch học hôm nay**
+        private async Task<string> GetTodayScheduleAsync(string mssv)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Now);
+
+            var semester = await _context.Semesters
+                .FirstOrDefaultAsync(s => s.StartDate <= today && s.EndDate >= today);
+            var schedules = await _context.Schedules
+                .Include(s => s.Section)
+                    .ThenInclude(sec => sec.CurriculumCourse.Course)
+                .Include(s => s.ScheduleType)
+                .Include(s => s.PracticeGroup)
+                .Where(s =>
+                    (s.DayOfWeek == today.DayOfWeek) &&
+                    s.Section.Enrollments.Any(e => e.Student.MSSV == mssv && s.Section.Semester == semester))
+                .OrderBy(s => s.StartTime)
+                .ToListAsync();
+
+            var excludePracticeSchedulesWithoutNoPracticeGroupEnrollment = new List<Schedule>();
+            foreach (var schedule in schedules)
+                {
+                if (schedule.PracticeGroupId.HasValue)
+                {
+                    var isEnrolledInPracticeGroup = await _context.PracticeGroupEnrollments
+                        .AnyAsync(pge => pge.Student.MSSV == mssv &&
+                                         pge.PracticeGroupId == schedule.PracticeGroupId &&
+                                         pge.IsActive);
+                    if (isEnrolledInPracticeGroup)
+                    {
+                        excludePracticeSchedulesWithoutNoPracticeGroupEnrollment.Add(schedule);
+                    }
+                }
+                else
+                {
+                    excludePracticeSchedulesWithoutNoPracticeGroupEnrollment.Add(schedule);
+                }
+            }
+
+            if (!excludePracticeSchedulesWithoutNoPracticeGroupEnrollment.Any())
+                return "Hôm nay bạn không có lịch học.";
+
+            var result = "📅 **Lịch học hôm nay:**\n";
+            foreach (var schedule in excludePracticeSchedulesWithoutNoPracticeGroupEnrollment)
+            {
+                var courseInfo = $"{schedule.Section.CurriculumCourse.Course.CourseCode} - {schedule.Section.CurriculumCourse.Course.CourseName}";
+                var timeInfo = $"{schedule.StartTime:HH:mm} - {schedule.EndTime:HH:mm}";
+                var roomInfo = schedule.Room ?? "Online";
+                var typeInfo = schedule.ScheduleType.ScheduleTypeId == 3 ? " (THI)" :
+                              schedule.PracticeGroupId.HasValue ? " (TH)" : " (LT)";
+
+                result += $"• {timeInfo}: {courseInfo}{typeInfo} - Phòng {roomInfo}\n";
+            }
+
+            return result.TrimEnd('\n');
+        }
+
+        // **Lấy lịch học ngày mai**
+        private async Task<string> GetTomorrowScheduleAsync(string mssv)
+        {
+            var tomorrow = DateOnly.FromDateTime(DateTime.Now.AddDays(1));
+
+            var semester = await _context.Semesters
+                .FirstOrDefaultAsync(s => s.StartDate <= tomorrow && s.EndDate >= tomorrow);
+            var schedules = await _context.Schedules
+                .Include(s => s.Section)
+                    .ThenInclude(sec => sec.CurriculumCourse.Course)
+                .Include(s => s.ScheduleType)
+                .Include(s => s.PracticeGroup)
+                .Where(s =>
+                    (s.DayOfWeek == tomorrow.DayOfWeek) && s.ScheduleType.ScheduleTypeId != 3 &&
+                    s.Section.Enrollments.Any(e => e.Student.MSSV == mssv &&
+                                                  s.Section.Semester == semester))
+                .OrderBy(s => s.StartTime)
+                .ToListAsync();
+
+            var excludePracticeSchedulesWithoutNoPracticeGroupEnrollment = new List<Schedule>();
+            foreach (var schedule in schedules)
+            {
+                if (schedule.PracticeGroupId.HasValue)
+                {
+                    var isEnrolledInPracticeGroup = await _context.PracticeGroupEnrollments
+                        .AnyAsync(pge => pge.Student.MSSV == mssv &&
+                                         pge.PracticeGroupId == schedule.PracticeGroupId &&
+                                         pge.IsActive);
+                    if (isEnrolledInPracticeGroup)
+                    {
+                        excludePracticeSchedulesWithoutNoPracticeGroupEnrollment.Add(schedule);
+                    }
+                }
+                else
+                {
+                    excludePracticeSchedulesWithoutNoPracticeGroupEnrollment.Add(schedule);
+                }
+            }
+
+            if (!excludePracticeSchedulesWithoutNoPracticeGroupEnrollment.Any())
+                return "Ngày mai bạn không có lịch học.";
+
+            var result = "📅 **Lịch học ngày mai:**\n";
+            foreach (var schedule in excludePracticeSchedulesWithoutNoPracticeGroupEnrollment)
+            {
+                var courseInfo = $"{schedule.Section.CurriculumCourse.Course.CourseCode} - {schedule.Section.CurriculumCourse.Course.CourseName}";
+                var timeInfo = $"{schedule.StartTime:HH:mm} - {schedule.EndTime:HH:mm}";
+                var roomInfo = schedule.Room ?? "Online";
+                var typeInfo = schedule.ScheduleType.ScheduleTypeId == 3 ? " (THI)" :
+                              schedule.PracticeGroupId.HasValue ? " (TH)" : " (LT)";
+
+                result += $"• {timeInfo}: {courseInfo}{typeInfo} - Phòng {roomInfo}\n";
+            }
+
+            return result.TrimEnd('\n');
+        }
+
+        // **Lấy lịch thi sắp tới**
+        private async Task<string> GetUpcomingExamsAsync(string mssv)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            var semester = await _context.Semesters
+    .FirstOrDefaultAsync(s => s.StartDate <= today && s.EndDate >= today);
+            var examSchedules = await _context.Schedules
+                .Include(s => s.Section)
+                    .ThenInclude(sec => sec.CurriculumCourse.Course)
+                .Where(s =>
+                    s.ScheduleType.ScheduleTypeId == 3 && // Lịch thi
+                    s.Date.HasValue &&
+                    s.Date >= today &&
+                    s.Section.Enrollments.Any(e => e.Student.MSSV == mssv &&
+                                                 s.Section.Semester == semester))
+                .OrderBy(s => s.Date)
+                .Take(5)
+                .ToListAsync();
+
+            if (!examSchedules.Any())
+                return "Bạn không có lịch thi nào sắp tới.";
+
+            var result = "📝 **Lịch thi sắp tới:**\n";
+            foreach (var exam in examSchedules)
+            {
+                var courseInfo = $"{exam.Section.CurriculumCourse.Course.CourseCode} - {exam.Section.CurriculumCourse.Course.CourseName}";
+                var dateInfo = exam.Date?.ToString("dd/MM/yyyy") ?? "Chưa xác định";
+                var timeInfo = $"{exam.StartTime:HH:mm} - {exam.EndTime:HH:mm}";
+                var roomInfo = exam.Room ?? "Chưa xác định";
+
+                result += $"• {dateInfo} {timeInfo}: {courseInfo} - Phòng {roomInfo}\n";
+            }
+
+            return result.TrimEnd('\n');
+        }
+
+        // **Lấy thông tin điểm số gần đây**
+        private async Task<string> GetRecentGradesAsync(string mssv)
+        {
+            var student = await _context.Students.FirstOrDefaultAsync(s => s.MSSV == mssv);
+            if (student == null) return "Không tìm thấy thông tin sinh viên.";
+
+            // Lấy GPA gần nhất
+            var latestGPA = await _context.GpaSnapshots
+                .Include(g => g.Semester)
+                .Where(g => g.Student.MSSV == mssv)
+                .OrderByDescending(g => g.Semester.Year)
+                .ThenByDescending(g => g.Semester.Term)
+                .FirstOrDefaultAsync();
+
+            // Lấy 3 kết quả môn học gần nhất
+            var recentGrades = await _context.FinalResults
+                .Include(fr => fr.Section)
+                    .ThenInclude(s => s.CurriculumCourse.Course)
+                .Include(fr => fr.Section.Semester)
+                .Where(fr => fr.Student.MSSV == mssv)
+                .OrderByDescending(fr => fr.Section.Semester.Year)
+                .ThenByDescending(fr => fr.Section.Semester.Term)
+                .Take(3)
+                .ToListAsync();
+
+            var result = "📊 **Kết quả học tập:**\n";
+
+            if (latestGPA != null)
+            {
+                result += $"• GPA {latestGPA.Semester.Year}-{latestGPA.Semester.Term}: {latestGPA.Gpa:F2}/4.0 ({latestGPA.Gpa * 2.5:F2}/10)\n";
+            }
+
+            if (recentGrades.Any())
+            {
+                result += "**Môn học gần đây:**\n";
+                foreach (var grade in recentGrades)
+                {
+                    result += $"• {grade.Section.CurriculumCourse.Course.CourseCode}: {grade.FinalScore:F1}/10 ({grade.GradeLetter})\n";
+                }
+            }
+
+            return result.TrimEnd('\n');
+        }
+
+        // **Lấy thông tin đăng ký môn học**
+        private async Task<string> GetCourseRegistrationInfoAsync(string mssv)
+        {
+            var student = await _context.Students
+                .Include(s => s.Class)
+                    .ThenInclude(c => c.Program)
+                .FirstOrDefaultAsync(s => s.MSSV == mssv);
+
+            if (student == null) return "Không tìm thấy thông tin sinh viên.";
+
+            // Tìm học kỳ tiếp theo
+            var currentDate = DateTime.Now;
+            var nextSemester = await _context.Semesters
+                .Where(s => s.StartDate > DateOnly.FromDateTime(currentDate))
+                .OrderBy(s => s.StartDate)
+                .FirstOrDefaultAsync();
+
+            if (nextSemester == null) return "Chưa có thông tin học kỳ tiếp theo.";
+
+            // Tìm thời gian đăng ký
+            var registrationPeriod = await _context.RegistrationPeriods
+                .Include(rp => rp.Department)
+                .Include(rp => rp.Semester)
+                .FirstOrDefaultAsync(rp =>
+                    rp.Semester.SemesterId == nextSemester.SemesterId &&
+                    rp.Department.DepartmentId == student.Class.Program.Department.DepartmentId);
+
+            var result = $"📝 **Thông tin đăng ký học kỳ {nextSemester.Year}-{nextSemester.Term}:**\n";
+
+            if (registrationPeriod != null)
+            {
+                var startDate = registrationPeriod.StartDate.ToString("dd/MM/yyyy HH:mm");
+                var endDate = registrationPeriod.EndDate.ToString("dd/MM/yyyy HH:mm");
+                var status = registrationPeriod.IsActive ? "Đang mở" : "Chưa mở";
+
+                result += $"• Thời gian: {startDate} - {endDate}\n";
+                result += $"• Trạng thái: {status}\n";
+
+                if (currentDate < registrationPeriod.StartDate)
+                {
+                    var timeToStart = registrationPeriod.StartDate - currentDate;
+                    result += $"• Còn {timeToStart.Days} ngày {timeToStart.Hours} giờ nữa\n";
+                }
+            }
+            else
+            {
+                result += "• Chưa có thông tin thời gian đăng ký cho khoa của bạn\n";
+            }
+
+            // Gợi ý môn học nên đăng ký dựa trên năm học
+            var currentYear = currentDate.Year - student.YearOfAdmission + 1;
+            var suggestedCourses = await _context.CurriculumCourses
+                .Include(cc => cc.Course)
+                .Where(cc => cc.Program.AcademicProgramId == student.Class.Program.AcademicProgramId &&
+                            cc.SemeterSuggested == currentYear)
+                .Take(5)
+                .ToListAsync();
+
+            if (suggestedCourses.Any())
+            {
+                result += "**Môn học nên đăng ký (năm " + currentYear + "):**\n";
+                foreach (var course in suggestedCourses)
+                {
+                    result += $"• {course.Course.CourseCode} - {course.Course.CourseName}\n";
+                }
+            }
+
+            return result.TrimEnd('\n');
+        }
+
+        // **Lấy thông tin học phí**
+        private async Task<string> GetTuitionInfoAsync(string mssv)
+        {
+            var tuitionFees = await _context.TuitionFees
+                .Include(tf => tf.Semester)
+                .Where(tf => tf.Student.MSSV == mssv)
+                .OrderByDescending(tf => tf.Semester.Year)
+                .ThenByDescending(tf => tf.Semester.Term)
+                .Take(2)
+                .ToListAsync();
+
+            if (!tuitionFees.Any())
+                return "Không có thông tin học phí.";
+
+            var result = "💰 **Thông tin học phí:**\n";
+            foreach (var tuition in tuitionFees)
+            {
+                var semester = $"{tuition.Semester.Year}-{tuition.Semester.Term}";
+                var total = tuition.TotalAmount.ToString("N0");
+                var paid = tuition.PaidAmount.ToString("N0");
+                var remaining = tuition.RemainingAmount.ToString("N0");
+                var status = tuition.Status == TuitionStatus.FullyPaid ? "✅ Đã thanh toán" : "❌ Chưa thanh toán";
+
+                result += $"• HK {semester}: {paid}/{total} VND ({status})\n";
+                if (tuition.RemainingAmount > 0)
+                {
+                    result += $"  Còn lại: {remaining} VND\n";
+                }
+            }
+
+            return result.TrimEnd('\n');
+        }
+
+        // **Cải thiện BuildStudentContextPromptAsync**
+        private async Task<string> BuildStudentContextPromptAsync(string studentContext, StudentDatabaseInfo? studentInfo, QuestionAnalysis analysis)
+        {
+            var baseContext = $@"
+👨‍🎓 **SINH VIÊN:** {(string.IsNullOrEmpty(studentContext) ? "Chưa cung cấp thông tin" : studentContext)}
+🎯 **LOẠI CÂU HỎI:** {analysis.QuestionType}";
+
+            // **CHỈ THÊM THÔNG TIN CẦN THIẾT DựA THEO LOẠI CÂU HỎI**
+            if (studentInfo != null && !studentInfo.NotFound)
+            {
+                baseContext += $@"
+📋 **DỮ LIỆU CẦN THIẾT:**
+• Sinh viên: {studentInfo.StudentName} ({studentInfo.MSSV})
+• Lớp: {studentInfo.ClassName} - {studentInfo.ProgramName}";
+
+                // Chỉ thêm thông tin liên quan
+                switch (analysis.QuestionType)
+                {
+                    case "SCHEDULE":
+                        if (studentInfo.ScheduleInfos.Any())
+                        {
+                            baseContext += "\n• Lịch học tuần này: " + studentInfo.ScheduleInfos.Count + " buổi";
+                        }
+                        break;
+                    case "GRADE":
+                        baseContext += $"\n• GPA hiện tại: {studentInfo.CurrentGPA}/4.0";
+                        baseContext += $"\n• Tín chỉ tích lũy: {studentInfo.TotalCreditsCompleted}/{studentInfo.RequiredCredits}";
+                        break;
+                    case "TUITION":
+                        if (studentInfo.TuitionInfo.Any())
+                        {
+                            var latest = studentInfo.TuitionInfo.First();
+                            baseContext += $"\n• Học phí gần nhất: {latest.RemainingAmount:N0} VND còn lại";
+                        }
+                        break;
+                }
+            }
+
+            baseContext += $@"
+
+🤖 **HƯỚNG DẪN AI:**
+- Trả lời NGẮN GỌN, TRỰC TIẾP
+- Chỉ dùng dữ liệu có sẵn ở trên
+- Không giải thích dài dòng
+- Không lặp lại câu hỏi của sinh viên
+- Kết thúc câu trả lời ngay khi đã đủ thông tin";
+
+            return baseContext;
+        }
+
+        // **Class hỗ trợ phân tích câu hỏi**
+        private class QuestionAnalysis
+        {
+            public bool CanAnswerDirectly { get; set; } = false;
+            public string DirectAnswer { get; set; } = "";
+            public string QuestionType { get; set; } = "GENERAL";
         }
     }
 }

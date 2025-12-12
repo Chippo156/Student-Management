@@ -638,14 +638,13 @@ namespace StudentManagement.Services
                 .FirstOrDefaultAsync(s => s.SectionId == sectionId)
                 ?? throw new Exception($"Section with ID {sectionId} not found");
 
-            // Lấy tất cả sinh viên đã đăng ký section này
-            var enrolledStudents =  context.Enrollments
+            var enrolledStudents = context.Enrollments
                 .Include(e => e.Student)
                     .ThenInclude(s => s.User)
                 .Where(e => e.Section.SectionId == sectionId &&
                            e.enrollmentStatus == EnrollmentStatus.Enrolled)
                 .AsEnumerable()
-    .OrderBy(e => e.Student.User.FullName.Trim().Split(' ').LastOrDefault())
+                .OrderBy(e => e.Student.User.FullName.Trim().Split(' ').LastOrDefault())
                 .ToList();
 
             if (!enrolledStudents.Any())
@@ -653,7 +652,6 @@ namespace StudentManagement.Services
                 throw new Exception("Chưa có sinh viên đăng ký");
             }
 
-            // Lấy tất cả assessments của section này
             var allAssessments = await context.Assessment
                 .Include(a => a.AssessmentType)
                 .Where(a => a.Section.SectionId == sectionId)
@@ -661,7 +659,6 @@ namespace StudentManagement.Services
                 .ThenBy(a => a.Title)
                 .ToListAsync();
 
-            // Lấy tất cả grades của tất cả sinh viên trong section này
             var studentIds = enrolledStudents.Select(e => e.Student.Id).ToList();
             var allGrades = await context.Grades
                 .Include(g => g.Assessment)
@@ -671,14 +668,17 @@ namespace StudentManagement.Services
                            g.Assessment.Section.SectionId == sectionId)
                 .ToListAsync();
 
-            // Lấy final results của tất cả sinh viên
             var finalResults = await context.FinalResults
                 .Include(fr => fr.Student)
                 .Where(fr => studentIds.Contains(fr.Student.Id) &&
                             fr.Section.SectionId == sectionId)
                 .ToDictionaryAsync(fr => fr.Student.Id, fr => fr);
 
-            // Tạo response
+            // **MỚI: Kiểm tra xem section đã có final exam (CK) chưa**
+            var hasFinalExamAssessment = allAssessments.Any(a => a.AssessmentType.AssessmentTypeId == 4); // AssessmentTypeId = 4 là thi cuối kỳ
+            var finalExamGrades = allGrades.Where(g => g.Assessment.AssessmentType.AssessmentTypeId == 4).ToList();
+            var sectionHasFinalResults = finalResults.Any(); // Kiểm tra đã có FinalResult nào chưa
+
             var response = new SectionAllStudentsGradesResponse
             {
                 SectionId = section.SectionId,
@@ -696,7 +696,6 @@ namespace StudentManagement.Services
                 TotalAssessments = allAssessments.Count
             };
 
-            // Group assessments by assessment type để tạo cấu trúc dữ liệu
             var assessmentsByType = allAssessments
                 .GroupBy(a => a.AssessmentType.AssessmentTypeId)
                 .OrderBy(g => g.Key);
@@ -757,6 +756,10 @@ namespace StudentManagement.Services
                 // Lấy final result của sinh viên này
                 finalResults.TryGetValue(student.Id, out var finalResult);
 
+                // **MỚI: Kiểm tra student này đã có điểm CK chưa**
+                var studentHasFinalExam = studentGradesList.Any(g => g.Assessment.AssessmentType.AssessmentTypeId == 4);
+                var studentHasFinalResult = finalResult != null;
+
                 var studentGradeData = new StudentGradesInSection
                 {
                     StudentId = student.Id,
@@ -776,24 +779,30 @@ namespace StudentManagement.Services
                 {
                     if (gradesByAssessment.TryGetValue(assessmentHeader.AssessmentId, out var grade))
                     {
+                        // **CẬP NHẬT: Quy tắc CanEdit mới**
+                        bool canEdit = DetermineCanEditGrade(assessmentHeader, studentHasFinalResult, studentHasFinalExam);
+
                         assessmentGrades.Add(new AssessmentGradeData
                         {
                             AssessmentId = assessmentHeader.AssessmentId,
                             GradeId = grade.GradeId,
                             Score = grade.Score,
                             HasGrade = true,
-                            CanEdit = false 
+                            CanEdit = canEdit // Áp dụng logic mới
                         });
                     }
                     else
                     {
+                        // **CẬP NHẬT: Quy tắc CanEdit mới cho grade chưa có**
+                        bool canEdit = DetermineCanEditGrade(assessmentHeader, studentHasFinalResult, studentHasFinalExam);
+
                         assessmentGrades.Add(new AssessmentGradeData
                         {
                             AssessmentId = assessmentHeader.AssessmentId,
                             GradeId = null,
                             Score = null,
                             HasGrade = false,
-                            CanEdit = true // Có thể nhập điểm mới
+                            CanEdit = canEdit // Áp dụng logic mới
                         });
                     }
                 }
@@ -823,6 +832,46 @@ namespace StudentManagement.Services
             response.StudentsWithoutFinalGrades = response.TotalStudents - response.StudentsWithFinalGrades;
 
             return response;
+        }
+
+        // **MỚI: Method xác định quy tắc có thể chỉnh sửa điểm hay không**
+        private bool DetermineCanEditGrade(AssessmentHeaderInfo assessmentHeader, bool studentHasFinalResult, bool studentHasFinalExam)
+        {
+            /*
+             * QUY TẮC CHỈNH SỬA ĐIỂM:
+             * 1. Nếu sinh viên đã có FinalResult (kết quả cuối kỳ) -> KHÔNG cho sửa bất kỳ điểm nào
+             * 2. Nếu chưa có FinalResult:
+             *    - Điểm thành phần (AssessmentTypeId != 4): Cho phép nhập/sửa
+             *    - Điểm cuối kỳ (AssessmentTypeId == 4): Cho phép nhập/sửa
+             * 3. Đặc biệt: Nếu sinh viên đã có điểm CK thì có thể cân nhắc không cho sửa điểm thành phần
+             */
+
+            // Nếu sinh viên đã có kết quả cuối kỳ (FinalResult) -> Không cho sửa gì cả
+            if (studentHasFinalResult)
+            {
+                return false;
+            }
+
+            // Nếu chưa có FinalResult -> Cho phép nhập điểm
+            return true;
+
+            /* 
+             * TÙNG CHỌN: Nếu bạn muốn nghiêm ngặt hơn, có thể dùng logic này:
+             * 
+             * // Nếu đây là điểm cuối kỳ (AssessmentTypeId == 4)
+             * if (assessmentHeader.AssessmentTypeId == 4)
+             * {
+             *     return true; // Luôn cho phép nhập điểm CK nếu chưa có FinalResult
+             * }
+             * 
+             * // Nếu đây là điểm thành phần và sinh viên đã có điểm CK
+             * if (assessmentHeader.AssessmentTypeId != 4 && studentHasFinalExam)
+             * {
+             *     return false; // Không cho sửa điểm thành phần khi đã có điểm CK
+             * }
+             * 
+             * return true; // Các trường hợp khác cho phép nhập
+             */
         }
         private string GetEnrollmentStatusInVietnamese(EnrollmentStatus status)
         {

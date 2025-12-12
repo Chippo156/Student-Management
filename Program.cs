@@ -6,7 +6,6 @@ using Scalar.AspNetCore;
 using StudentManagement.Data;
 using StudentManagement.Exceptions;
 using StudentManagement.Hubs;
-using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services;
 using StudentManagement.Services.Interface;
