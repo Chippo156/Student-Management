@@ -334,7 +334,19 @@ const AttendancePage = () => {
         className: s.className || '',
       }));
 
-      setStudents(studentsData);
+      // Remove duplicates based on studentId
+      const uniqueStudents = studentsData.reduce((acc, current) => {
+        console.log(acc)
+        const exists = acc.find(item => item.studentId === current.studentId);
+        if (!exists) {
+          acc.push(current);
+        } else {
+          console.warn('Duplicate student found in attendance:', current.studentId, current.fullName);
+        }
+        return acc;
+      }, []);
+
+      setStudents(uniqueStudents);
 
       // Map attendance từ session
       const attendanceMap = {};
@@ -1180,12 +1192,7 @@ const AttendancePage = () => {
               dataSource={sessions}
               loading={loading}
               rowKey="attendanceSessionId"
-              pagination={{
-                pageSize: 8,
-                showSizeChanger: true,
-                showTotal: (total) => `Tổng ${total} phiên`,
-                position: ['bottomRight'],
-              }}
+              pagination={false}
               scroll={{ x: 'max-content' }}
               size="middle"
               rowClassName={(record) =>
@@ -1219,13 +1226,7 @@ const AttendancePage = () => {
                 dataSource={students}
                 loading={loading}
                 rowKey="studentId"
-                pagination={{
-                  pageSize: 20,
-                  showSizeChanger: true,
-                  showTotal: (total, range) =>
-                    `${range[0]}-${range[1]} của ${total} sinh viên`,
-                  position: ['bottomRight'],
-                }}
+                pagination={false}
                 scroll={{ x: 'max-content' }}
                 size="middle"
               />

@@ -401,9 +401,8 @@ const AttendanceStatistics = ({ sectionId, sectionName }) => {
                     totalSessions > 0
                       ? ((student.absentCount || 0) / totalSessions) * 100
                       : 0;
-
                   return (
-                    <TableRow key={student.studentId || index} hover>
+                    <TableRow key={`${student.studentId}_${index}`} hover>
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>{student.mssv}</TableCell>
                       <TableCell>{student.studentName}</TableCell>
