@@ -919,8 +919,8 @@ namespace StudentManagement.Services
                 .FirstOrDefaultAsync(s => s.MSSV == mssv)
                 ?? throw new Exception("Student not found");
 
-            var now = DateTime.Now;
-            
+            var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
             // Get attendance sessions where:
             // 1. Student is enrolled in the section
             // 2. Self check-in is enabled
@@ -963,9 +963,9 @@ namespace StudentManagement.Services
                 var isCheckInActive = now >= session.SelfCheckInStartTime && 
                                      now <= session.SelfCheckInEndTime;
 
-                var minutesUntilStart = session.SelfCheckInStartTime.HasValue 
-                    ? Math.Max(0, (int)(session.SelfCheckInStartTime.Value - now).TotalMinutes)
-                    : 0;
+                var minutesUntilStart = session.SelfCheckInStartTime.HasValue
+            ? Math.Max(0, (int)(session.SelfCheckInStartTime.Value - now).TotalMinutes)
+            : 0;
 
                 var minutesUntilEnd = session.SelfCheckInEndTime.HasValue
                     ? Math.Max(0, (int)(session.SelfCheckInEndTime.Value - now).TotalMinutes)

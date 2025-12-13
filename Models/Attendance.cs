@@ -22,7 +22,7 @@ namespace StudentManagement.Models
         
         // Attendance details
         public AttendanceStatus Status { get; set; }
-        public DateTime RecordedAt { get; set; } = DateTime.Now;
+        public DateTime RecordedAt { get; set; } = DateTime.UtcNow;
         public string? Note { get; set; }
         
         // Who recorded this attendance
@@ -49,7 +49,7 @@ namespace StudentManagement.Models
         
         // Session status
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public int CreatedByLecturerId { get; set; }
         [JsonIgnore]
         public Lecturer CreatedByLecturer { get; set; } = null!;

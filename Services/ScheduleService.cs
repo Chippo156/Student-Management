@@ -24,21 +24,21 @@ namespace StudentManagement.Services
                 return false;
             }
 
-            var sameSectionConflict = await context.Schedules
-                .Include(s => s.Section)
-                .Where(s =>
-                    s.Section.SectionId == sectionId &&
-                    s.DayOfWeek == dayOfWeek &&
-                    s.Room == room &&
-                    ((s.StartTime <= startTime && s.EndTime > startTime) ||
-                     (s.StartTime < endTime && s.EndTime >= endTime) ||
-                     (s.StartTime >= startTime && s.EndTime <= endTime)))
-                .AnyAsync();
+            //var sameSectionConflict = await context.Schedules
+            //    .Include(s => s.Section)
+            //    .Where(s =>
+            //        s.Section.SectionId == sectionId &&
+            //        s.DayOfWeek == dayOfWeek &&
+            //        s.Room == room &&
+            //        ((s.StartTime <= startTime && s.EndTime > startTime) ||
+            //         (s.StartTime < endTime && s.EndTime >= endTime) ||
+            //         (s.StartTime >= startTime && s.EndTime <= endTime)))
+            //    .AnyAsync();
 
-            if (sameSectionConflict)
-            {
-                return true;
-            }
+            //if (sameSectionConflict)
+            //{
+            //    return true;
+            //}
 
             var targetSemesterId = currentSection.SemesterId;
             var lecturerId = currentSection.Id;
@@ -106,6 +106,7 @@ namespace StudentManagement.Services
                 return true;
             }
 
+            // BƯỚC 5: Check for conflicts với practice group schedules - cùng phòng
             var practiceScheduleConflicts = await context.Schedules
                 .Include(s => s.Section)
                   .ThenInclude(s => s.Semester)
