@@ -88,7 +88,8 @@ const SectionsTable = forwardRef((props, ref) => {
             </span>
           );
         }
-        if (record.currentCapacity >= record.maxCapacity) {
+        console.log(record);
+        if (!record.isAvailable) {
           return (
             <span style={{ color: theme.palette.error.main }}>❌ Đã đầy</span>
           );

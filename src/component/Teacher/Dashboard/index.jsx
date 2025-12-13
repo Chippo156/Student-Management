@@ -316,7 +316,7 @@ const TeacherDashboard = () => {
 
       {/* Statistics Cards */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={12} sm={12} lg={6}>
+        <Col xs={24} sm={24} lg={8}>
           <Card
             style={{
               ...cardStyle,
@@ -340,7 +340,7 @@ const TeacherDashboard = () => {
             />
           </Card>
         </Col>
-        <Col xs={12} sm={12} lg={6}>
+        <Col xs={24} sm={24} lg={8}>
           <Card
             style={{
               ...cardStyle,
@@ -364,7 +364,7 @@ const TeacherDashboard = () => {
             />
           </Card>
         </Col>
-        <Col xs={12} sm={12} lg={6}>
+        <Col xs={24} sm={24} lg={8}>
           <Card
             style={{
               ...cardStyle,
@@ -390,7 +390,7 @@ const TeacherDashboard = () => {
             />
           </Card>
         </Col>
-        <Col xs={12} sm={12} lg={6}>
+        {/* <Col xs={12} sm={12} lg={6}>
           <Card
             style={{
               ...cardStyle,
@@ -415,7 +415,7 @@ const TeacherDashboard = () => {
               valueStyle={{ color: colors.fg, fontWeight: 600, fontSize: 24 }}
             />
           </Card>
-        </Col>
+        </Col> */}
       </Row>
 
       {/* Quick Menu */}
@@ -479,7 +479,7 @@ const TeacherDashboard = () => {
       </Card>
 
       {/* Main Content */}
-      <Row gutter={[16, 16]}>
+      <Row gutter={[16, 16]} className="equal-height-cards ">
         {/* Left Column */}
         <Col xs={24} lg={16}>
           <Row gutter={[16, 16]}>
@@ -494,9 +494,7 @@ const TeacherDashboard = () => {
             </Col>
 
             {/* Recent Activity */}
-            <Col xs={24}>
-              <TeacherRecentActivity />
-            </Col>
+            <Col xs={24}>{/* <TeacherRecentActivity /> */}</Col>
           </Row>
         </Col>
 

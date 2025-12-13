@@ -35,7 +35,9 @@ const StudentEditInfoPage = () => {
         // Lấy người thân
         const familyRes =
           await familyRelationshipService.getFamilyRelationshipsByStudent();
-        const familyListRaw = Array.isArray(familyRes) ? familyRes : familyRes?.data || [];
+        const familyListRaw = Array.isArray(familyRes)
+          ? familyRes
+          : familyRes?.data || [];
         const familyList = familyListRaw.map((item) => ({
           ...item,
           id: item.familyRelationshipId,
@@ -90,7 +92,9 @@ const StudentEditInfoPage = () => {
         religion: values.religion ?? null,
         avatarUrl: null,
         citizenIdCard: values.citizenIdCard ?? null,
-        issuedDate: values.issuedDate ? values.issuedDate.format('YYYY-MM-DD') : null,
+        issuedDate: values.issuedDate
+          ? values.issuedDate.format('YYYY-MM-DD')
+          : null,
         issuedPlace: values.issuedPlace ?? null,
         healthInsuranceNumber: values.healthInsuranceNumber ?? null,
         registeredHospital: values.healthInsuranceRegistrationPlace ?? null,
@@ -128,7 +132,10 @@ const StudentEditInfoPage = () => {
       const createList = familyList.filter((item) => !item.id);
 
       for (const member of updateList) {
-        await familyRelationshipService.updateFamilyRelationship(member.id, member);
+        await familyRelationshipService.updateFamilyRelationship(
+          member.id,
+          member
+        );
       }
       for (const member of createList) {
         await familyRelationshipService.createFamilyRelationship(member);
@@ -169,7 +176,13 @@ const StudentEditInfoPage = () => {
         minHeight: '100vh',
       }}
     >
-      <Paper elevation={3} sx={{ p: { xs: 2, sm: 2, md: 4 }, background: theme.palette.background.paper }}>
+      <Paper
+        elevation={3}
+        sx={{
+          p: { xs: 2, sm: 2, md: 4 },
+          background: theme.palette.background.paper,
+        }}
+      >
         <Tabs defaultActiveKey="1">
           <TabPane tab="Thông tin cá nhân" key="1">
             <PersonalInfoForm
@@ -182,7 +195,10 @@ const StudentEditInfoPage = () => {
           </TabPane>
 
           <TabPane tab="Quan hệ gia đình" key="2">
-            <FamilyMembersList familyList={familyList} setFamilyList={setFamilyList} />
+            <FamilyMembersList
+              familyList={familyList}
+              setFamilyList={setFamilyList}
+            />
             <div style={{ textAlign: 'center', marginTop: 16 }}>
               <Button
                 type="primary"

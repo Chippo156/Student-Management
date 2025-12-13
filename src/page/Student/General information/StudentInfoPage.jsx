@@ -122,7 +122,8 @@ const StudentInfoPage = () => {
   return (
     <div
       style={{
-        padding: window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 20 : 24,
+        padding:
+          window.innerWidth < 600 ? 16 : window.innerWidth < 960 ? 20 : 24,
         background: theme.palette.background.default,
         minHeight: '100vh',
       }}
@@ -205,12 +206,22 @@ const StudentInfoPage = () => {
               </Col>
               <Col xs={12} sm={12}>
                 <div>
-                  <div style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 13, marginBottom: 8 }}>
+                  <div
+                    style={{
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      fontSize: 13,
+                      marginBottom: 8,
+                    }}
+                  >
                     Năm nhập học
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                  >
                     <CalendarOutlined style={{ color: '#fff', fontSize: 20 }} />
-                    <span style={{ color: '#fff', fontSize: 20, fontWeight: 500 }}>
+                    <span
+                      style={{ color: '#fff', fontSize: 20, fontWeight: 500 }}
+                    >
                       {data?.yearOfAdmission || 'N/A'}
                     </span>
                   </div>
@@ -239,7 +250,11 @@ const StudentInfoPage = () => {
       </div>
 
       {/* Quick Stats */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      <Row
+        gutter={[16, 16]}
+        style={{ marginBottom: 24 }}
+        className="equal-height-cards"
+      >
         <Col xs={24} sm={12} md={6}>
           <Card
             style={{
@@ -269,12 +284,26 @@ const StudentInfoPage = () => {
             }}
           >
             <div style={{ padding: '8px 0' }}>
-              <div style={{ color: theme.palette.text.secondary, fontSize: 14, marginBottom: 4 }}>
+              <div
+                style={{
+                  color: theme.palette.text.secondary,
+                  fontSize: 14,
+                  marginBottom: 4,
+                }}
+              >
                 Số điện thoại
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <PhoneOutlined style={{ color: theme.palette.success.main, fontSize: 16 }} />
-                <span style={{ color: theme.palette.success.main, fontSize: 16, fontWeight: 600 }}>
+                <PhoneOutlined
+                  style={{ color: theme.palette.success.main, fontSize: 16 }}
+                />
+                <span
+                  style={{
+                    color: theme.palette.success.main,
+                    fontSize: 16,
+                    fontWeight: 600,
+                  }}
+                >
                   {user?.phone || 'Chưa có'}
                 </span>
               </div>
