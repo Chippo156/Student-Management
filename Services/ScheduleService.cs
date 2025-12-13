@@ -12,7 +12,6 @@ namespace StudentManagement.Services
     {
         public async Task<bool> CheckScheduleConflictsAsync(int sectionId, DateOnly? dateEvent, DayOfWeek? dayOfWeek, TimeOnly startTime, TimeOnly endTime, string room)
         {
-            // BƯỚC 1: Lấy SemesterId và LecturerId của section hiện tại
             var currentSection = await context.Sections
                 .Include(s => s.Semester)
                 .Include(s => s.Lecturer)
@@ -25,7 +24,6 @@ namespace StudentManagement.Services
                 return false;
             }
 
-            // BƯỚC 1.1: Kiểm tra xung đột trong cùng section (phòng + thời gian)
             var sameSectionConflict = await context.Schedules
                 .Include(s => s.Section)
                 .Where(s =>
@@ -45,7 +43,6 @@ namespace StudentManagement.Services
             var targetSemesterId = currentSection.SemesterId;
             var lecturerId = currentSection.Id;
 
-            // BƯỚC 2:- Kiểm tra xung đột lịch giảng viên (bất kể phòng học)
             var lecturerScheduleConflicts = await context.Schedules
                 .Include(s => s.Section)
                     .ThenInclude(sec => sec.Semester)
@@ -67,7 +64,6 @@ namespace StudentManagement.Services
                 return true; // Giảng viên bị xung đột lịch
             }
 
-            // BƯỚC 3: **MỚI** - Kiểm tra xung đột với lịch thực hành mà giảng viên phụ trách
             var lecturerPracticeConflicts = await context.Schedules
                 .Include(s => s.Section)
                     .ThenInclude(sec => sec.Semester)
@@ -90,7 +86,6 @@ namespace StudentManagement.Services
                 return true; // Giảng viên bị xung đột với lịch thực hành
             }
 
-            // BƯỚC 4: Check for conflicts với main schedules (theory schedules) - cùng phòng
             var mainScheduleConflicts = await context.Schedules
                 .Include(s => s.Section)
                   .ThenInclude(s => s.Semester)
@@ -111,7 +106,6 @@ namespace StudentManagement.Services
                 return true;
             }
 
-            // BƯỚC 5: Check for conflicts với practice group schedules - cùng phòng
             var practiceScheduleConflicts = await context.Schedules
                 .Include(s => s.Section)
                   .ThenInclude(s => s.Semester)

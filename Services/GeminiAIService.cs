@@ -745,7 +745,7 @@ Bạn là EduBot - trợ lý AI thông minh của Student Management System tạ
                 .Include(s => s.ScheduleType)
                 .Include(s => s.PracticeGroup)
                 .Where(s =>
-                    (s.DayOfWeek == today.DayOfWeek) &&
+                    (s.DayOfWeek == today.DayOfWeek) && s.ScheduleType.ScheduleTypeId != 3 &&
                     s.Section.Enrollments.Any(e => e.Student.MSSV == mssv && s.Section.Semester == semester))
                 .OrderBy(s => s.StartTime)
                 .ToListAsync();

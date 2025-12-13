@@ -10,15 +10,12 @@ namespace StudentManagement.Services
     {
         public async Task<Prerequisite> CreatePrerequisiteAsync(PrerequisiteRequest request)
         {
-            // Check that course exists
             var course = await context.Courses.FindAsync(request.CourseId)
                 ?? throw new Exception("Course not found");
             
-            // Check that prerequisite course exists
             var prerequisiteCourse = await context.Courses.FindAsync(request.PrerequisiteCourseId)
                 ?? throw new Exception("Prerequisite course not found");
             
-            // Check that the prerequisite relationship doesn't create a cycle
             var hasCircularDependency = await CheckCircularDependencyAsync(request.CourseId, request.PrerequisiteCourseId);
             if (hasCircularDependency)
             {

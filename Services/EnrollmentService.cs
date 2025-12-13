@@ -93,7 +93,6 @@ namespace StudentManagement.Services
 
             try
             {
-                // Get student information
                 var student = await context.Students
                     .Include(s => s.Class)
                         .ThenInclude(c => c.Program)
@@ -110,7 +109,6 @@ namespace StudentManagement.Services
                     };
                 }
 
-                // Get section information with all related data
                 var section = await context.Sections
                     .Include(s => s.CurriculumCourse)
                         .ThenInclude(cc => cc.Course)
@@ -167,7 +165,6 @@ namespace StudentManagement.Services
                     };
                 }
 
-                // Check if student is already enrolled in this section
                 var existingEnrollment = await context.Enrollments
                     .FirstOrDefaultAsync(e => e.Student.Id == student.Id &&
                                             e.Section.SectionId == section.SectionId);
@@ -182,7 +179,6 @@ namespace StudentManagement.Services
                     };
                 }
 
-                // Check if student is already enrolled in another section of the same course in the same semester
                 var duplicateEnrollment = await context.Enrollments
                     .Include(e => e.Section)
                         .ThenInclude(s => s.CurriculumCourse)
@@ -200,7 +196,6 @@ namespace StudentManagement.Services
                     };
                 }
 
-                // **NEW: Check schedule conflicts before enrollment**
                 var scheduleConflictResult = await CheckScheduleConflictsForStudentAsync(student.Id, section);
                 if (!scheduleConflictResult.IsValid)
                 {
@@ -212,7 +207,6 @@ namespace StudentManagement.Services
                     };
                 }
 
-                // Create enrollment
                 var enrollment = new Enrollment
                 {
                     Student = student,
@@ -224,17 +218,14 @@ namespace StudentManagement.Services
                 context.Enrollments.Add(enrollment);
                 await context.SaveChangesAsync();
 
-                // Update section enrollment count
                 section.EnrolledCount = section.EnrolledCount + 1;
                 context.Sections.Update(section);
 
-                // Handle practice group enrollment
                 string practiceGroupInfo = "";
                 if (section.CurriculumCourse.Course.CreditsLab > 0)
                 {
                     if (request.PracticeGroupId.HasValue)
                     {
-                        // Sinh viên đã chọn nhóm thực hành cụ thể
                         var practiceGroupResult = await EnrollInSpecificPracticeGroupAsync(student.Id, request.PracticeGroupId.Value);
                         if (practiceGroupResult.IsSuccess == false)
                         {
@@ -257,7 +248,6 @@ namespace StudentManagement.Services
                     }
                 }
 
-                // After successful enrollment, automatically generate or update tuition fee
                 await HandleTuitionFeeCreationAsync(student, section, enrollment);
 
                 await context.SaveChangesAsync();
@@ -295,24 +285,20 @@ namespace StudentManagement.Services
             }
         }
 
-        // **NEW: Method to check schedule conflicts for student enrollment**
         private async Task<(bool IsValid, List<string> Errors)> CheckScheduleConflictsForStudentAsync(int studentId, Section newSection)
         {
             var errors = new List<string>();
 
-            // Get all schedules of the new section (lịch lý thuyết của section mới)
             var newSectionSchedules = newSection.Schedules
-                .Where(sch => !sch.PracticeGroupId.HasValue && // Lịch lý thuyết
-                             sch.ScheduleType.ScheduleTypeId != 3) // Không phải lịch thi
+                .Where(sch => !sch.PracticeGroupId.HasValue &&
+                             sch.ScheduleType.ScheduleTypeId != 3)
                 .ToList();
 
             if (!newSectionSchedules.Any())
             {
-                // Nếu section mới chưa có lịch thì không có xung đột
                 return (true, errors);
             }
 
-            // Get all current enrolled sections of the student in the same semester
             var studentCurrentEnrollments = await context.Enrollments
                 .Include(e => e.Section)
                     .ThenInclude(s => s.Schedules)
@@ -327,19 +313,17 @@ namespace StudentManagement.Services
                        e.enrollmentStatus == EnrollmentStatus.Enrolled)
                 .ToListAsync();
 
-            // Get all theory schedules from student's current enrollments
             var studentTheorySchedules = new List<Schedule>();
             foreach (var enrollment in studentCurrentEnrollments)
             {
                 var theorySchedules = enrollment.Section.Schedules
-                    .Where(sch => !sch.PracticeGroupId.HasValue && // Lịch lý thuyết
-                                 sch.ScheduleType.ScheduleTypeId != 3) // Không phải lịch thi
+                    .Where(sch => !sch.PracticeGroupId.HasValue &&
+                                 sch.ScheduleType.ScheduleTypeId != 3)
                     .ToList();
 
                 studentTheorySchedules.AddRange(theorySchedules);
             }
 
-            // Get all practice group schedules that student is enrolled in the same semester
             var studentPracticeSchedules = await context.PracticeGroupEnrollments
                 .Include(pge => pge.PracticeGroup)
                     .ThenInclude(pg => pg.Schedules)
@@ -358,15 +342,12 @@ namespace StudentManagement.Services
                 .Where(sch => sch.ScheduleType.ScheduleTypeId != 3) // Không phải lịch thi
                 .ToListAsync();
 
-            // Combine all student's current schedules (theory + practice)
             var allStudentCurrentSchedules = studentTheorySchedules.Concat(studentPracticeSchedules).ToList();
 
-            // Check conflicts between new section schedules and student's current schedules
             foreach (var newSchedule in newSectionSchedules)
             {
                 foreach (var existingSchedule in allStudentCurrentSchedules)
                 {
-                    // Check conflict on recurring schedule (same day of week)
                     if (newSchedule.DayOfWeek.HasValue && existingSchedule.DayOfWeek.HasValue &&
                         newSchedule.DayOfWeek == existingSchedule.DayOfWeek &&
                         DoTimesOverlap(newSchedule.StartTime, newSchedule.EndTime,
@@ -399,12 +380,10 @@ namespace StudentManagement.Services
             return (errors.Count == 0, errors);
         }
 
-        // **NEW: Helper method to get course info from schedule**
         private string GetCourseFromSchedule(Schedule schedule, List<Enrollment> enrollments)
         {
             if (schedule.PracticeGroupId.HasValue)
             {
-                // This is a practice schedule, find from practice group enrollments
                 var practiceGroup = context.PracticeGroups
                     .Include(pg => pg.Section)
                         .ThenInclude(s => s.CurriculumCourse)
@@ -417,7 +396,6 @@ namespace StudentManagement.Services
             }
             else
             {
-                // This is a theory schedule, find from enrollments
                 var enrollment = enrollments.FirstOrDefault(e => e.Section.SectionId == schedule.Section.SectionId);
                 return enrollment != null ?
                     $"{enrollment.Section.CurriculumCourse.Course.CourseCode} - {enrollment.Section.CurriculumCourse.Course.CourseName}" :
@@ -425,12 +403,10 @@ namespace StudentManagement.Services
             }
         }
 
-        // **UPDATED: Enhanced EnrollInSpecificPracticeGroupAsync to include schedule conflict check**
         private async Task<(bool IsSuccess, string GroupName, string ErrorMessage)> EnrollInSpecificPracticeGroupAsync(int studentId, int practiceGroupId)
         {
             try
             {
-                // Kiểm tra nhóm thực hành có tồn tại và còn chỗ không
                 var practiceGroup = await context.PracticeGroups
                     .Include(pg => pg.Schedules) // Include schedules để kiểm tra xung đột
                         .ThenInclude(sch => sch.ScheduleType)
@@ -448,7 +424,6 @@ namespace StudentManagement.Services
                     return (false, "", "Nhóm thực hành đã đầy");
                 }
 
-                // Kiểm tra sinh viên đã có nhóm thực hành cho section này chưa
                 var existingPracticeEnrollment = await context.PracticeGroupEnrollments
                     .Include(pge => pge.PracticeGroup)
                     .FirstOrDefaultAsync(pge => pge.StudentId == studentId &&
@@ -460,7 +435,6 @@ namespace StudentManagement.Services
                     return (false, "", "Sinh viên đã có nhóm thực hành cho học phần này");
                 }
 
-                // **ENHANCED: Comprehensive schedule conflict check for practice group**
                 var conflictErrors = await CheckPracticeGroupScheduleConflictsForStudentAsync(studentId, practiceGroup);
                 if (conflictErrors.Any())
                 {
@@ -490,7 +464,6 @@ namespace StudentManagement.Services
 
         private async Task HandleTuitionFeeCreationAsync(Student student, Section section, Enrollment enrollment)
         {
-            // Check if tuition fee already exists for this semester
             var existingTuition = await context.TuitionFees
                 .Include(tf => tf.Details)
                 .FirstOrDefaultAsync(tf => tf.StudentId == student.Id && 
@@ -502,7 +475,6 @@ namespace StudentManagement.Services
 
             if (existingTuition == null)
             {
-                // Create new tuition fee for this semester
                 var newTuition = new TuitionFee
                 {
                     StudentId = student.Id,
@@ -536,13 +508,11 @@ namespace StudentManagement.Services
             }
             else
             {
-                // Check if this course is already in the tuition fee
                 var existingDetail = existingTuition.Details
                     .FirstOrDefault(d => d.SectionId == section.SectionId);
 
                 if (existingDetail == null)
                 {
-                    // Add new course to existing tuition fee
                     var tuitionDetail = new TuitionFeeDetail
                     {
                         TuitionFeeId = existingTuition.TuitionFeeId,
