@@ -170,14 +170,22 @@ const GradesPage = () => {
 
         // Debug: Log raw response to check for duplicates from backend
         if (gradesResponse?.studentGrades) {
-          const studentIds = gradesResponse.studentGrades.map(s => s.studentId);
+          const studentIds = gradesResponse.studentGrades.map(
+            (s) => s.studentId
+          );
           const uniqueIds = [...new Set(studentIds)];
           if (studentIds.length !== uniqueIds.length) {
             console.error('⚠️ BACKEND BUG: API trả về duplicate students!');
             console.error('Tổng số students từ API:', studentIds.length);
             console.error('Số students unique:', uniqueIds.length);
-            console.error('Số students bị duplicate:', studentIds.length - uniqueIds.length);
-            console.error('API endpoint:', `/api/Grade/GetAllStudentGradesBySection/${selectedSection}`);
+            console.error(
+              'Số students bị duplicate:',
+              studentIds.length - uniqueIds.length
+            );
+            console.error(
+              'API endpoint:',
+              `/api/Grade/GetAllStudentGradesBySection/${selectedSection}`
+            );
           }
         }
 
@@ -228,17 +236,25 @@ const GradesPage = () => {
 
         // Remove duplicates based on studentId
         const uniqueStudents = studentsWithGrades.reduce((acc, current) => {
-          const exists = acc.find(item => item.studentId === current.studentId);
+          const exists = acc.find(
+            (item) => item.studentId === current.studentId
+          );
           if (!exists) {
             acc.push(current);
           } else {
-            console.warn('Duplicate student found:', current.studentId, current.fullName);
+            console.warn(
+              'Duplicate student found:',
+              current.studentId,
+              current.fullName
+            );
           }
           return acc;
         }, []);
 
         if (uniqueStudents.length !== studentsWithGrades.length) {
-          console.warn(`Removed ${studentsWithGrades.length - uniqueStudents.length} duplicate students`);
+          console.warn(
+            `Removed ${studentsWithGrades.length - uniqueStudents.length} duplicate students`
+          );
         }
 
         setStudents(uniqueStudents);
@@ -356,7 +372,9 @@ const GradesPage = () => {
 
         // Remove duplicates based on studentId
         const uniqueStudents = studentsWithGrades.reduce((acc, current) => {
-          const exists = acc.find(item => item.studentId === current.studentId);
+          const exists = acc.find(
+            (item) => item.studentId === current.studentId
+          );
           if (!exists) {
             acc.push(current);
           }
@@ -600,23 +618,33 @@ const GradesPage = () => {
             const value = row[colInfo.col];
             if (value === undefined || value === '' || value === null) continue;
 
-            const assessment = assessmentHeaders.find(a => a.assessmentId === colInfo.assessmentId);
+            const assessment = assessmentHeaders.find(
+              (a) => a.assessmentId === colInfo.assessmentId
+            );
             if (!assessment) continue;
 
             const assessmentTypeId = assessment.assessmentTypeId;
 
             // Giữa kỳ: cần đủ LT và TH
             if (assessmentTypeId === 3) {
-              const allLTFilled = ltAssessments.every(ltAss => {
-                const existingGrade = student.assessmentGrades?.find(g => g.assessmentId === ltAss.assessmentId);
-                const hasExisting = existingGrade?.score !== null && existingGrade?.score !== undefined;
+              const allLTFilled = ltAssessments.every((ltAss) => {
+                const existingGrade = student.assessmentGrades?.find(
+                  (g) => g.assessmentId === ltAss.assessmentId
+                );
+                const hasExisting =
+                  existingGrade?.score !== null &&
+                  existingGrade?.score !== undefined;
                 const hasImported = importedGrades.has(ltAss.assessmentId);
                 return hasExisting || hasImported;
               });
 
-              const allTHFilled = thAssessments.every(thAss => {
-                const existingGrade = student.assessmentGrades?.find(g => g.assessmentId === thAss.assessmentId);
-                const hasExisting = existingGrade?.score !== null && existingGrade?.score !== undefined;
+              const allTHFilled = thAssessments.every((thAss) => {
+                const existingGrade = student.assessmentGrades?.find(
+                  (g) => g.assessmentId === thAss.assessmentId
+                );
+                const hasExisting =
+                  existingGrade?.score !== null &&
+                  existingGrade?.score !== undefined;
                 const hasImported = importedGrades.has(thAss.assessmentId);
                 return hasExisting || hasImported;
               });
@@ -633,25 +661,38 @@ const GradesPage = () => {
 
             // Cuối kỳ: cần đủ LT, TH và GK
             if (assessmentTypeId === 4) {
-              const allLTFilled = ltAssessments.every(ltAss => {
-                const existingGrade = student.assessmentGrades?.find(g => g.assessmentId === ltAss.assessmentId);
-                const hasExisting = existingGrade?.score !== null && existingGrade?.score !== undefined;
+              const allLTFilled = ltAssessments.every((ltAss) => {
+                const existingGrade = student.assessmentGrades?.find(
+                  (g) => g.assessmentId === ltAss.assessmentId
+                );
+                const hasExisting =
+                  existingGrade?.score !== null &&
+                  existingGrade?.score !== undefined;
                 const hasImported = importedGrades.has(ltAss.assessmentId);
                 return hasExisting || hasImported;
               });
 
-              const allTHFilled = thAssessments.every(thAss => {
-                const existingGrade = student.assessmentGrades?.find(g => g.assessmentId === thAss.assessmentId);
-                const hasExisting = existingGrade?.score !== null && existingGrade?.score !== undefined;
+              const allTHFilled = thAssessments.every((thAss) => {
+                const existingGrade = student.assessmentGrades?.find(
+                  (g) => g.assessmentId === thAss.assessmentId
+                );
+                const hasExisting =
+                  existingGrade?.score !== null &&
+                  existingGrade?.score !== undefined;
                 const hasImported = importedGrades.has(thAss.assessmentId);
                 return hasExisting || hasImported;
               });
 
               let hasGKScore = true;
               if (giuaKyAssessment) {
-                const existingGK = student.assessmentGrades?.find(g => g.assessmentId === giuaKyAssessment.assessmentId);
-                const hasExistingGK = existingGK?.score !== null && existingGK?.score !== undefined;
-                const hasImportedGK = importedGrades.has(giuaKyAssessment.assessmentId);
+                const existingGK = student.assessmentGrades?.find(
+                  (g) => g.assessmentId === giuaKyAssessment.assessmentId
+                );
+                const hasExistingGK =
+                  existingGK?.score !== null && existingGK?.score !== undefined;
+                const hasImportedGK = importedGrades.has(
+                  giuaKyAssessment.assessmentId
+                );
                 hasGKScore = hasExistingGK || hasImportedGK;
               }
 
@@ -794,7 +835,11 @@ const GradesPage = () => {
     let count = 0;
     students.forEach((student) => {
       student.assessmentGrades?.forEach((grade) => {
-        if (!grade.canEdit && grade.score !== null && grade.score !== undefined) {
+        if (
+          !grade.canEdit &&
+          grade.score !== null &&
+          grade.score !== undefined
+        ) {
           count++;
         }
       });
@@ -804,69 +849,116 @@ const GradesPage = () => {
 
   // Helper function to check if prerequisites are met for entering grades
   const checkPrerequisites = (record, assessmentId) => {
-    const assessment = assessmentHeaders.find(a => a.assessmentId === assessmentId);
+    const assessment = assessmentHeaders.find(
+      (a) => a.assessmentId === assessmentId
+    );
     if (!assessment) return { canEnter: true, reason: '' };
 
     const assessmentTypeId = assessment.assessmentTypeId;
 
     // Lấy tất cả assessments theo loại
-    const ltAssessments = assessmentHeaders.filter(a => a.assessmentTypeId === 1);
-    const thAssessments = assessmentHeaders.filter(a => a.assessmentTypeId === 2);
-    const giuaKyAssessment = assessmentHeaders.find(a => a.assessmentTypeId === 3);
+    const ltAssessments = assessmentHeaders.filter(
+      (a) => a.assessmentTypeId === 1
+    );
+    const thAssessments = assessmentHeaders.filter(
+      (a) => a.assessmentTypeId === 2
+    );
+    const giuaKyAssessment = assessmentHeaders.find(
+      (a) => a.assessmentTypeId === 3
+    );
 
     // Nếu là Giữa kỳ (typeId = 3): cần có đủ điểm LT và TH (nếu có)
     if (assessmentTypeId === 3) {
       // Chỉ check nếu có assessments LT hoặc TH
-      const allLTScores = ltAssessments.length === 0 || ltAssessments.every(ltAss => {
-        const grade = record.assessmentGrades?.find(g => g.assessmentId === ltAss.assessmentId);
-        const editedScore = editedGrades.get(ltAss.assessmentId)?.get(record.studentId)?.score;
-        return (editedScore !== undefined && editedScore !== '') ||
-               (grade?.score !== null && grade?.score !== undefined);
-      });
+      const allLTScores =
+        ltAssessments.length === 0 ||
+        ltAssessments.every((ltAss) => {
+          const grade = record.assessmentGrades?.find(
+            (g) => g.assessmentId === ltAss.assessmentId
+          );
+          const editedScore = editedGrades
+            .get(ltAss.assessmentId)
+            ?.get(record.studentId)?.score;
+          return (
+            (editedScore !== undefined && editedScore !== '') ||
+            (grade?.score !== null && grade?.score !== undefined)
+          );
+        });
 
-      const allTHScores = thAssessments.length === 0 || thAssessments.every(thAss => {
-        const grade = record.assessmentGrades?.find(g => g.assessmentId === thAss.assessmentId);
-        const editedScore = editedGrades.get(thAss.assessmentId)?.get(record.studentId)?.score;
-        return (editedScore !== undefined && editedScore !== '') ||
-               (grade?.score !== null && grade?.score !== undefined);
-      });
+      const allTHScores =
+        thAssessments.length === 0 ||
+        thAssessments.every((thAss) => {
+          const grade = record.assessmentGrades?.find(
+            (g) => g.assessmentId === thAss.assessmentId
+          );
+          const editedScore = editedGrades
+            .get(thAss.assessmentId)
+            ?.get(record.studentId)?.score;
+          return (
+            (editedScore !== undefined && editedScore !== '') ||
+            (grade?.score !== null && grade?.score !== undefined)
+          );
+        });
 
       if (!allLTScores || !allTHScores) {
         return {
           canEnter: false,
-          reason: 'Cần nhập đủ điểm Lý thuyết và Thực hành trước khi nhập điểm Giữa kỳ'
+          reason:
+            'Cần nhập đủ điểm Lý thuyết và Thực hành trước khi nhập điểm Giữa kỳ',
         };
       }
     }
 
     // Nếu là Cuối kỳ (typeId = 4): cần có đủ điểm LT, TH VÀ Giữa kỳ (nếu có)
     if (assessmentTypeId === 4) {
-      const allLTScores = ltAssessments.length === 0 || ltAssessments.every(ltAss => {
-        const grade = record.assessmentGrades?.find(g => g.assessmentId === ltAss.assessmentId);
-        const editedScore = editedGrades.get(ltAss.assessmentId)?.get(record.studentId)?.score;
-        return (editedScore !== undefined && editedScore !== '') ||
-               (grade?.score !== null && grade?.score !== undefined);
-      });
+      const allLTScores =
+        ltAssessments.length === 0 ||
+        ltAssessments.every((ltAss) => {
+          const grade = record.assessmentGrades?.find(
+            (g) => g.assessmentId === ltAss.assessmentId
+          );
+          const editedScore = editedGrades
+            .get(ltAss.assessmentId)
+            ?.get(record.studentId)?.score;
+          return (
+            (editedScore !== undefined && editedScore !== '') ||
+            (grade?.score !== null && grade?.score !== undefined)
+          );
+        });
 
-      const allTHScores = thAssessments.length === 0 || thAssessments.every(thAss => {
-        const grade = record.assessmentGrades?.find(g => g.assessmentId === thAss.assessmentId);
-        const editedScore = editedGrades.get(thAss.assessmentId)?.get(record.studentId)?.score;
-        return (editedScore !== undefined && editedScore !== '') ||
-               (grade?.score !== null && grade?.score !== undefined);
-      });
+      const allTHScores =
+        thAssessments.length === 0 ||
+        thAssessments.every((thAss) => {
+          const grade = record.assessmentGrades?.find(
+            (g) => g.assessmentId === thAss.assessmentId
+          );
+          const editedScore = editedGrades
+            .get(thAss.assessmentId)
+            ?.get(record.studentId)?.score;
+          return (
+            (editedScore !== undefined && editedScore !== '') ||
+            (grade?.score !== null && grade?.score !== undefined)
+          );
+        });
 
       let hasGiuaKyScore = true;
       if (giuaKyAssessment) {
-        const gkGrade = record.assessmentGrades?.find(g => g.assessmentId === giuaKyAssessment.assessmentId);
-        const gkEditedScore = editedGrades.get(giuaKyAssessment.assessmentId)?.get(record.studentId)?.score;
-        hasGiuaKyScore = (gkEditedScore !== undefined && gkEditedScore !== '') ||
-                        (gkGrade?.score !== null && gkGrade?.score !== undefined);
+        const gkGrade = record.assessmentGrades?.find(
+          (g) => g.assessmentId === giuaKyAssessment.assessmentId
+        );
+        const gkEditedScore = editedGrades
+          .get(giuaKyAssessment.assessmentId)
+          ?.get(record.studentId)?.score;
+        hasGiuaKyScore =
+          (gkEditedScore !== undefined && gkEditedScore !== '') ||
+          (gkGrade?.score !== null && gkGrade?.score !== undefined);
       }
 
       if (!allLTScores || !allTHScores || !hasGiuaKyScore) {
         return {
           canEnter: false,
-          reason: 'Cần nhập đủ điểm Lý thuyết, Thực hành và Giữa kỳ trước khi nhập điểm Cuối kỳ'
+          reason:
+            'Cần nhập đủ điểm Lý thuyết, Thực hành và Giữa kỳ trước khi nhập điểm Cuối kỳ',
         };
       }
     }
@@ -937,11 +1029,7 @@ const GradesPage = () => {
     // Kiểm tra điều kiện tiên quyết - chưa đủ điều kiện (màu xám nhẹ minimalist)
     if (!prerequisiteCheck.canEnter) {
       return (
-        <Tooltip
-          title={prerequisiteCheck.reason}
-          arrow
-          placement="top"
-        >
+        <Tooltip title={prerequisiteCheck.reason} arrow placement="top">
           <Box
             sx={{
               display: 'inline-flex',
@@ -1340,7 +1428,6 @@ const GradesPage = () => {
             </Card>
           </Grow>
         </Grid>
-
         <Grid item xs={12} sm={3}>
           <Grow in={true} timeout={1200}>
             <Card
@@ -1416,7 +1503,9 @@ const GradesPage = () => {
                   setEditedGrades(new Map());
                 }}
                 getOptionLabel={(option) => option.name}
-                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                isOptionEqualToValue={(option, value) =>
+                  option.id === value?.id
+                }
                 label="Chọn học kỳ"
                 placeholder="Tìm kiếm học kỳ..."
                 disabled={loading}
@@ -1544,7 +1633,10 @@ const GradesPage = () => {
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
                         Có {lockedGradesCount} ô điểm đã bị khóa
                       </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: 'text.secondary' }}
+                      >
                         (các ô điểm này đã được xác nhận hoặc quá hạn chỉnh sửa)
                       </Typography>
                     </Box>
