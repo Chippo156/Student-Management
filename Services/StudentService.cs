@@ -507,6 +507,75 @@ namespace StudentManagement.Services
             };
         }
 
+        public async Task<PagedResult<StudentInSectionDto>> GetStudentsByClassWithPaginationAsync(
+        int classId,
+        PaginationParams pagination,
+        string? searchTerm = null)
+        {
+            // Kiểm tra section tồn tại
+            var classes = await context.Classes.AnyAsync(s => s.ClassId == classId);
+            if (!classes)
+            {
+                throw new Exception("Section not found");
+            }
+
+            var query = context.Students
+                .Include(e => e.User)
+                .Include(e => e.Class)
+                    .ThenInclude(c => c.Program)
+                .AsQueryable()
+                .Where(e => e.Class.ClassId == classId);
+
+            // Apply search filter nếu có
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var searchLower = searchTerm.Trim().ToLower();
+                query = query.Where(e =>
+                    e.MSSV.ToLower().Contains(searchLower) ||
+                    e.User.FullName.ToLower().Contains(searchLower) ||
+                    e.User.Email.ToLower().Contains(searchLower) ||
+                    e.Class.ClassName.ToLower().Contains(searchLower));
+            }
+
+            // Tổng số bản ghi
+            var totalCount = await query.CountAsync();
+
+            // Lấy dữ liệu với phân trang, sắp xếp theo MSSV
+            var students = query
+                .AsEnumerable()
+                .OrderBy(e => e.User.FullName.Trim().Split(' ').LastOrDefault())
+                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToList();
+
+            // Placeholder mapping, adjust as needed:
+            var studentDtos = students.Select(student => new StudentInSectionDto
+            {
+                StudentId = student.Id,
+                MSSV = student.MSSV,
+                FullName = student.User.FullName,
+                Email = student.User.Email,
+                Phone = student.User.Phone ?? "",
+                ClassName = student.Class.ClassName,
+                ClassCode = student.Class.ClassCode,
+                ProgramName = student.Class.Program.ProgramName,
+                AccountStatus = student.User.AccountStatus.ToString(),
+                AvatarUrl = student.User.AvatarUrl,
+                DateOfBirth = student.User.DateOfBirth,
+                Gender = student.User.Gender.ToString(),
+
+                // Populate other fields as needed
+            }).ToList();
+
+            return new PagedResult<StudentInSectionDto>
+            {
+                Items = studentDtos,
+                TotalCount = totalCount,
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize
+            };
+        }
+
         private string GetEnrollmentStatusInVietnamese(StudentManagement.Enum.EnrollmentStatus status)
         {
             return status switch

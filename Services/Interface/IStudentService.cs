@@ -24,5 +24,10 @@ namespace StudentManagement.Services.Interface
             int sectionId, 
             PaginationParams pagination, 
             string? searchTerm = null);
+
+        Task<PagedResult<StudentInSectionDto>> GetStudentsByClassWithPaginationAsync(
+         int classId,
+         PaginationParams pagination,
+         string? searchTerm = null);
     }
 }

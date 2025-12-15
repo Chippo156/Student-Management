@@ -141,5 +141,14 @@ namespace StudentManagement.Controllers
             var studentsWithSections = await studentService.GetStudentsBySectionWithPaginationAsync(sectionId, paginationParams, searchTerm);
             return Ok(ApiResponse.SuccessResponse(studentsWithSections, "Students with section retrieved successfully"));
         }
+
+        [HttpGet("GetStudentsWithClass/{classId}")]
+        [Authorize(Roles = "Admin,Lecturer")]
+        public async Task<ActionResult<IEnumerable<StudentInSectionDto>>> GetStudentsWithClass(
+            int classId, [FromQuery] PaginationParams paginationParams, string? searchTerm = null)
+        {
+            var studentsWithSections = await studentService.GetStudentsByClassWithPaginationAsync(classId, paginationParams, searchTerm);
+            return Ok(ApiResponse.SuccessResponse(studentsWithSections, "Students with section retrieved successfully"));
+        }
     }
 }
