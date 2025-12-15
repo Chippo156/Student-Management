@@ -63,7 +63,13 @@ namespace StudentManagement.Services
                     AllowSelfCheckIn = request.AllowSelfCheckIn,
                     SelfCheckInStartTime = request.SelfCheckInStartTime,
                     SelfCheckInEndTime = request.SelfCheckInEndTime,
-                    CheckInCode = GenerateCheckInCode()
+                    CheckInCode = GenerateCheckInCode(),
+                    
+                    // **NEW: Location verification settings**
+                    Latitude = request.Latitude,
+                    Longitude = request.Longitude,
+                    AllowedDistanceMeters = request.AllowedDistanceMeters ?? 100,
+                    RequireLocationVerification = request.RequireLocationVerification
                 };
 
                 context.AttendanceSessions.Add(attendanceSession);
@@ -993,7 +999,13 @@ namespace StudentManagement.Services
                     MinutesUntilStart = minutesUntilStart,
                     MinutesUntilEnd = minutesUntilEnd,
                     
-                    LecturerName = session.Section.Lecturer?.User?.FullName ?? "Not Assigned"
+                    LecturerName = session.Section.Lecturer?.User?.FullName ?? "Not Assigned",
+                    
+                    // **NEW: Location verification info**
+                    RequireLocationVerification = session.RequireLocationVerification,
+                    ClassLatitude = session.Latitude,
+                    ClassLongitude = session.Longitude,
+                    AllowedDistanceMeters = session.AllowedDistanceMeters ?? 100
                 };
 
                 responses.Add(response);
@@ -1053,6 +1065,25 @@ namespace StudentManagement.Services
                 //    };
                 //}
 
+                // **NEW: Validate location if required**
+                if (attendanceSession.RequireLocationVerification)
+                {
+                    var locationValidation = ValidateStudentLocation(
+                        request.Latitude, request.Longitude,
+                        attendanceSession.Latitude, attendanceSession.Longitude,
+                        attendanceSession.AllowedDistanceMeters ?? 100);
+
+                    if (!locationValidation.IsValid)
+                    {
+                        return new StudentSelfCheckInResponse
+                        {
+                            IsSuccess = false,
+                            Message = "Location verification failed",
+                            Errors = locationValidation.Errors
+                        };
+                    }
+                }
+
                 // Determine attendance status based on check-in time
                 var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
                 var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
@@ -1098,7 +1129,7 @@ namespace StudentManagement.Services
                         StudentId = student.Id,
                         SectionId = attendanceSession.SectionId,
                         Status = attendanceStatus,
-                        Note = $"Self check-in{(string.IsNullOrEmpty(request.Note) ? "" : $": {request.Note}")}",
+                        Note = BuildCheckInNote(request, attendanceSession),
                         RecordedAt = now,
                         RecordedByLecturerId = null // Self check-in
                     };
@@ -1109,9 +1140,9 @@ namespace StudentManagement.Services
                 {
                     // Update existing unknown status
                     attendance.Status = attendanceStatus;
-                    attendance.Note = $"Self check-in{(string.IsNullOrEmpty(request.Note) ? "" : $": {request.Note}")}";
+                    attendance.Note = BuildCheckInNote(request, attendanceSession);
                     attendance.RecordedAt = now;
-                    
+
                     context.Attendances.Update(attendance);
                 }
                 else
@@ -1245,6 +1276,124 @@ namespace StudentManagement.Services
             }).ToList();
             return responses;
 
+        }
+
+        public static class LocationHelper
+        {
+            /// <summary>
+            /// Tính khoảng cách giữa 2 điểm GPS bằng công thức Haversine (mét)
+            /// </summary>
+            public static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+            {
+                const double earthRadiusKm = 6371.0;
+
+                var dLat = DegreesToRadians(lat2 - lat1);
+                var dLon = DegreesToRadians(lon2 - lon1);
+
+                var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                        Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
+                        Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+                var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+                var distanceKm = earthRadiusKm * c;
+
+                return distanceKm * 1000; // Convert to meters
+            }
+
+            private static double DegreesToRadians(double degrees)
+            {
+                return degrees * (Math.PI / 180);
+            }
+
+            /// <summary>
+            /// Kiểm tra xem sinh viên có trong phạm vi cho phép không
+            /// </summary>
+            public static bool IsWithinAllowedDistance(
+                double studentLat, double studentLon,
+                double classLat, double classLon,
+                int allowedDistanceMeters)
+            {
+                var distance = CalculateDistance(studentLat, studentLon, classLat, classLon);
+                return distance <= allowedDistanceMeters;
+            }
+
+            /// <summary>
+            /// Lấy thông tin khoảng cách dễ đọc
+            /// </summary>
+            public static string GetDistanceInfo(double distanceMeters)
+            {
+                if (distanceMeters < 1000)
+                {
+                    return $"{Math.Round(distanceMeters, 1)}m";
+                }
+                else
+                {
+                    return $"{Math.Round(distanceMeters / 1000, 2)}km";
+                }
+            }
+        }
+        private (bool IsValid, List<string> Errors) ValidateStudentLocation(
+    double? studentLat, double? studentLon,
+    double? classLat, double? classLon,
+    int allowedDistanceMeters)
+        {
+            var errors = new List<string>();
+
+            // Check if student provided location
+            if (!studentLat.HasValue || !studentLon.HasValue)
+            {
+                errors.Add("Vui lòng bật định vị GPS và cho phép truy cập vị trí");
+                return (false, errors);
+            }
+
+            // Check if class location is set
+            if (!classLat.HasValue || !classLon.HasValue)
+            {
+                // If class location not set, skip validation (backward compatibility)
+                return (true, errors);
+            }
+
+            // Calculate distance
+            var distance = LocationHelper.CalculateDistance(
+                studentLat.Value, studentLon.Value,
+                classLat.Value, classLon.Value);
+
+            if (distance > allowedDistanceMeters)
+            {
+                var distanceInfo = LocationHelper.GetDistanceInfo(distance);
+                var allowedInfo = LocationHelper.GetDistanceInfo(allowedDistanceMeters);
+
+                errors.Add($"Bạn đang ở ngoài phạm vi lớp học. Khoảng cách: {distanceInfo} (Cho phép: {allowedInfo})");
+                errors.Add("Vui lòng di chuyển gần hơn đến lớp học để điểm danh");
+                return (false, errors);
+            }
+
+            return (true, errors);
+        }
+
+        // **NEW: Build check-in note with location info**
+        private string BuildCheckInNote(StudentSelfCheckInRequest request, AttendanceSession session)
+        {
+            var note = "Self check-in";
+
+            if (!string.IsNullOrEmpty(request.Note))
+            {
+                note += $": {request.Note}";
+            }
+
+            // Add location info if available
+            if (request.Latitude.HasValue && request.Longitude.HasValue &&
+                session.Latitude.HasValue && session.Longitude.HasValue)
+            {
+                var distance = LocationHelper.CalculateDistance(
+                    request.Latitude.Value, request.Longitude.Value,
+                    session.Latitude.Value, session.Longitude.Value);
+
+                var distanceInfo = LocationHelper.GetDistanceInfo(distance);
+                note += $" (Vị trí: {distanceInfo} từ lớp)";
+            }
+
+            return note;
         }
     }
 }

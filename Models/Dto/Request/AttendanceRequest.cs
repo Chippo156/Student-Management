@@ -15,6 +15,10 @@ namespace StudentManagement.Models.Dto.Request
         public bool AllowSelfCheckIn { get; set; } = false;
         public DateTime? SelfCheckInStartTime { get; set; }
         public DateTime? SelfCheckInEndTime { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+        public int? AllowedDistanceMeters { get; set; } = 100;
+        public bool RequireLocationVerification { get; set; } = false;
     }
 
     public class RecordAttendanceRequest

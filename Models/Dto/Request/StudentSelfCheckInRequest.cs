@@ -12,6 +12,8 @@ namespace StudentManagement.Models.Dto.Request
         public string CheckInCode { get; set; } = string.Empty;
         
         public string? Note { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
     }
 
     public class StudentCheckInStatusRequest

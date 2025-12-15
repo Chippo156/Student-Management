@@ -37,7 +37,12 @@ namespace StudentManagement.Models.Dto.Response
         public DateTime? CheckedInAt { get; set; }
         public int MinutesUntilStart { get; set; }
         public int MinutesUntilEnd { get; set; }
-        
+
+        public bool RequireLocationVerification { get; set; }
+        public double? ClassLatitude { get; set; }
+        public double? ClassLongitude { get; set; }
+        public int AllowedDistanceMeters { get; set; }
+
         public string LecturerName { get; set; } = string.Empty;
     }
 }

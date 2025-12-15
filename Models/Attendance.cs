@@ -63,6 +63,10 @@ namespace StudentManagement.Models
         public DateTime? SelfCheckInEndTime { get; set; }
         public string? CheckInCode { get; set; } // 6-digit code for verification
 
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+        public int? AllowedDistanceMeters { get; set; } = 100; // Default 100m
+        public bool RequireLocationVerification { get; set; } = false;
         // Attendance records for this session
         [JsonIgnore]
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
