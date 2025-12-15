@@ -1041,21 +1041,21 @@ namespace StudentManagement.Services
                     };
                 }
 
-                // Validate check-in eligibility
-                var validationResult = await ValidateStudentCheckInAsync(student, attendanceSession, request);
-                if (!validationResult.IsValid)
-                {
-                    return new StudentSelfCheckInResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Check-in validation failed",
-                        Errors = validationResult.Errors
-                    };
-                }
+                //// Validate check-in eligibility
+                //var validationResult = await ValidateStudentCheckInAsync(student, attendanceSession, request);
+                //if (!validationResult.IsValid)
+                //{
+                //    return new StudentSelfCheckInResponse
+                //    {
+                //        IsSuccess = false,
+                //        Message = "Check-in validation failed",
+                //        Errors = validationResult.Errors
+                //    };
+                //}
 
                 // Determine attendance status based on check-in time
-                var now = DateTime.Now;
-
+                var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
                 var startTime = attendanceSession.SelfCheckInStartTime.Value;
                 var endTime = attendanceSession.SelfCheckInEndTime.Value;
 

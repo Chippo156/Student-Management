@@ -573,7 +573,7 @@ Hãy đặt câu hỏi bất cứ lúc nào bạn cần hỗ trợ! 😊";
             }
         }
 
-        private async Task AddParticipantAsync(int chatRoomId, string username, ParticipantRole role)
+        public async Task AddParticipantAsync(int chatRoomId, string username, ParticipantRole role)
         {
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Username == username);
@@ -743,6 +743,79 @@ Hãy đặt câu hỏi bất cứ lúc nào bạn cần hỗ trợ! 😊";
                 ParticipantRole.Assistant => "Trợ giảng",
                 _ => "Unknown"
             };
+        }
+
+        public async Task UpdateClassTeacherChatRoomsAsync(int classId, string? oldLecturerUsername, string newLecturerUsername)
+        {
+            try
+            {
+                // Lấy tất cả chat rooms của class với ChatType.ClassTeacher
+                var classTeacherRooms = await _context.ChatRooms
+                    .Where(cr => cr.ChatType == ChatType.ClassTeacher && cr.ClassId == classId)
+                    .ToListAsync();
+
+                if (!classTeacherRooms.Any()) return;
+
+                var newLecturerUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Username == newLecturerUsername)
+                    ?? throw new Exception("New lecturer not found");
+
+                foreach (var room in classTeacherRooms)
+                {
+                    // Vô hiệu hóa giáo viên cũ (nếu có)
+                    if (!string.IsNullOrEmpty(oldLecturerUsername))
+                    {
+                        var oldParticipant = await _context.ChatRoomParticipants
+                            .FirstOrDefaultAsync(p => p.ChatRoomId == room.ChatRoomId && 
+                                                     p.User.Username == oldLecturerUsername && 
+                                                     p.Role == ParticipantRole.Lecturer);
+                        if (oldParticipant != null)
+                        {
+                            oldParticipant.IsActive = false;
+                        }
+                    }
+
+                    // Thêm hoặc kích hoạt giáo viên mới
+                    var newParticipant = await _context.ChatRoomParticipants
+                        .FirstOrDefaultAsync(p => p.ChatRoomId == room.ChatRoomId && 
+                                                 p.UserId == newLecturerUser.UserId);
+
+                    if (newParticipant == null)
+                    {
+                        _context.ChatRoomParticipants.Add(new ChatRoomParticipant
+                        {
+                            ChatRoomId = room.ChatRoomId,
+                            UserId = newLecturerUser.UserId,
+                            Role = ParticipantRole.Lecturer,
+                            IsActive = true,
+                            JoinedAt = DateTime.Now
+                        });
+                    }
+                    else
+                    {
+                        newParticipant.IsActive = true;
+                        newParticipant.Role = ParticipantRole.Lecturer;
+                        newParticipant.JoinedAt = DateTime.Now;
+                    }
+
+                    // Gửi system message
+                    _context.ChatMessages.Add(new ChatMessage
+                    {
+                        ChatRoomId = room.ChatRoomId,
+                        Content = $"🔄 Giáo viên chủ nhiệm đã thay đổi thành {newLecturerUser.FullName}",
+                        MessageType = MessageType.System,
+                        SentAt = DateTime.Now
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"Updated {classTeacherRooms.Count} chat rooms for class {classId}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating chat rooms: {ex.Message}");
+                throw;
+            }
         }
     }
 }

@@ -1,35 +1,63 @@
-﻿using StudentManagement.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using StudentManagement.Data;
 using StudentManagement.Models;
 using StudentManagement.Services.Interface;
 
 namespace StudentManagement.Services
 {
-    public class AdviserAssignmentService(AppDbContext context) : IAdviserAssignmentService
+    public class AdviserAssignmentService(AppDbContext context, IChatService chatService) : IAdviserAssignmentService
     {
 
         public async Task<bool> AssignLecturerToClass(int lecturerId, int classId)
         {
-            Lecturer lecturer = await context.Lecturers.FindAsync(lecturerId) ?? throw new System.Exception("Lecturer not found");
-            Class cls = await context.Classes.FindAsync(classId) ?? throw new System.Exception("Class not found");
+            var lecturer = await context.Lecturers
+                .Include(l => l.User)
+                .FirstOrDefaultAsync(l => l.Id == lecturerId)
+                ?? throw new Exception("Lecturer not found");
+
+            var cls = await context.Classes
+                .Include(c => c.AdviserAssignment)
+                    .ThenInclude(aa => aa.Lecturer)
+                        .ThenInclude(l => l.User)
+                .FirstOrDefaultAsync(c => c.ClassId == classId)
+                ?? throw new Exception("Class not found");
+
+            // **Lưu thông tin giáo viên cũ**
+            string? oldLecturerUsername = cls.AdviserAssignment?.Lecturer?.User?.Username;
 
             if (cls.AdviserAssignment != null)
             {
-                throw new System.Exception("Lớp đã được phân công giáo viên chủ nhiệm");
+                context.AdviserAssignments.Remove(cls.AdviserAssignment);
+                cls.AdviserAssignment = null; // ⭐ QUAN TRỌNG
+                await context.SaveChangesAsync();
             }
-            AdviserAssignment assignment = new AdviserAssignment
+
+            var assignment = new AdviserAssignment
             {
                 Lecturer = lecturer,
+                ClassId = classId,
                 StartDate = DateOnly.FromDateTime(DateTime.Now),
                 EndDate = null,
-                ClassId = classId,
-                Class = cls,
                 IsActive = true
-
             };
+
             context.AdviserAssignments.Add(assignment);
             cls.AdviserAssignment = assignment;
-            return await context.SaveChangesAsync() > 0;
+
+            var result = await context.SaveChangesAsync() > 0;
+
+            // **Cập nhật chat rooms**
+            if (result)
+            {
+                await chatService.UpdateClassTeacherChatRoomsAsync(
+                    classId,
+                    oldLecturerUsername,
+                    lecturer.User.Username);
+            }
+
+            return result;
         }
+
 
         public Task<Lecturer?> GetLecturerByAdviser(int adviserId)
         {
