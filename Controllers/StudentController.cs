@@ -142,12 +142,18 @@ namespace StudentManagement.Controllers
             return Ok(ApiResponse.SuccessResponse(studentsWithSections, "Students with section retrieved successfully"));
         }
 
-        [HttpGet("GetStudentsWithClass/{classId}")]
+        [HttpGet("GetStudentsWithLecturerClass")]
         [Authorize(Roles = "Admin,Lecturer")]
         public async Task<ActionResult<IEnumerable<StudentInSectionDto>>> GetStudentsWithClass(
-            int classId, [FromQuery] PaginationParams paginationParams, string? searchTerm = null)
+            [FromQuery] PaginationParams paginationParams, string? searchTerm = null)
         {
-            var studentsWithSections = await studentService.GetStudentsByClassWithPaginationAsync(classId, paginationParams, searchTerm);
+            var lecturerCode = User.FindFirstValue(ClaimTypes.Name);
+            if (lecturerCode == null)
+            {
+                return BadRequest(ApiResponse.ErrorResponse(ErrorCodes.BadRequest, "Invalid lecturer code in token.", null));
+            }
+
+            var studentsWithSections = await studentService.GetStudentsByLecturerWithPaginationAsync(lecturerCode, paginationParams, searchTerm);
             return Ok(ApiResponse.SuccessResponse(studentsWithSections, "Students with section retrieved successfully"));
         }
     }

@@ -507,64 +507,138 @@ namespace StudentManagement.Services
             };
         }
 
-        public async Task<PagedResult<StudentInSectionDto>> GetStudentsByClassWithPaginationAsync(
-        int classId,
-        PaginationParams pagination,
-        string? searchTerm = null)
+        public async Task<PagedResult<StudentInSectionDto>> GetStudentsByLecturerWithPaginationAsync(
+     string lecturerCode,
+     PaginationParams pagination,
+     string? searchTerm = null)
         {
-            // Kiểm tra section tồn tại
-            var classes = await context.Classes.AnyAsync(s => s.ClassId == classId);
-            if (!classes)
+            // Tìm giảng viên theo mã
+            var lecturer = await context.Lecturers
+                .Include(l => l.User)
+                .FirstOrDefaultAsync(l => l.User.Username == lecturerCode);
+
+            if (lecturer == null)
             {
-                throw new Exception("Section not found");
+                throw new Exception("Lecturer not found");
             }
 
+            // Tìm lớp danh nghĩa mà giảng viên làm chủ nhiệm (AdviserAssignment)
+            var advisedClasses = await context.AdviserAssignments
+                .Include(aa => aa.Class)
+                .Where(aa => aa.Lecturer.Id == lecturer.Id &&
+                            aa.IsActive &&
+                            aa.EndDate == null) // Đang làm chủ nhiệm
+                .Select(aa => aa.Class.ClassId)
+                .ToListAsync();
+
+            if (!advisedClasses.Any())
+            {
+                // Trả về kết quả rỗng nếu giảng viên không làm chủ nhiệm lớp nào
+                return new PagedResult<StudentInSectionDto>
+                {
+                    Items = new List<StudentInSectionDto>(),
+                    TotalCount = 0,
+                    PageNumber = pagination.PageNumber,
+                    PageSize = pagination.PageSize
+                };
+            }
+
+            // Query danh sách sinh viên trong các lớp mà giảng viên làm chủ nhiệm
             var query = context.Students
-                .Include(e => e.User)
-                .Include(e => e.Class)
+                .Include(s => s.User)
+                .Include(s => s.Class)
                     .ThenInclude(c => c.Program)
-                .AsQueryable()
-                .Where(e => e.Class.ClassId == classId);
+                .Where(s => advisedClasses.Contains(s.Class.ClassId))
+                .AsQueryable();
 
             // Apply search filter nếu có
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 var searchLower = searchTerm.Trim().ToLower();
-                query = query.Where(e =>
-                    e.MSSV.ToLower().Contains(searchLower) ||
-                    e.User.FullName.ToLower().Contains(searchLower) ||
-                    e.User.Email.ToLower().Contains(searchLower) ||
-                    e.Class.ClassName.ToLower().Contains(searchLower));
+                query = query.Where(s =>
+                    s.MSSV.ToLower().Contains(searchLower) ||
+                    s.User.FullName.ToLower().Contains(searchLower) ||
+                    s.User.Email.ToLower().Contains(searchLower) ||
+                    s.Class.ClassName.ToLower().Contains(searchLower));
             }
 
             // Tổng số bản ghi
             var totalCount = await query.CountAsync();
 
-            // Lấy dữ liệu với phân trang, sắp xếp theo MSSV
+            // Lấy dữ liệu với phân trang, sắp xếp theo tên
             var students = query
                 .AsEnumerable()
-                .OrderBy(e => e.User.FullName.Trim().Split(' ').LastOrDefault())
+                .OrderBy(s => s.Class.ClassName) // Sắp xếp theo lớp trước
+                .ThenBy(s => s.User.FullName.Trim().Split(' ').LastOrDefault()) // Sau đó theo tên
                 .Skip((pagination.PageNumber - 1) * pagination.PageSize)
                 .Take(pagination.PageSize)
                 .ToList();
 
-            // Placeholder mapping, adjust as needed:
-            var studentDtos = students.Select(student => new StudentInSectionDto
-            {
-                StudentId = student.Id,
-                MSSV = student.MSSV,
-                FullName = student.User.FullName,
-                Email = student.User.Email,
-                Phone = student.User.Phone ?? "",
-                ClassName = student.Class.ClassName,
-                ClassCode = student.Class.ClassCode,
-                ProgramName = student.Class.Program.ProgramName,
-                AccountStatus = student.User.AccountStatus.ToString(),
-                AvatarUrl = student.User.AvatarUrl,
-                DateOfBirth = student.User.DateOfBirth,
-                Gender = student.User.Gender.ToString(),
+            // Lấy thông tin GPA gần nhất cho các sinh viên này
+            var studentIds = students.Select(s => s.Id).ToList();
+            var latestGPAs = await context.GpaSnapshots
+                .Include(g => g.Semester)
+                .Where(g => studentIds.Contains(g.Student.Id))
+                .GroupBy(g => g.Student.Id)
+                .Select(g => new {
+                    StudentId = g.Key,
+                    LatestGPA = g.OrderByDescending(gpa => gpa.Semester.Year)
+                                 .ThenByDescending(gpa => gpa.Semester.Term)
+                                 .FirstOrDefault()
+                })
+                .ToDictionaryAsync(x => x.StudentId, x => x.LatestGPA);
 
-                // Populate other fields as needed
+            // Lấy thông tin tín chỉ tích lũy cho các sinh viên này
+            var completedCredits = await context.FinalResults
+                .Include(fr => fr.Section)
+                    .ThenInclude(s => s.CurriculumCourse.Course)
+                .Where(fr => studentIds.Contains(fr.Student.Id) && fr.GradePoint >= 1.0)
+                .GroupBy(fr => fr.Student.Id)
+                .Select(g => new {
+                    StudentId = g.Key,
+                    CompletedCredits = g.Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory +
+                                                  fr.Section.CurriculumCourse.Course.CreditsLab)
+                })
+                .ToDictionaryAsync(x => x.StudentId, x => x.CompletedCredits);
+
+            // Map to response DTO
+            var studentDtos = students.Select(student => {
+                var latestGPA = latestGPAs.GetValueOrDefault(student.Id);
+                var credits = completedCredits.GetValueOrDefault(student.Id, 0);
+
+                return new StudentInSectionDto
+                {
+                    StudentId = student.Id,
+                    MSSV = student.MSSV,
+                    FullName = student.User.FullName,
+                    Email = student.User.Email,
+                    Phone = student.User.Phone ?? "",
+                    ClassName = student.Class.ClassName,
+                    ClassCode = student.Class.ClassCode,
+                    ProgramName = student.Class.Program.ProgramName,
+                    AccountStatus = student.User.AccountStatus.ToString(),
+                    AvatarUrl = student.User.AvatarUrl,
+                    DateOfBirth = student.User.DateOfBirth,
+                    Gender = student.User.Gender.ToString(),
+
+                    // **Thông tin học tập cho giảng viên chủ nhiệm**
+                    YearOfAdmission = student.YearOfAdmission,
+                    StudentStatus = student.StudentStatus.ToString(),
+
+                    // GPA và tín chỉ
+                    CurrentGPA = latestGPA?.Gpa ?? 0,
+                    CompletedCredits = credits,
+                    RequiredCredits = student.Class.Program.CreditsRequired,
+
+                    // Thông tin bổ sung
+                    EnrollmentDate = student.DateOfAdmission.HasValue ?
+                                    DateTime.SpecifyKind(student.DateOfAdmission.Value.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc) :
+                                    null,
+
+                    // Tính tiến độ học tập
+                    CompletionRate = student.Class.Program.CreditsRequired > 0 ?
+                                   Math.Round((double)credits / student.Class.Program.CreditsRequired * 100, 1) : 0
+                };
             }).ToList();
 
             return new PagedResult<StudentInSectionDto>

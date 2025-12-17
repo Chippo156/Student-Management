@@ -25,9 +25,9 @@ namespace StudentManagement.Services.Interface
             PaginationParams pagination, 
             string? searchTerm = null);
 
-        Task<PagedResult<StudentInSectionDto>> GetStudentsByClassWithPaginationAsync(
-         int classId,
-         PaginationParams pagination,
-         string? searchTerm = null);
+        Task<PagedResult<StudentInSectionDto>> GetStudentsByLecturerWithPaginationAsync(
+     string lecturerCode,
+     PaginationParams pagination,
+     string? searchTerm = null)
     }
 }
