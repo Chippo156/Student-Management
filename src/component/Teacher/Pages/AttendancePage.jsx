@@ -46,6 +46,9 @@ import dayjs from 'dayjs';
 import { exportAttendanceExcel } from '../../../until/exportAttendanceExcel';
 import AttendanceStatistics from '../Components/AttendanceStatistics';
 import SearchableAutocomplete from '../../Common/SearchableAutocomplete';
+import LocationPicker from '../../Common/LocationPicker';
+import LocationDisplay from '../../Common/LocationDisplay';
+
 const AttendancePage = () => {
   const theme = useTheme();
   const [courses, setCourses] = useState([]);
@@ -76,6 +79,10 @@ const AttendancePage = () => {
     allowSelfCheckIn: true,
     selfCheckInStartTime: null,
     selfCheckInEndTime: null,
+    requireLocationVerification: false,
+    latitude: null,
+    longitude: null,
+    allowedDistanceMeters: 50,
   });
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -88,6 +95,7 @@ const AttendancePage = () => {
     code: '',
     sessionName: '',
   });
+  const [openLocationPicker, setOpenLocationPicker] = useState(false);
 
   const user = useSelector((state) => state.user.account);
   const lecturerId = user?.lecturerId;
@@ -222,6 +230,10 @@ const AttendancePage = () => {
           ? `${sessionDateStr}T${sessionData.selfCheckInEndTime}:00`
           : null,
         checkInCode: null,
+        requireLocationVerification: sessionData.requireLocationVerification,
+        latitude: sessionData.requireLocationVerification ? sessionData.latitude : null,
+        longitude: sessionData.requireLocationVerification ? sessionData.longitude : null,
+        allowedDistanceMeters: sessionData.requireLocationVerification ? sessionData.allowedDistanceMeters : null,
       };
 
       const response = await teacherService.createAttendanceSession(payload);
@@ -238,6 +250,10 @@ const AttendancePage = () => {
         allowSelfCheckIn: true,
         selfCheckInStartTime: null,
         selfCheckInEndTime: null,
+        requireLocationVerification: false,
+        latitude: null,
+        longitude: null,
+        allowedDistanceMeters: 50,
       });
 
       // Load lại danh sách sessions
@@ -1404,6 +1420,96 @@ const AttendancePage = () => {
                     InputLabelProps={{ shrink: true }}
                   />
                 </Grid>
+
+                {/* Location Verification Section */}
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={sessionData.requireLocationVerification}
+                        onChange={(e) =>
+                          setSessionData({
+                            ...sessionData,
+                            requireLocationVerification: e.target.checked,
+                            // Reset location fields if disabled
+                            latitude: e.target.checked
+                              ? sessionData.latitude
+                              : null,
+                            longitude: e.target.checked
+                              ? sessionData.longitude
+                              : null,
+                            allowedDistanceMeters: e.target.checked
+                              ? sessionData.allowedDistanceMeters
+                              : 50,
+                          })
+                        }
+                        color="primary"
+                      />
+                    }
+                    label="Yêu cầu xác minh vị trí khi điểm danh"
+                  />
+                </Grid>
+
+                {sessionData.requireLocationVerification && (
+                  <>
+                    <Grid item xs={12}>
+                      <Alert severity="info" sx={{ mb: 1 }}>
+                        Sinh viên chỉ có thể điểm danh khi ở trong bán kính cho
+                        phép từ vị trí được chỉ định
+                      </Alert>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Bán kính cho phép (mét)"
+                        type="number"
+                        value={sessionData.allowedDistanceMeters || 50}
+                        onChange={(e) =>
+                          setSessionData({
+                            ...sessionData,
+                            allowedDistanceMeters: e.target.value
+                              ? parseInt(e.target.value)
+                              : 50,
+                          })
+                        }
+                        placeholder="Ví dụ: 50"
+                        inputProps={{ min: 10, step: 10 }}
+                        helperText="Khoảng cách tối đa (tính bằng mét) mà sinh viên có thể điểm danh"
+                      />
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      {sessionData.latitude && sessionData.longitude ? (
+                        <Alert severity="success" sx={{ mb: 1 }}>
+                          <LocationDisplay
+                            latitude={sessionData.latitude}
+                            longitude={sessionData.longitude}
+                            radius={sessionData.allowedDistanceMeters}
+                          />
+                        </Alert>
+                      ) : (
+                        <Alert severity="warning" sx={{ mb: 1 }}>
+                          <Typography variant="body2">
+                            Chưa chọn vị trí điểm danh
+                          </Typography>
+                        </Alert>
+                      )}
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={() => setOpenLocationPicker(true)}
+                      >
+                        {sessionData.latitude && sessionData.longitude
+                          ? 'Thay đổi vị trí trên bản đồ'
+                          : 'Chọn vị trí trên bản đồ'}
+                      </Button>
+                    </Grid>
+                  </>
+                )}
               </>
             )}
           </Grid>
@@ -1551,6 +1657,28 @@ const AttendancePage = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Location Picker Dialog */}
+      <LocationPicker
+        open={openLocationPicker}
+        onClose={() => setOpenLocationPicker(false)}
+        onSelect={(position) => {
+          setSessionData({
+            ...sessionData,
+            latitude: position.latitude,
+            longitude: position.longitude,
+          });
+        }}
+        initialPosition={
+          sessionData.latitude && sessionData.longitude
+            ? {
+                latitude: sessionData.latitude,
+                longitude: sessionData.longitude,
+              }
+            : null
+        }
+        radius={sessionData.allowedDistanceMeters || 50}
+      />
     </Box>
   );
 };

@@ -34,12 +34,15 @@ import {
   AccessTime as AccessTimeIcon,
   Refresh as RefreshIcon,
   CheckCircleOutline as CheckCircleOutlineIcon,
+  LocationOn as LocationOnIcon,
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { studentServices } from '../../../service/studentServices';
+import { message } from 'antd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/vi';
+import LocationDisplay from '../../../component/Common/LocationDisplay';
 
 dayjs.extend(relativeTime);
 dayjs.locale('vi');
@@ -56,6 +59,8 @@ const SelfCheckIn = () => {
   const [checkInHistory, setCheckInHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationError, setLocationError] = useState(null);
 
   useEffect(() => {
     fetchAvailableSessions();
@@ -102,7 +107,28 @@ const SelfCheckIn = () => {
     setSelectedSession(session);
     setCheckInCode('');
     setNote('');
+    setUserLocation(null);
+    setLocationError(null);
     setOpenDialog(true);
+
+    // Request location if session requires it
+    if (session.requireLocationVerification) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+          },
+          (error) => {
+            setLocationError('Không thể lấy vị trí: ' + error.message);
+          }
+        );
+      } else {
+        setLocationError('Trình duyệt không hỗ trợ định vị');
+      }
+    }
   };
 
   const handleCloseDialog = () => {
@@ -115,12 +141,20 @@ const SelfCheckIn = () => {
   const handleCheckIn = async () => {
     if (!selectedSession) return;
 
+    // Check location requirement
+    if (selectedSession.requireLocationVerification && !userLocation) {
+      message.warning('Vui lòng cho phép truy cập vị trí để điểm danh');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const result = await studentServices.selfCheckIn(
         selectedSession.attendanceSessionId,
         checkInCode,
-        note || null
+        note || null,
+        userLocation?.latitude || null,
+        userLocation?.longitude || null
       );
 
       if (result) {
@@ -389,7 +423,7 @@ const SelfCheckIn = () => {
                           </Typography>
                         </Box>
                         {session.room && (
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                             <RoomIcon
                               sx={{
                                 fontSize: 18,
@@ -399,6 +433,20 @@ const SelfCheckIn = () => {
                             />
                             <Typography variant="body2">
                               <strong>Phòng:</strong> {session.room}
+                            </Typography>
+                          </Box>
+                        )}
+                        {session.requireLocationVerification && (
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <LocationOnIcon
+                              sx={{
+                                fontSize: 18,
+                                mr: 1,
+                                color: 'warning.main',
+                              }}
+                            />
+                            <Typography variant="body2" color="warning.main">
+                              <strong>Yêu cầu xác minh vị trí</strong>
                             </Typography>
                           </Box>
                         )}
@@ -470,6 +518,33 @@ const SelfCheckIn = () => {
                   {formatDateTime(selectedSession.selfCheckInEndTime)}
                 </Typography>
               </Alert>
+
+              {selectedSession.requireLocationVerification && (
+                <Alert
+                  severity={
+                    locationError
+                      ? 'error'
+                      : userLocation
+                        ? 'success'
+                        : 'warning'
+                  }
+                  sx={{ mb: 2 }}
+                >
+                  {locationError ? (
+                    <Typography variant="body2">{locationError}</Typography>
+                  ) : userLocation ? (
+                    <LocationDisplay
+                      latitude={userLocation.latitude}
+                      longitude={userLocation.longitude}
+                      compact={true}
+                    />
+                  ) : (
+                    <Typography variant="body2">
+                      Đang lấy vị trí của bạn...
+                    </Typography>
+                  )}
+                </Alert>
+              )}
 
               <TextField
                 fullWidth
