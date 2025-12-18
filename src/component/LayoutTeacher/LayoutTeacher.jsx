@@ -54,10 +54,16 @@ const menuData = [
     path: '/teacher/schedule',
   },
   {
-    label: 'Học sinh',
+    label: 'Sinh viên - Lớp học phần',
     icon: <PeopleIcon />,
     key: 'students',
     path: '/teacher/students',
+  },
+  {
+    label: 'Sinh viên - Lớp chủ nhiệm',
+    icon: <SchoolIcon />,
+    key: 'students-by-class',
+    path: '/teacher/students-by-class',
   },
   {
     label: 'Điểm số',

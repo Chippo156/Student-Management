@@ -11,6 +11,8 @@ import {
   Tooltip,
   Alert,
   CircularProgress,
+  MenuItem,
+  TextField,
 } from '@mui/material';
 import SearchableAutocomplete from '../../Common/SearchableAutocomplete';
 import DataTable from '../../Common/DataTable';
@@ -23,11 +25,15 @@ import {
   Phone,
   Refresh,
   Class as ClassIcon,
+  Download,
+  CalendarToday,
+  Search as SearchIcon,
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { message } from 'antd';
 import { studentServices } from '../../../service/studentServices';
-import { lecturerService } from '../../../service/lecturerService';
+import { classService } from '../../../service/classService';
+import ExcelJS from 'exceljs';
 
 const TeacherStudentsPage = () => {
   const theme = useTheme();
@@ -51,53 +57,59 @@ const TeacherStudentsPage = () => {
   );
 
   const [students, setStudents] = useState([]);
-  const [advisedClass, setAdvisedClass] = useState(null);
+  const [advisedClasses, setAdvisedClasses] = useState([]);
+  const [selectedClass, setSelectedClass] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
+  const [exporting, setExporting] = useState(false);
 
-  // Fetch advised class on mount
+  // Fetch adviser classes on mount
   useEffect(() => {
-    const fetchAdvisedClass = async () => {
+    const fetchAdvisedClasses = async () => {
       setLoading(true);
       try {
-        const classData = await lecturerService.getMyAdvisedClass();
-        if (classData) {
-          setAdvisedClass(classData);
+        const classes = await classService.getAdviserClasses();
+        if (classes && classes.length > 0) {
+          setAdvisedClasses(classes);
+          // Auto-select first class
+          setSelectedClass(classes[0]);
         } else {
-          setAdvisedClass(null);
+          setAdvisedClasses([]);
+          setSelectedClass(null);
           message.warning('Bạn chưa được gán làm chủ nhiệm lớp nào');
         }
       } catch (error) {
-        console.error('Error fetching advised class:', error);
-        setAdvisedClass(null);
+        console.error('Error fetching advised classes:', error);
+        setAdvisedClasses([]);
+        setSelectedClass(null);
       } finally {
         setLoading(false);
       }
     };
-    fetchAdvisedClass();
+    fetchAdvisedClasses();
   }, []);
 
   // Fetch students when class or search changes
   useEffect(() => {
-    if (advisedClass && advisedClass.classId) {
+    if (selectedClass && selectedClass.classId) {
       const timeoutId = setTimeout(() => {
         fetchStudents();
       }, 500); // Debounce 500ms
 
       return () => clearTimeout(timeoutId);
     }
-  }, [advisedClass, searchText, page, rowsPerPage]);
+  }, [selectedClass, searchText, page, rowsPerPage]);
 
   const fetchStudents = async () => {
-    if (!advisedClass || !advisedClass.classId) return;
+    if (!selectedClass || !selectedClass.classId) return;
 
     setLoading(true);
     try {
-      const response = await studentServices.getStudentsWithClass(
-        advisedClass.classId,
+      const response = await studentServices.getStudentsWithLecturerClass(
+        selectedClass.classId,
         page + 1,
         rowsPerPage,
         searchText
@@ -121,8 +133,174 @@ const TeacherStudentsPage = () => {
   };
 
   const handleRefresh = () => {
-    if (advisedClass) {
+    if (selectedClass) {
       fetchStudents();
+    }
+  };
+
+  const handleClassChange = (event) => {
+    const classId = event.target.value;
+    const selected = advisedClasses.find((c) => c.classId === classId);
+    setSelectedClass(selected);
+    setPage(0);
+    setSearchText('');
+  };
+
+  const handleExportExcel = async () => {
+    if (!selectedClass || !selectedClass.classId) {
+      message.warning('Vui lòng chọn lớp');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      // Fetch all students (without pagination)
+      const response = await studentServices.getStudentsWithLecturerClass(
+        selectedClass.classId,
+        1,
+        9999,
+        ''
+      );
+
+      if (!response || !response.items || response.items.length === 0) {
+        message.warning('Không có sinh viên nào để xuất');
+        setExporting(false);
+        return;
+      }
+
+      const allStudents = response.items;
+
+      // Create workbook
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Danh sách sinh viên');
+
+      // Add title
+      worksheet.mergeCells('A1:I1');
+      const titleCell = worksheet.getCell('A1');
+      titleCell.value = `DANH SÁCH SINH VIÊN LỚP ${selectedClass.className}`;
+      titleCell.font = { size: 16, bold: true };
+      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.getRow(1).height = 30;
+
+      // Add class info
+      worksheet.mergeCells('A2:I2');
+      const infoCell = worksheet.getCell('A2');
+      infoCell.value = `Mã lớp: ${selectedClass.classCode} | Chương trình: ${selectedClass.programName}`;
+      infoCell.font = { size: 12, italic: true };
+      infoCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.getRow(2).height = 25;
+
+      // Add export date
+      worksheet.mergeCells('A3:I3');
+      const dateCell = worksheet.getCell('A3');
+      dateCell.value = `Ngày xuất: ${new Date().toLocaleString('vi-VN')}`;
+      dateCell.font = { size: 11, italic: true };
+      dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.getRow(3).height = 20;
+
+      // Add empty row
+      worksheet.addRow([]);
+
+      // Add headers
+      const headerRow = worksheet.addRow([
+        'STT',
+        'MSSV',
+        'Họ và tên',
+        'Giới tính',
+        'Ngày sinh',
+        'Email',
+        'Số điện thoại',
+        'Chương trình',
+        'Trạng thái',
+      ]);
+
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' },
+      };
+      headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+      headerRow.height = 25;
+
+      // Add data rows
+      allStudents.forEach((student, index) => {
+        const row = worksheet.addRow([
+          index + 1,
+          student.mssv || '',
+          student.fullName || '',
+          student.gender === 'MALE'
+            ? 'Nam'
+            : student.gender === 'FEMALE'
+              ? 'Nữ'
+              : '',
+          student.dateOfBirth
+            ? new Date(student.dateOfBirth).toLocaleDateString('vi-VN')
+            : '',
+          student.email || '',
+          student.phone || '',
+          student.programName || '',
+          student.accountStatus === 'Active' ? 'Hoạt động' : 'Không hoạt động',
+        ]);
+
+        row.alignment = { vertical: 'middle' };
+        row.height = 20;
+
+        // Alternate row colors
+        if (index % 2 === 0) {
+          row.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF2F2F2' },
+          };
+        }
+      });
+
+      // Set column widths
+      worksheet.columns = [
+        { width: 8 }, // STT
+        { width: 15 }, // MSSV
+        { width: 25 }, // Họ và tên
+        { width: 12 }, // Giới tính
+        { width: 15 }, // Ngày sinh
+        { width: 30 }, // Email
+        { width: 15 }, // Số điện thoại
+        { width: 35 }, // Chương trình
+        { width: 15 }, // Trạng thái
+      ];
+
+      // Add borders to all cells
+      worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+        if (rowNumber > 3) {
+          row.eachCell((cell) => {
+            cell.border = {
+              top: { style: 'thin' },
+              left: { style: 'thin' },
+              bottom: { style: 'thin' },
+              right: { style: 'thin' },
+            };
+          });
+        }
+      });
+
+      // Generate file
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Danh_sach_sinh_vien_${selectedClass.classCode}_${new Date().getTime()}.xlsx`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      message.success('Xuất file Excel thành công!');
+    } catch (error) {
+      console.error('Error exporting Excel:', error);
+      message.error('Lỗi khi xuất file Excel');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -138,7 +316,9 @@ const TeacherStudentsPage = () => {
   // Statistics
   const maleCount = students.filter((s) => s.gender === 'MALE').length;
   const femaleCount = students.filter((s) => s.gender === 'FEMALE').length;
-  const activeCount = students.filter((s) => s.accountStatus === 'Active').length;
+  const activeCount = students.filter(
+    (s) => s.accountStatus === 'Active'
+  ).length;
 
   // Table columns
   const columns = [
@@ -253,7 +433,9 @@ const TeacherStudentsPage = () => {
       align: 'center',
       renderCell: (row) => (
         <Chip
-          label={row.accountStatus === 'Active' ? 'Hoạt động' : 'Không hoạt động'}
+          label={
+            row.accountStatus === 'Active' ? 'Hoạt động' : 'Không hoạt động'
+          }
           size="small"
           color={row.accountStatus === 'Active' ? 'success' : 'error'}
           variant="filled"
@@ -262,21 +444,33 @@ const TeacherStudentsPage = () => {
     },
   ];
 
-  // If still loading advised class
-  if (loading && !advisedClass) {
+  // If still loading classes
+  if (loading && advisedClasses.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+        }}
+      >
         <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Đang tải thông tin lớp chủ nhiệm...</Typography>
+        <Typography sx={{ ml: 2 }}>
+          Đang tải thông tin lớp chủ nhiệm...
+        </Typography>
       </Box>
     );
   }
 
-  // If no advised class
-  if (!advisedClass) {
+  // If no advised classes
+  if (advisedClasses.length === 0) {
     return (
       <Box sx={{ flexGrow: 1, p: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text, mb: 3 }}>
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 700, color: colors.text, mb: 3 }}
+        >
           Quản lý sinh viên lớp chủ nhiệm
         </Typography>
         <Alert severity="info" sx={{ mb: 3 }}>
@@ -294,147 +488,81 @@ const TeacherStudentsPage = () => {
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography
-          variant="h4"
-          sx={{ fontWeight: 700, color: colors.text, mb: 1 }}
-        >
-          Quản lý sinh viên lớp chủ nhiệm
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <ClassIcon sx={{ color: colors.primary }} />
-          <Typography variant="h6" color={colors.primary} sx={{ fontWeight: 600 }}>
-            {advisedClass.className} ({advisedClass.classCode})
-          </Typography>
-          <Chip label="Lớp chủ nhiệm" size="small" color="primary" variant="outlined" />
-        </Box>
-      </Box>
+      <Typography
+        variant="h4"
+        sx={{ fontWeight: 700, color: colors.text, mb: 3 }}
+      >
+        Quản lý sinh viên lớp chủ nhiệm
+      </Typography>
 
       {/* Statistics Cards */}
-      {students.length > 0 && (
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} md={3}>
-            <Card
-              sx={{
-                bgcolor: colors.bgPrimarySoft,
-                transition: 'transform 0.3s',
-                '&:hover': { transform: 'translateY(-5px)' },
-              }}
-            >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-                <People sx={{ fontSize: 50, mr: 2, color: colors.primary }} />
-                <Box>
-                  <Typography
-                    variant="h4"
-                    sx={{ fontWeight: 'bold', mb: 0.5, color: colors.primary }}
-                  >
-                    {totalCount}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-                    Tổng sinh viên
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
 
-          <Grid item xs={12} md={3}>
-            <Card
-              sx={{
-                bgcolor: colors.bgSuccessSoft,
-                transition: 'transform 0.3s',
-                '&:hover': { transform: 'translateY(-5px)' },
-              }}
-            >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-                <Male sx={{ fontSize: 50, mr: 2, color: colors.success }} />
-                <Box>
-                  <Typography
-                    variant="h4"
-                    sx={{ fontWeight: 'bold', mb: 0.5, color: colors.success }}
-                  >
-                    {maleCount}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-                    Nam
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <Card
-              sx={{
-                bgcolor: colors.bgErrorSoft,
-                transition: 'transform 0.3s',
-                '&:hover': { transform: 'translateY(-5px)' },
-              }}
-            >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-                <Female sx={{ fontSize: 50, mr: 2, color: colors.error }} />
-                <Box>
-                  <Typography
-                    variant="h4"
-                    sx={{ fontWeight: 'bold', mb: 0.5, color: colors.error }}
-                  >
-                    {femaleCount}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-                    Nữ
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <Card
-              sx={{
-                bgcolor: colors.bgWarningSoft,
-                transition: 'transform 0.3s',
-                '&:hover': { transform: 'translateY(-5px)' },
-              }}
-            >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', py: 3 }}>
-                <School sx={{ fontSize: 50, mr: 2, color: colors.warning }} />
-                <Box>
-                  <Typography
-                    variant="h4"
-                    sx={{ fontWeight: 'bold', mb: 0.5, color: colors.warning }}
-                  >
-                    {activeCount}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-                    Đang học
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      )}
-
-      {/* Search and Actions */}
+      {/* Filters and Actions */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={10}>
-              <SearchableAutocomplete
-                freeSolo
-                options={[]}
-                value={searchText}
-                onInputChange={(event, newValue) => {
-                  setSearchText(newValue);
-                  setPage(0);
-                }}
-                getOptionLabel={(option) => option}
+            {/* Class Selector */}
+            <Grid item xs={12} md={3}>
+              <TextField
+                select
+                fullWidth
+                label="Chọn lớp"
+                value={selectedClass?.classId || ''}
+                onChange={handleClassChange}
+                variant="outlined"
+                size="small"
+              >
+                {advisedClasses.map((cls) => (
+                  <MenuItem key={cls.classId} value={cls.classId}>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {cls.className} ({cls.classCode})
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+
+            {/* Search */}
+            <Grid item xs={12} md={5}>
+              <TextField
+                fullWidth
+                size="small"
                 label="Tìm kiếm sinh viên"
                 placeholder="Nhập MSSV hoặc tên sinh viên..."
-                showSearchIcon={true}
+                value={searchText}
+                onChange={(e) => {
+                  setSearchText(e.target.value);
+                  setPage(0);
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <SearchIcon sx={{ mr: 1, color: 'action.active' }} />
+                  ),
+                }}
               />
             </Grid>
 
+            {/* Export Button */}
+            <Grid item xs={12} md={2}>
+              <Tooltip title="Xuất danh sách ra Excel">
+                <Button
+                  variant="contained"
+                  color="success"
+                  onClick={handleExportExcel}
+                  disabled={loading || exporting || !selectedClass}
+                  startIcon={
+                    exporting ? <CircularProgress size={20} /> : <Download />
+                  }
+                  fullWidth
+                >
+                  {exporting ? 'Đang xuất...' : 'Xuất Excel'}
+                </Button>
+              </Tooltip>
+            </Grid>
+
+            {/* Refresh Button */}
             <Grid item xs={12} md={2}>
               <Tooltip title="Làm mới danh sách">
                 <Button
@@ -450,6 +578,31 @@ const TeacherStudentsPage = () => {
               </Tooltip>
             </Grid>
           </Grid>
+
+          {/* Class Info Chips */}
+          {selectedClass && (
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 2 }}>
+              <Chip
+                icon={<ClassIcon />}
+                label={selectedClass.programName}
+                variant="outlined"
+                color="primary"
+                size="small"
+              />
+              <Chip
+                icon={<CalendarToday />}
+                label={`Ngày nhận: ${selectedClass?.assignedDate ? new Date(selectedClass.assignedDate).toLocaleDateString('vi-VN') : '-'}`}
+                variant="outlined"
+                size="small"
+              />
+              <Chip
+                label={selectedClass?.assignmentStatus || 'Đang chủ nhiệm'}
+                variant="filled"
+                color="success"
+                size="small"
+              />
+            </Box>
+          )}
         </CardContent>
       </Card>
 

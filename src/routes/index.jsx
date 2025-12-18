@@ -49,6 +49,7 @@ import TeacherDashboard from '../component/Teacher/Dashboard';
 import TeacherCourses from '../component/Teacher/Pages/CoursesPage';
 import TeacherSchedule from '../component/Teacher/Pages/SchedulePage';
 import TeacherStudents from '../component/Teacher/Pages/StudentsPage';
+import TeacherStudentsByClass from '../component/Teacher/Pages/TeacherStudentsPage';
 import TeacherGrades from '../component/Teacher/Pages/GradesPage';
 import TeacherAttendance from '../component/Teacher/Pages/AttendancePage';
 import TeacherAssignments from '../component/Teacher/Pages/AssignmentsPage';
@@ -221,6 +222,7 @@ const AppRoutes = () => {
           <Route path="courses" element={<TeacherCourses />} />
           <Route path="schedule" element={<TeacherSchedule />} />
           <Route path="students" element={<TeacherStudents />} />
+          <Route path="students-by-class" element={<TeacherStudentsByClass />} />
           <Route path="grades" element={<TeacherGrades />} />
           <Route path="attendance" element={<TeacherAttendance />} />
           <Route path="assignments" element={<TeacherAssignments />} />

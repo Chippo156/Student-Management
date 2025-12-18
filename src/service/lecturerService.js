@@ -86,4 +86,22 @@ export const lecturerService = {
       return null;
     }
   },
+
+  // Lấy thông tin lớp chủ nhiệm của giảng viên hiện tại
+  getMyAdvisedClass: async () => {
+    try {
+      const response = await customizeAxios.get(
+        '/api/Lecturer/GetMyAdvisedClass'
+      );
+      if (response?.success === false) {
+        // Không hiển thị lỗi nếu giảng viên chưa được gán lớp
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      // Không hiển thị lỗi nếu giảng viên chưa được gán lớp
+      console.log('Lecturer has no advised class or API not available');
+      return null;
+    }
+  },
 };

@@ -38,12 +38,13 @@ export const studentServices = {
   // Đổi mật khẩu
   resetPassword: async (passwordData) => {
     try {
-      const response = await customizeAxios.put('/api/User/ResetPassword', passwordData);
+      const response = await customizeAxios.put(
+        '/api/User/ResetPassword',
+        passwordData
+      );
       return response.data;
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || 'Reset password failed'
-      );
+      throw new Error(error.response?.data?.message || 'Reset password failed');
     }
   },
 
@@ -61,7 +62,8 @@ export const studentServices = {
       // Add filter parameters
       if (filters.departmentId) params.departmentId = filters.departmentId;
       if (filters.className) params.className = filters.className;
-      if (filters.yearOfAdmission) params.yearOfAdmission = filters.yearOfAdmission;
+      if (filters.yearOfAdmission)
+        params.yearOfAdmission = filters.yearOfAdmission;
       if (filters.studentStatus !== undefined && filters.studentStatus !== '') {
         params.studentStatus = filters.studentStatus;
       }
@@ -144,6 +146,114 @@ export const studentServices = {
       } else {
         message.error(
           error.message || 'Lấy danh sách sinh viên theo lớp học phần thất bại'
+        );
+      }
+      return null;
+    }
+  },
+
+  // New: get students with class (paged, searchable) - for Teacher
+  getStudentsWithClass: async (
+    classId,
+    pageNumber = 1,
+    pageSize = 10,
+    searchTerm = ''
+  ) => {
+    try {
+      const response = await customizeAxios.get(
+        `/api/Student/GetStudentsWithClass/${classId}`,
+        {
+          params: {
+            PageNumber: pageNumber,
+            PageSize: pageSize,
+            searchTerm,
+          },
+        }
+      );
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            response?.message ||
+              'Lấy danh sách sinh viên theo lớp danh nghĩa thất bại'
+          );
+        }
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message ||
+              'Lấy danh sách sinh viên theo lớp danh nghĩa thất bại'
+          );
+        }
+      } else {
+        message.error(
+          error.message ||
+            'Lấy danh sách sinh viên theo lớp danh nghĩa thất bại'
+        );
+      }
+      return null;
+    }
+  },
+
+  // Get students with lecturer class (adviser) - for Teacher
+  getStudentsWithLecturerClass: async (
+    classId,
+    pageNumber = 1,
+    pageSize = 10,
+    searchTerm = ''
+  ) => {
+    try {
+      const response = await customizeAxios.get(
+        `/api/Student/GetStudentsWithLecturerClass/${classId}`,
+        {
+          params: {
+            PageNumber: pageNumber,
+            PageSize: pageSize,
+            searchTerm,
+          },
+        }
+      );
+
+      if (response?.success === false) {
+        const errData = response?.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            response?.message ||
+              'Lấy danh sách sinh viên theo lớp chủ nhiệm thất bại'
+          );
+        }
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errData = error.response.data.data;
+        if (Array.isArray(errData) && errData.length > 0) {
+          message.error(errData[0]);
+        } else {
+          message.error(
+            error.response.data.message ||
+              'Lấy danh sách sinh viên theo lớp chủ nhiệm thất bại'
+          );
+        }
+      } else {
+        message.error(
+          error.message ||
+            'Lấy danh sách sinh viên theo lớp chủ nhiệm thất bại'
         );
       }
       return null;
@@ -239,7 +349,13 @@ export const studentServices = {
   },
 
   // Sinh viên tự điểm danh
-  selfCheckIn: async (attendanceSessionId, checkInCode = '', note = null) => {
+  selfCheckIn: async (
+    attendanceSessionId,
+    checkInCode = '',
+    note = null,
+    latitude = null,
+    longitude = null
+  ) => {
     try {
       const response = await customizeAxios.post(
         '/api/student/attendance/check-in',
@@ -247,10 +363,13 @@ export const studentServices = {
           attendanceSessionId,
           checkInCode,
           note,
+          latitude,
+          longitude,
         }
       );
       if (response?.success === false) {
-        message.error(response?.message || 'Điểm danh thất bại');
+        message.error(response?.data[0]);
+        message.error(response?.data[1]);
         return null;
       }
       message.success('Điểm danh thành công!');
@@ -277,9 +396,7 @@ export const studentServices = {
         '/api/student/attendance/GetAllCheckIn'
       );
       if (response?.success === false) {
-        message.error(
-          response?.message || 'Lấy lịch sử điểm danh thất bại'
-        );
+        message.error(response?.message || 'Lấy lịch sử điểm danh thất bại');
         return null;
       }
       return response.data;
