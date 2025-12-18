@@ -1053,17 +1053,17 @@ namespace StudentManagement.Services
                     };
                 }
 
-                //// Validate check-in eligibility
-                //var validationResult = await ValidateStudentCheckInAsync(student, attendanceSession, request);
-                //if (!validationResult.IsValid)
-                //{
-                //    return new StudentSelfCheckInResponse
-                //    {
-                //        IsSuccess = false,
-                //        Message = "Check-in validation failed",
-                //        Errors = validationResult.Errors
-                //    };
-                //}
+                // Validate check-in eligibility
+                var validationResult = await ValidateStudentCheckInAsync(student, attendanceSession, request);
+                if (!validationResult.IsValid)
+                {
+                    return new StudentSelfCheckInResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Check-in validation failed",
+                        Errors = validationResult.Errors
+                    };
+                }
 
                 // **NEW: Validate location if required**
                 if (attendanceSession.RequireLocationVerification)
@@ -1188,8 +1188,8 @@ namespace StudentManagement.Services
             StudentSelfCheckInRequest request)
         {
             var errors = new List<string>();
-            var now = DateTime.Now;
-
+            var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
             // Check if self check-in is enabled
             if (!attendanceSession.AllowSelfCheckIn)
             {
@@ -1283,21 +1283,23 @@ namespace StudentManagement.Services
             /// <summary>
             /// Tính khoảng cách giữa 2 điểm GPS bằng công thức Haversine (mét)
             /// </summary>
-            public static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
-            {
-                const double earthRadiusKm = 6371.0;
+             private const double EarthRadiusKm = 6371.0;
 
+            public static double CalculateDistance(
+       double lat1, double lon1,
+       double lat2, double lon2)
+            {
                 var dLat = DegreesToRadians(lat2 - lat1);
                 var dLon = DegreesToRadians(lon2 - lon1);
 
                 var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                        Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
+                        Math.Cos(DegreesToRadians(lat1)) *
+                        Math.Cos(DegreesToRadians(lat2)) *
                         Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
 
                 var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-                var distanceKm = earthRadiusKm * c;
 
-                return distanceKm * 1000; // Convert to meters
+                return EarthRadiusKm * c * 1000; // meters
             }
 
             private static double DegreesToRadians(double degrees)
