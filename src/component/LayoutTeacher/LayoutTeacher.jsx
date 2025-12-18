@@ -198,21 +198,29 @@ const LayoutTeacher = () => {
       )}
 
       {/* Menu List */}
-      <List component="nav" sx={{ flex: 1, overflow: 'auto', pt: isDesktop ? 0 : 1 }}>
+      <List
+        component="nav"
+        sx={{ flex: 1, overflow: 'auto', pt: isDesktop ? 0 : 1 }}
+      >
         {menuData.map((item) => renderMenuItem(item))}
       </List>
 
       {/* Collapse toggle for desktop */}
       {isDesktop && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 1, borderTop: 1, borderColor: 'divider' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            py: 1,
+            borderTop: 1,
+            borderColor: 'divider',
+          }}
+        >
           <Tooltip
             title={collapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
             placement="right"
           >
-            <IconButton
-              onClick={() => setCollapsed((v) => !v)}
-              size="small"
-            >
+            <IconButton onClick={() => setCollapsed((v) => !v)} size="small">
               {collapsed ? <MenuIcon /> : <MenuOpenIcon />}
             </IconButton>
           </Tooltip>
@@ -234,7 +242,7 @@ const LayoutTeacher = () => {
             bgcolor: 'background.paper',
             color: 'text.primary',
             borderBottom: 1,
-            borderColor: 'divider'
+            borderColor: 'divider',
           }}
         >
           <Toolbar variant="dense" sx={{ minHeight: 48 }}>
@@ -265,8 +273,8 @@ const LayoutTeacher = () => {
             <Paper
               elevation={2}
               sx={{
-                width: collapsed ? 72 : 240,
-                minWidth: collapsed ? 72 : 240,
+                width: collapsed ? 72 : 360,
+                minWidth: collapsed ? 72 : 360,
                 minHeight: '100%',
                 bgcolor: 'background.paper',
                 borderRight: 1,
