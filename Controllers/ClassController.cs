@@ -1,10 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using StudentManagement.Exceptions;
 using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Services.Interface;
+using System.Security.Claims;
 
 namespace StudentManagement.Controllers
 {
@@ -134,6 +135,37 @@ namespace StudentManagement.Controllers
             {
                 return StatusCode(500, ApiResponse.ErrorResponse(ErrorCodes.InternalServerError, 
                     "An error occurred while retrieving classes", new List<string> { ex.Message }));
+            }
+        }
+        [HttpGet("dropdown/adviser")]
+        [Authorize(Roles = "Lecturer")]
+        public async Task<IActionResult> GetClassesByAdviserDropdown()
+        {
+            try
+            {
+                // Lấy lecturer code từ JWT token
+                var lecturerCode = User.FindFirstValue(ClaimTypes.Name);
+
+                if (string.IsNullOrEmpty(lecturerCode))
+                {
+                    return BadRequest(ApiResponse.ErrorResponse(
+                        ErrorCodes.BadRequest,
+                        "Không thể xác định thông tin giảng viên từ token",
+                        null));
+                }
+
+                var classes = await classService.GetClassesByAdviserDropdownAsync(lecturerCode);
+
+                return Ok(ApiResponse.SuccessResponse(
+                    classes,
+                    "Danh sách lớp chủ nhiệm được lấy thành công"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.ErrorResponse(
+                    ErrorCodes.InternalServerError,
+                    "Lỗi khi lấy danh sách lớp chủ nhiệm",
+                    new List<string> { ex.Message }));
             }
         }
     }

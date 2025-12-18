@@ -1,4 +1,4 @@
-using StudentManagement.Models;
+﻿using StudentManagement.Models;
 using StudentManagement.Models.Dto.Request;
 using StudentManagement.Models.Dto.Response;
 
@@ -21,5 +21,10 @@ namespace StudentManagement.Services.Interface
             PaginationParams pagination,
             string? search = null,
             int? programId = null);
+
+        /// <summary>
+        /// Lấy danh sách các lớp mà giảng viên làm chủ nhiệm
+        /// </summary>
+        Task<IEnumerable<ClassAdviserDropdownResponse>> GetClassesByAdviserDropdownAsync(string lecturerCode);
     }
 }

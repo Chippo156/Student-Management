@@ -507,49 +507,23 @@ namespace StudentManagement.Services
             };
         }
 
-        public async Task<PagedResult<StudentInSectionDto>> GetStudentsByLecturerWithPaginationAsync(
-     string lecturerCode,
-     PaginationParams pagination,
-     string? searchTerm = null)
+        public async Task<PagedResult<StudentInSectionDto>> GetStudentsByClassWithPaginationAsync(
+        int? classId,
+        PaginationParams pagination,
+        string? searchTerm = null)
         {
-            // Tìm giảng viên theo mã
-            var lecturer = await context.Lecturers
-                .Include(l => l.User)
-                .FirstOrDefaultAsync(l => l.User.Username == lecturerCode);
+            // You need to materialize the query to a list using ToListAsync()
+            // Lấy lớp duy nhất (có thể null nếu không tồn tại)
+            var adviserClass = await context.Classes
+                .FirstOrDefaultAsync(c => !classId.HasValue || c.ClassId == classId.Value);
 
-            if (lecturer == null)
-            {
-                throw new Exception("Lecturer not found");
-            }
-
-            // Tìm lớp danh nghĩa mà giảng viên làm chủ nhiệm (AdviserAssignment)
-            var advisedClasses = await context.AdviserAssignments
-                .Include(aa => aa.Class)
-                .Where(aa => aa.Lecturer.Id == lecturer.Id &&
-                            aa.IsActive &&
-                            aa.EndDate == null) // Đang làm chủ nhiệm
-                .Select(aa => aa.Class.ClassId)
-                .ToListAsync();
-
-            if (!advisedClasses.Any())
-            {
-                // Trả về kết quả rỗng nếu giảng viên không làm chủ nhiệm lớp nào
-                return new PagedResult<StudentInSectionDto>
-                {
-                    Items = new List<StudentInSectionDto>(),
-                    TotalCount = 0,
-                    PageNumber = pagination.PageNumber,
-                    PageSize = pagination.PageSize
-                };
-            }
-
-            // Query danh sách sinh viên trong các lớp mà giảng viên làm chủ nhiệm
+            // Nếu có lớp thì lấy sinh viên của lớp đó
             var query = context.Students
                 .Include(s => s.User)
                 .Include(s => s.Class)
                     .ThenInclude(c => c.Program)
-                .Where(s => advisedClasses.Contains(s.Class.ClassId))
-                .AsQueryable();
+                .Where(s => adviserClass == null || s.Class == adviserClass);
+
 
             // Apply search filter nếu có
             if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -576,35 +550,11 @@ namespace StudentManagement.Services
 
             // Lấy thông tin GPA gần nhất cho các sinh viên này
             var studentIds = students.Select(s => s.Id).ToList();
-            var latestGPAs = await context.GpaSnapshots
-                .Include(g => g.Semester)
-                .Where(g => studentIds.Contains(g.Student.Id))
-                .GroupBy(g => g.Student.Id)
-                .Select(g => new {
-                    StudentId = g.Key,
-                    LatestGPA = g.OrderByDescending(gpa => gpa.Semester.Year)
-                                 .ThenByDescending(gpa => gpa.Semester.Term)
-                                 .FirstOrDefault()
-                })
-                .ToDictionaryAsync(x => x.StudentId, x => x.LatestGPA);
 
-            // Lấy thông tin tín chỉ tích lũy cho các sinh viên này
-            var completedCredits = await context.FinalResults
-                .Include(fr => fr.Section)
-                    .ThenInclude(s => s.CurriculumCourse.Course)
-                .Where(fr => studentIds.Contains(fr.Student.Id) && fr.GradePoint >= 1.0)
-                .GroupBy(fr => fr.Student.Id)
-                .Select(g => new {
-                    StudentId = g.Key,
-                    CompletedCredits = g.Sum(fr => fr.Section.CurriculumCourse.Course.CreditsTheory +
-                                                  fr.Section.CurriculumCourse.Course.CreditsLab)
-                })
-                .ToDictionaryAsync(x => x.StudentId, x => x.CompletedCredits);
 
             // Map to response DTO
-            var studentDtos = students.Select(student => {
-                var latestGPA = latestGPAs.GetValueOrDefault(student.Id);
-                var credits = completedCredits.GetValueOrDefault(student.Id, 0);
+            var studentDtos = students.Select(student =>
+            {
 
                 return new StudentInSectionDto
                 {
@@ -619,25 +569,7 @@ namespace StudentManagement.Services
                     AccountStatus = student.User.AccountStatus.ToString(),
                     AvatarUrl = student.User.AvatarUrl,
                     DateOfBirth = student.User.DateOfBirth,
-                    Gender = student.User.Gender.ToString(),
-
-                    // **Thông tin học tập cho giảng viên chủ nhiệm**
-                    YearOfAdmission = student.YearOfAdmission,
-                    StudentStatus = student.StudentStatus.ToString(),
-
-                    // GPA và tín chỉ
-                    CurrentGPA = latestGPA?.Gpa ?? 0,
-                    CompletedCredits = credits,
-                    RequiredCredits = student.Class.Program.CreditsRequired,
-
-                    // Thông tin bổ sung
-                    EnrollmentDate = student.DateOfAdmission.HasValue ?
-                                    DateTime.SpecifyKind(student.DateOfAdmission.Value.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc) :
-                                    null,
-
-                    // Tính tiến độ học tập
-                    CompletionRate = student.Class.Program.CreditsRequired > 0 ?
-                                   Math.Round((double)credits / student.Class.Program.CreditsRequired * 100, 1) : 0
+                    Gender = student.User.Gender.ToString()
                 };
             }).ToList();
 

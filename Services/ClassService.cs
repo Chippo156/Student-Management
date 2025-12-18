@@ -441,6 +441,64 @@ namespace StudentManagement.Services
             };
         }
 
+        public async Task<IEnumerable<ClassAdviserDropdownResponse>> GetClassesByAdviserDropdownAsync(string lecturerCode)
+        {
+            // Tìm giảng viên theo mã
+            var lecturer = await context.Lecturers
+                .Include(l => l.User)
+                .FirstOrDefaultAsync(l => l.User.Username == lecturerCode);
+
+            if (lecturer == null)
+            {
+                return new List<ClassAdviserDropdownResponse>();
+            }
+
+            // Lấy các lớp mà giảng viên làm chủ nhiệm (chỉ lấy assignment đang active)
+            var advisedClasses = await context.AdviserAssignments
+                .Include(aa => aa.Class)
+                    .ThenInclude(c => c.Program)
+                        .ThenInclude(p => p.Department)
+                .Include(aa => aa.Lecturer)
+                    .ThenInclude(l => l.User)
+                .Where(aa => aa.Lecturer.Id == lecturer.Id && 
+                            aa.IsActive && 
+                            aa.EndDate == null) // Đang làm chủ nhiệm
+                .ToListAsync();
+
+            if (!advisedClasses.Any())
+            {
+                return new List<ClassAdviserDropdownResponse>();
+            }
+
+            // Tạo response với thông tin chi tiết
+            var responses = new List<ClassAdviserDropdownResponse>();
+            
+            foreach (var assignment in advisedClasses)
+            {
+                // Đếm số sinh viên trong lớp
+                var studentCount = await context.Students
+                    .CountAsync(s => s.Class.ClassId == assignment.Class.ClassId);
+
+                var response = new ClassAdviserDropdownResponse
+                {
+                    ClassId = assignment.Class.ClassId,
+                    ClassName = assignment.Class.ClassName,
+                    ClassCode = assignment.Class.ClassCode,
+                    ProgramId = assignment.Class.Program.AcademicProgramId,
+                    ProgramName = assignment.Class.Program.ProgramName,
+                    DepartmentName = assignment.Class.Program.Department.DepartmentName,
+                    StudentCount = studentCount,
+                    AssignedDate = assignment.StartDate.ToDateTime(TimeOnly.MinValue),
+                    AssignmentStatus = assignment.IsActive ? "Đang chủ nhiệm" : "Không hoạt động"
+                };
+
+                responses.Add(response);
+            }
+
+            // Sắp xếp theo tên lớp
+            return responses.OrderBy(r => r.ClassName).ToList();
+        }
+
         // Helper method to generate class code
         private static string GenerateClassCode(string className)
         {
